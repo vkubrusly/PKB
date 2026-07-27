@@ -1,0 +1,78 @@
+line_code,wbs_code,item_name,qty,unit,unit_cost
+1.1.1,1.1,Doc Box,1,ea,55.00
+1.1.2,1.1,Silt Temporary Fencing material,1,ea,237.50
+1.1.3,1.1,Silt Fence Installation,1,ea,237.50
+1.1.4,1.1,Notice Of Commencement,1,ea,65.00
+1.1.5,1.1,Impact Fees,1,ea,10300.00
+1.1.6,1.1,Power Connection,1,ea,1000.00
+1.1.7,1.1,INSPEÇÃO /Permits & Permitting Fees,1,ea,1300.00
+1.1.8,1.1,Utilities - Water / energy,1,ea,550.00
+1.1.9,1.1,Job Insurance - Builders Risk,1,ea,580.00
+1.1.10,1.1,General Liability Insurance,1,ea,1050.00
+1.1.11,1.1,Fee Permits Run /SOVERING,1,ea,500.00
+1.1.12,1.1,Water Connection,1,ea,2679.00
+1.2.1,1.2,Drawings - Design Site Plan - Civil Engineers,1,sf,1450.00
+1.2.2,1.2,Surveyors,1,ea,1500.00
+1.3.1,1.3,Portable Toilets,5,mo,106.50
+1.3.2,1.3,Dumpster,1,ea,1556.00
+2.1,2,Clearing Lot and Remove Debris,1,bid,3300.00
+2.2,2,Load of Fill Dirt,10,ea,255.00
+2.3,2,House Pad Preparation,1,ea,500.00
+3.1.1,3.1,Mono Slab as per plan (labor+mat foundation+concrete),1,sf,14705.63
+3.1.2,3.1,Boom Pump,1,ls,900.00
+3.1.3,3.1,Geo Compaction test,1,ls,250.00
+3.1.4,3.1,Re-treated footers - pest control,1,ls,466.00
+3.2.1,3.2,Lintel/Block,1,ls,9700.00
+3.2.2,3.2,Fill Cells/lintels w/pump included - labor+equipment,1,ls,850.00
+3.2.3,3.2,Cement material,1,ls,2300.00
+3.2.4,3.2,Block labor,1,ls,4400.00
+3.3.1,3.3,Roof Trusses,1,ls,6300.00
+3.3.2,3.3,Framing/Roof,1,ls,5977.20
+3.3.3,3.3,Framing Materials,1,ls,5841.55
+3.4.1,3.4,Doors (2 exterior doors + sliding door),1,ls,4170.00
+3.4.2,3.4,Windows (bundled),1,ls,0.00
+3.4.3,3.4,Exterior doors and windows labor,1,ls,1500.00
+3.4.4,3.4,Installing sills on the windows,1,ls,125.00
+3.5.1,3.5,Stucco Material/Labor,1,ls,4300.00
+3.6.1,3.6,Shingle Install - Roofing Shingle,1,ls,7300.00
+3.7.1,3.7,Soffit/Fascia material and labor,1,ls,1300.00
+4.1.1,4.1,HVAC System,1,bid,8084.00
+4.2.1,4.2,Plumbing System,1,bid,8187.00
+4.3.1,4.3,Electrical System,1,bid,7800.00
+5.1,5,Insulation,1,ls,1725.00
+6.1,6,Drywall material,1,ls,8000.00
+6.2,6,Drywall finish/texture/move drywall inside - labor (bundled),1,ls,0.00
+7.1,7,Doors / baseboard,1,bid,3463.02
+7.2,7,Trim material (bundled),1,ls,0.00
+7.3,7,Trim / Doors / Baseboard labor,1,ea,1100.00
+7.4,7,Polo Satin Nickel Interior / exterior,1,ls,386.00
+8.1,8,Paint material,1,ea,4500.00
+8.2,8,Paint labor (bundled),1,ls,0.00
+9.1,9,Cabinets,1,ls,5050.00
+9.2,9,Counter top / backsplash (bundled),1,ls,0.00
+10.1,10,Wire Closet Shelves,1,ls,400.00
+10.2,10,Hardware set brushed nickel,1,ls,50.00
+10.3,10,Pendant Kitchen,1,ls,175.00
+10.4,10,Light bathroom,1,ls,180.00
+10.5,10,Outdoor light wall fixtures,1,ls,145.00
+10.6,10,Shower Mirror,1,ls,250.00
+10.7,10,Accessories Install,1,ls,250.00
+11.1,11,Septic Tank Contractor,1,ea,6500.00
+12.1,12,Vinyl floor material/labor,1,ls,4260.00
+12.2,12,Tiles - wall and floor - material,1,ls,1050.00
+12.3,12,Tiles - wall and floor - labor,1,ls,900.00
+12.4,12,Paver,1,ls,1300.00
+12.5,12,Epoxy garage,1,ls,450.00
+13.1,13,Garage Door and Opener System,1,ea,1950.00
+14.1,14,"Microwave, dishwasher, refrigerator, etc.",1,ls,2750.00
+15.1,15,Final Grading Around The House,1,ea,400.00
+16.1,16,Driveway,1,ea,5047.00
+17.1,17,Irrigation System / Garden,1,ea,850.00
+18.1,18,Bahia Grass Sod Installed,1,ea,3312.00
+19.1,19,Final Cleaning Services,1,bid,350.00
+20.1,20,Punch List Miscellaneous Items,1,bid,450.00
+21.1,21,Administration Fee,1,bid,25000.00
+22.1,22,Box,1,bid,0.00
+22.2,22,Blinds,2,bid,0.00
+22.3,22,Mailbox,3,bid,0.00
+22.4,22,Washer,4,bid,0.00

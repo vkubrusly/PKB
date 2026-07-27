@@ -40,9 +40,12 @@ exception when duplicate_object then null; end $$;
 
 -- Unidades comuns na construção residencial FL. Extensível.
 -- ea=each, sf=square foot, lf=linear foot, cy=cubic yard, ls=lump sum,
--- hr=hour, gal=gallon, sq=roofing square (100 sf), ton=HVAC ton.
+-- hr=hour, gal=gallon, sq=roofing square (100 sf), ton=HVAC ton,
+-- bid=preço fechado por bid (lump), mo=mês (aluguéis: banheiro químico, etc.).
+-- 'bid' e 'mo' vieram do orçamento real da Sunny (Estimate Affordable).
 do $$ begin
-  create type unit_type as enum ('ea', 'sf', 'lf', 'cy', 'ls', 'hr', 'gal', 'sq', 'ton');
+  create type unit_type as enum
+    ('ea', 'sf', 'lf', 'cy', 'ls', 'hr', 'gal', 'sq', 'ton', 'bid', 'mo');
 exception when duplicate_object then null; end $$;
 
 -- ---------------------------------------------------------------------------

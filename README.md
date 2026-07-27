@@ -24,6 +24,8 @@ supabase/
   config.toml             Config local da CLI (db + seed)
   migrations/             Schema versionado (Postgres) — Parte 5 da spec
   seed.sql                Dados-semente: 22 categorias WBS (numeração imutável)
+data/                     Orçamentos reais importados (formato normalizado + SQL)
+scripts/                  Importador de orçamentos (CSV normalizado → SQL)
 frontend/                 App React (Vite) — a ser scaffoldado no Sprint 2/3
 ```
 
@@ -39,7 +41,7 @@ tabelas e como elas se conectam ao roadmap.
 
 | Sprint | Entrega | Status |
 |---|---|---|
-| 1 | Setup + cadastros + import do modelo XLSX | 🚧 em andamento (schema + seed) |
+| 1 | Setup + cadastros + import do modelo XLSX | 🚧 schema + seed + import da Sunny (real, validado) |
 | 2 | Upload de projeto + Agente de Takeoff + revisão editável | ⏳ |
 | 3 | Motor de níveis: 3 cenários + mix & match + delta pricing | ⏳ |
 | 4 | Agente de Preços (cotações + histórico + busca web) | ⏳ |

@@ -80,7 +80,8 @@ create table if not exists estimate_items (
   id            uuid primary key default gen_random_uuid(),
   org_id        uuid not null references orgs(id) on delete cascade,
   estimate_id   uuid not null references estimates(id) on delete cascade,
-  wbs_code      text not null references wbs_nodes(code),
+  wbs_code      text not null references wbs_nodes(code),  -- structural (is_leaf) parent node
+  line_code     text,                             -- full PKB line code as shown (1.1.1, 2.2, ...)
   material_id   uuid references materials(id) on delete set null,
   supplier_id   uuid references suppliers(id) on delete set null,
   description   text,                             -- overrides material name when set
