@@ -12,14 +12,14 @@
     "address": null,
     "living_area_sf": 1820,
     "total_area_sf": 2344,
-    "wind_speed_mph": null,
+    "wind_speed_mph": 130,
     "flood_zone": "X",
     "water": "municipal",
     "sewer": "septic",
     "contract": null,
     "initial_level": "essential",
     "arv": null,
-    "_notes": "Água = municipal (Marion Oaks é ligada à rede da cidade). Sewer = septic (linha 11.1). Flood zone X (menor risco). Wind speed a confirmar."
+    "_notes": "Água = municipal (Marion Oaks é ligada à rede da cidade). Sewer = septic (linha 11.1). Flood zone X (menor risco). Wind speed = 130 mph Vult (padrão Marion County: interior FL, Risk Category II / Wind Zone 1, rajada 3s, FBC/ASCE 7). Dimensionamento de pressões de projeto é do engenheiro no permit."
   },
   "estimate": {
     "id": "33333333-3333-3333-3333-333333333333",

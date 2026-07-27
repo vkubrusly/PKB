@@ -8,7 +8,7 @@ insert into projects (id, org_id, name, base_model, county, address, market,
     living_area_sf, total_area_sf, wind_speed_mph, flood_zone, water, sewer, contract, initial_level, arv)
   values ('22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', 'Sunny — Marion Oaks', 'Sunny', 'Marion',
     null, 'Marion Oaks', 1820, 2344,
-    null, 'X', 'municipal'::water_source,
+    130, 'X', 'municipal'::water_source,
     'septic'::sewer_type, null::contract_type,
     'essential'::spec_level, null)
   on conflict (id) do update set
