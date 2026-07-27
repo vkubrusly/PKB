@@ -13,13 +13,13 @@
     "living_area_sf": 1820,
     "total_area_sf": 2344,
     "wind_speed_mph": null,
-    "flood_zone": null,
-    "water": null,
+    "flood_zone": "X",
+    "water": "municipal",
     "sewer": "septic",
     "contract": null,
     "initial_level": "essential",
     "arv": null,
-    "_notes": "Sewer=septic confirmado pela linha 11.1 (Septic Tank Contractor). Água não consta no orçamento (a confirmar). Wind/flood zone não constam."
+    "_notes": "Água = municipal (Marion Oaks é ligada à rede da cidade). Sewer = septic (linha 11.1). Flood zone X (menor risco). Wind speed a confirmar."
   },
   "estimate": {
     "id": "33333333-3333-3333-3333-333333333333",

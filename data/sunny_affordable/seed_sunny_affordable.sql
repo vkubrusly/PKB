@@ -8,13 +8,14 @@ insert into projects (id, org_id, name, base_model, county, address, market,
     living_area_sf, total_area_sf, wind_speed_mph, flood_zone, water, sewer, contract, initial_level, arv)
   values ('22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', 'Sunny — Marion Oaks', 'Sunny', 'Marion',
     null, 'Marion Oaks', 1820, 2344,
-    null, null, null::water_source,
+    null, 'X', 'municipal'::water_source,
     'septic'::sewer_type, null::contract_type,
     'essential'::spec_level, null)
   on conflict (id) do update set
     name=excluded.name, base_model=excluded.base_model, county=excluded.county, market=excluded.market,
-    living_area_sf=excluded.living_area_sf, total_area_sf=excluded.total_area_sf, sewer=excluded.sewer,
-    initial_level=excluded.initial_level;
+    living_area_sf=excluded.living_area_sf, total_area_sf=excluded.total_area_sf,
+    wind_speed_mph=excluded.wind_speed_mph, flood_zone=excluded.flood_zone, water=excluded.water,
+    sewer=excluded.sewer, contract=excluded.contract, initial_level=excluded.initial_level, arv=excluded.arv;
 
 insert into estimates (id, org_id, project_id, level, version, status, notes)
   values ('33333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', 'essential'::spec_level,

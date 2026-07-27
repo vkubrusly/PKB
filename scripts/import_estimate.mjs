@@ -103,8 +103,9 @@ out.push(`    ${p.sewer ? sqlStr(p.sewer) : 'null'}::sewer_type, ${p.contract ? 
 out.push(`    ${p.initial_level ? sqlStr(p.initial_level) : 'null'}::spec_level, ${sqlNum(p.arv)})`);
 out.push(`  on conflict (id) do update set`);
 out.push(`    name=excluded.name, base_model=excluded.base_model, county=excluded.county, market=excluded.market,`);
-out.push(`    living_area_sf=excluded.living_area_sf, total_area_sf=excluded.total_area_sf, sewer=excluded.sewer,`);
-out.push(`    initial_level=excluded.initial_level;`);
+out.push(`    living_area_sf=excluded.living_area_sf, total_area_sf=excluded.total_area_sf,`);
+out.push(`    wind_speed_mph=excluded.wind_speed_mph, flood_zone=excluded.flood_zone, water=excluded.water,`);
+out.push(`    sewer=excluded.sewer, contract=excluded.contract, initial_level=excluded.initial_level, arv=excluded.arv;`);
 out.push('');
 out.push(`insert into estimates (id, org_id, project_id, level, version, status, notes)`);
 out.push(`  values (${sqlStr(e.id)}, ${sqlStr(org.id)}, ${sqlStr(p.id)}, ${sqlStr(e.level)}::spec_level,`);
