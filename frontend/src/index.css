@@ -120,7 +120,14 @@ label.checkbox input { width: auto; }
 .level-badge.luxury { background: var(--luxury); }
 .level-badge.any { background: var(--muted); }
 
-/* ---- PKB Homes logo lockup (bars · PKB · HOMES) ---- */
+/* ---- PKB Homes logo (real PNG) ---- */
+.pkb-logo-img { display: block; object-fit: contain; }
+@media (prefers-color-scheme: dark) {
+  /* the artwork's "PKB" is graphite → give it a light plate on dark surfaces */
+  .pkb-logo-img { background: rgba(255,255,255,.94); border-radius: 10px; padding: 5px; }
+}
+
+/* ---- (legado) lockup CSS — não usado, mantido inofensivo ---- */
 .pkb-logo { display: inline-flex; align-items: center; line-height: 1; --logo-size: 40px; }
 .pkb-logo.stacked { flex-direction: column; gap: calc(var(--logo-size) * .1); }
 .pkb-logo.inline { flex-direction: row; gap: calc(var(--logo-size) * .28); }

@@ -17,7 +17,7 @@ export function Layout() {
     <div className="app">
       <aside className="sidebar">
         <div className="brand small">
-          <Logo size={30} stacked={false} />
+          <Logo size={40} />
           <strong>Orçamentos</strong>
         </div>
 
