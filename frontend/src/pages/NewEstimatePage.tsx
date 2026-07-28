@@ -24,6 +24,10 @@ export function NewEstimatePage() {
     level: 'essential' as Exclude<SpecLevel, 'any'>,
   });
   const [planFile, setPlanFile] = useState<File | null>(null);
+  const [planPath, setPlanPath] = useState<string | null>(null); // uploaded once, reused
+  const [extracting, setExtracting] = useState(false);
+  const [aiFilled, setAiFilled] = useState<Set<string>>(new Set());
+  const [aiNote, setAiNote] = useState<string | null>(null);
 
   // step 2 — method
   const [method, setMethod] = useState<Method>('model');
@@ -77,14 +81,57 @@ export function NewEstimatePage() {
     finally { setBusy(false); }
   }
 
+  // Upload the plans once; reuse the path for both extraction and take-off.
+  async function ensurePlanUploaded(): Promise<string> {
+    if (planPath) return planPath;
+    if (!planFile) throw new Error('Escolha o PDF das plantas primeiro.');
+    const path = `${activeOrg!.id}/${Date.now()}-${planFile.name}`;
+    const up = await supabase.storage.from('plantas').upload(path, planFile);
+    if (up.error) throw new Error(`Falha ao subir plantas: ${up.error.message}`);
+    setPlanPath(path);
+    return path;
+  }
+
+  // Document-first: read the plans and pre-fill the project fields.
+  async function extractFromPlan() {
+    setExtracting(true); setErr(null); setAiNote(null);
+    try {
+      const path = await ensurePlanUploaded();
+      const { data, error } = await supabase.functions.invoke('project-extract', { body: { plan_path: path } });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const r = data.result as Record<string, unknown>;
+      const filled = new Set<string>();
+      setF((prev) => {
+        const next = { ...prev };
+        const put = (k: keyof typeof prev, v: unknown) => {
+          if (v !== null && v !== undefined && v !== '') {
+            (next as Record<string, string>)[k as string] = String(v);
+            filled.add(k as string);
+          }
+        };
+        put('name', r.name); put('base_model', r.base_model); put('county', r.county); put('market', r.market);
+        put('living', r.living_area_sf); put('total', r.total_area_sf);
+        put('wind', r.wind_speed_mph); put('flood_zone', r.flood_zone);
+        return next;
+      });
+      setAiFilled(filled);
+      const extra = [r.bedrooms && `${r.bedrooms} quartos`, r.bathrooms && `${r.bathrooms} banheiros`, r.notes]
+        .filter(Boolean).join(' · ');
+      setAiNote(`IA preencheu ${filled.size} campo(s) das plantas${extra ? ` — ${extra}` : ''}. Revise antes de continuar.`);
+    } catch (e) {
+      setErr(
+        (e instanceof Error ? e.message : String(e)) +
+        ' — Exige a Edge Function "project-extract" com a chave da Claude API, e a policy do bucket (storage_policies.sql).',
+      );
+    } finally { setExtracting(false); }
+  }
+
   async function generateFromAI() {
     setBusy(true); setErr(null);
     try {
-      if (!planFile) throw new Error('Anexe o PDF das plantas no passo 1 para o take-off por IA.');
-      // Upload plans to storage, then invoke the takeoff Edge Function.
-      const path = `${activeOrg!.id}/${Date.now()}-${planFile.name}`;
-      const up = await supabase.storage.from('plantas').upload(path, planFile);
-      if (up.error) throw new Error(`Falha ao subir plantas: ${up.error.message}`);
+      if (!planFile && !planPath) throw new Error('Anexe o PDF das plantas no passo 1 para o take-off por IA.');
+      const path = await ensurePlanUploaded();
       const { data, error } = await supabase.functions.invoke('takeoff', {
         body: { plan_path: path, target, level: f.level },
       });
@@ -155,13 +202,35 @@ export function NewEstimatePage() {
 
       {step === 1 && (
         <>
+          <div className="card upload-hero">
+            <div className="uh-text">
+              <h2>Subir plantas → preencher com IA</h2>
+              <p className="muted small">Anexe o PDF das plantas e a IA preenche o que estiver nelas (modelo, áreas, condado,
+                wind speed, flood zone). Você revisa e ajusta os campos abaixo.</p>
+            </div>
+            <div className="uh-actions">
+              <input type="file" accept="application/pdf"
+                onChange={(e) => { setPlanFile(e.target.files?.[0] ?? null); setPlanPath(null); setAiFilled(new Set()); }} />
+              <button className="btn primary" disabled={!planFile || extracting} onClick={extractFromPlan}>
+                {extracting ? 'Lendo plantas…' : '✨ Preencher com IA'}
+              </button>
+            </div>
+          </div>
+          {aiNote && <p className="success">{aiNote}</p>}
+
           <div className="card form-grid">
-            <label>Nome do projeto<input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} required /></label>
-            <label>Modelo-base<input value={f.base_model} onChange={(e) => setF({ ...f, base_model: e.target.value })} /></label>
-            <label>Condado<input value={f.county} onChange={(e) => setF({ ...f, county: e.target.value })} /></label>
-            <label>Mercado<input value={f.market} onChange={(e) => setF({ ...f, market: e.target.value })} /></label>
-            <label>Living Area (sf)<input type="number" value={f.living} onChange={(e) => setF({ ...f, living: e.target.value })} /></label>
-            <label>Total Area (sf)<input type="number" value={f.total} onChange={(e) => setF({ ...f, total: e.target.value })} /></label>
+            <label>Nome do projeto {aiFilled.has('name') && <span className="ai-tag">IA</span>}
+              <input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} required /></label>
+            <label>Modelo-base {aiFilled.has('base_model') && <span className="ai-tag">IA</span>}
+              <input value={f.base_model} onChange={(e) => setF({ ...f, base_model: e.target.value })} /></label>
+            <label>Condado {aiFilled.has('county') && <span className="ai-tag">IA</span>}
+              <input value={f.county} onChange={(e) => setF({ ...f, county: e.target.value })} /></label>
+            <label>Mercado {aiFilled.has('market') && <span className="ai-tag">IA</span>}
+              <input value={f.market} onChange={(e) => setF({ ...f, market: e.target.value })} /></label>
+            <label>Living Area (sf) {aiFilled.has('living') && <span className="ai-tag">IA</span>}
+              <input type="number" value={f.living} onChange={(e) => setF({ ...f, living: e.target.value })} /></label>
+            <label>Total Area (sf) {aiFilled.has('total') && <span className="ai-tag">IA</span>}
+              <input type="number" value={f.total} onChange={(e) => setF({ ...f, total: e.target.value })} /></label>
             <label>Água
               <select value={f.water} onChange={(e) => setF({ ...f, water: e.target.value })}>
                 <option value="">—</option><option value="municipal">Municipal</option><option value="well">Poço</option>
@@ -171,15 +240,14 @@ export function NewEstimatePage() {
                 <option value="">—</option><option value="municipal">Municipal</option>
                 <option value="septic">Séptico</option><option value="septic_nitrogen">Séptico (redução N)</option>
               </select></label>
-            <label>Flood zone<input value={f.flood_zone} onChange={(e) => setF({ ...f, flood_zone: e.target.value })} /></label>
-            <label>Wind speed (mph)<input type="number" value={f.wind} onChange={(e) => setF({ ...f, wind: e.target.value })} /></label>
+            <label>Flood zone {aiFilled.has('flood_zone') && <span className="ai-tag">IA</span>}
+              <input value={f.flood_zone} onChange={(e) => setF({ ...f, flood_zone: e.target.value })} /></label>
+            <label>Wind speed (mph) {aiFilled.has('wind') && <span className="ai-tag">IA</span>}
+              <input type="number" value={f.wind} onChange={(e) => setF({ ...f, wind: e.target.value })} /></label>
             <label>Nível
               <select value={f.level} onChange={(e) => setF({ ...f, level: e.target.value as Exclude<SpecLevel, 'any'> })}>
                 <option value="essential">Essential</option><option value="signature">Signature</option><option value="luxury">Luxury</option>
               </select></label>
-            <label className="span-all">Plantas (PDF) — para o take-off por IA
-              <input type="file" accept="application/pdf" onChange={(e) => setPlanFile(e.target.files?.[0] ?? null)} />
-            </label>
           </div>
           <div className="row-actions">
             <button className="btn primary" disabled={!f.name || !f.living || !f.total} onClick={() => setStep(2)}>
