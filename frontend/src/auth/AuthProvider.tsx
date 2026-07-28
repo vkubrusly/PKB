@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase
       .from('org_members')
       .select('orgs(id, name, created_at)')
-      .order('created_at', { foreignTable: 'orgs', ascending: true });
+      .order('created_at', { referencedTable: 'orgs', ascending: true });
     if (error) {
       console.error('Falha ao carregar orgs:', error.message);
       setOrgs([]);

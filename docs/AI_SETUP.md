@@ -20,6 +20,11 @@ supabase functions deploy product-detail
 
 `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` já são injetados pela plataforma.
 
+> **Take-off por IA (plantas):** depois de criar o bucket `plantas`, rode uma vez
+> `supabase/storage_policies.sql` no SQL Editor — libera o upload de plantas para
+> membros da org. Sem isso, o upload retorna 403. (Não afeta os botões "Preço IA"
+> e "Detalhar IA" nem a estimativa por modelo-base.)
+
 ## As três funções de IA
 
 | Função | O que faz | Sprint | Entrada |
