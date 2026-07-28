@@ -19,6 +19,19 @@ que **já está pronto no repo** (schema, funções, build, config de host).
 
 ## 1. Backend — Supabase (banco + auth + storage + IA)
 
+### 1A. Banco SEM instalar nada (recomendado para começar)
+
+1. Supabase → **SQL Editor** → **New query**.
+2. Cole todo o conteúdo de **`supabase/deploy_all.sql`** e clique **Run**.
+   (Aplica todo o schema + as 22 categorias WBS + o projeto-demo Sunny. Idempotente.)
+3. **Storage** → **New bucket** → nome `plantas`, **private**.
+4. **Authentication** → habilitar **Email**.
+
+Pronto o banco. As **funções de IA** (passo 1.5) ainda precisam da CLI ou do CI/CD —
+não dá para publicá-las pelo painel.
+
+### 1B. Via CLI (alternativa completa)
+
 ```bash
 # 1.1 Ligar o repo ao seu projeto Supabase
 supabase login
