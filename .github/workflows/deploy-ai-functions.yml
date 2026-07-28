@@ -11,7 +11,7 @@ name: Deploy AI functions
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, claude/new-session-zkg2g6]   # branch default do repo
     paths: ['supabase/functions/**']
 
 env:

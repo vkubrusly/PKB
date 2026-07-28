@@ -7,7 +7,7 @@ name: Deploy site (GitHub Pages)
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, claude/new-session-zkg2g6]   # branch default do repo
     paths: ['frontend/**']
 
 permissions:
