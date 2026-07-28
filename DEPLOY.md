@@ -11,9 +11,13 @@ que **já está pronto no repo** (schema, funções, build, config de host).
 |---|---|---|
 | Conta **Supabase** + 1 projeto | supabase.com | Free para começar · Pro ~US$25/mês |
 | **ANTHROPIC_API_KEY** (Claude) | console.anthropic.com | Pré-pago por uso |
-| Conta de host do site (**Vercel** ou Netlify) | vercel.com | Free para começar |
-| **Domínio** | subdomínio `budget.pkbhomes.com` (de `pkbhomes.com`) | já é seu |
-| CLI: `npm i -g supabase` e `vercel` | — | grátis |
+| Host do site: **GitHub Pages** (você já tem GitHub) | github.com | Free¹ |
+| **Domínio** | subdomínio `budget.pkbhomes.com` (registrado na **GoDaddy**) | já é seu |
+
+¹ GitHub Pages publica de graça a partir de repo **público**. Se o repositório for
+**privado**, o Pages exige **GitHub Pro** (~US$4/mês) ou Team. Alternativa sem custo e
+sem esse limite: **Cloudflare Pages** (grátis, aceita repo privado) — mas exige criar
+conta Cloudflare.
 
 ---
 
@@ -60,51 +64,50 @@ Pegue do Dashboard (Settings → API): **Project URL** e **anon key** — vão n
 
 ---
 
-## 2. Frontend — build + host
+## 2. Frontend — GitHub Pages (sem conta nova, sem terminal)
 
-```bash
-cd frontend
-# .env de produção
-echo "VITE_SUPABASE_URL=https://<ref>.supabase.co"   > .env.production
-echo "VITE_SUPABASE_ANON_KEY=<anon-key>"            >> .env.production
+O frontend já vem com `frontend/.env.production` (URL + publishable key) e o build
+gera `CNAME`, `404.html` e `.nojekyll` automaticamente. O deploy é feito por um
+GitHub Action (`.github/workflows/deploy-site.yml`).
 
-# Deploy na Vercel (usa frontend/vercel.json — SPA, output dist)
-vercel --prod
-```
+1. **Habilitar o Pages:** GitHub → repo → **Settings → Pages** →
+   em **Build and deployment → Source**, escolha **GitHub Actions**.
+2. **Publicar:** GitHub → aba **Actions** → workflow **Deploy site (GitHub Pages)**
+   → **Run workflow**. (Depois roda sozinho a cada push em `frontend/**`.)
+   > O workflow só aparece quando estiver na branch **main** — faça o merge da
+   > branch de trabalho para `main` antes.
+3. Após o DNS (passo 3) propagar, volte em **Settings → Pages** e ligue
+   **Enforce HTTPS** (o certificado leva alguns minutos).
 
-Na Vercel: **Root Directory = `frontend`**, Build = `npm run build`, Output = `dist`.
-Defina as duas variáveis `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` no painel
-do projeto (Settings → Environment Variables) além do `.env.production`.
+## 2C. Funções de IA — GitHub Actions (já rodou ✅)
 
----
+`.github/workflows/deploy-ai-functions.yml`, com os secrets `SUPABASE_ACCESS_TOKEN`
+e `ANTHROPIC_API_KEY`. Aba **Actions** → **Deploy AI functions** → **Run workflow**.
 
-## 2C. Deploy automático (CI/CD) — recomendado
+## 3. Domínio — DNS na GoDaddy
 
-O frontend já vem com `frontend/.env.production` preenchido (URL + publishable key),
-então o build não precisa de configuração extra.
+Como é um **subdomínio** (`budget`), o registro é um **CNAME** simples:
 
-**Funções de IA** — via GitHub Actions (`.github/workflows/deploy-ai-functions.yml`):
-1. GitHub → repo → **Settings → Secrets and variables → Actions → New secret**, adicione:
-   - `SUPABASE_ACCESS_TOKEN` → supabase.com/dashboard/account/tokens
-   - `ANTHROPIC_API_KEY` → console.anthropic.com
-2. GitHub → aba **Actions** → workflow **Deploy AI functions** → **Run workflow**.
-   (Depois roda sozinho a cada push em `supabase/functions/**`.)
+1. GoDaddy → **My Products** → domínio **pkbhomes.com** → **DNS / Manage DNS**.
+2. **Add New Record**:
+   | Campo | Valor |
+   |---|---|
+   | **Type** | `CNAME` |
+   | **Name** | `budget` |
+   | **Value** | `vkubrusly.github.io` |
+   | **TTL** | `1 Hour` (padrão) |
+3. **Save**. Propaga em minutos (às vezes até 1h).
+4. GitHub → **Settings → Pages → Custom domain**: deve mostrar `budget.pkbhomes.com`
+   (vem do arquivo CNAME). Confirme e ligue **Enforce HTTPS**.
+5. Supabase → **Authentication → URL Configuration** → **Site URL** =
+   `https://budget.pkbhomes.com` (e adicione em **Redirect URLs**).
 
-**Site** — via integração nativa da Vercel (sem terminal):
-1. vercel.com → **Add New → Project** → importe o repositório do GitHub.
-2. **Root Directory = `frontend`** (Vercel detecta Vite; usa `frontend/vercel.json`).
-3. Deploy. A cada push, a Vercel republica sozinha.
+Pronto: `https://budget.pkbhomes.com` no ar, com HTTPS.
 
-## 3. Domínio
-
-1. Na Vercel: Project → **Settings → Domains** → adicionar
-   `budget.pkbhomes.com` (ou o subdomínio que preferir).
-2. No seu DNS (onde o domínio está registrado): criar o registro **CNAME** que a
-   Vercel indicar (aponta o subdomínio para a Vercel). Propaga em minutos.
-3. Volte ao Supabase → Auth → **Site URL** = `https://budget.pkbhomes.com`
-   e adicione-o em **Redirect URLs**. (Senão o login redireciona errado.)
-
-Pronto: `https://budget.pkbhomes.com` no ar, com HTTPS automático.
+> **Se o repositório for privado e você estiver no plano Free**, o Pages não publica.
+> Opções: tornar o repo público, assinar GitHub Pro, ou usar **Cloudflare Pages**
+> (grátis, aceita repo privado) — nesse caso o CNAME da GoDaddy aponta para o host
+> que a Cloudflare indicar, em vez de `vkubrusly.github.io`.
 
 ---
 
@@ -112,11 +115,11 @@ Pronto: `https://budget.pkbhomes.com` no ar, com HTTPS automático.
 
 | Etapa | Você | Já pronto no repo |
 |---|---|---|
-| Criar projeto Supabase + chave Claude + domínio | ✅ | — |
-| Schema do banco (migrations + WBS) | roda `db push` | ✅ |
-| Funções de IA (takeoff / preço / detalhamento) | roda `deploy` + `secrets set` | ✅ código |
-| Build do site + config de SPA | roda `vercel --prod` | ✅ `vercel.json` |
-| Apontar o domínio (CNAME + Site URL) | ✅ | — |
+| Projeto Supabase + chave Claude + domínio GoDaddy | ✅ | — |
+| Schema do banco (SQL no painel, ou `db push`) | cola `deploy_all.sql` | ✅ |
+| Funções de IA (takeoff / preço / detalhamento) | "Run workflow" | ✅ Action |
+| Build + publicação do site | "Run workflow" | ✅ Action + `.env.production` |
+| Apontar o domínio (CNAME na GoDaddy + Site URL) | ✅ | — |
 
 Detalhe das funções de IA: [`docs/AI_SETUP.md`](docs/AI_SETUP.md).
 
@@ -124,6 +127,7 @@ Detalhe das funções de IA: [`docs/AI_SETUP.md`](docs/AI_SETUP.md).
 
 ## Custo mensal aproximado (início)
 
-- Supabase Free (ou Pro US$25 quando crescer) · Vercel Free · domínio ~US$1/mês.
+- Supabase Free (ou Pro US$25 quando crescer) · **GitHub Pages Free** (repo público;
+  ou GitHub Pro ~US$4/mês se privado) · domínio já pago na GoDaddy.
 - Claude API: só o que usar (um take-off de plantas custa centavos; buscas de
   preço, frações de centavo). Comece sem compromisso e acompanhe pelo console.
