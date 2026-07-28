@@ -12,7 +12,7 @@ que **já está pronto no repo** (schema, funções, build, config de host).
 | Conta **Supabase** + 1 projeto | supabase.com | Free para começar · Pro ~US$25/mês |
 | **ANTHROPIC_API_KEY** (Claude) | console.anthropic.com | Pré-pago por uso |
 | Conta de host do site (**Vercel** ou Netlify) | vercel.com | Free para começar |
-| **Domínio** | você já tem `victorkubrusly.com` | ~US$12/ano |
+| **Domínio** | subdomínio `budget.pkbhomes.com` (de `pkbhomes.com`) | já é seu |
 | CLI: `npm i -g supabase` e `vercel` | — | grátis |
 
 ---
@@ -98,13 +98,13 @@ então o build não precisa de configuração extra.
 ## 3. Domínio
 
 1. Na Vercel: Project → **Settings → Domains** → adicionar
-   `orcamentos.victorkubrusly.com` (ou o subdomínio que preferir).
+   `budget.pkbhomes.com` (ou o subdomínio que preferir).
 2. No seu DNS (onde o domínio está registrado): criar o registro **CNAME** que a
    Vercel indicar (aponta o subdomínio para a Vercel). Propaga em minutos.
-3. Volte ao Supabase → Auth → **Site URL** = `https://orcamentos.victorkubrusly.com`
+3. Volte ao Supabase → Auth → **Site URL** = `https://budget.pkbhomes.com`
    e adicione-o em **Redirect URLs**. (Senão o login redireciona errado.)
 
-Pronto: `https://orcamentos.victorkubrusly.com` no ar, com HTTPS automático.
+Pronto: `https://budget.pkbhomes.com` no ar, com HTTPS automático.
 
 ---
 
