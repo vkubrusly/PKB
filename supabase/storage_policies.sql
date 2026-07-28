@@ -13,6 +13,12 @@
 -- rode antes o supabase/deploy_all.sql — o schema ainda não foi aplicado.
 -- =============================================================================
 
+-- 0) Cria o bucket "plantas" (privado) se ainda não existir.
+--    Sem isto o upload retorna 400 "Bucket not found".
+insert into storage.buckets (id, name, public)
+values ('plantas', 'plantas', false)
+on conflict (id) do nothing;
+
 drop policy if exists "plantas_org_upload" on storage.objects;
 create policy "plantas_org_upload"
   on storage.objects for insert to authenticated
