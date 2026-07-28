@@ -134,6 +134,24 @@ invoice_items >── invoices ────────┘ (project_id opcional)
 
 ---
 
+## 4.1 Geração de orçamento — dois motores (§3.5.2 / §4.1)
+
+O fluxo **Novo Orçamento** (`frontend/src/pages/NewEstimatePage.tsx`) sobe um projeto
+e gera a estimativa + take-off por um de dois motores:
+
+1. **Paramétrico (modelo-base)** — `scripts/estimate_engine.mjs` (canônico, validado)
+   e `frontend/src/lib/estimateEngine.ts` (espelho no app). Escala os custos de um
+   modelo de referência (Sunny) pela área, linha a linha, usando uma **base de escala
+   por linha** (`fixed` / `living` / `total`) em `data/*/quantity_model.json`. Roda no
+   cliente, sem IA. Responde à *estimativa de custo*. Toda linha sai `needs_review`.
+2. **Take-off por IA (plantas)** — `supabase/functions/takeoff/index.ts` (Edge Function
+   Deno). Baixa as plantas do Storage, manda para a Claude API (`claude-opus-5`, tool
+   `emit_takeoff` com schema estrito) e devolve **quantidades de material por WBS**.
+   Responde ao *take-off de material*. Exige `ANTHROPIC_API_KEY`.
+
+> Contagem real de material (blocos, sf de drywall) vem do caminho de IA ou de fatores
+> de consumo da PKB; o motor paramétrico entrega **custo escalado**, não contagem.
+
 ## 5. Decisões em aberto (a confirmar com o time PKB)
 
 - **Modelo-base:** `projects.base_model` é texto livre agora; virar tabela `models`

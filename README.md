@@ -43,6 +43,7 @@ tabelas e como elas se conectam ao roadmap.
 |---|---|---|
 | 1 | Setup + cadastros + import do modelo XLSX | ✅ schema + seed + import da Sunny (real, validado) |
 | 2 | App React: login + cadastros + projeto por WBS | ✅ auth, orgs/RLS, projetos, materiais, fornecedores, níveis |
+| 2b | Novo Orçamento: estimativa paramétrica + take-off por IA | ✅ wizard + motor paramétrico (validado) + Edge Function `takeoff` |
 | 3 | Motor de níveis: 3 cenários + mix & match + delta pricing | ⏳ |
 | 4 | Agente de Preços (cotações + histórico + busca web) | ⏳ |
 | 5 | Saídas: XLSX + Buildertrend-ready + Memorial + Proposta + Draw schedule | ⏳ |

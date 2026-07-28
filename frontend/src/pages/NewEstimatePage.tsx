@@ -1,0 +1,277 @@
+import { Fragment, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../auth/AuthProvider';
+import type { SpecLevel, Unit } from '../lib/database.types';
+import {
+  generateEstimate, toRefLines, SUNNY_BASIS, type GeneratedLine,
+} from '../lib/estimateEngine';
+import { money, number, psf, UNIT_LABEL } from '../lib/format';
+
+interface RefOption { estimate_id: string; label: string; living: number | null; total: number | null; }
+
+type Method = 'model' | 'ai';
+
+export function NewEstimatePage() {
+  const { activeOrg } = useAuth();
+  const nav = useNavigate();
+
+  const [step, setStep] = useState(1);
+  // step 1 — project fields
+  const [f, setF] = useState({
+    name: '', base_model: '', county: '', market: '',
+    living: '', total: '', water: '', sewer: '', flood_zone: '', wind: '',
+    level: 'essential' as Exclude<SpecLevel, 'any'>,
+  });
+  const [planFile, setPlanFile] = useState<File | null>(null);
+
+  // step 2 — method
+  const [method, setMethod] = useState<Method>('model');
+  const [refs, setRefs] = useState<RefOption[]>([]);
+  const [refId, setRefId] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  // step 3 — generated lines (editable)
+  const [lines, setLines] = useState<GeneratedLine[]>([]);
+  const [catName, setCatName] = useState<Record<string, string>>({});
+
+  const target = { living_sf: Number(f.living) || 0, total_sf: Number(f.total) || 0 };
+
+  useEffect(() => {
+    if (!activeOrg) return;
+    (async () => {
+      const [{ data: es }, { data: w }] = await Promise.all([
+        supabase.from('estimates').select('id, level, project_id, projects(name, living_area_sf, total_area_sf)')
+          .eq('org_id', activeOrg.id),
+        supabase.from('wbs_nodes').select('code, name').eq('depth', 1),
+      ]);
+      type Row = { id: string; level: string; projects: { name: string; living_area_sf: number | null; total_area_sf: number | null } | null };
+      const opts = ((es ?? []) as unknown as Row[]).map((e) => ({
+        estimate_id: e.id,
+        label: `${e.projects?.name ?? 'Projeto'} · ${e.level}`,
+        living: e.projects?.living_area_sf ?? null,
+        total: e.projects?.total_area_sf ?? null,
+      }));
+      setRefs(opts);
+      setRefId(opts[0]?.estimate_id ?? '');
+      setCatName(Object.fromEntries((w ?? []).map((n: { code: string; name: string }) => [n.code, n.name])));
+    })();
+  }, [activeOrg?.id]);
+
+  async function generateFromModel() {
+    setBusy(true); setErr(null);
+    try {
+      const ref = refs.find((r) => r.estimate_id === refId);
+      if (!ref) throw new Error('Escolha um modelo de referência.');
+      if (!ref.living || !ref.total) throw new Error('O modelo de referência não tem áreas cadastradas.');
+      const { data, error } = await supabase.from('estimate_items').select('*').eq('estimate_id', refId);
+      if (error) throw error;
+      const out = generateEstimate(
+        toRefLines(data ?? []), SUNNY_BASIS,
+        { living_sf: ref.living, total_sf: ref.total }, target,
+      );
+      setLines(out.lines);
+      setStep(3);
+    } catch (e) { setErr(e instanceof Error ? e.message : String(e)); }
+    finally { setBusy(false); }
+  }
+
+  async function generateFromAI() {
+    setBusy(true); setErr(null);
+    try {
+      if (!planFile) throw new Error('Anexe o PDF das plantas no passo 1 para o take-off por IA.');
+      // Upload plans to storage, then invoke the takeoff Edge Function.
+      const path = `${activeOrg!.id}/${Date.now()}-${planFile.name}`;
+      const up = await supabase.storage.from('plantas').upload(path, planFile);
+      if (up.error) throw new Error(`Falha ao subir plantas: ${up.error.message}`);
+      const { data, error } = await supabase.functions.invoke('takeoff', {
+        body: { plan_path: path, target, level: f.level },
+      });
+      if (error) throw error;
+      const got = (data?.lines ?? []) as GeneratedLine[];
+      if (!got.length) throw new Error('A IA não retornou linhas. Revise as plantas.');
+      setLines(got);
+      setStep(3);
+    } catch (e) {
+      setErr(
+        (e instanceof Error ? e.message : String(e)) +
+        ' — O take-off por IA exige a Edge Function "takeoff" implantada com a chave da Claude API (ver supabase/functions/takeoff).',
+      );
+    } finally { setBusy(false); }
+  }
+
+  async function save() {
+    setBusy(true); setErr(null);
+    try {
+      const { data: proj, error: pe } = await supabase.from('projects').insert({
+        org_id: activeOrg!.id, name: f.name, base_model: f.base_model || null,
+        county: f.county || null, market: f.market || null,
+        living_area_sf: target.living_sf || null, total_area_sf: target.total_sf || null,
+        flood_zone: f.flood_zone || null, wind_speed_mph: f.wind ? Number(f.wind) : null,
+        water: f.water || null, sewer: f.sewer || null, initial_level: f.level,
+      }).select('id').single();
+      if (pe) throw pe;
+
+      const { data: est, error: ee } = await supabase.from('estimates').insert({
+        org_id: activeOrg!.id, project_id: proj!.id, level: f.level, status: 'draft',
+        notes: method === 'model' ? 'Gerado por estimativa paramétrica (modelo-base).' : 'Gerado por take-off IA das plantas.',
+      }).select('id').single();
+      if (ee) throw ee;
+
+      const rows = lines.map((l, i) => ({
+        org_id: activeOrg!.id, estimate_id: est!.id, wbs_code: l.wbs_code,
+        line_code: l.line_code, description: l.description, qty: l.qty,
+        unit: l.unit as Unit, unit_cost: l.unit_cost,
+        price_source: 'estimated' as const, needs_review: true, sort_order: i + 1,
+      }));
+      const { error: ie } = await supabase.from('estimate_items').insert(rows);
+      if (ie) throw ie;
+      nav(`/projetos/${proj!.id}`);
+    } catch (e) { setErr(e instanceof Error ? e.message : String(e)); setBusy(false); }
+  }
+
+  const total = useMemo(() => lines.reduce((s, l) => s + l.line_total, 0), [lines]);
+  const cats = useMemo(() => [...new Set(lines.map((l) => (l.line_code ?? l.wbs_code).split('.')[0]))]
+    .sort((a, b) => Number(a) - Number(b)), [lines]);
+
+  function editCost(idx: number, val: string) {
+    setLines((prev) => prev.map((l, i) =>
+      i === idx ? { ...l, unit_cost: Number(val) || 0, line_total: Math.round(l.qty * (Number(val) || 0) * 100) / 100 } : l));
+  }
+
+  return (
+    <div>
+      <header className="page-head">
+        <h1>Novo orçamento</h1>
+        <div className="steps">
+          {['Projeto', 'Método', 'Revisão'].map((s, i) => (
+            <span key={s} className={`step ${step === i + 1 ? 'on' : ''} ${step > i + 1 ? 'done' : ''}`}>{i + 1}. {s}</span>
+          ))}
+        </div>
+      </header>
+
+      {err && <p className="error">{err}</p>}
+
+      {step === 1 && (
+        <>
+          <div className="card form-grid">
+            <label>Nome do projeto<input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} required /></label>
+            <label>Modelo-base<input value={f.base_model} onChange={(e) => setF({ ...f, base_model: e.target.value })} /></label>
+            <label>Condado<input value={f.county} onChange={(e) => setF({ ...f, county: e.target.value })} /></label>
+            <label>Mercado<input value={f.market} onChange={(e) => setF({ ...f, market: e.target.value })} /></label>
+            <label>Living Area (sf)<input type="number" value={f.living} onChange={(e) => setF({ ...f, living: e.target.value })} /></label>
+            <label>Total Area (sf)<input type="number" value={f.total} onChange={(e) => setF({ ...f, total: e.target.value })} /></label>
+            <label>Água
+              <select value={f.water} onChange={(e) => setF({ ...f, water: e.target.value })}>
+                <option value="">—</option><option value="municipal">Municipal</option><option value="well">Poço</option>
+              </select></label>
+            <label>Esgoto
+              <select value={f.sewer} onChange={(e) => setF({ ...f, sewer: e.target.value })}>
+                <option value="">—</option><option value="municipal">Municipal</option>
+                <option value="septic">Séptico</option><option value="septic_nitrogen">Séptico (redução N)</option>
+              </select></label>
+            <label>Flood zone<input value={f.flood_zone} onChange={(e) => setF({ ...f, flood_zone: e.target.value })} /></label>
+            <label>Wind speed (mph)<input type="number" value={f.wind} onChange={(e) => setF({ ...f, wind: e.target.value })} /></label>
+            <label>Nível
+              <select value={f.level} onChange={(e) => setF({ ...f, level: e.target.value as Exclude<SpecLevel, 'any'> })}>
+                <option value="essential">Essential</option><option value="signature">Signature</option><option value="luxury">Luxury</option>
+              </select></label>
+            <label className="span-all">Plantas (PDF) — para o take-off por IA
+              <input type="file" accept="application/pdf" onChange={(e) => setPlanFile(e.target.files?.[0] ?? null)} />
+            </label>
+          </div>
+          <div className="row-actions">
+            <button className="btn primary" disabled={!f.name || !f.living || !f.total} onClick={() => setStep(2)}>
+              Continuar
+            </button>
+          </div>
+        </>
+      )}
+
+      {step === 2 && (
+        <>
+          <div className="method-cards">
+            <button className={`card method ${method === 'model' ? 'sel' : ''}`} onClick={() => setMethod('model')}>
+              <h2>A partir de modelo-base</h2>
+              <p className="muted small">Escala os custos de um modelo de referência pela área. Rápido, funciona agora. Cada linha sai marcada para revisão.</p>
+            </button>
+            <button className={`card method ${method === 'ai' ? 'sel' : ''}`} onClick={() => setMethod('ai')}>
+              <h2>Take-off por IA (plantas)</h2>
+              <p className="muted small">A IA lê o PDF das plantas e extrai quantidades por categoria do WBS. Exige a Edge Function com a chave da Claude API.</p>
+            </button>
+          </div>
+
+          {method === 'model' && (
+            <div className="card form-grid">
+              <label className="span-all">Modelo de referência
+                <select value={refId} onChange={(e) => setRefId(e.target.value)}>
+                  {refs.length === 0 && <option value="">Nenhum orçamento de referência ainda</option>}
+                  {refs.map((r) => <option key={r.estimate_id} value={r.estimate_id}>
+                    {r.label} {r.living ? `(${number(r.living)} sf living)` : ''}
+                  </option>)}
+                </select>
+              </label>
+            </div>
+          )}
+
+          <div className="row-actions">
+            <button className="btn" onClick={() => setStep(1)}>Voltar</button>
+            {method === 'model'
+              ? <button className="btn primary" disabled={busy || !refId} onClick={generateFromModel}>{busy ? 'Gerando…' : 'Gerar estimativa'}</button>
+              : <button className="btn primary" disabled={busy} onClick={generateFromAI}>{busy ? 'Processando plantas…' : 'Rodar take-off por IA'}</button>}
+          </div>
+        </>
+      )}
+
+      {step === 3 && (
+        <>
+          <div className="totals">
+            <div><div className="k muted small">Total estimado</div><div className="v accent">{money(total)}</div></div>
+            <div><div className="k muted small">$/sf (total)</div><div className="v">{psf(total, target.total_sf)}</div></div>
+            <div><div className="k muted small">$/sf (living)</div><div className="v">{psf(total, target.living_sf)}</div></div>
+            <div><div className="k muted small">Linhas</div><div className="v">{lines.length}</div></div>
+          </div>
+          <p className="muted small">Todas as linhas estão marcadas ⚠️ para revisão. Ajuste o custo unitário onde precisar antes de salvar.</p>
+
+          <div className="tablewrap">
+            <table className="table estimate">
+              <thead><tr><th>COD</th><th>Item</th><th className="num">Qtd</th><th>Un</th><th>Base</th><th className="num">Custo Un.</th><th className="num">Total</th></tr></thead>
+              <tbody>
+                {cats.map((cat) => {
+                  const its = lines.map((l, i) => ({ l, i })).filter(({ l }) => (l.line_code ?? l.wbs_code).split('.')[0] === cat);
+                  const sub = its.reduce((s, { l }) => s + l.line_total, 0);
+                  return (
+                    <Fragment key={`c${cat}`}>
+                      <tr className="cat-row">
+                        <td>{cat}</td><td>{catName[cat] ?? ''}</td><td colSpan={3}></td>
+                        <td className="num muted small">Sub-total {cat}</td><td className="num"><strong>{money(sub)}</strong></td>
+                      </tr>
+                      {its.map(({ l, i }) => (
+                        <tr key={l.line_code ?? `${l.wbs_code}-${i}`}>
+                          <td className="mono">{l.line_code ?? l.wbs_code}</td>
+                          <td>{l.description}<span className="tag warn">⚠ revisar</span></td>
+                          <td className="num">{number(l.qty)}</td>
+                          <td>{UNIT_LABEL[l.unit] ?? l.unit}</td>
+                          <td><span className={`basis ${l.basis}`}>{l.basis}</span></td>
+                          <td className="num"><input className="cost-input" type="number" step="0.01" value={l.unit_cost}
+                            onChange={(e) => editCost(i, e.target.value)} /></td>
+                          <td className="num">{money(l.line_total)}</td>
+                        </tr>
+                      ))}
+                    </Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="row-actions" style={{ marginTop: '1rem' }}>
+            <button className="btn" onClick={() => setStep(2)}>Voltar</button>
+            <button className="btn primary" disabled={busy} onClick={save}>{busy ? 'Salvando…' : 'Salvar orçamento'}</button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

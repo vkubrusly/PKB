@@ -1,0 +1,30 @@
+{
+  "_doc": "Modelo de quantidades da Sunny — base para estimativa paramétrica (§4.1).",
+  "_basis": "Cada linha tem uma base de escala: 'fixed' (custo independe do tamanho), 'living' (escala por living_sf), 'total' (escala por total_sf). Padrões de engenharia, EDITÁVEIS pela PKB. Toda linha gerada sai com needs_review=true.",
+  "reference": { "living_sf": 1820, "total_sf": 2344 },
+  "basis_by_line": {
+    "1.1.1": "fixed", "1.1.2": "fixed", "1.1.3": "fixed", "1.1.4": "fixed",
+    "1.1.5": "fixed", "1.1.6": "fixed", "1.1.7": "fixed", "1.1.8": "fixed",
+    "1.1.9": "living", "1.1.10": "living", "1.1.11": "fixed", "1.1.12": "fixed",
+    "1.2.1": "fixed", "1.2.2": "fixed", "1.3.1": "fixed", "1.3.2": "total",
+    "2.1": "fixed", "2.2": "total", "2.3": "total",
+    "3.1.1": "total", "3.1.2": "total", "3.1.3": "fixed", "3.1.4": "total",
+    "3.2.1": "total", "3.2.2": "total", "3.2.3": "total", "3.2.4": "total",
+    "3.3.1": "total", "3.3.2": "total", "3.3.3": "total",
+    "3.4.1": "living", "3.4.2": "living", "3.4.3": "living", "3.4.4": "living",
+    "3.5.1": "total", "3.6.1": "total", "3.7.1": "total",
+    "4.1.1": "living", "4.2.1": "living", "4.3.1": "living",
+    "5.1": "living",
+    "6.1": "living", "6.2": "living",
+    "7.1": "living", "7.2": "living", "7.3": "living", "7.4": "living",
+    "8.1": "living", "8.2": "living",
+    "9.1": "fixed", "9.2": "fixed",
+    "10.1": "fixed", "10.2": "fixed", "10.3": "fixed", "10.4": "fixed",
+    "10.5": "fixed", "10.6": "fixed", "10.7": "fixed",
+    "11.1": "fixed",
+    "12.1": "living", "12.2": "living", "12.3": "living", "12.4": "fixed", "12.5": "fixed",
+    "13.1": "fixed", "14.1": "fixed", "15.1": "total", "16.1": "fixed",
+    "17.1": "fixed", "18.1": "fixed", "19.1": "living", "20.1": "fixed",
+    "21.1": "fixed", "22.1": "fixed", "22.2": "fixed", "22.3": "fixed", "22.4": "fixed"
+  }
+}
