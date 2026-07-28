@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
+import { Logo } from './Logo';
 
 const NAV = [
   { to: '/novo', label: '＋ Novo orçamento' },
@@ -16,7 +17,7 @@ export function Layout() {
     <div className="app">
       <aside className="sidebar">
         <div className="brand small">
-          <span className="brand-mark">PKB</span>
+          <Logo size={30} stacked={false} />
           <strong>Orçamentos</strong>
         </div>
 

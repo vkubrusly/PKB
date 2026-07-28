@@ -1,26 +1,30 @@
 :root {
-  --bg: #f6f7f9;
+  /* PKB Homes — dourado + grafite */
+  --bg: #f6f5f1;
   --surface: #ffffff;
-  --surface-2: #f0f2f5;
-  --border: #e2e6ea;
-  --text: #1a1f26;
-  --muted: #6b7480;
-  --primary: #1e5eff;
-  --primary-ink: #ffffff;
-  --danger: #d64545;
-  --ok: #1f9d55;
-  --essential: #6b7480;
-  --signature: #1e5eff;
-  --luxury: #a06b1e;
+  --surface-2: #f2f0ea;
+  --border: #e6e2d8;
+  --text: #262320;
+  --muted: #7a7368;
+  --brand: #c29a43;          /* dourado PKB */
+  --primary: #c29a43;        /* ações */
+  --primary-ink: #2a2110;    /* texto sobre dourado */
+  --link: #8a6d22;           /* link legível no claro */
+  --danger: #c0402f;
+  --ok: #2f7d4f;
+  --essential: #8a8a8a;
+  --signature: #c29a43;
+  --luxury: #6b4f1a;         /* bronze escuro = topo de linha */
   --radius: 10px;
-  --shadow: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.08);
+  --shadow: 0 1px 2px rgba(30,24,10,.06), 0 1px 3px rgba(30,24,10,.08);
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0f1216; --surface: #171b21; --surface-2: #1e242c; --border: #2a313b;
-    --text: #e7ebf0; --muted: #98a2b0; --primary: #4d84ff; --essential: #98a2b0;
-    --signature: #4d84ff; --luxury: #d3a24e;
-    --shadow: 0 1px 2px rgba(0,0,0,.3);
+    --bg: #14120e; --surface: #1c1a15; --surface-2: #24211a; --border: #33302a;
+    --text: #efe9db; --muted: #a89f8d;
+    --brand: #cca94f; --primary: #cca94f; --primary-ink: #1b160a; --link: #d8b45e;
+    --essential: #9a9384; --signature: #cca94f; --luxury: #d3a24e;
+    --shadow: 0 1px 2px rgba(0,0,0,.4);
   }
 }
 
@@ -32,7 +36,7 @@ body {
 }
 h1 { font-size: 1.4rem; margin: 0; }
 h2 { font-size: 1.05rem; margin: 0 0 .25rem; }
-a { color: var(--primary); text-decoration: none; }
+a { color: var(--link); text-decoration: none; }
 a:hover { text-decoration: underline; }
 .muted { color: var(--muted); }
 .small { font-size: .82rem; }
@@ -88,7 +92,7 @@ label.checkbox input { width: auto; }
   color: var(--text); padding: .5rem .65rem; border-radius: 8px; font-weight: 500;
 }
 .sidebar nav a:hover { background: var(--surface-2); text-decoration: none; }
-.sidebar nav a.active { background: var(--primary); color: #fff; }
+.sidebar nav a.active { background: var(--primary); color: var(--primary-ink); }
 .org-switch, .org-name { margin-top: .25rem; }
 .org-name { font-weight: 600; padding: .3rem 0; }
 .sidebar-foot { margin-top: auto; display: flex; flex-direction: column; gap: .3rem; padding-top: 1rem; border-top: 1px solid var(--border); }
@@ -112,9 +116,24 @@ label.checkbox input { width: auto; }
 
 .level-badge { padding: .1rem .5rem; border-radius: 999px; font-size: .75rem; font-weight: 600; color: #fff; }
 .level-badge.essential { background: var(--essential); }
-.level-badge.signature { background: var(--signature); }
+.level-badge.signature { background: var(--signature); color: var(--primary-ink); }
 .level-badge.luxury { background: var(--luxury); }
 .level-badge.any { background: var(--muted); }
+
+/* ---- PKB Homes logo lockup (bars · PKB · HOMES) ---- */
+.pkb-logo { display: inline-flex; align-items: center; line-height: 1; --logo-size: 40px; }
+.pkb-logo.stacked { flex-direction: column; gap: calc(var(--logo-size) * .1); }
+.pkb-logo.inline { flex-direction: row; gap: calc(var(--logo-size) * .28); }
+.pkb-bars { display: flex; gap: calc(var(--logo-size) * .13);
+  height: calc(var(--logo-size) * .5); align-items: stretch; }
+.pkb-logo.inline .pkb-bars { height: calc(var(--logo-size) * .72); }
+.pkb-bars i { width: calc(var(--logo-size) * .13); background: var(--brand); border-radius: 1px; }
+.pkb-text { display: flex; flex-direction: column; align-items: center; }
+.pkb-logo.inline .pkb-text { align-items: flex-start; }
+.pkb-word { font-weight: 800; color: var(--text);
+  font-size: calc(var(--logo-size) * .6); letter-spacing: .02em; }
+.pkb-homes { font-weight: 700; color: var(--brand);
+  font-size: calc(var(--logo-size) * .24); letter-spacing: calc(var(--logo-size) * .13); }
 
 /* ---- project detail ---- */
 .fact-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: .75rem; margin-bottom: 1.5rem; }
@@ -123,7 +142,7 @@ label.checkbox input { width: auto; }
 
 .estimate-tabs { display: flex; gap: .4rem; margin-bottom: 1rem; flex-wrap: wrap; }
 .chip { border: 1px solid var(--border); background: var(--surface); padding: .4rem .8rem; border-radius: 999px; cursor: pointer; font-size: .85rem; color: var(--text); }
-.chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+.chip.active { background: var(--primary); color: var(--primary-ink); border-color: var(--primary); }
 
 .totals-bar { display: flex; gap: 2rem; padding: 1rem 1.25rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 1.25rem; }
 .totals-bar > div { display: flex; flex-direction: column; }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { Logo } from '../components/Logo';
 
 type Mode = 'signin' | 'signup';
 
@@ -35,8 +36,8 @@ export function LoginPage() {
   return (
     <div className="auth-shell">
       <form className="card auth-card" onSubmit={submit}>
-        <div className="brand">
-          <span className="brand-mark">PKB</span>
+        <div className="brand" style={{ flexDirection: 'column', gap: '.6rem', textAlign: 'center' }}>
+          <Logo size={72} />
           <div>
             <h1>Orçamentos</h1>
             <p className="muted">Prime Kubrusly Basso Homes</p>

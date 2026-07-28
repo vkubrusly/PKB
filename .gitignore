@@ -12,7 +12,8 @@ build/
 .env
 .env.*
 !.env.example
-!frontend/.env.production   # only PUBLIC values (URL + publishable key) — safe to track
+# Nota: os valores públicos de produção (URL + publishable key) ficam no código
+# (frontend/src/lib/supabase.ts como fallback), então não versionamos .env.production.
 
 # Supabase local
 supabase/.branches/

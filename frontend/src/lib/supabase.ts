@@ -1,16 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 
-const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
+// Production defaults (PUBLIC values — the publishable key is protected by RLS
+// and is designed to ship in the client bundle). Env vars override them for
+// local dev (copy .env.example → .env.local pointing at a local Supabase).
+const PROD_URL = 'https://fvjknahpmihueyeasgbx.supabase.co';
+const PROD_ANON_KEY = 'sb_publishable_wr3657pmQAxZy2FEmLQ-RQ_pAPxEm7J';
 
-if (!url || !anonKey) {
-  // Fail loud in dev: the app cannot talk to any data without these.
-  console.error(
-    'Faltam VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY. Copie frontend/.env.example para .env.local.',
-  );
-}
+const url = (import.meta.env.VITE_SUPABASE_URL as string | undefined) || PROD_URL;
+const anonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) || PROD_ANON_KEY;
 
-export const supabase = createClient(url ?? 'http://localhost:54321', anonKey ?? 'missing-anon-key');
+export const supabase = createClient(url, anonKey);
 
 export const DEMO_ORG_ID =
   (import.meta.env.VITE_DEMO_ORG_ID as string | undefined) ??
