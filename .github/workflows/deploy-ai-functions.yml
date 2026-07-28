@@ -1,0 +1,39 @@
+name: Deploy AI functions
+
+# Publica as Edge Functions de IA no Supabase automaticamente.
+# Roda ao dar push em supabase/functions/**, e também pelo botão "Run workflow".
+#
+# Secrets necessários (GitHub → Settings → Secrets and variables → Actions):
+#   SUPABASE_ACCESS_TOKEN  → supabase.com/dashboard/account/tokens
+#   ANTHROPIC_API_KEY      → console.anthropic.com
+# (o project ref é público e fica fixo abaixo)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['supabase/functions/**']
+
+env:
+  PROJECT_REF: fvjknahpmihueyeasgbx
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Set Claude API key (função secret)
+        run: supabase secrets set ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}" --project-ref "$PROJECT_REF"
+
+      - name: Deploy functions
+        run: |
+          supabase functions deploy takeoff        --project-ref "$PROJECT_REF"
+          supabase functions deploy price-search   --project-ref "$PROJECT_REF"
+          supabase functions deploy product-detail --project-ref "$PROJECT_REF"

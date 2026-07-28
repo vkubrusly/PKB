@@ -12,6 +12,7 @@ build/
 .env
 .env.*
 !.env.example
+!frontend/.env.production   # only PUBLIC values (URL + publishable key) — safe to track
 
 # Supabase local
 supabase/.branches/

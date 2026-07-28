@@ -78,6 +78,23 @@ do projeto (Settings → Environment Variables) além do `.env.production`.
 
 ---
 
+## 2C. Deploy automático (CI/CD) — recomendado
+
+O frontend já vem com `frontend/.env.production` preenchido (URL + publishable key),
+então o build não precisa de configuração extra.
+
+**Funções de IA** — via GitHub Actions (`.github/workflows/deploy-ai-functions.yml`):
+1. GitHub → repo → **Settings → Secrets and variables → Actions → New secret**, adicione:
+   - `SUPABASE_ACCESS_TOKEN` → supabase.com/dashboard/account/tokens
+   - `ANTHROPIC_API_KEY` → console.anthropic.com
+2. GitHub → aba **Actions** → workflow **Deploy AI functions** → **Run workflow**.
+   (Depois roda sozinho a cada push em `supabase/functions/**`.)
+
+**Site** — via integração nativa da Vercel (sem terminal):
+1. vercel.com → **Add New → Project** → importe o repositório do GitHub.
+2. **Root Directory = `frontend`** (Vercel detecta Vite; usa `frontend/vercel.json`).
+3. Deploy. A cada push, a Vercel republica sozinha.
+
 ## 3. Domínio
 
 1. Na Vercel: Project → **Settings → Domains** → adicionar
