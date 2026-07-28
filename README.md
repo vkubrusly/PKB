@@ -26,7 +26,7 @@ supabase/
   seed.sql                Dados-semente: 22 categorias WBS (numeração imutável)
 data/                     Orçamentos reais importados (formato normalizado + SQL)
 scripts/                  Importador de orçamentos (CSV normalizado → SQL)
-frontend/                 App React (Vite) — a ser scaffoldado no Sprint 2/3
+frontend/                 App React (Vite + TS) — login, cadastros, projeto por WBS
 ```
 
 ## Modelo de dados (resumo)
@@ -41,8 +41,8 @@ tabelas e como elas se conectam ao roadmap.
 
 | Sprint | Entrega | Status |
 |---|---|---|
-| 1 | Setup + cadastros + import do modelo XLSX | 🚧 schema + seed + import da Sunny (real, validado) |
-| 2 | Upload de projeto + Agente de Takeoff + revisão editável | ⏳ |
+| 1 | Setup + cadastros + import do modelo XLSX | ✅ schema + seed + import da Sunny (real, validado) |
+| 2 | App React: login + cadastros + projeto por WBS | ✅ auth, orgs/RLS, projetos, materiais, fornecedores, níveis |
 | 3 | Motor de níveis: 3 cenários + mix & match + delta pricing | ⏳ |
 | 4 | Agente de Preços (cotações + histórico + busca web) | ⏳ |
 | 5 | Saídas: XLSX + Buildertrend-ready + Memorial + Proposta + Draw schedule | ⏳ |
