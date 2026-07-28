@@ -23,6 +23,30 @@ export function MaterialsPage() {
   const [editing, setEditing] = useState<string | 'new' | null>(null);
   const [draft, setDraft] = useState<Draft>(empty);
   const [filterLevel, setFilterLevel] = useState<SpecLevel | ''>('');
+  const [aiBusy, setAiBusy] = useState<string | null>(null); // material_id being processed
+  const [aiMsg, setAiMsg] = useState<string | null>(null);
+
+  // Call an AI Edge Function (Agente de Preços / Detalhamento) for one material.
+  async function runAgent(kind: 'price-search' | 'product-detail', id: string) {
+    setAiBusy(id); setAiMsg(null); setErr(null);
+    const { data, error } = await supabase.functions.invoke(kind, { body: { material_id: id } });
+    if (error) {
+      setErr(
+        `IA indisponível (${error.message}). Configure a Edge Function "${kind}" + ANTHROPIC_API_KEY ` +
+        `(supabase functions deploy ${kind}; supabase secrets set ANTHROPIC_API_KEY=...).`,
+      );
+    } else if (data?.error) {
+      setErr(data.error);
+    } else if (kind === 'price-search') {
+      const r = data.result;
+      setAiMsg(`Preço encontrado: ${r.supplier_name} — $${r.unit_price}/${r.unit} (${r.confidence}). Gravado no histórico.`);
+      load();
+    } else {
+      setAiMsg('Detalhamento gerado e salvo no material.');
+      load();
+    }
+    setAiBusy(null);
+  }
 
   async function load() {
     if (!activeOrg) return;
@@ -87,6 +111,9 @@ export function MaterialsPage() {
         <h1>Materiais</h1>
         <button className="btn primary" onClick={startNew}>Novo material</button>
       </header>
+
+      {aiMsg && <p className="success">{aiMsg}</p>}
+      {err && <p className="error">{err}</p>}
 
       <div className="filters">
         <label className="inline">Nível
@@ -153,6 +180,12 @@ export function MaterialsPage() {
                 <td className="mono small">{m.fl_approval ?? '—'}</td>
                 <td className="row-actions">
                   <button className="link" onClick={() => startEdit(m)}>Editar</button>
+                  <button className="link ai" disabled={aiBusy === m.id}
+                    onClick={() => runAgent('price-search', m.id)}>
+                    {aiBusy === m.id ? '…' : 'Preço IA'}
+                  </button>
+                  <button className="link ai" disabled={aiBusy === m.id}
+                    onClick={() => runAgent('product-detail', m.id)}>Detalhar IA</button>
                   <button className="link danger" onClick={() => remove(m.id)}>Excluir</button>
                 </td>
               </tr>

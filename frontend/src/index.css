@@ -171,3 +171,7 @@ label.checkbox input { width: auto; }
   .form-grid { grid-template-columns: 1fr; }
   .totals-bar { flex-wrap: wrap; gap: 1rem; }
 }
+
+/* AI action buttons in tables */
+.link.ai { color: var(--luxury); font-weight: 600; }
+.link.ai:disabled { opacity: .5; }
