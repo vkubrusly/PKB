@@ -85,7 +85,12 @@ export function NewEstimatePage() {
   async function ensurePlanUploaded(): Promise<string> {
     if (planPath) return planPath;
     if (!planFile) throw new Error('Escolha o PDF das plantas primeiro.');
-    const path = `${activeOrg!.id}/${Date.now()}-${planFile.name}`;
+    // Supabase Storage object keys reject spaces/accents/special chars — sanitize the filename.
+    const safeName = planFile.name
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')  // strip accents
+      .replace(/[^\w.\-]+/g, '_')                         // spaces & symbols → _
+      .replace(/_+/g, '_').replace(/^_|_$/g, '');
+    const path = `${activeOrg!.id}/${Date.now()}-${safeName || 'plantas.pdf'}`;
     const up = await supabase.storage.from('plantas').upload(path, planFile);
     if (up.error) throw new Error(`Falha ao subir plantas: ${up.error.message}`);
     setPlanPath(path);
