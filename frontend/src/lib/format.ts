@@ -19,6 +19,7 @@ export const psf = (total: number | null | undefined, area: number | null | unde
   total == null || !area ? '—' : usd.format(total / area);
 
 export const SPEC_LEVEL_LABEL: Record<string, string> = {
+  affordable: 'Affordable',
   essential: 'Essential',
   signature: 'Signature',
   luxury: 'Luxury',

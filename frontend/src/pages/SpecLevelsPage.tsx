@@ -4,7 +4,8 @@ import { useAuth } from '../auth/AuthProvider';
 import type { SpecLevelRow } from '../lib/database.types';
 import { SPEC_LEVEL_LABEL, money } from '../lib/format';
 
-const DEFAULTS: { level: 'essential' | 'signature' | 'luxury'; low: number; high: number; desc: string }[] = [
+const DEFAULTS: { level: 'affordable' | 'essential' | 'signature' | 'luxury'; low: number; high: number; desc: string }[] = [
+  { level: 'affordable', low: 105, high: 135, desc: 'Affordable / habitação acessível (ex.: Sunny)' },
   { level: 'essential', low: 165, high: 180, desc: 'Entrada / investidor / aluguel' },
   { level: 'signature', low: 200, high: 225, desc: 'Padrão PKB / cliente final' },
   { level: 'luxury', low: 245, high: 280, desc: 'Alto padrão / custom' },

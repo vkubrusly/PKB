@@ -14,7 +14,7 @@ export function ImportEstimatePage() {
   const nav = useNavigate();
   const [wbs, setWbs] = useState<WbsNode[]>([]);
   const [f, setF] = useState({
-    name: '', level: 'essential' as Exclude<SpecLevel, 'any'>,
+    name: '', level: 'affordable' as Exclude<SpecLevel, 'any'>,
     living: '', total: '', county: '', market: '',
   });
   const [defaultCat, setDefaultCat] = useState('20'); // fallback category for uncoded lines
@@ -74,7 +74,7 @@ export function ImportEstimatePage() {
           onChange={(e) => setF({ ...f, name: e.target.value })} /></label>
         <label>Nível
           <select value={f.level} onChange={(e) => setF({ ...f, level: e.target.value as Exclude<SpecLevel, 'any'> })}>
-            <option value="essential">Essential</option><option value="signature">Signature</option><option value="luxury">Luxury</option>
+            <option value="affordable">Affordable</option><option value="essential">Essential</option><option value="signature">Signature</option><option value="luxury">Luxury</option>
           </select>
         </label>
         <label>Condado<input value={f.county} onChange={(e) => setF({ ...f, county: e.target.value })} /></label>

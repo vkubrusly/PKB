@@ -1,7 +1,7 @@
 // Hand-written types mirroring supabase/migrations. Keep in sync with the schema
 // (or regenerate later with `supabase gen types typescript`).
 
-export type SpecLevel = 'essential' | 'signature' | 'luxury' | 'any';
+export type SpecLevel = 'affordable' | 'essential' | 'signature' | 'luxury' | 'any';
 export type PriceSource = 'catalog' | 'quote' | 'web' | 'invoice' | 'estimated';
 export type WaterSource = 'municipal' | 'well';
 export type SewerType = 'municipal' | 'septic' | 'septic_nitrogen';

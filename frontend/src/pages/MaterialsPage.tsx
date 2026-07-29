@@ -7,7 +7,7 @@ import { ImportDialog, type ImportResult } from '../components/ImportDialog';
 import { MATERIAL_FIELDS, normalizeUnit, coerceWbsCode } from '../lib/importMap';
 
 const UNITS: Unit[] = ['ea', 'sf', 'lf', 'cy', 'ls', 'hr', 'gal', 'sq', 'ton', 'bid', 'mo'];
-const LEVELS: SpecLevel[] = ['essential', 'signature', 'luxury', 'any'];
+const LEVELS: SpecLevel[] = ['affordable', 'essential', 'signature', 'luxury', 'any'];
 
 const empty = {
   name: '', wbs_code: '', spec_level: 'any' as SpecLevel, brand: '', model: '',

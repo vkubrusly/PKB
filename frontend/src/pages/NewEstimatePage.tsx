@@ -21,7 +21,7 @@ export function NewEstimatePage() {
   const [f, setF] = useState({
     name: '', base_model: '', county: '', market: '',
     living: '', total: '', water: '', sewer: '', flood_zone: '', wind: '',
-    level: 'essential' as Exclude<SpecLevel, 'any'>,
+    level: 'affordable' as Exclude<SpecLevel, 'any'>,
   });
   const [planFile, setPlanFile] = useState<File | null>(null);
   const [planPath, setPlanPath] = useState<string | null>(null); // uploaded once, reused
@@ -251,7 +251,7 @@ export function NewEstimatePage() {
               <input type="number" value={f.wind} onChange={(e) => setF({ ...f, wind: e.target.value })} /></label>
             <label>Nível
               <select value={f.level} onChange={(e) => setF({ ...f, level: e.target.value as Exclude<SpecLevel, 'any'> })}>
-                <option value="essential">Essential</option><option value="signature">Signature</option><option value="luxury">Luxury</option>
+                <option value="affordable">Affordable</option><option value="essential">Essential</option><option value="signature">Signature</option><option value="luxury">Luxury</option>
               </select></label>
           </div>
           <div className="row-actions">

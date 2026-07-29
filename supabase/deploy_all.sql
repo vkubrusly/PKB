@@ -19,9 +19,12 @@ create extension if not exists "citext";      -- case-insensitive text (emails, 
 -- ---------------------------------------------------------------------------
 
 -- Nível de especificação. 'any' = material aplicável a qualquer nível.
+-- Ordem = tier crescente: affordable < essential < signature < luxury.
 do $$ begin
-  create type spec_level as enum ('essential', 'signature', 'luxury', 'any');
+  create type spec_level as enum ('affordable', 'essential', 'signature', 'luxury', 'any');
 exception when duplicate_object then null; end $$;
+-- Bancos criados antes do 0010 já têm o enum sem 'affordable': adiciona idempotente.
+alter type spec_level add value if not exists 'affordable' before 'essential';
 
 -- Origem do preço. Ordem reflete a confiabilidade crescente na calibração:
 -- invoice (pago) > quote (cotado) > web > catalog > estimated.
