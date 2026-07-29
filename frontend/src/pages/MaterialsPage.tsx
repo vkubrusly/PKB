@@ -3,6 +3,8 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../auth/AuthProvider';
 import type { Material, SpecLevel, Supplier, Unit, WbsNode } from '../lib/database.types';
 import { SPEC_LEVEL_LABEL, UNIT_LABEL } from '../lib/format';
+import { ImportDialog, type ImportResult } from '../components/ImportDialog';
+import { MATERIAL_FIELDS, normalizeUnit, coerceWbsCode } from '../lib/importMap';
 
 const UNITS: Unit[] = ['ea', 'sf', 'lf', 'cy', 'ls', 'hr', 'gal', 'sq', 'ton', 'bid', 'mo'];
 const LEVELS: SpecLevel[] = ['essential', 'signature', 'luxury', 'any'];
@@ -25,6 +27,31 @@ export function MaterialsPage() {
   const [filterLevel, setFilterLevel] = useState<SpecLevel | ''>('');
   const [aiBusy, setAiBusy] = useState<string | null>(null); // material_id being processed
   const [aiMsg, setAiMsg] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+
+  // Bulk-insert materials from a mapped CSV/XLSX (Buildertrend Cost Catalog).
+  async function importMaterials(mapped: Record<string, string>[]): Promise<ImportResult> {
+    const validCodes = new Set(wbs.filter((n) => n.is_leaf).map((n) => n.code));
+    const payload = mapped.map((r) => {
+      const code = r.wbs_code?.trim() ? coerceWbsCode(r.wbs_code, validCodes, '') : '';
+      return {
+        org_id: activeOrg!.id,
+        name: r.name.trim(),
+        wbs_code: code || null,
+        spec_level: 'any' as SpecLevel,
+        brand: r.brand?.trim() || null,
+        model: r.model?.trim() || null,
+        unit: normalizeUnit(r.unit),
+        fl_approval: r.fl_approval?.trim() || null,
+        specs: r.specs?.trim() || null,
+      };
+    }).filter((r) => r.name);
+    if (!payload.length) return { inserted: 0, error: 'Nenhuma linha com "Nome" preenchido.' };
+    const { error } = await supabase.from('materials').insert(payload);
+    if (error) return { inserted: 0, error: error.message };
+    load();
+    return { inserted: payload.length };
+  }
 
   // Call an AI Edge Function (Agente de Preços / Detalhamento) for one material.
   async function runAgent(kind: 'price-search' | 'product-detail', id: string) {
@@ -109,8 +136,22 @@ export function MaterialsPage() {
     <div>
       <header className="page-head">
         <h1>Materiais</h1>
-        <button className="btn primary" onClick={startNew}>Novo material</button>
+        <div className="row-actions">
+          <button className="btn" onClick={() => setImporting(true)}>⬆ Importar</button>
+          <button className="btn primary" onClick={startNew}>Novo material</button>
+        </div>
       </header>
+
+      {importing && (
+        <ImportDialog
+          title="Importar materiais"
+          fields={MATERIAL_FIELDS}
+          onClose={() => setImporting(false)}
+          onImport={importMaterials}
+          intro={<>Suba o export de <strong>Cost Catalog / Cost Items</strong> do Buildertrend (.xlsx ou .csv).
+            A unidade é normalizada e o código vira a categoria WBS correspondente (ou fica em branco).</>}
+        />
+      )}
 
       {aiMsg && <p className="success">{aiMsg}</p>}
       {err && <p className="error">{err}</p>}

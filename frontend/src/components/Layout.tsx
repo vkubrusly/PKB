@@ -4,6 +4,7 @@ import { Logo } from './Logo';
 
 const NAV = [
   { to: '/novo', label: '＋ Novo orçamento' },
+  { to: '/importar', label: '⬆ Importar orçamento' },
   { to: '/projetos', label: 'Projetos' },
   { to: '/materiais', label: 'Materiais' },
   { to: '/fornecedores', label: 'Fornecedores' },

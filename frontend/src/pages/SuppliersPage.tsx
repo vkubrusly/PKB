@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../auth/AuthProvider';
 import type { Supplier } from '../lib/database.types';
+import { ImportDialog, type ImportResult } from '../components/ImportDialog';
+import { SUPPLIER_FIELDS } from '../lib/importMap';
 
 const empty = { name: '', contact_name: '', email: '', phone: '', website: '', is_preferred: false };
 type Draft = typeof empty;
@@ -13,6 +15,26 @@ export function SuppliersPage() {
   const [err, setErr] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | 'new' | null>(null);
   const [draft, setDraft] = useState<Draft>(empty);
+  const [importing, setImporting] = useState(false);
+
+  // Bulk-insert suppliers from a mapped CSV/XLSX (Buildertrend Vendors export).
+  async function importSuppliers(mapped: Record<string, string>[]): Promise<ImportResult> {
+    const payload = mapped.map((r) => ({
+      org_id: activeOrg!.id,
+      name: r.name.trim(),
+      contact_name: r.contact_name?.trim() || null,
+      email: r.email?.trim() || null,
+      phone: r.phone?.trim() || null,
+      website: r.website?.trim() || null,
+      notes: r.notes?.trim() || null,
+      is_preferred: false,
+    })).filter((r) => r.name);
+    if (!payload.length) return { inserted: 0, error: 'Nenhuma linha com "Nome" preenchido.' };
+    const { error } = await supabase.from('suppliers').insert(payload);
+    if (error) return { inserted: 0, error: error.message };
+    load();
+    return { inserted: payload.length };
+  }
 
   async function load() {
     if (!activeOrg) return;
@@ -61,8 +83,22 @@ export function SuppliersPage() {
     <div>
       <header className="page-head">
         <h1>Fornecedores</h1>
-        <button className="btn primary" onClick={startNew}>Novo fornecedor</button>
+        <div className="row-actions">
+          <button className="btn" onClick={() => setImporting(true)}>⬆ Importar</button>
+          <button className="btn primary" onClick={startNew}>Novo fornecedor</button>
+        </div>
       </header>
+
+      {importing && (
+        <ImportDialog
+          title="Importar fornecedores"
+          fields={SUPPLIER_FIELDS}
+          onClose={() => setImporting(false)}
+          onImport={importSuppliers}
+          intro={<>Suba o export de <strong>Vendors/Subs</strong> do Buildertrend (.xlsx ou .csv). As colunas
+            são mapeadas automaticamente — confira e ajuste antes de importar.</>}
+        />
+      )}
 
       {editing && (
         <form className="card form-grid" onSubmit={save}>

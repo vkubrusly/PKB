@@ -6,6 +6,7 @@ import { Layout } from './components/Layout';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { ProjectDetailPage } from './pages/ProjectDetailPage';
 import { NewEstimatePage } from './pages/NewEstimatePage';
+import { ImportEstimatePage } from './pages/ImportEstimatePage';
 import { SuppliersPage } from './pages/SuppliersPage';
 import { MaterialsPage } from './pages/MaterialsPage';
 import { SpecLevelsPage } from './pages/SpecLevelsPage';
@@ -21,6 +22,7 @@ function Gate() {
       <Route element={<Layout />}>
         <Route path="/projetos" element={<ProjectsPage />} />
         <Route path="/novo" element={<NewEstimatePage />} />
+        <Route path="/importar" element={<ImportEstimatePage />} />
         <Route path="/projetos/:id" element={<ProjectDetailPage />} />
         <Route path="/materiais" element={<MaterialsPage />} />
         <Route path="/fornecedores" element={<SuppliersPage />} />
