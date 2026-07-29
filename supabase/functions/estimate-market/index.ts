@@ -18,7 +18,7 @@
 import Anthropic from 'npm:@anthropic-ai/sdk@0.68.0';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { cors, json, parseJson } from '../_shared/cors.ts';
-import { aiErrorMessage, createJsonWithWeb } from '../_shared/ai.ts';
+import { aiErrorMessage, createWithFallback, extractText } from '../_shared/ai.ts';
 import { PKB_COSTBOOK } from '../_shared/costbook.ts';
 
 interface Line {
@@ -105,6 +105,35 @@ LIVING: ${project.living_sf ?? '?'} sf   TOTAL CONSTRUCTED: ${project.total_sf ?
 PROGRAM: ${pg.bedrooms ?? '?'} bed / ${pg.full_baths ?? '?'} full bath / ${pg.half_baths ?? 0} half / ${pg.kitchens ?? 1} kitchen(s) / ${pg.laundries ?? 1} laundry / garage ${pg.garage_bays ?? 2} bay(s) / ${pg.stories ?? 1} story / ${pg.doors ?? '?'} doors / ${pg.windows ?? '?'} windows${pg.has_inlaw ? ' / in-law suite' : ''}`;
 
     const anthropic = new Anthropic({ apiKey });
+
+    // STEP 1 — LIVE WEB RESEARCH. A search-only turn returns prose findings, so
+    // the web tool is always exercised and can't break the JSON step. This is
+    // the "feed from outside" the estimate uses on every run.
+    let research = '';
+    let usedWeb = false;
+    try {
+      const r = await createWithFallback(anthropic, {
+        max_tokens: 1600,
+        messages: [{
+          role: 'user',
+          content: [{
+            type: 'text',
+            text:
+`Research CURRENT (this month) residential construction prices in ${project.county ?? 'Central Florida'}, FL,
+for a ${project.level ?? 'essential'}-level single-family home (~${project.total_sf ?? 2000} sf). Use web_search.
+Find current unit prices for the volatile/large items: concrete & slab, framing lumber, roof trusses, shingles,
+impact & vinyl windows, HVAC, plumbing, electrical, drywall, cabinets & countertops, LVP/tile flooring,
+appliances, well drilling, septic (conventional & nitrogen-reducing), driveway/pavers, sod/landscaping.
+Also find this county's current impact fees and building permit fee.
+Return a concise bulleted list: "item — $price per unit — source (site)". Flag volatile items (lumber, steel, concrete).`,
+          }],
+        }],
+      }, { webSearch: true, maxUses: 6 });
+      research = extractText(r.resp).trim();
+      usedWeb = r.usedWeb && research.length > 0;
+    } catch { /* research is best-effort; fall back to cost book + internal data */ }
+
+    // STEP 2 — GENERATE the JSON estimate (no tools) from cost book + internal history + fresh research.
     const params = {
       max_tokens: 8000,
       messages: [{
@@ -115,36 +144,36 @@ PROGRAM: ${pg.bedrooms ?? '?'} bed / ${pg.full_baths ?? '?'} full bath / ${pg.ha
 `You are the PKB Homes senior estimator. Build a COMPLETE construction estimate for a new home
 that has no reference model, using these sources IN PRIORITY ORDER:
 
-(PKB COST BOOK — HIGHEST PRIORITY: these are the company's real calibrated Central-FL costs, benchmarks,
- builder-fee rules and add-ons. Anchor every line to this; only deviate with a clear reason in the note.)
+(PKB COST BOOK — HIGHEST PRIORITY: the company's real calibrated Central-FL costs, benchmarks, builder-fee
+ rules and add-ons. Anchor every line to this; only deviate with a clear reason in the note.)
 ${PKB_COSTBOOK}
 
-(0) LIVE WEB SEARCH — when you have the web_search tool, search for CURRENT ${project.county ?? 'Florida'}
-    material/labor prices to refine numbers the cost book doesn't cover. Cite the source in the line note.
+(0) CURRENT MARKET RESEARCH — live web results for ${project.county ?? 'FL'}. UPDATE cost-book numbers where
+    these are fresher (especially volatile items). Cite the source in the line note when you use one:
+${research || '(web research unavailable this run — rely on the cost book + internal data)'}
 
-(A) INTERNAL PRICE BOOK — this company's OWN historical unit costs by line/category (anchor to these
-    when a line has data; adjust for the target spec level and size). Format: "code ~$avg/unit (n=samples; level:$avg …)".
+(A) INTERNAL PRICE BOOK — this company's OWN historical unit costs by line/category (anchor when a line has
+    data; adjust for the target spec level and size). Format: "code ~$avg/unit (n=samples; level:$avg …)".
 ${priceBook || '(no internal estimate history yet)'}
 
 (B) INTERNAL MATERIAL PRICES by category:
 ${catBook || '(none)'}
 
-For any line without internal data, use realistic CURRENT Florida market pricing from your own knowledge,
-adjusted to the county and spec level. Never leave a needed line unpriced.
+Never leave a needed line unpriced. Apply the builder fee per the cost-book rules (section 21).
 
 TARGET PROJECT:
 ${projText}
 
-Produce line items across these WBS categories (use these codes/names; you may add sub-lines with the
-same parent code when useful):
+Produce line items across these WBS categories (use these codes/names; add sub-lines with the same parent
+code when useful):
 ${lineList}
 
 For EACH line output: line_code (the WBS code), wbs_code (its parent leaf code from the list),
-description, qty (derive from the areas/program — e.g. slab & framing by total sf, plumbing by baths,
+description, qty (derive from areas/program — slab & framing by total sf, plumbing by baths,
 cabinetry/appliances by kitchens, openings by doors+windows), unit, unit_cost, and:
-- origin: "internal" if anchored to the internal price book, "market" if from Florida market knowledge,
-  "estimated" if a rough placeholder.
-- note: one short line on how you derived it (e.g. "internal avg adjusted +15% for signature level").
+- origin: "market" if the number came from the live research, "internal" if from PKB cost book / internal
+  history, "estimated" if a rough placeholder.
+- note: one short line on how you derived it (e.g. "web: ABC Supply $X/sq" or "PKB realized +15% signature").
 Prices must reflect the ${project.level ?? 'essential'} level and ${project.county ?? 'the region'}.
 
 Respond with ONLY this JSON:
@@ -154,10 +183,9 @@ Respond with ONLY this JSON:
         }],
       }],
     };
-    const { result, model, usedWeb } = await createJsonWithWeb<Result>(
-      anthropic, params, (t) => parseJson<Result>(t), { maxUses: 6 },
-    );
-    return json({ result, model, used_web: usedWeb, internal_lines: book.size });
+    const { resp, model } = await createWithFallback(anthropic, params);
+    const result = parseJson<Result>(extractText(resp));
+    return json({ result, model, used_web: usedWeb, research: research.slice(0, 3000), internal_lines: book.size });
   } catch (e) {
     return json({ error: aiErrorMessage(e) }, 500);
   }

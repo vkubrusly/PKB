@@ -34,6 +34,7 @@ export function NewEstimatePage() {
   const [aiFilled, setAiFilled] = useState<Set<string>>(new Set());
   const [aiNote, setAiNote] = useState<string | null>(null);
   const [genNote, setGenNote] = useState<{ text: string; warn: boolean } | null>(null); // step-3 summary of what generation did
+  const [research, setResearch] = useState<string | null>(null); // live web findings used by the AI estimate
 
   // step 2 — method
   const [method, setMethod] = useState<Method>('model');
@@ -75,7 +76,7 @@ export function NewEstimatePage() {
   }, [activeOrg?.id]);
 
   async function generateFromModel() {
-    setBusy(true); setErr(null);
+    setBusy(true); setErr(null); setResearch(null);
     try {
       const ref = refs.find((r) => r.estimate_id === refId);
       if (!ref) throw new Error('Escolha um modelo de referência.');
@@ -232,7 +233,7 @@ export function NewEstimatePage() {
   }
 
   async function generateFromAI() {
-    setBusy(true); setErr(null);
+    setBusy(true); setErr(null); setResearch(null);
     try {
       if (!planFile && !planPath) throw new Error('Anexe o PDF das plantas no passo 1 para o take-off por IA.');
       const path = await ensurePlanUploaded();
@@ -283,6 +284,7 @@ export function NewEstimatePage() {
         };
       }).filter((l) => l.wbs_code);
       if (!got.length) throw new Error('A IA não retornou linhas.');
+      setResearch(typeof data.research === 'string' && data.research.trim() ? data.research.trim() : null);
       const reg = await withRegional(got);
       setLines(reg.lines);
       const internal = typeof data.internal_lines === 'number' ? data.internal_lines : 0;
@@ -488,6 +490,12 @@ export function NewEstimatePage() {
             <div><div className="k muted small">Linhas</div><div className="v">{lines.length}</div></div>
           </div>
           {genNote && <p className={genNote.warn ? 'error small' : 'success small'}>{genNote.text}</p>}
+          {research && (
+            <details className="card" style={{ marginBottom: '.75rem' }}>
+              <summary style={{ cursor: 'pointer', fontWeight: 600 }}>🌐 Dados de mercado que a IA buscou na web</summary>
+              <pre style={{ whiteSpace: 'pre-wrap', fontSize: '.8rem', margin: '.5rem 0 0' }}>{research}</pre>
+            </details>
+          )}
           <p className="muted small">Todas as linhas estão marcadas ⚠️ para revisão. Ajuste o custo unitário onde precisar antes de salvar.</p>
 
           <div className="tablewrap">
