@@ -20,10 +20,21 @@ interface Extracted {
   market: string | null;
   living_area_sf: number | null;
   total_area_sf: number | null;
+  garage_area_sf: number | null;
+  lanai_area_sf: number | null;
   wind_speed_mph: number | null;
   flood_zone: string | null;
+  // Program (deep analysis) — drives multi-factor cost scaling.
   bedrooms: number | null;
-  bathrooms: number | null;
+  full_baths: number | null;
+  half_baths: number | null;
+  kitchens: number | null;
+  laundries: number | null;
+  garage_bays: number | null;
+  stories: number | null;
+  doors: number | null;
+  windows: number | null;
+  has_inlaw: boolean | null;
   notes: string;
   confidence: 'high' | 'medium' | 'low';
 }
@@ -60,18 +71,28 @@ Deno.serve(async (req) => {
           {
             type: 'text',
             text:
-`This is a Florida residential plan set. Read the title block, cover sheet and floor plans and extract the PROJECT DATA.
-- name / base_model: the model or house name in the title block.
-- living_area_sf: heated/AC (living) area. total_area_sf: total under-roof area (living + garage + porches).
-- wind_speed_mph and flood_zone: only if a design-criteria / cover sheet states them.
-- county: only if shown. market: subdivision/community if shown.
-- bedrooms / bathrooms: counts from the floor plan.
-Never guess. Put null in any field you cannot read from the plans, and note uncertainties in "notes".
+`You are a senior estimator doing a DEEP READ of a Florida residential plan set before budgeting.
+Read the title block, cover sheet, AREA CALCS, floor plan, and the DOOR SCHEDULE and WINDOW SCHEDULE
+tables. Extract the project data AND the full room "program" — the counts that drive cost.
+
+Rules:
+- living_area_sf: heated/AC (living) area. total_area_sf: total constructed area (living + garage + porches/lanai + entry).
+- garage_area_sf, lanai_area_sf: from the AREA CALCS table if present.
+- bedrooms: count rooms labeled Bedroom/Master. full_baths: bathrooms with a shower/tub. half_baths: powder/half baths (toilet+sink only).
+- kitchens: COUNT EVERY kitchen, including a second/in-law kitchen or kitchenette (look for a 2nd range/refrigerator/sink cluster, often near an "IN-LAW" suite). This matters a lot.
+- laundries: count laundry rooms/closets. garage_bays: 1 for single, 2 for double, etc.
+- stories: number of floors. has_inlaw: true if there is an in-law / guest suite (own bath and/or kitchenette).
+- doors: TOTAL DOORS from the door schedule. windows: TOTAL WINDOWS from the window schedule.
+- wind_speed_mph, flood_zone: only if a design-criteria/cover sheet states them. county/market: only if shown.
+Never guess a number you can't see — use null and explain in "notes". Call out the kitchen and bath counts explicitly in "notes".
 
 Respond with ONLY this JSON:
 {"name": <str|null>, "base_model": <str|null>, "county": <str|null>, "market": <str|null>,
- "living_area_sf": <num|null>, "total_area_sf": <num|null>, "wind_speed_mph": <num|null>,
- "flood_zone": <str|null>, "bedrooms": <num|null>, "bathrooms": <num|null>,
+ "living_area_sf": <num|null>, "total_area_sf": <num|null>, "garage_area_sf": <num|null>, "lanai_area_sf": <num|null>,
+ "wind_speed_mph": <num|null>, "flood_zone": <str|null>,
+ "bedrooms": <num|null>, "full_baths": <num|null>, "half_baths": <num|null>, "kitchens": <num|null>,
+ "laundries": <num|null>, "garage_bays": <num|null>, "stories": <num|null>,
+ "doors": <num|null>, "windows": <num|null>, "has_inlaw": <bool|null>,
  "notes": <str>, "confidence": "high"|"medium"|"low"}`,
           },
         ],

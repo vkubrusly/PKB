@@ -308,10 +308,12 @@ create table if not exists projects (
   contract       contract_type,
   initial_level  spec_level,
   arv            numeric(14,2),                   -- estimated sale value (CMA/ARV)
+  program        jsonb,                           -- room program (counts) for multi-driver scaling
   created_at     timestamptz not null default now(),
   updated_at     timestamptz not null default now()
 );
 create index if not exists idx_projects_org on projects(org_id);
+alter table projects add column if not exists program jsonb;  -- idempotent for pre-0011 DBs
 create or replace trigger trg_projects_updated before update on projects
   for each row execute function set_updated_at();
 
