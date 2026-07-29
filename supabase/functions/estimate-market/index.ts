@@ -18,7 +18,7 @@
 import Anthropic from 'npm:@anthropic-ai/sdk@0.68.0';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { cors, json, parseJson } from '../_shared/cors.ts';
-import { aiErrorMessage, createWithFallback } from '../_shared/ai.ts';
+import { aiErrorMessage, createJsonWithWeb } from '../_shared/ai.ts';
 
 interface Line {
   line_code: string | null;
@@ -104,7 +104,7 @@ LIVING: ${project.living_sf ?? '?'} sf   TOTAL CONSTRUCTED: ${project.total_sf ?
 PROGRAM: ${pg.bedrooms ?? '?'} bed / ${pg.full_baths ?? '?'} full bath / ${pg.half_baths ?? 0} half / ${pg.kitchens ?? 1} kitchen(s) / ${pg.laundries ?? 1} laundry / garage ${pg.garage_bays ?? 2} bay(s) / ${pg.stories ?? 1} story / ${pg.doors ?? '?'} doors / ${pg.windows ?? '?'} windows${pg.has_inlaw ? ' / in-law suite' : ''}`;
 
     const anthropic = new Anthropic({ apiKey });
-    const { resp, model, usedWeb } = await createWithFallback(anthropic, {
+    const params = {
       max_tokens: 8000,
       messages: [{
         role: 'user',
@@ -148,11 +148,10 @@ Respond with ONLY this JSON:
  "notes": <str>, "confidence": "high"|"medium"|"low"}`,
         }],
       }],
-    }, { webSearch: true, maxUses: 6 });
-
-    const text = resp.content.filter((b: { type: string }) => b.type === 'text')
-      .map((b: { text: string }) => b.text).join('\n');
-    const result = parseJson<Result>(text);
+    };
+    const { result, model, usedWeb } = await createJsonWithWeb<Result>(
+      anthropic, params, (t) => parseJson<Result>(t), { maxUses: 6 },
+    );
     return json({ result, model, used_web: usedWeb, internal_lines: book.size });
   } catch (e) {
     return json({ error: aiErrorMessage(e) }, 500);

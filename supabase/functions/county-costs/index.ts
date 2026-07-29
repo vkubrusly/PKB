@@ -18,7 +18,7 @@
 
 import Anthropic from 'npm:@anthropic-ai/sdk@0.68.0';
 import { cors, json, parseJson } from '../_shared/cors.ts';
-import { aiErrorMessage, createWithFallback } from '../_shared/ai.ts';
+import { aiErrorMessage, createJsonWithWeb } from '../_shared/ai.ts';
 
 interface Result {
   county: string | null;
@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     const sewer = b.sewer || 'municipal';   // 'municipal' | 'septic' | 'septic_nitrogen'
 
     const anthropic = new Anthropic({ apiKey });
-    const { resp, model, usedWeb } = await createWithFallback(anthropic, {
+    const params = {
       max_tokens: 1500,
       messages: [{
         role: 'user',
@@ -85,11 +85,10 @@ Respond with ONLY this JSON:
  "notes": <str>, "confidence": "high"|"medium"|"low"}`,
         }],
       }],
-    }, { webSearch: true, maxUses: 4 });
-
-    const text = resp.content.filter((x: { type: string }) => x.type === 'text')
-      .map((x: { text: string }) => x.text).join('\n');
-    const result = parseJson<Result>(text);
+    };
+    const { result, model, usedWeb } = await createJsonWithWeb<Result>(
+      anthropic, params, (t) => parseJson<Result>(t), { maxUses: 4 },
+    );
     return json({ result, model, used_web: usedWeb });
   } catch (e) {
     return json({ error: aiErrorMessage(e) }, 500);

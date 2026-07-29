@@ -50,6 +50,35 @@ export async function createWithFallback(
   throw lastErr;
 }
 
+// Join the text blocks of a response (ignores web_search tool_use/result blocks).
+// deno-lint-ignore no-explicit-any
+export function extractText(resp: any): string {
+  return (resp?.content ?? [])
+    .filter((b: { type?: string }) => b.type === 'text')
+    .map((b: { text?: string }) => b.text ?? '').join('\n');
+}
+
+// Create → extract text → parse JSON, with web-search that DEGRADES GRACEFULLY:
+// a web-augmented turn can end without a final JSON block (truncated by tool
+// output, or a pause_turn). If the web result won't parse, retry once WITHOUT
+// web so the caller still gets a valid object.
+// deno-lint-ignore no-explicit-any
+export async function createJsonWithWeb<T>(
+  anthropic: Anthropic,
+  params: Record<string, any>,
+  parse: (text: string) => T,
+  opts: { maxUses?: number } = {},
+): Promise<{ result: T; model: string; usedWeb: boolean }> {
+  let r = await createWithFallback(anthropic, params, { webSearch: true, maxUses: opts.maxUses ?? 5 });
+  try {
+    return { result: parse(extractText(r.resp)), model: r.model, usedWeb: r.usedWeb };
+  } catch (e) {
+    if (!r.usedWeb) throw e; // no web was used → the model genuinely didn't return JSON
+    r = await createWithFallback(anthropic, params, {}); // retry without web search
+    return { result: parse(extractText(r.resp)), model: r.model, usedWeb: false };
+  }
+}
+
 // Turn any thrown error into a clear message (Anthropic API errors include a nested message).
 export function aiErrorMessage(e: unknown): string {
   const err = e as { status?: number; message?: string; error?: { error?: { message?: string } } };
