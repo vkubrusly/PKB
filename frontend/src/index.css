@@ -227,3 +227,7 @@ label.checkbox input { width: auto; }
 .map-row .req { color: var(--danger, #b3261e); }
 .table.small th, .table.small td { padding: .3rem .5rem; font-size: .8rem; }
 @media (max-width: 640px) { .map-grid { grid-template-columns: 1fr; } }
+
+/* Destructive outline button (e.g. Excluir projeto) */
+.btn.danger-outline { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+.btn.danger-outline:hover:not(:disabled) { background: color-mix(in srgb, var(--danger) 10%, transparent); }

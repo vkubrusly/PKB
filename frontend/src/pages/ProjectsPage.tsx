@@ -10,18 +10,28 @@ export function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
-  useEffect(() => {
+  async function load() {
     if (!activeOrg) return;
-    (async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('projects').select('*').eq('org_id', activeOrg.id)
-        .order('created_at', { ascending: false });
-      if (error) setErr(error.message); else setProjects(data ?? []);
-      setLoading(false);
-    })();
-  }, [activeOrg?.id]);
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('projects').select('*').eq('org_id', activeOrg.id)
+      .order('created_at', { ascending: false });
+    if (error) setErr(error.message); else setProjects(data ?? []);
+    setLoading(false);
+  }
+  useEffect(() => { load(); /* eslint-disable-next-line */ }, [activeOrg?.id]);
+
+  // Deleting a project cascades to its estimates and line items (FK on delete cascade).
+  async function remove(p: Project) {
+    if (!confirm(`Excluir o projeto "${p.name}"? Isso apaga também todos os orçamentos e itens ligados a ele. Esta ação não pode ser desfeita.`)) return;
+    setDeleting(p.id); setErr(null);
+    const { error } = await supabase.from('projects').delete().eq('id', p.id);
+    setDeleting(null);
+    if (error) setErr(error.message);
+    else setProjects((prev) => prev.filter((x) => x.id !== p.id));
+  }
 
   return (
     <div>
@@ -36,12 +46,12 @@ export function ProjectsPage() {
           <thead>
             <tr>
               <th>Projeto</th><th>Modelo</th><th>Condado</th><th>Nível</th>
-              <th className="num">Living (sf)</th><th className="num">Total (sf)</th>
+              <th className="num">Living (sf)</th><th className="num">Total (sf)</th><th></th>
             </tr>
           </thead>
           <tbody>
             {projects.length === 0 && (
-              <tr><td colSpan={6} className="muted center">Nenhum projeto ainda. Comece por “Novo orçamento”.</td></tr>
+              <tr><td colSpan={7} className="muted center">Nenhum projeto ainda. Comece por “Novo orçamento”.</td></tr>
             )}
             {projects.map((p) => (
               <tr key={p.id}>
@@ -51,6 +61,10 @@ export function ProjectsPage() {
                 <td>{p.initial_level ? SPEC_LEVEL_LABEL[p.initial_level] : '—'}</td>
                 <td className="num">{number(p.living_area_sf)}</td>
                 <td className="num">{number(p.total_area_sf)}</td>
+                <td className="row-actions">
+                  <button className="link danger" disabled={deleting === p.id}
+                    onClick={() => remove(p)}>{deleting === p.id ? 'Excluindo…' : 'Excluir'}</button>
+                </td>
               </tr>
             ))}
           </tbody>

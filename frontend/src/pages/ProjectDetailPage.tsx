@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { Estimate, EstimateItem, Project, WbsNode } from '../lib/database.types';
 import {
@@ -8,7 +8,9 @@ import {
 
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const nav = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [estimates, setEstimates] = useState<Estimate[]>([]);
   const [activeEstimate, setActiveEstimate] = useState<string | null>(null);
   const [items, setItems] = useState<EstimateItem[]>([]);
@@ -60,6 +62,15 @@ export function ProjectDetailPage() {
 
   const est = estimates.find((e) => e.id === activeEstimate);
 
+  async function removeProject() {
+    if (!project) return;
+    if (!confirm(`Excluir o projeto "${project.name}"? Isso apaga também todos os orçamentos e itens ligados a ele. Esta ação não pode ser desfeita.`)) return;
+    setDeleting(true); setErr(null);
+    const { error } = await supabase.from('projects').delete().eq('id', project.id);
+    if (error) { setErr(error.message); setDeleting(false); }
+    else nav('/projetos');
+  }
+
   return (
     <div>
       <header className="page-head">
@@ -67,6 +78,9 @@ export function ProjectDetailPage() {
           <Link to="/projetos" className="muted small">← Projetos</Link>
           <h1>{project.name}</h1>
         </div>
+        <button className="btn danger-outline" disabled={deleting} onClick={removeProject}>
+          {deleting ? 'Excluindo…' : '🗑 Excluir projeto'}
+        </button>
       </header>
 
       {err && <p className="error">{err}</p>}
