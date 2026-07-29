@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     const sewer = b.sewer || 'municipal';   // 'municipal' | 'septic' | 'septic_nitrogen'
 
     const anthropic = new Anthropic({ apiKey });
-    const { resp, model } = await createWithFallback(anthropic, {
+    const { resp, model, usedWeb } = await createWithFallback(anthropic, {
       max_tokens: 1500,
       messages: [{
         role: 'user',
@@ -90,7 +90,7 @@ Respond with ONLY this JSON:
     const text = resp.content.filter((x: { type: string }) => x.type === 'text')
       .map((x: { text: string }) => x.text).join('\n');
     const result = parseJson<Result>(text);
-    return json({ result, model });
+    return json({ result, model, used_web: usedWeb });
   } catch (e) {
     return json({ error: aiErrorMessage(e) }, 500);
   }
