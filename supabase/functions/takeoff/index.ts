@@ -16,6 +16,7 @@
 
 import Anthropic from 'npm:@anthropic-ai/sdk@0.68.0';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { cors, json } from '../_shared/cors.ts';
 
 const WBS = `
 1 Planning & Preconstruction (1.1 General Conditions, 1.2 Architect/Engineering, 1.3 Recurring Fixed Costs)
@@ -68,6 +69,7 @@ WBS (numeração imutável):
 ${WBS}`;
 
 Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   try {
     const { plan_path, target } = await req.json();
     if (!plan_path) return json({ error: 'plan_path é obrigatório' }, 400);
@@ -137,12 +139,6 @@ Deno.serve(async (req) => {
 interface RawLine {
   wbs_code: string; line_code: string; description: string;
   qty: number; unit: string; unit_cost: number; confidence: string;
-}
-
-function json(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status, headers: { 'content-type': 'application/json' },
-  });
 }
 
 function base64(bytes: Uint8Array): string {
