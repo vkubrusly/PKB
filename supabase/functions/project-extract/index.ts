@@ -103,6 +103,13 @@ Respond with ONLY this JSON:
     const result = parseJson<Extracted>(text);
     return json({ result });
   } catch (e) {
-    return json({ error: e instanceof Error ? e.message : String(e) }, 500);
+    // Surface Anthropic API errors clearly (bad model, PDF too large/too many
+    // pages, credits, rate limit) instead of a generic 500.
+    const err = e as { status?: number; message?: string; error?: { error?: { message?: string } } };
+    const apiMsg = err?.error?.error?.message;
+    const msg = apiMsg
+      ? `Claude API ${err.status ?? ''}: ${apiMsg}`.trim()
+      : (e instanceof Error ? e.message : String(e));
+    return json({ error: msg }, 500);
   }
 });

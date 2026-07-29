@@ -104,13 +104,23 @@ export function NewEstimatePage() {
     return path;
   }
 
+  // supabase-js returns a generic "non-2xx" message; the real cause is in the
+  // Response carried on error.context. Surface it so failures are diagnosable.
+  async function funcError(error: unknown): Promise<string> {
+    const ctx = (error as { context?: Response }).context;
+    if (ctx && typeof ctx.json === 'function') {
+      try { const b = await ctx.json(); if (b?.error) return String(b.error); } catch { /* not JSON */ }
+    }
+    return error instanceof Error ? error.message : String(error);
+  }
+
   // Document-first: read the plans and pre-fill the project fields.
   async function extractFromPlan() {
     setExtracting(true); setErr(null); setAiNote(null);
     try {
       const path = await ensurePlanUploaded();
       const { data, error } = await supabase.functions.invoke('project-extract', { body: { plan_path: path } });
-      if (error) throw error;
+      if (error) throw new Error(await funcError(error));
       if (data?.error) throw new Error(data.error);
       const r = data.result as Record<string, unknown>;
       const filled = new Set<string>();
