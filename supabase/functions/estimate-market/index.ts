@@ -19,6 +19,7 @@ import Anthropic from 'npm:@anthropic-ai/sdk@0.68.0';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { cors, json, parseJson } from '../_shared/cors.ts';
 import { aiErrorMessage, createJsonWithWeb } from '../_shared/ai.ts';
+import { PKB_COSTBOOK } from '../_shared/costbook.ts';
 
 interface Line {
   line_code: string | null;
@@ -111,11 +112,15 @@ PROGRAM: ${pg.bedrooms ?? '?'} bed / ${pg.full_baths ?? '?'} full bath / ${pg.ha
         content: [{
           type: 'text',
           text:
-`You are a senior Florida residential estimator. Build a COMPLETE construction estimate for a new home
-that has no reference model, using these sources:
+`You are the PKB Homes senior estimator. Build a COMPLETE construction estimate for a new home
+that has no reference model, using these sources IN PRIORITY ORDER:
+
+(PKB COST BOOK — HIGHEST PRIORITY: these are the company's real calibrated Central-FL costs, benchmarks,
+ builder-fee rules and add-ons. Anchor every line to this; only deviate with a clear reason in the note.)
+${PKB_COSTBOOK}
+
 (0) LIVE WEB SEARCH — when you have the web_search tool, search for CURRENT ${project.county ?? 'Florida'}
-    material/labor prices, supplier pricing, and recent cost data to ground your numbers. Prefer fresh
-    market figures over memory, and cite where a number came from in the line note.
+    material/labor prices to refine numbers the cost book doesn't cover. Cite the source in the line note.
 
 (A) INTERNAL PRICE BOOK — this company's OWN historical unit costs by line/category (anchor to these
     when a line has data; adjust for the target spec level and size). Format: "code ~$avg/unit (n=samples; level:$avg …)".

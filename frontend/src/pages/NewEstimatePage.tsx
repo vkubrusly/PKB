@@ -141,7 +141,7 @@ export function NewEstimatePage() {
     try {
       const { data, error } = await supabase.functions.invoke('county-costs', {
         body: {
-          county: f.county, state: 'FL', water: f.water || 'municipal', sewer: f.sewer || 'municipal',
+          county: f.county, market: f.market, state: 'FL', water: f.water || 'municipal', sewer: f.sewer || 'municipal',
           level: f.level, living_sf: target.living_sf, total_sf: target.total_sf,
         },
       });

@@ -19,6 +19,7 @@
 import Anthropic from 'npm:@anthropic-ai/sdk@0.68.0';
 import { cors, json, parseJson } from '../_shared/cors.ts';
 import { aiErrorMessage, createJsonWithWeb } from '../_shared/ai.ts';
+import { lookupCounty, PKB_COSTBOOK, regionalFromRow } from '../_shared/costbook.ts';
 
 interface Result {
   county: string | null;
@@ -44,6 +45,12 @@ Deno.serve(async (req) => {
     const water = b.water || 'municipal';   // 'municipal' | 'well'
     const sewer = b.sewer || 'municipal';   // 'municipal' | 'septic' | 'septic_nitrogen'
 
+    // Known region → exact PKB cost-book values, no AI guessing.
+    const row = lookupCounty(county, b.market);
+    if (row) {
+      return json({ result: regionalFromRow(row, water, sewer), model: 'pkb-costbook', used_web: false, source: 'costbook' });
+    }
+
     const anthropic = new Anthropic({ apiKey });
     const params = {
       max_tokens: 1500,
@@ -52,10 +59,14 @@ Deno.serve(async (req) => {
         content: [{
           type: 'text',
           text:
-`You are a Florida residential permitting & site-costs expert. For a NEW single-family home give the
-LOCATION- and SYSTEM-specific costs (USD) that don't come from a construction template.
+`You are a Florida residential permitting & site-costs expert for PKB Homes. For a NEW single-family home
+give the LOCATION- and SYSTEM-specific costs (USD) that don't come from a construction template.
 When you have the web_search tool, SEARCH for this county's CURRENT impact fee schedule, building permit
 fees, and typical well-drilling / septic install prices — impact fees change and vary a lot by county.
+
+Use this PKB reference for typical Central-FL system costs (a well ~$10k; conventional septic ~$6.5k;
+nitrogen-reducing septic ~$10.5k; municipal water tap ~$2.7–3k; municipal sewer tap ~$2k):
+${PKB_COSTBOOK}
 
 Project:
 - County: ${county}, ${state}
