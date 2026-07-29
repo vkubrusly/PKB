@@ -12,7 +12,7 @@ import Anthropic from 'npm:@anthropic-ai/sdk@0.68.0';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { encodeBase64 } from 'jsr:@std/encoding@1/base64';
 import { cors, json, parseJson } from '../_shared/cors.ts';
-import { aiErrorMessage, createWithFallback } from '../_shared/ai.ts';
+import { aiErrorMessage, createJsonText } from '../_shared/ai.ts';
 
 interface Extracted {
   name: string | null;
@@ -62,8 +62,8 @@ Deno.serve(async (req) => {
     const b64 = encodeBase64(buf); // fast native base64 (avoids CPU/memory limit → 546)
 
     const anthropic = new Anthropic({ apiKey });
-    const { resp } = await createWithFallback(anthropic, {
-      max_tokens: 2000,
+    const { text } = await createJsonText(anthropic, {
+      max_tokens: 4000,
       messages: [{
         role: 'user',
         content: [
@@ -99,7 +99,6 @@ Respond with ONLY this JSON:
       }],
     });
 
-    const text = resp.content.filter((b) => b.type === 'text').map((b) => (b as { text: string }).text).join('\n');
     const result = parseJson<Extracted>(text);
     return json({ result });
   } catch (e) {

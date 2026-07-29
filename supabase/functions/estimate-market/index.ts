@@ -18,7 +18,7 @@
 import Anthropic from 'npm:@anthropic-ai/sdk@0.68.0';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { cors, json, parseJson } from '../_shared/cors.ts';
-import { aiErrorMessage, createWithFallback, extractText } from '../_shared/ai.ts';
+import { aiErrorMessage, createJsonText } from '../_shared/ai.ts';
 import { PKB_COSTBOOK } from '../_shared/costbook.ts';
 
 interface Line {
@@ -159,8 +159,8 @@ Respond with ONLY this JSON:
         }],
       }],
     };
-    const { resp, model } = await createWithFallback(anthropic, params);
-    const result = parseJson<Result>(extractText(resp));
+    const { text, model } = await createJsonText(anthropic, params);
+    const result = parseJson<Result>(text);
     return json({ result, model, used_web: research.length > 0, research: research.slice(0, 3000), internal_lines: book.size });
   } catch (e) {
     return json({ error: aiErrorMessage(e) }, 500);
