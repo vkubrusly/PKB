@@ -9,8 +9,8 @@ import {
 import { money, number, psf, UNIT_LABEL } from '../lib/format';
 
 interface RefOption {
-  estimate_id: string; label: string;
-  living: number | null; total: number | null; program: Program | null;
+  estimate_id: string; project_id: string | null; label: string;
+  living: number | null; total: number | null;
 }
 
 type Method = 'model' | 'ai';
@@ -50,18 +50,21 @@ export function NewEstimatePage() {
   useEffect(() => {
     if (!activeOrg) return;
     (async () => {
+      // NB: don't join projects.program here — a DB without the 0011 migration
+      // would 400 the whole query and hide every reference model. Program is
+      // fetched lazily (best-effort) when a model is actually selected.
       const [{ data: es }, { data: w }] = await Promise.all([
-        supabase.from('estimates').select('id, level, project_id, projects(name, living_area_sf, total_area_sf, program)')
+        supabase.from('estimates').select('id, level, project_id, projects(name, living_area_sf, total_area_sf)')
           .eq('org_id', activeOrg.id),
         supabase.from('wbs_nodes').select('code, name').eq('depth', 1),
       ]);
-      type Row = { id: string; level: string; projects: { name: string; living_area_sf: number | null; total_area_sf: number | null; program: Program | null } | null };
+      type Row = { id: string; level: string; project_id: string | null; projects: { name: string; living_area_sf: number | null; total_area_sf: number | null } | null };
       const opts = ((es ?? []) as unknown as Row[]).map((e) => ({
         estimate_id: e.id,
+        project_id: e.project_id,
         label: `${e.projects?.name ?? 'Projeto'} · ${e.level}`,
         living: e.projects?.living_area_sf ?? null,
         total: e.projects?.total_area_sf ?? null,
-        program: e.projects?.program ?? null,
       }));
       setRefs(opts);
       setRefId(opts[0]?.estimate_id ?? '');
@@ -77,9 +80,16 @@ export function NewEstimatePage() {
       if (!ref.living || !ref.total) throw new Error('O modelo de referência não tem áreas cadastradas.');
       const { data, error } = await supabase.from('estimate_items').select('*').eq('estimate_id', refId);
       if (error) throw error;
+      // Best-effort: the reference model's program (counts) enables count-driver
+      // scaling. If the column/data is absent, the engine falls back to area.
+      let refProgram: Program | null = null;
+      if (ref.project_id) {
+        const { data: pj } = await supabase.from('projects').select('program').eq('id', ref.project_id).maybeSingle();
+        refProgram = (pj?.program as Program | undefined) ?? null;
+      }
       const out = generateFromProgram(
         toRefLines(data ?? []),
-        { living_sf: ref.living, total_sf: ref.total }, ref.program,
+        { living_sf: ref.living, total_sf: ref.total }, refProgram,
         target, prog,
       );
       setLines(out.lines);
