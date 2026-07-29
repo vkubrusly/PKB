@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../auth/AuthProvider';
 import type { SpecLevel, WbsNode } from '../lib/database.types';
 import { ImportDialog, type ImportResult } from '../components/ImportDialog';
-import { ESTIMATE_FIELDS, coerceWbsCode, normalizeUnit, parseNumber } from '../lib/importMap';
+import { ESTIMATE_FIELDS, prepareEstimateLines } from '../lib/importMap';
 
 // Import an existing budget table (Buildertrend estimate export, or any spreadsheet)
 // as a project + estimate + line items. The saved estimate is immediately usable
@@ -44,19 +44,16 @@ export function ImportEstimatePage() {
     }).select('id').single();
     if (ee) return { inserted: 0, error: ee.message };
 
-    const rows = mapped.map((r, i) => ({
+    // Collapse hierarchical budgets to leaf items and use the Total column as the
+    // line amount (see prepareEstimateLines) so category subtotals aren't double-counted.
+    const prepared = prepareEstimateLines(mapped, validCodes, defaultCat);
+    const rows = prepared.map((l) => ({
       org_id: activeOrg!.id, estimate_id: est!.id,
-      wbs_code: coerceWbsCode(r.wbs_code, validCodes, defaultCat),
-      line_code: r.line_code?.trim() || null,
-      description: r.description?.trim() || null,
-      qty: parseNumber(r.qty) || 1,
-      unit: normalizeUnit(r.unit),
-      unit_cost: parseNumber(r.unit_cost),
-      price_source: 'catalog' as const,
-      needs_review: false,
-      sort_order: i + 1,
-    })).filter((r) => r.description);
-    if (!rows.length) return { inserted: 0, error: 'Nenhuma linha com "Descrição" preenchida.' };
+      wbs_code: l.wbs_code, line_code: l.line_code, description: l.description,
+      qty: l.qty, unit: l.unit, unit_cost: l.unit_cost,
+      price_source: 'catalog' as const, needs_review: false, sort_order: l.sort_order,
+    }));
+    if (!rows.length) return { inserted: 0, error: 'Nenhuma linha de item encontrada (só cabeçalhos?).' };
 
     const { error: ie } = await supabase.from('estimate_items').insert(rows);
     if (ie) return { inserted: 0, error: ie.message };
@@ -101,8 +98,10 @@ export function ImportEstimatePage() {
           fields={ESTIMATE_FIELDS}
           onClose={() => setImporting(false)}
           onImport={importEstimate}
-          intro={<>Mapeie as colunas da sua planilha. Códigos como <code>3.1.1</code> caem na categoria WBS
-            correspondente; valores em <code>$1,234.56</code> ou <code>1.234,56</code> são interpretados automaticamente.</>}
+          intro={<>Mapeie as colunas. Planilhas hierárquicas (categoria → subcategoria → item) são
+            <strong> agrupadas automaticamente</strong>: só os <strong>itens finais</strong> viram linhas e a coluna
+            <strong> Total</strong> é a fonte do valor (os subtotais de categoria não são contados duas vezes).
+            Códigos como <code>3.1.1</code> caem na categoria WBS correta; <code>$1,234.56</code> e <code>1.234,56</code> são entendidos.</>}
           extra={
             <label className="inline" style={{ margin: '0.5rem 0' }}>Categoria para linhas sem código válido
               <select value={defaultCat} onChange={(e) => setDefaultCat(e.target.value)}>

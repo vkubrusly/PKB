@@ -52,13 +52,67 @@ export const MATERIAL_FIELDS: ImportField[] = [
 ];
 
 export const ESTIMATE_FIELDS: ImportField[] = [
-  { key: 'wbs_code', label: 'Categoria WBS (código)', required: true, aliases: ['wbs', 'cost code', 'code', 'category', 'cod', 'group', 'grupo'] },
-  { key: 'line_code', label: 'Código da linha', aliases: ['line code', 'line', 'item #', 'item number', 'ref', 'código', 'codigo'] },
-  { key: 'description', label: 'Descrição', required: true, aliases: ['description', 'title', 'item', 'name', 'scope', 'descrição', 'descricao'] },
+  { key: 'wbs_code', label: 'Código (COD)', required: true, aliases: ['cod', 'wbs', 'cost code', 'code', 'category', 'group', 'grupo'] },
+  { key: 'description', label: 'Descrição / Item', required: true, aliases: ['item name', 'description', 'title', 'item', 'name', 'scope', 'descrição', 'descricao'] },
   { key: 'qty', label: 'Quantidade', aliases: ['quantity', 'qty', 'qtd', 'quantidade'] },
   { key: 'unit', label: 'Unidade', aliases: ['unit', 'uom', 'un', 'unit type', 'unidade'] },
   { key: 'unit_cost', label: 'Custo unitário', aliases: ['unit cost', 'unit price', 'cost', 'price', 'rate', 'custo unitário', 'custo unitario', 'custo', 'preço', 'preco'] },
+  { key: 'total', label: 'Total da linha', aliases: ['total', 'amount', 'line total', 'valor', 'valor total', 'extended'] },
 ];
+
+export interface PreparedLine {
+  wbs_code: string; line_code: string | null; description: string;
+  qty: number; unit: Unit; unit_cost: number; sort_order: number;
+}
+
+// Normalize a hierarchical code cell: keep "3.1.1" strings; fix Excel float
+// artifacts on 1-decimal headers ("4.0999999999999996" → "4.1").
+export function normalizeCode(raw: string | undefined): string {
+  const s = (raw ?? '').trim();
+  if (!s) return '';
+  if ((s.match(/\./g) ?? []).length >= 2) return s.match(/\d+(?:\.\d+)*/)?.[0] ?? '';
+  const n = Number(s);
+  if (!Number.isFinite(n)) return s.match(/\d+(?:\.\d+)?/)?.[0] ?? '';
+  return Number.isInteger(n) ? String(n) : String(Math.round(n * 10) / 10);
+}
+
+// Turn mapped budget rows into DB-ready estimate lines. Hierarchical budgets
+// (category → subcategory → item) are collapsed to LEAF items only, so category
+// and subcategory subtotal rows aren't double-counted. The "Total" column is the
+// source of truth for the line amount; qty/unit_cost are kept only when they
+// already multiply to that total (so real quantities like "10 @ $255" survive).
+export function prepareEstimateLines(
+  rows: Record<string, string>[], valid: Set<string>, fallback: string,
+): PreparedLine[] {
+  const norm = rows.map((r) => ({
+    code: normalizeCode(r.wbs_code),
+    desc: (r.description ?? '').trim(),
+    qty: parseNumber(r.qty),
+    uc: parseNumber(r.unit_cost),
+    tot: parseNumber(r.total),
+    unit: r.unit,
+  })).filter((r) => r.desc);
+
+  const codes = norm.map((r) => r.code).filter(Boolean);
+  const isAggregate = (c: string) => !!c && codes.some((x) => x !== c && x.startsWith(c + '.'));
+
+  const out: PreparedLine[] = [];
+  let order = 1;
+  for (const r of norm) {
+    if (isAggregate(r.code)) continue; // skip category / subcategory subtotal rows
+    const target = r.tot > 0 ? r.tot : r.qty * r.uc;
+    let qty = r.qty || 1;
+    let uc = r.uc;
+    if (!(uc > 0 && Math.abs(qty * uc - target) < 0.5)) { qty = 1; uc = target; }
+    out.push({
+      wbs_code: coerceWbsCode(r.code, valid, fallback),
+      line_code: r.code || null,
+      description: r.desc,
+      qty, unit: normalizeUnit(r.unit), unit_cost: uc, sort_order: order++,
+    });
+  }
+  return out;
+}
 
 // ---- Value normalizers ------------------------------------------------------
 const UNIT_MAP: Record<string, Unit> = {
