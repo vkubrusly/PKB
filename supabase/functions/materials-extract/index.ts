@@ -17,6 +17,7 @@ import Anthropic from 'npm:@anthropic-ai/sdk@0.68.0';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { encodeBase64 } from 'jsr:@std/encoding@1/base64';
 import { cors, json, parseJson } from '../_shared/cors.ts';
+import { aiErrorMessage, createWithFallback } from '../_shared/ai.ts';
 
 interface MaterialRow {
   name: string;
@@ -58,8 +59,7 @@ Deno.serve(async (req) => {
     const b64 = encodeBase64(buf);
 
     const anthropic = new Anthropic({ apiKey });
-    const resp = await anthropic.messages.create({
-      model: 'claude-opus-5',
+    const { resp } = await createWithFallback(anthropic, {
       max_tokens: 8000,
       messages: [{
         role: 'user',
@@ -106,11 +106,6 @@ Respond with ONLY this JSON:
     const result = parseJson<Extracted>(text);
     return json({ result });
   } catch (e) {
-    const err = e as { status?: number; message?: string; error?: { error?: { message?: string } } };
-    const apiMsg = err?.error?.error?.message;
-    const msg = apiMsg
-      ? `Claude API ${err.status ?? ''}: ${apiMsg}`.trim()
-      : (e instanceof Error ? e.message : String(e));
-    return json({ error: msg }, 500);
+    return json({ error: aiErrorMessage(e) }, 500);
   }
 });

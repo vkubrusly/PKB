@@ -39,3 +39,4 @@ jobs:
           supabase functions deploy product-detail  --project-ref "$PROJECT_REF"
           supabase functions deploy project-extract --project-ref "$PROJECT_REF"
           supabase functions deploy materials-extract --project-ref "$PROJECT_REF"
+          supabase functions deploy estimate-market --project-ref "$PROJECT_REF"

@@ -13,7 +13,7 @@ interface RefOption {
   living: number | null; total: number | null;
 }
 
-type Method = 'model' | 'ai';
+type Method = 'model' | 'ai' | 'market';
 
 export function NewEstimatePage() {
   const { activeOrg } = useAuth();
@@ -193,6 +193,46 @@ export function NewEstimatePage() {
     } finally { setBusy(false); }
   }
 
+  // No reference model: ask the AI to build an estimate from internal price
+  // history + Florida market knowledge, scaled to this project's level & program.
+  async function generateFromMarket() {
+    setBusy(true); setErr(null);
+    try {
+      if (!target.total_sf) throw new Error('Informe a área total (sf) no passo 1.');
+      const { data, error } = await supabase.functions.invoke('estimate-market', {
+        body: { org_id: activeOrg!.id, project: {
+          county: f.county, market: f.market, level: f.level,
+          living_sf: target.living_sf, total_sf: target.total_sf, program: prog,
+        } },
+      });
+      if (error) throw new Error(await funcError(error));
+      if (data?.error) throw new Error(data.error);
+      const r = data.result as { lines: Record<string, unknown>[]; notes?: string; confidence?: string };
+      const got: GeneratedLine[] = (r.lines ?? []).map((l) => {
+        const qty = Number(l.qty) || 0;
+        const unit_cost = Number(l.unit_cost) || 0;
+        return {
+          line_code: (l.line_code as string) ?? null,
+          wbs_code: String(l.wbs_code ?? l.line_code ?? ''),
+          description: String(l.description ?? ''),
+          qty, unit: (l.unit as Unit) ?? 'ea', unit_cost,
+          basis: (l.origin as GeneratedLine['basis']) ?? 'estimated', // shown in Driver col
+          factor: 1, line_total: Math.round(qty * unit_cost * 100) / 100,
+          needs_review: true, price_source: 'estimated' as const,
+        };
+      }).filter((l) => l.wbs_code);
+      if (!got.length) throw new Error('A IA não retornou linhas.');
+      setLines(got);
+      const internal = typeof data.internal_lines === 'number' ? data.internal_lines : 0;
+      setAiNote(`Estimativa por IA (${data.model ?? 'modelo'}) — ${got.length} linhas, ${internal} com histórico interno`
+        + `${r.confidence ? ` · confiança ${r.confidence}` : ''}. Revise cada custo antes de salvar.`);
+      setStep(3);
+    } catch (e) {
+      setErr((e instanceof Error ? e.message : String(e))
+        + ' — Exige a Edge Function "estimate-market" com a chave da Claude API.');
+    } finally { setBusy(false); }
+  }
+
   async function save() {
     setBusy(true); setErr(null);
     try {
@@ -208,7 +248,9 @@ export function NewEstimatePage() {
 
       const { data: est, error: ee } = await supabase.from('estimates').insert({
         org_id: activeOrg!.id, project_id: proj!.id, level: f.level, status: 'draft',
-        notes: method === 'model' ? 'Gerado por estimativa paramétrica (modelo-base).' : 'Gerado por take-off IA das plantas.',
+        notes: method === 'model' ? 'Gerado por estimativa paramétrica (modelo-base).'
+          : method === 'market' ? 'Gerado por IA (histórico interno + mercado FL).'
+          : 'Gerado por take-off IA das plantas.',
       }).select('id').single();
       if (ee) throw ee;
 
@@ -339,6 +381,11 @@ export function NewEstimatePage() {
               <h2>Take-off por IA (plantas)</h2>
               <p className="muted small">A IA lê o PDF das plantas e extrai quantidades por categoria do WBS. Exige a Edge Function com a chave da Claude API.</p>
             </button>
+            <button className={`card method ${method === 'market' ? 'sel' : ''}`} onClick={() => setMethod('market')}>
+              <h2>Estimar por IA (mercado + histórico)</h2>
+              <p className="muted small">Sem modelo de referência: a IA usa seu histórico interno de preços + o mercado da Flórida
+                e monta o orçamento completo, ajustado ao nível e ao programa. Cada linha marcada pela origem.</p>
+            </button>
           </div>
 
           {method === 'model' && (
@@ -356,9 +403,15 @@ export function NewEstimatePage() {
 
           <div className="row-actions">
             <button className="btn" onClick={() => setStep(1)}>Voltar</button>
-            {method === 'model'
-              ? <button className="btn primary" disabled={busy || !refId} onClick={generateFromModel}>{busy ? 'Gerando…' : 'Gerar estimativa'}</button>
-              : <button className="btn primary" disabled={busy} onClick={generateFromAI}>{busy ? 'Processando plantas…' : 'Rodar take-off por IA'}</button>}
+            {method === 'model' && (
+              <button className="btn primary" disabled={busy || !refId} onClick={generateFromModel}>{busy ? 'Gerando…' : 'Gerar estimativa'}</button>
+            )}
+            {method === 'ai' && (
+              <button className="btn primary" disabled={busy} onClick={generateFromAI}>{busy ? 'Processando plantas…' : 'Rodar take-off por IA'}</button>
+            )}
+            {method === 'market' && (
+              <button className="btn primary" disabled={busy} onClick={generateFromMarket}>{busy ? 'Estimando…' : 'Estimar por IA'}</button>
+            )}
           </div>
         </>
       )}
