@@ -15,6 +15,12 @@ const empty = {
 };
 type Draft = typeof empty;
 
+// One parsed row from an AI-read quote PDF, editable before insert.
+interface QRow {
+  name: string; brand: string; model: string; unit: Unit; wbs_code: string;
+  spec_level: SpecLevel; fl_approval: string; specs: string; unit_price: number | null;
+}
+
 export function MaterialsPage() {
   const { activeOrg } = useAuth();
   const [rows, setRows] = useState<Material[]>([]);
@@ -28,6 +34,11 @@ export function MaterialsPage() {
   const [aiBusy, setAiBusy] = useState<string | null>(null); // material_id being processed
   const [aiMsg, setAiMsg] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
+  // AI quote (PDF) import
+  const [quoteFile, setQuoteFile] = useState<File | null>(null);
+  const [quoteBusy, setQuoteBusy] = useState(false);
+  const [quoteRows, setQuoteRows] = useState<QRow[] | null>(null);
+  const [quoteMeta, setQuoteMeta] = useState<{ supplier: string | null; notes: string; confidence: string } | null>(null);
 
   // Bulk-insert materials from a mapped CSV/XLSX (Buildertrend Cost Catalog).
   async function importMaterials(mapped: Record<string, string>[]): Promise<ImportResult> {
@@ -51,6 +62,72 @@ export function MaterialsPage() {
     if (error) return { inserted: 0, error: error.message };
     load();
     return { inserted: payload.length };
+  }
+
+  // supabase-js gives a generic "non-2xx"; the real cause is on error.context.
+  async function funcError(error: unknown): Promise<string> {
+    const ctx = (error as { context?: Response }).context;
+    if (ctx && typeof ctx.json === 'function') {
+      try { const b = await ctx.json(); if (b?.error) return String(b.error); } catch { /* not JSON */ }
+    }
+    return error instanceof Error ? error.message : String(error);
+  }
+
+  const LEVELSET = new Set<SpecLevel>(LEVELS);
+
+  // Read a supplier quote PDF with the AI: extract materials + inferred level/type.
+  async function extractQuote() {
+    if (!quoteFile) return;
+    setQuoteBusy(true); setErr(null); setAiMsg(null);
+    try {
+      const safe = quoteFile.name.normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/[^\w.\-]+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+      const path = `${activeOrg!.id}/cotacoes/${Date.now()}-${safe || 'cotacao.pdf'}`;
+      const up = await supabase.storage.from('plantas').upload(path, quoteFile);
+      if (up.error) throw new Error(`Falha ao subir o PDF: ${up.error.message}`);
+      const { data, error } = await supabase.functions.invoke('materials-extract', { body: { plan_path: path } });
+      if (error) throw new Error(await funcError(error));
+      if (data?.error) throw new Error(data.error);
+      const r = data.result as { supplier: string | null; notes: string; confidence: string; materials: Record<string, unknown>[] };
+      const validCodes = new Set(wbs.map((n) => n.code));
+      const rows: QRow[] = (r.materials ?? []).map((m) => ({
+        name: String(m.name ?? '').trim(),
+        brand: m.brand ? String(m.brand) : '',
+        model: m.model ? String(m.model) : '',
+        unit: normalizeUnit(m.unit ? String(m.unit) : undefined),
+        wbs_code: coerceWbsCode(m.wbs_code ? String(m.wbs_code) : '', validCodes, ''),
+        spec_level: LEVELSET.has(m.spec_level as SpecLevel) ? (m.spec_level as SpecLevel) : 'any',
+        fl_approval: m.fl_approval ? String(m.fl_approval) : '',
+        specs: m.specs ? String(m.specs) : '',
+        unit_price: typeof m.unit_price === 'number' ? m.unit_price : null,
+      })).filter((x) => x.name);
+      setQuoteRows(rows);
+      setQuoteMeta({ supplier: r.supplier, notes: r.notes ?? '', confidence: r.confidence ?? '' });
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    }
+    setQuoteBusy(false);
+  }
+
+  async function confirmQuoteImport() {
+    if (!quoteRows) return;
+    setErr(null);
+    const payload = quoteRows.filter((r) => r.name.trim()).map((r) => ({
+      org_id: activeOrg!.id, name: r.name.trim(),
+      wbs_code: r.wbs_code || null, spec_level: r.spec_level,
+      brand: r.brand || null, model: r.model || null, unit: r.unit,
+      fl_approval: r.fl_approval || null, specs: r.specs || null,
+    }));
+    if (!payload.length) { setErr('Nenhum material para importar.'); return; }
+    const { error } = await supabase.from('materials').insert(payload);
+    if (error) { setErr(error.message); return; }
+    setAiMsg(`${payload.length} material(is) importado(s) da cotação.`);
+    setQuoteRows(null); setQuoteMeta(null); setQuoteFile(null);
+    load();
+  }
+
+  function patchRow(i: number, patch: Partial<QRow>) {
+    setQuoteRows((rows) => rows && rows.map((r, j) => (j === i ? { ...r, ...patch } : r)));
   }
 
   // Call an AI Edge Function (Agente de Preços / Detalhamento) for one material.
@@ -137,7 +214,11 @@ export function MaterialsPage() {
       <header className="page-head">
         <h1>Materiais</h1>
         <div className="row-actions">
-          <button className="btn" onClick={() => setImporting(true)}>⬆ Importar</button>
+          <label className="btn" style={{ cursor: 'pointer' }}>✨ Cotação IA (PDF)
+            <input type="file" accept="application/pdf" style={{ display: 'none' }}
+              onChange={(e) => { setQuoteFile(e.target.files?.[0] ?? null); setQuoteRows(null); setQuoteMeta(null); setErr(null); }} />
+          </label>
+          <button className="btn" onClick={() => setImporting(true)}>⬆ Importar planilha</button>
           <button className="btn primary" onClick={startNew}>Novo material</button>
         </div>
       </header>
@@ -155,6 +236,57 @@ export function MaterialsPage() {
 
       {aiMsg && <p className="success">{aiMsg}</p>}
       {err && <p className="error">{err}</p>}
+
+      {quoteFile && !quoteRows && (
+        <div className="card">
+          <h2 style={{ marginTop: 0 }}>Ler cotação com IA</h2>
+          <p className="muted small">A IA lê o PDF, identifica cada material, sua <strong>categoria</strong> e o
+            <strong> nível</strong> que ele representa — ou marca <em>"todos os níveis"</em> quando é commodity
+            (concreto, vergalhão, madeira genérica). Você revisa tudo antes de gravar.</p>
+          <p><strong>{quoteFile.name}</strong></p>
+          <div className="row-actions">
+            <button className="btn primary" disabled={quoteBusy} onClick={extractQuote}>
+              {quoteBusy ? 'Lendo…' : 'Ler com IA'}</button>
+            <button className="btn" disabled={quoteBusy} onClick={() => setQuoteFile(null)}>Cancelar</button>
+          </div>
+        </div>
+      )}
+
+      {quoteRows && (
+        <div className="card">
+          <h2 style={{ marginTop: 0 }}>Revisar cotação{quoteMeta?.supplier ? ` — ${quoteMeta.supplier}` : ''}</h2>
+          {quoteMeta?.notes && <p className="muted small">{quoteMeta.notes}
+            {quoteMeta.confidence && ` · confiança: ${quoteMeta.confidence}`}</p>}
+          <table className="table">
+            <thead><tr><th>Material</th><th>Categoria</th><th>Nível</th><th>Marca/Modelo</th><th>Unid</th><th className="num">Cotado</th><th></th></tr></thead>
+            <tbody>
+              {quoteRows.length === 0 && <tr><td colSpan={7} className="muted center">A IA não encontrou itens.</td></tr>}
+              {quoteRows.map((r, i) => (
+                <tr key={i}>
+                  <td><input value={r.name} onChange={(e) => patchRow(i, { name: e.target.value })} /></td>
+                  <td><select value={r.wbs_code} onChange={(e) => patchRow(i, { wbs_code: e.target.value })}>
+                    <option value="">—</option>
+                    {wbs.map((n) => <option key={n.code} value={n.code}>{n.code} · {n.name}</option>)}
+                  </select></td>
+                  <td><select value={r.spec_level} onChange={(e) => patchRow(i, { spec_level: e.target.value as SpecLevel })}>
+                    {LEVELS.map((l) => <option key={l} value={l}>{SPEC_LEVEL_LABEL[l]}</option>)}
+                  </select></td>
+                  <td className="muted small">{[r.brand, r.model].filter(Boolean).join(' ') || '—'}</td>
+                  <td className="muted small">{UNIT_LABEL[r.unit] ?? r.unit}</td>
+                  <td className="num muted small">{r.unit_price != null ? `$${r.unit_price}` : '—'}</td>
+                  <td><button className="link danger"
+                    onClick={() => setQuoteRows((rows) => rows && rows.filter((_, j) => j !== i))}>remover</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="row-actions" style={{ marginTop: '.75rem' }}>
+            <button className="btn primary" disabled={quoteRows.length === 0} onClick={confirmQuoteImport}>
+              Importar {quoteRows.length} material(is)</button>
+            <button className="btn" onClick={() => { setQuoteRows(null); setQuoteMeta(null); setQuoteFile(null); }}>Descartar</button>
+          </div>
+        </div>
+      )}
 
       <div className="filters">
         <label className="inline">Nível
