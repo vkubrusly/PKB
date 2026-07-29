@@ -2,13 +2,16 @@ import { Fragment, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../auth/AuthProvider';
-import type { SpecLevel, Unit } from '../lib/database.types';
+import type { Program, SpecLevel, Unit } from '../lib/database.types';
 import {
-  generateEstimate, toRefLines, SUNNY_BASIS, type GeneratedLine,
+  generateFromProgram, toRefLines, EMPTY_PROGRAM, type GeneratedLine,
 } from '../lib/estimateEngine';
 import { money, number, psf, UNIT_LABEL } from '../lib/format';
 
-interface RefOption { estimate_id: string; label: string; living: number | null; total: number | null; }
+interface RefOption {
+  estimate_id: string; label: string;
+  living: number | null; total: number | null; program: Program | null;
+}
 
 type Method = 'model' | 'ai';
 
@@ -23,6 +26,8 @@ export function NewEstimatePage() {
     living: '', total: '', water: '', sewer: '', flood_zone: '', wind: '',
     level: 'affordable' as Exclude<SpecLevel, 'any'>,
   });
+  // Program (deep analysis) — counts that drive multi-factor scaling.
+  const [prog, setProg] = useState<Program>({ ...EMPTY_PROGRAM, garage_bays: 2 });
   const [planFile, setPlanFile] = useState<File | null>(null);
   const [planPath, setPlanPath] = useState<string | null>(null); // uploaded once, reused
   const [extracting, setExtracting] = useState(false);
@@ -46,16 +51,17 @@ export function NewEstimatePage() {
     if (!activeOrg) return;
     (async () => {
       const [{ data: es }, { data: w }] = await Promise.all([
-        supabase.from('estimates').select('id, level, project_id, projects(name, living_area_sf, total_area_sf)')
+        supabase.from('estimates').select('id, level, project_id, projects(name, living_area_sf, total_area_sf, program)')
           .eq('org_id', activeOrg.id),
         supabase.from('wbs_nodes').select('code, name').eq('depth', 1),
       ]);
-      type Row = { id: string; level: string; projects: { name: string; living_area_sf: number | null; total_area_sf: number | null } | null };
+      type Row = { id: string; level: string; projects: { name: string; living_area_sf: number | null; total_area_sf: number | null; program: Program | null } | null };
       const opts = ((es ?? []) as unknown as Row[]).map((e) => ({
         estimate_id: e.id,
         label: `${e.projects?.name ?? 'Projeto'} · ${e.level}`,
         living: e.projects?.living_area_sf ?? null,
         total: e.projects?.total_area_sf ?? null,
+        program: e.projects?.program ?? null,
       }));
       setRefs(opts);
       setRefId(opts[0]?.estimate_id ?? '');
@@ -71,9 +77,10 @@ export function NewEstimatePage() {
       if (!ref.living || !ref.total) throw new Error('O modelo de referência não tem áreas cadastradas.');
       const { data, error } = await supabase.from('estimate_items').select('*').eq('estimate_id', refId);
       if (error) throw error;
-      const out = generateEstimate(
-        toRefLines(data ?? []), SUNNY_BASIS,
-        { living_sf: ref.living, total_sf: ref.total }, target,
+      const out = generateFromProgram(
+        toRefLines(data ?? []),
+        { living_sf: ref.living, total_sf: ref.total }, ref.program,
+        target, prog,
       );
       setLines(out.lines);
       setStep(3);
@@ -120,10 +127,23 @@ export function NewEstimatePage() {
         put('wind', r.wind_speed_mph); put('flood_zone', r.flood_zone);
         return next;
       });
+      // Program counts drive the multi-factor scaling — fill what the AI read.
+      setProg((prev) => {
+        const np = { ...prev };
+        const putN = (k: keyof Program, v: unknown) => {
+          if (typeof v === 'number' && Number.isFinite(v)) { (np as Record<string, number | boolean>)[k] = v; filled.add(k); }
+        };
+        putN('bedrooms', r.bedrooms); putN('full_baths', r.full_baths); putN('half_baths', r.half_baths);
+        putN('kitchens', r.kitchens); putN('laundries', r.laundries); putN('garage_bays', r.garage_bays);
+        putN('stories', r.stories); putN('doors', r.doors); putN('windows', r.windows);
+        if (typeof r.has_inlaw === 'boolean') { np.has_inlaw = r.has_inlaw; filled.add('has_inlaw'); }
+        return np;
+      });
       setAiFilled(filled);
-      const extra = [r.bedrooms && `${r.bedrooms} quartos`, r.bathrooms && `${r.bathrooms} banheiros`, r.notes]
+      const extra = [r.kitchens && `${r.kitchens} cozinha(s)`, r.full_baths && `${r.full_baths} banheiro(s)`,
+        r.bedrooms && `${r.bedrooms} quarto(s)`, r.has_inlaw && 'suíte in-law', r.notes]
         .filter(Boolean).join(' · ');
-      setAiNote(`IA preencheu ${filled.size} campo(s) das plantas${extra ? ` — ${extra}` : ''}. Revise antes de continuar.`);
+      setAiNote(`IA analisou as plantas${extra ? ` — ${extra}` : ''}. Confirme o programa e os campos abaixo antes de orçar.`);
     } catch (e) {
       setErr(
         (e instanceof Error ? e.message : String(e)) +
@@ -162,6 +182,7 @@ export function NewEstimatePage() {
         living_area_sf: target.living_sf || null, total_area_sf: target.total_sf || null,
         flood_zone: f.flood_zone || null, wind_speed_mph: f.wind ? Number(f.wind) : null,
         water: f.water || null, sewer: f.sewer || null, initial_level: f.level,
+        program: prog,
       }).select('id').single();
       if (pe) throw pe;
 
@@ -254,6 +275,31 @@ export function NewEstimatePage() {
                 <option value="affordable">Affordable</option><option value="essential">Essential</option><option value="signature">Signature</option><option value="luxury">Luxury</option>
               </select></label>
           </div>
+
+          <div className="card">
+            <h2 style={{ marginTop: 0 }}>Programa do projeto
+              <span className="muted small" style={{ fontWeight: 400 }}> — o que faz o custo variar além da área</span></h2>
+            <p className="muted small">Cozinhas, banheiros e aberturas são custo <strong>por contagem</strong> (não por sf). O motor
+              escala cada categoria pelo driver certo — por isso uma 2ª cozinha ou um banheiro a mais entram no orçamento
+              de verdade. Confira os números que a IA leu.</p>
+            <div className="form-grid prog-grid">
+              <ProgNum label="Quartos" k="bedrooms" prog={prog} setProg={setProg} ai={aiFilled} />
+              <ProgNum label="Banheiros (full)" k="full_baths" prog={prog} setProg={setProg} ai={aiFilled} />
+              <ProgNum label="Lavabos (½)" k="half_baths" prog={prog} setProg={setProg} ai={aiFilled} />
+              <ProgNum label="Cozinhas" k="kitchens" prog={prog} setProg={setProg} ai={aiFilled} />
+              <ProgNum label="Lavanderias" k="laundries" prog={prog} setProg={setProg} ai={aiFilled} />
+              <ProgNum label="Vagas de garagem" k="garage_bays" prog={prog} setProg={setProg} ai={aiFilled} />
+              <ProgNum label="Pavimentos" k="stories" prog={prog} setProg={setProg} ai={aiFilled} />
+              <ProgNum label="Portas (total)" k="doors" prog={prog} setProg={setProg} ai={aiFilled} />
+              <ProgNum label="Janelas (total)" k="windows" prog={prog} setProg={setProg} ai={aiFilled} />
+              <label className="checkbox">
+                <input type="checkbox" checked={prog.has_inlaw}
+                  onChange={(e) => setProg({ ...prog, has_inlaw: e.target.checked })} />
+                Suíte in-law {aiFilled.has('has_inlaw') && <span className="ai-tag">IA</span>}
+              </label>
+            </div>
+          </div>
+
           <div className="row-actions">
             <button className="btn primary" disabled={!f.name || !f.living || !f.total} onClick={() => setStep(2)}>
               Continuar
@@ -309,7 +355,7 @@ export function NewEstimatePage() {
 
           <div className="tablewrap">
             <table className="table estimate">
-              <thead><tr><th>COD</th><th>Item</th><th className="num">Qtd</th><th>Un</th><th>Base</th><th className="num">Custo Un.</th><th className="num">Total</th></tr></thead>
+              <thead><tr><th>COD</th><th>Item</th><th className="num">Qtd</th><th>Un</th><th>Driver</th><th className="num">Custo Un.</th><th className="num">Total</th></tr></thead>
               <tbody>
                 {cats.map((cat) => {
                   const its = lines.map((l, i) => ({ l, i })).filter(({ l }) => (l.line_code ?? l.wbs_code).split('.')[0] === cat);
@@ -346,5 +392,18 @@ export function NewEstimatePage() {
         </>
       )}
     </div>
+  );
+}
+
+type ProgNumKey = Exclude<keyof Program, 'has_inlaw'>;
+function ProgNum(
+  { label, k, prog, setProg, ai }:
+  { label: string; k: ProgNumKey; prog: Program; setProg: (p: Program) => void; ai: Set<string> },
+) {
+  return (
+    <label>{label} {ai.has(k) && <span className="ai-tag">IA</span>}
+      <input type="number" min={0} value={prog[k]}
+        onChange={(e) => setProg({ ...prog, [k]: Math.max(0, Math.floor(Number(e.target.value) || 0)) })} />
+    </label>
   );
 }

@@ -65,6 +65,20 @@ export interface SpecLevelRow {
   description: string | null;
 }
 
+// Room program (counts) from the deep plan analysis — drives multi-factor scaling.
+export interface Program {
+  bedrooms: number;
+  full_baths: number;
+  half_baths: number;
+  kitchens: number;
+  laundries: number;
+  garage_bays: number;
+  stories: number;
+  doors: number;
+  windows: number;
+  has_inlaw: boolean;
+}
+
 export interface Project {
   id: string;
   org_id: string;
@@ -82,6 +96,7 @@ export interface Project {
   contract: ContractType | null;
   initial_level: SpecLevel | null;
   arv: number | null;
+  program: Program | null;
   created_at: string;
   updated_at: string;
 }

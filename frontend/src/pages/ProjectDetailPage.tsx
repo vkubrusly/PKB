@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import type { Estimate, EstimateItem, Project, WbsNode } from '../lib/database.types';
+import type { Estimate, EstimateItem, Program, Project, WbsNode } from '../lib/database.types';
+import { EMPTY_PROGRAM } from '../lib/estimateEngine';
 import {
   money, number, psf, SPEC_LEVEL_LABEL, UNIT_LABEL, WATER_LABEL, SEWER_LABEL,
 } from '../lib/format';
@@ -11,6 +12,8 @@ export function ProjectDetailPage() {
   const nav = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [prog, setProg] = useState<Program | null>(null);
+  const [progSaved, setProgSaved] = useState(false);
   const [estimates, setEstimates] = useState<Estimate[]>([]);
   const [activeEstimate, setActiveEstimate] = useState<string | null>(null);
   const [items, setItems] = useState<EstimateItem[]>([]);
@@ -29,6 +32,7 @@ export function ProjectDetailPage() {
       if (pe) setErr(pe.message);
       if (ee) setErr(ee.message);
       setProject(p ?? null);
+      setProg(p ? { ...EMPTY_PROGRAM, ...(p.program ?? {}) } : null);
       setEstimates(es ?? []);
       setWbs(w ?? []);
       setActiveEstimate((es ?? [])[0]?.id ?? null);
@@ -61,6 +65,14 @@ export function ProjectDetailPage() {
   if (!project) return <p className="error">Projeto não encontrado. <Link to="/projetos">Voltar</Link></p>;
 
   const est = estimates.find((e) => e.id === activeEstimate);
+
+  async function saveProgram() {
+    if (!project || !prog) return;
+    setProgSaved(false); setErr(null);
+    const { error } = await supabase.from('projects').update({ program: prog }).eq('id', project.id);
+    if (error) setErr(error.message);
+    else { setProject({ ...project, program: prog }); setProgSaved(true); }
+  }
 
   async function removeProject() {
     if (!project) return;
@@ -97,6 +109,34 @@ export function ProjectDetailPage() {
         <Fact label="Flood zone" value={project.flood_zone} />
         <Fact label="Wind speed" value={project.wind_speed_mph ? `${project.wind_speed_mph} mph` : null} />
       </section>
+
+      {prog && (
+        <section className="card">
+          <h2 style={{ marginTop: 0 }}>Programa
+            <span className="muted small" style={{ fontWeight: 400 }}> — contagens que dirigem a escala de custo por driver</span></h2>
+          <div className="form-grid prog-grid">
+            {([
+              ['bedrooms', 'Quartos'], ['full_baths', 'Banheiros (full)'], ['half_baths', 'Lavabos (½)'],
+              ['kitchens', 'Cozinhas'], ['laundries', 'Lavanderias'], ['garage_bays', 'Vagas garagem'],
+              ['stories', 'Pavimentos'], ['doors', 'Portas'], ['windows', 'Janelas'],
+            ] as [Exclude<keyof Program, 'has_inlaw'>, string][]).map(([k, label]) => (
+              <label key={k}>{label}
+                <input type="number" min={0} value={prog[k]}
+                  onChange={(e) => { setProg({ ...prog, [k]: Math.max(0, Math.floor(Number(e.target.value) || 0)) }); setProgSaved(false); }} />
+              </label>
+            ))}
+            <label className="checkbox">
+              <input type="checkbox" checked={prog.has_inlaw}
+                onChange={(e) => { setProg({ ...prog, has_inlaw: e.target.checked }); setProgSaved(false); }} />
+              Suíte in-law
+            </label>
+          </div>
+          <div className="row-actions" style={{ marginTop: '.5rem' }}>
+            <button className="btn primary" onClick={saveProgram}>Salvar programa</button>
+            {progSaved && <span className="success small">Programa salvo ✓</span>}
+          </div>
+        </section>
+      )}
 
       {estimates.length === 0 ? (
         <p className="muted">Nenhum orçamento para este projeto ainda.</p>

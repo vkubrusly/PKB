@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../auth/AuthProvider';
-import type { SpecLevel, WbsNode } from '../lib/database.types';
+import type { Program, SpecLevel, WbsNode } from '../lib/database.types';
 import { ImportDialog, type ImportResult } from '../components/ImportDialog';
 import { ESTIMATE_FIELDS, prepareEstimateLines } from '../lib/importMap';
+import { EMPTY_PROGRAM } from '../lib/estimateEngine';
 
 // Import an existing budget table (Buildertrend estimate export, or any spreadsheet)
 // as a project + estimate + line items. The saved estimate is immediately usable
@@ -18,7 +19,10 @@ export function ImportEstimatePage() {
     living: '', total: '', county: '', market: '',
   });
   const [defaultCat, setDefaultCat] = useState('20'); // fallback category for uncoded lines
+  const [prog, setProg] = useState<Program>({ ...EMPTY_PROGRAM, garage_bays: 2 });
   const [importing, setImporting] = useState(false);
+  const setP = (k: Exclude<keyof Program, 'has_inlaw'>, v: string) =>
+    setProg({ ...prog, [k]: Math.max(0, Math.floor(Number(v) || 0)) });
 
   useEffect(() => {
     supabase.from('wbs_nodes').select('*').order('sort_order')
@@ -34,7 +38,7 @@ export function ImportEstimatePage() {
       org_id: activeOrg!.id, name: f.name.trim(),
       county: f.county || null, market: f.market || null,
       living_area_sf: Number(f.living) || null, total_area_sf: Number(f.total) || null,
-      initial_level: f.level,
+      initial_level: f.level, program: prog,
     }).select('id').single();
     if (pe) return { inserted: 0, error: pe.message };
 
@@ -83,6 +87,24 @@ export function ImportEstimatePage() {
           onChange={(e) => setF({ ...f, living: e.target.value })} /></label>
         <label>Total Area (sf)<input type="number" value={f.total}
           onChange={(e) => setF({ ...f, total: e.target.value })} /></label>
+      </div>
+
+      <div className="card">
+        <h2 style={{ marginTop: 0 }}>Programa do modelo
+          <span className="muted small" style={{ fontWeight: 400 }}> — usado para escalar novos orçamentos por driver</span></h2>
+        <p className="muted small">Informe as contagens deste modelo (ex.: Sunny = 4 quartos, 2 banheiros, 1 cozinha). Assim,
+          ao estimar uma casa nova a partir dele, cozinhas/banheiros/aberturas a mais entram pelo fator certo — não só pela área.</p>
+        <div className="form-grid prog-grid">
+          <label>Quartos<input type="number" min={0} value={prog.bedrooms} onChange={(e) => setP('bedrooms', e.target.value)} /></label>
+          <label>Banheiros (full)<input type="number" min={0} value={prog.full_baths} onChange={(e) => setP('full_baths', e.target.value)} /></label>
+          <label>Lavabos (½)<input type="number" min={0} value={prog.half_baths} onChange={(e) => setP('half_baths', e.target.value)} /></label>
+          <label>Cozinhas<input type="number" min={0} value={prog.kitchens} onChange={(e) => setP('kitchens', e.target.value)} /></label>
+          <label>Lavanderias<input type="number" min={0} value={prog.laundries} onChange={(e) => setP('laundries', e.target.value)} /></label>
+          <label>Vagas de garagem<input type="number" min={0} value={prog.garage_bays} onChange={(e) => setP('garage_bays', e.target.value)} /></label>
+          <label>Pavimentos<input type="number" min={0} value={prog.stories} onChange={(e) => setP('stories', e.target.value)} /></label>
+          <label>Portas (total)<input type="number" min={0} value={prog.doors} onChange={(e) => setP('doors', e.target.value)} /></label>
+          <label>Janelas (total)<input type="number" min={0} value={prog.windows} onChange={(e) => setP('windows', e.target.value)} /></label>
+        </div>
       </div>
 
       <div className="row-actions">

@@ -234,3 +234,13 @@ label.checkbox input { width: auto; }
 /* Destructive outline button (e.g. Excluir projeto) */
 .btn.danger-outline { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
 .btn.danger-outline:hover:not(:disabled) { background: color-mix(in srgb, var(--danger) 10%, transparent); }
+
+/* ---- Program (counts) grid + driver badges ---- */
+.prog-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+.prog-grid input[type="number"] { width: 100%; }
+.basis.kitchen { color: #7a5bb0; border-color: #7a5bb0; }
+.basis.bath { color: #2f8fb0; border-color: #2f8fb0; }
+.basis.opening { color: #b07a2f; border-color: #b07a2f; }
+.basis.garage { color: #6b6b6b; border-color: #6b6b6b; }
+.basis.bedroom { color: #5a8f7b; border-color: #5a8f7b; }
+.basis.fixed { color: var(--muted); border-color: var(--border); }
