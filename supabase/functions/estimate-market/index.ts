@@ -41,7 +41,9 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
     if (!apiKey) return json({ error: 'ANTHROPIC_API_KEY não configurada' }, 500);
 
-    const { org_id, project } = await req.json();
+    const body = await req.json();
+    const { org_id, project } = body;
+    const research = typeof body.research === 'string' ? body.research.trim() : '';
     if (!org_id || !project) return json({ error: 'org_id e project são obrigatórios' }, 400);
 
     const supabase = createClient(
@@ -104,36 +106,10 @@ COUNTY: ${project.county ?? '(unknown)'}   MARKET: ${project.market ?? '(unknown
 LIVING: ${project.living_sf ?? '?'} sf   TOTAL CONSTRUCTED: ${project.total_sf ?? '?'} sf
 PROGRAM: ${pg.bedrooms ?? '?'} bed / ${pg.full_baths ?? '?'} full bath / ${pg.half_baths ?? 0} half / ${pg.kitchens ?? 1} kitchen(s) / ${pg.laundries ?? 1} laundry / garage ${pg.garage_bays ?? 2} bay(s) / ${pg.stories ?? 1} story / ${pg.doors ?? '?'} doors / ${pg.windows ?? '?'} windows${pg.has_inlaw ? ' / in-law suite' : ''}`;
 
+    // Single generation call, NO web tool here (web research is a separate,
+    // decoupled invocation — see the market-research function — so neither call
+    // exceeds the Edge Function resource limit). `research` arrives pre-fetched.
     const anthropic = new Anthropic({ apiKey });
-
-    // STEP 1 — LIVE WEB RESEARCH. A search-only turn returns prose findings, so
-    // the web tool is always exercised and can't break the JSON step. This is
-    // the "feed from outside" the estimate uses on every run.
-    let research = '';
-    let usedWeb = false;
-    try {
-      const r = await createWithFallback(anthropic, {
-        max_tokens: 1600,
-        messages: [{
-          role: 'user',
-          content: [{
-            type: 'text',
-            text:
-`Research CURRENT (this month) residential construction prices in ${project.county ?? 'Central Florida'}, FL,
-for a ${project.level ?? 'essential'}-level single-family home (~${project.total_sf ?? 2000} sf). Use web_search.
-Find current unit prices for the volatile/large items: concrete & slab, framing lumber, roof trusses, shingles,
-impact & vinyl windows, HVAC, plumbing, electrical, drywall, cabinets & countertops, LVP/tile flooring,
-appliances, well drilling, septic (conventional & nitrogen-reducing), driveway/pavers, sod/landscaping.
-Also find this county's current impact fees and building permit fee.
-Return a concise bulleted list: "item — $price per unit — source (site)". Flag volatile items (lumber, steel, concrete).`,
-          }],
-        }],
-      }, { webSearch: true, maxUses: 6 });
-      research = extractText(r.resp).trim();
-      usedWeb = r.usedWeb && research.length > 0;
-    } catch { /* research is best-effort; fall back to cost book + internal data */ }
-
-    // STEP 2 — GENERATE the JSON estimate (no tools) from cost book + internal history + fresh research.
     const params = {
       max_tokens: 8000,
       messages: [{
@@ -185,7 +161,7 @@ Respond with ONLY this JSON:
     };
     const { resp, model } = await createWithFallback(anthropic, params);
     const result = parseJson<Result>(extractText(resp));
-    return json({ result, model, used_web: usedWeb, research: research.slice(0, 3000), internal_lines: book.size });
+    return json({ result, model, used_web: research.length > 0, research: research.slice(0, 3000), internal_lines: book.size });
   } catch (e) {
     return json({ error: aiErrorMessage(e) }, 500);
   }

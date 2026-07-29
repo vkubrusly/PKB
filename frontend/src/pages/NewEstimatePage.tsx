@@ -258,11 +258,24 @@ export function NewEstimatePage() {
   // No reference model: ask the AI to build an estimate from internal price
   // history + Florida market knowledge, scaled to this project's level & program.
   async function generateFromMarket() {
-    setBusy(true); setErr(null);
+    setBusy(true); setErr(null); setResearch(null);
     try {
       if (!target.total_sf) throw new Error('Informe a área total (sf) no passo 1.');
+      // Step 1 (decoupled) — live web research. Best-effort: if it fails or the
+      // account lacks web search, we still generate from cost book + history.
+      let researchText = ''; let usedWeb = false;
+      try {
+        const rr = await supabase.functions.invoke('market-research', {
+          body: { county: f.county, level: f.level, total_sf: target.total_sf },
+        });
+        if (!rr.error && !rr.data?.error && typeof rr.data?.research === 'string') {
+          researchText = rr.data.research.trim();
+          usedWeb = !!rr.data.used_web && researchText.length > 0;
+        }
+      } catch { /* research optional */ }
+      // Step 2 — generate the estimate (no web here), fed the research.
       const { data, error } = await supabase.functions.invoke('estimate-market', {
-        body: { org_id: activeOrg!.id, project: {
+        body: { org_id: activeOrg!.id, research: researchText, project: {
           county: f.county, market: f.market, level: f.level,
           living_sf: target.living_sf, total_sf: target.total_sf, program: prog,
         } },
@@ -284,11 +297,11 @@ export function NewEstimatePage() {
         };
       }).filter((l) => l.wbs_code);
       if (!got.length) throw new Error('A IA não retornou linhas.');
-      setResearch(typeof data.research === 'string' && data.research.trim() ? data.research.trim() : null);
+      setResearch(researchText || null);
       const reg = await withRegional(got);
       setLines(reg.lines);
       const internal = typeof data.internal_lines === 'number' ? data.internal_lines : 0;
-      const base = `Estimativa IA (${data.model ?? 'modelo'}${data.used_web ? ' + busca web' : ''}) — ${got.length} linhas · `
+      const base = `Estimativa IA (${data.model ?? 'modelo'}${usedWeb ? ' + busca web' : ''}) — ${got.length} linhas · `
         + `${internal} categorias c/ histórico interno${r.confidence ? ` · confiança ${r.confidence}` : ''}`;
       setGenNote({ text: base + (reg.summary ? ` · ${reg.summary}` : reg.error ? ` · ⚠ ${reg.error}` : ''), warn: !!reg.error });
       setStep(3);

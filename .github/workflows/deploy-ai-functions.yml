@@ -41,3 +41,4 @@ jobs:
           supabase functions deploy materials-extract --project-ref "$PROJECT_REF"
           supabase functions deploy estimate-market --project-ref "$PROJECT_REF"
           supabase functions deploy county-costs --project-ref "$PROJECT_REF"
+          supabase functions deploy market-research --project-ref "$PROJECT_REF"
