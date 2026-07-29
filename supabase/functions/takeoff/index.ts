@@ -16,6 +16,7 @@
 
 import Anthropic from 'npm:@anthropic-ai/sdk@0.68.0';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { encodeBase64 } from 'jsr:@std/encoding@1/base64';
 import { cors, json } from '../_shared/cors.ts';
 
 const WBS = `
@@ -85,7 +86,12 @@ Deno.serve(async (req) => {
     // Download the plans from Storage and base64-encode for the document block.
     const { data: file, error: dlErr } = await supabase.storage.from('plantas').download(plan_path);
     if (dlErr || !file) return json({ error: `Falha ao baixar plantas: ${dlErr?.message}` }, 400);
-    const b64 = base64(new Uint8Array(await file.arrayBuffer()));
+    const buf = await file.arrayBuffer();
+    // Claude's PDF support caps at ~32MB / 100 pages — fail clearly instead of dying.
+    if (buf.byteLength > 30 * 1024 * 1024) {
+      return json({ error: `Plantas muito grandes (${(buf.byteLength / 1048576).toFixed(1)} MB). Limite ~30 MB — envie um PDF menor ou só as pranchas necessárias.` }, 413);
+    }
+    const b64 = encodeBase64(buf); // fast native base64 (avoids CPU/memory limit → 546)
 
     const areaHint = target?.living_sf
       ? `The project is ~${target.living_sf} sf living / ${target.total_sf} sf total — sanity-check totals against this.`
@@ -139,10 +145,4 @@ Deno.serve(async (req) => {
 interface RawLine {
   wbs_code: string; line_code: string; description: string;
   qty: number; unit: string; unit_cost: number; confidence: string;
-}
-
-function base64(bytes: Uint8Array): string {
-  let bin = '';
-  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-  return btoa(bin);
 }

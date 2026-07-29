@@ -10,6 +10,7 @@
 
 import Anthropic from 'npm:@anthropic-ai/sdk@0.68.0';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { encodeBase64 } from 'jsr:@std/encoding@1/base64';
 import { cors, json, parseJson } from '../_shared/cors.ts';
 
 interface Extracted {
@@ -42,7 +43,11 @@ Deno.serve(async (req) => {
     );
     const { data: file, error: dlErr } = await supabase.storage.from('plantas').download(plan_path);
     if (dlErr || !file) return json({ error: `Falha ao baixar plantas: ${dlErr?.message}` }, 400);
-    const b64 = base64(new Uint8Array(await file.arrayBuffer()));
+    const buf = await file.arrayBuffer();
+    if (buf.byteLength > 30 * 1024 * 1024) {
+      return json({ error: `Plantas muito grandes (${(buf.byteLength / 1048576).toFixed(1)} MB). Limite ~30 MB.` }, 413);
+    }
+    const b64 = encodeBase64(buf); // fast native base64 (avoids CPU/memory limit → 546)
 
     const anthropic = new Anthropic({ apiKey });
     const resp = await anthropic.messages.create({
@@ -80,9 +85,3 @@ Respond with ONLY this JSON:
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
   }
 });
-
-function base64(bytes: Uint8Array): string {
-  let bin = '';
-  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
-  return btoa(bin);
-}
