@@ -80,6 +80,22 @@ export function resolveDriver(lineCode: string | null, wbsCode: string): Driver 
   return DRIVER_BY_CATEGORY[code.split('.')[0]] ?? 'fixed';
 }
 
+// Finish-cost index by spec level (relative to affordable). Applied to
+// FINISH-sensitive categories so changing the level actually moves the price:
+// higher levels buy better cabinets, counters, flooring, trim, fixtures.
+export const FINISH_INDEX: Record<string, number> = {
+  affordable: 1, essential: 1.25, signature: 1.6, luxury: 2.2, any: 1.25,
+};
+// Categories whose cost is driven by finish level (not structural).
+const FINISH_CATEGORIES = new Set(['4', '7', '8', '9', '10', '12', '14']);
+
+export function finishFactor(cat: string, refLevel?: string | null, tgtLevel?: string | null): number {
+  if (!refLevel || !tgtLevel || !FINISH_CATEGORIES.has(cat)) return 1;
+  const rf = FINISH_INDEX[refLevel] ?? 1;
+  const tf = FINISH_INDEX[tgtLevel] ?? 1;
+  return rf ? tf / rf : 1;
+}
+
 function baths(p: Program | null): number {
   return p ? p.full_baths + 0.5 * (p.half_baths || 0) : 0;
 }
@@ -117,10 +133,12 @@ export function generateFromProgram(
   refItems: RefLine[], refA: Areas, refP: Program | null,
   tgtA: Areas, tgtP: Program | null,
   driverOverride?: Record<string, Driver>,
+  refLevel?: string | null, tgtLevel?: string | null,
 ): { lines: GeneratedLine[]; total: number } {
   const lines = refItems.map((it) => {
     const driver = (it.line_code && driverOverride?.[it.line_code]) || resolveDriver(it.line_code, it.wbs_code);
-    const factor = driverRatio(driver, refA, refP, tgtA, tgtP);
+    const cat = (it.line_code || it.wbs_code || '').split('.')[0];
+    const factor = driverRatio(driver, refA, refP, tgtA, tgtP) * finishFactor(cat, refLevel, tgtLevel);
     const unit_cost = round2(it.unit_cost * factor);
     return {
       ...it, basis: driver, factor: round2(factor), unit_cost,

@@ -14,18 +14,37 @@ export function modelChain(): string[] {
     .filter((v, i, a) => a.indexOf(v) === i);
 }
 
+// Create a message with:
+//  • model fallback — fall through ONLY on model-availability errors (404/403);
+//  • optional web search — attach Anthropic's web_search tool, and if the
+//    account rejects it (400 tool error) retry the same model WITHOUT the tool,
+//    so generation still succeeds (just without live web results).
 // deno-lint-ignore no-explicit-any
-export async function createWithFallback(anthropic: Anthropic, params: Record<string, any>) {
+export async function createWithFallback(
+  anthropic: Anthropic,
+  params: Record<string, any>,
+  opts: { webSearch?: boolean; maxUses?: number } = {},
+) {
+  const tool = opts.webSearch
+    ? { type: 'web_search_20250305', name: 'web_search', max_uses: opts.maxUses ?? 5 }
+    : null;
   const models = modelChain();
   let lastErr: unknown;
   for (const model of models) {
-    try {
-      const resp = await anthropic.messages.create({ ...params, model });
-      return { resp, model };
-    } catch (e) {
-      const status = (e as { status?: number })?.status;
-      if (status === 404 || status === 403) { lastErr = e; continue; } // model unavailable → try next
-      throw e; // real error (credits, bad request, rate limit) → surface
+    for (const useTool of (tool ? [true, false] : [false])) {
+      try {
+        // deno-lint-ignore no-explicit-any
+        const body: Record<string, any> = { ...params, model };
+        if (useTool && tool) body.tools = [...(params.tools ?? []), tool];
+        const resp = await anthropic.messages.create(body);
+        return { resp, model, usedWeb: useTool };
+      } catch (e) {
+        const status = (e as { status?: number })?.status;
+        const msg = String((e as { message?: string })?.message ?? '');
+        if (useTool && status === 400 && /tool|web[_ ]?search|search/i.test(msg)) continue; // drop tool, retry
+        if (status === 404 || status === 403) { lastErr = e; break; }                        // model → next
+        throw e;                                                                             // real error → surface
+      }
     }
   }
   throw lastErr;

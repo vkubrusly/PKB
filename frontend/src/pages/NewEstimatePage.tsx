@@ -9,7 +9,7 @@ import {
 import { money, number, psf, UNIT_LABEL } from '../lib/format';
 
 interface RefOption {
-  estimate_id: string; project_id: string | null; label: string;
+  estimate_id: string; project_id: string | null; label: string; level: string;
   living: number | null; total: number | null;
 }
 
@@ -63,6 +63,7 @@ export function NewEstimatePage() {
         estimate_id: e.id,
         project_id: e.project_id,
         label: `${e.projects?.name ?? 'Projeto'} · ${e.level}`,
+        level: e.level,
         living: e.projects?.living_area_sf ?? null,
         total: e.projects?.total_area_sf ?? null,
       }));
@@ -90,9 +91,9 @@ export function NewEstimatePage() {
       const out = generateFromProgram(
         toRefLines(data ?? []),
         { living_sf: ref.living, total_sf: ref.total }, refProgram,
-        target, prog,
+        target, prog, undefined, ref.level, f.level,
       );
-      setLines(out.lines);
+      setLines(await withRegional(out.lines));
       setStep(3);
     } catch (e) { setErr(e instanceof Error ? e.message : String(e)); }
     finally { setBusy(false); }
@@ -122,6 +123,51 @@ export function NewEstimatePage() {
       try { const b = await ctx.json(); if (b?.error) return String(b.error); } catch { /* not JSON */ }
     }
     return error instanceof Error ? error.message : String(error);
+  }
+
+  // Regional intelligence: overlay county impact/permit fees and the water/sewer
+  // SYSTEM cost (well drilling, septic, or municipal taps) onto generated lines,
+  // so a different county — or switching to a well — actually changes the price.
+  // Best-effort: if the county is unknown or the call fails, lines pass through.
+  async function withRegional(lines: GeneratedLine[]): Promise<GeneratedLine[]> {
+    if (!f.county) return lines;
+    try {
+      const { data, error } = await supabase.functions.invoke('county-costs', {
+        body: {
+          county: f.county, state: 'FL', water: f.water || 'municipal', sewer: f.sewer || 'municipal',
+          level: f.level, living_sf: target.living_sf, total_sf: target.total_sf,
+        },
+      });
+      if (error || data?.error) return lines;
+      const r = data.result as {
+        county: string | null; impact_fees: number | null; building_permit: number | null;
+        water: { description: string; cost: number } | null;
+        sewer: { description: string; cost: number } | null;
+      };
+      const round2 = (x: number) => Math.round(x * 100) / 100;
+      const out = [...lines];
+      const setOrInsert = (match: RegExp, cat: string, code: string, desc: string, cost: number | null | undefined) => {
+        if (cost == null || !(cost > 0)) return;
+        const c = round2(cost);
+        const i = out.findIndex((l) => match.test(l.description) && (l.line_code ?? l.wbs_code).split('.')[0] === cat);
+        if (i >= 0) {
+          out[i] = { ...out[i], description: desc, qty: 1, unit: 'ls' as Unit, unit_cost: c, line_total: c, needs_review: true };
+        } else {
+          out.push({
+            line_code: code, wbs_code: cat === '1' ? '1.1' : cat, description: desc, qty: 1, unit: 'ls' as Unit,
+            unit_cost: c, basis: 'fixed', factor: 1, line_total: c, needs_review: true, price_source: 'estimated',
+          });
+        }
+      };
+      const cty = r.county ?? f.county;
+      setOrInsert(/impact fee/i, '1', '1.1.IMPACT', `Impact fees — ${cty}`, r.impact_fees);
+      setOrInsert(/permit/i, '1', '1.1.PERMIT', `Building permit — ${cty}`, r.building_permit);
+      if (f.water) setOrInsert(/well|po[çc]o|water (tap|meter|connection|impact)/i, '11', '11.WATER',
+        r.water?.description ?? (f.water === 'well' ? 'Poço (perfuração + bomba)' : 'Água municipal (tap)'), r.water?.cost);
+      if (f.sewer) setOrInsert(/septic|s[ée]ptico|sewer (tap|connection)|drainfield/i, '11', '11.SEWER',
+        r.sewer?.description ?? 'Sistema de esgoto', r.sewer?.cost);
+      return out;
+    } catch { return lines; }
   }
 
   // Document-first: read the plans and pre-fill the project fields.
@@ -183,7 +229,7 @@ export function NewEstimatePage() {
       if (error) throw error;
       const got = (data?.lines ?? []) as GeneratedLine[];
       if (!got.length) throw new Error('A IA não retornou linhas. Revise as plantas.');
-      setLines(got);
+      setLines(await withRegional(got));
       setStep(3);
     } catch (e) {
       setErr(
@@ -222,10 +268,11 @@ export function NewEstimatePage() {
         };
       }).filter((l) => l.wbs_code);
       if (!got.length) throw new Error('A IA não retornou linhas.');
-      setLines(got);
+      setLines(await withRegional(got));
       const internal = typeof data.internal_lines === 'number' ? data.internal_lines : 0;
-      setAiNote(`Estimativa por IA (${data.model ?? 'modelo'}) — ${got.length} linhas, ${internal} com histórico interno`
-        + `${r.confidence ? ` · confiança ${r.confidence}` : ''}. Revise cada custo antes de salvar.`);
+      setAiNote(`Estimativa por IA (${data.model ?? 'modelo'}${data.used_web ? ' + busca web' : ''}) — ${got.length} linhas, `
+        + `${internal} categorias com histórico interno${r.confidence ? ` · confiança ${r.confidence}` : ''}. `
+        + 'Revise cada custo antes de salvar.');
       setStep(3);
     } catch (e) {
       setErr((e instanceof Error ? e.message : String(e))

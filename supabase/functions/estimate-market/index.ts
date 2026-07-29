@@ -104,7 +104,7 @@ LIVING: ${project.living_sf ?? '?'} sf   TOTAL CONSTRUCTED: ${project.total_sf ?
 PROGRAM: ${pg.bedrooms ?? '?'} bed / ${pg.full_baths ?? '?'} full bath / ${pg.half_baths ?? 0} half / ${pg.kitchens ?? 1} kitchen(s) / ${pg.laundries ?? 1} laundry / garage ${pg.garage_bays ?? 2} bay(s) / ${pg.stories ?? 1} story / ${pg.doors ?? '?'} doors / ${pg.windows ?? '?'} windows${pg.has_inlaw ? ' / in-law suite' : ''}`;
 
     const anthropic = new Anthropic({ apiKey });
-    const { resp, model } = await createWithFallback(anthropic, {
+    const { resp, model, usedWeb } = await createWithFallback(anthropic, {
       max_tokens: 8000,
       messages: [{
         role: 'user',
@@ -112,7 +112,10 @@ PROGRAM: ${pg.bedrooms ?? '?'} bed / ${pg.full_baths ?? '?'} full bath / ${pg.ha
           type: 'text',
           text:
 `You are a senior Florida residential estimator. Build a COMPLETE construction estimate for a new home
-that has no reference model, using two sources:
+that has no reference model, using these sources:
+(0) LIVE WEB SEARCH — when you have the web_search tool, search for CURRENT ${project.county ?? 'Florida'}
+    material/labor prices, supplier pricing, and recent cost data to ground your numbers. Prefer fresh
+    market figures over memory, and cite where a number came from in the line note.
 
 (A) INTERNAL PRICE BOOK — this company's OWN historical unit costs by line/category (anchor to these
     when a line has data; adjust for the target spec level and size). Format: "code ~$avg/unit (n=samples; level:$avg …)".
@@ -145,12 +148,12 @@ Respond with ONLY this JSON:
  "notes": <str>, "confidence": "high"|"medium"|"low"}`,
         }],
       }],
-    });
+    }, { webSearch: true, maxUses: 6 });
 
     const text = resp.content.filter((b: { type: string }) => b.type === 'text')
       .map((b: { text: string }) => b.text).join('\n');
     const result = parseJson<Result>(text);
-    return json({ result, model, internal_lines: book.size });
+    return json({ result, model, used_web: usedWeb, internal_lines: book.size });
   } catch (e) {
     return json({ error: aiErrorMessage(e) }, 500);
   }
