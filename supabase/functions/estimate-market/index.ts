@@ -17,8 +17,8 @@
 
 import Anthropic from 'npm:@anthropic-ai/sdk@0.68.0';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
-import { cors, json, parseJson } from '../_shared/cors.ts';
-import { aiErrorMessage, createJsonText } from '../_shared/ai.ts';
+import { cors, json } from '../_shared/cors.ts';
+import { aiErrorMessage, createViaTool } from '../_shared/ai.ts';
 import { PKB_COSTBOOK } from '../_shared/costbook.ts';
 
 interface Line {
@@ -32,6 +32,36 @@ interface Line {
   note: string;
 }
 interface Result { lines: Line[]; notes: string; confidence: 'high' | 'medium' | 'low'; }
+
+const RESULT_TOOL = {
+  name: 'emit_estimate',
+  description: 'Return the complete construction estimate as structured line items.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      lines: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            line_code: { type: ['string', 'null'] },
+            wbs_code: { type: 'string' },
+            description: { type: 'string' },
+            qty: { type: 'number' },
+            unit: { type: 'string' },
+            unit_cost: { type: 'number' },
+            origin: { type: 'string', enum: ['internal', 'market', 'estimated'] },
+            note: { type: 'string' },
+          },
+          required: ['wbs_code', 'description', 'qty', 'unit', 'unit_cost', 'origin'],
+        },
+      },
+      notes: { type: 'string' },
+      confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
+    },
+    required: ['lines'],
+  },
+};
 
 const round2 = (x: number) => Math.round(x * 100) / 100;
 
@@ -159,8 +189,7 @@ Respond with ONLY this JSON:
         }],
       }],
     };
-    const { text, model } = await createJsonText(anthropic, params);
-    const result = parseJson<Result>(text);
+    const { result, model } = await createViaTool<Result>(anthropic, params, RESULT_TOOL);
     return json({ result, model, used_web: research.length > 0, research: research.slice(0, 3000), internal_lines: book.size });
   } catch (e) {
     return json({ error: aiErrorMessage(e) }, 500);

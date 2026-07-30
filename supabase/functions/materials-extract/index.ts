@@ -16,8 +16,40 @@
 import Anthropic from 'npm:@anthropic-ai/sdk@0.68.0';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { encodeBase64 } from 'jsr:@std/encoding@1/base64';
-import { cors, json, parseJson } from '../_shared/cors.ts';
-import { aiErrorMessage, createJsonText } from '../_shared/ai.ts';
+import { cors, json } from '../_shared/cors.ts';
+import { aiErrorMessage, createViaTool } from '../_shared/ai.ts';
+
+const MATERIALS_TOOL = {
+  name: 'emit_materials',
+  description: 'Return every material line item read from the supplier quote.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      supplier: { type: ['string', 'null'] },
+      materials: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            brand: { type: ['string', 'null'] },
+            model: { type: ['string', 'null'] },
+            unit: { type: ['string', 'null'] },
+            wbs_code: { type: ['string', 'null'] },
+            spec_level: { type: 'string', enum: ['affordable', 'essential', 'signature', 'luxury', 'any'] },
+            fl_approval: { type: ['string', 'null'] },
+            unit_price: { type: ['number', 'null'] },
+            specs: { type: ['string', 'null'] },
+          },
+          required: ['name', 'spec_level'],
+        },
+      },
+      notes: { type: 'string' },
+      confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
+    },
+    required: ['materials', 'notes', 'confidence'],
+  },
+};
 
 interface MaterialRow {
   name: string;
@@ -59,7 +91,7 @@ Deno.serve(async (req) => {
     const b64 = encodeBase64(buf);
 
     const anthropic = new Anthropic({ apiKey });
-    const { text } = await createJsonText(anthropic, {
+    const { result } = await createViaTool<Extracted>(anthropic, {
       max_tokens: 8000,
       messages: [{
         role: 'user',
@@ -100,9 +132,8 @@ Respond with ONLY this JSON:
           },
         ],
       }],
-    });
+    }, MATERIALS_TOOL);
 
-    const result = parseJson<Extracted>(text);
     return json({ result });
   } catch (e) {
     return json({ error: aiErrorMessage(e) }, 500);

@@ -79,19 +79,25 @@ export async function createJsonWithWeb<T>(
   }
 }
 
-// Force a JSON object response via assistant PREFILL: we seed the assistant
-// turn with "{" so the model can only continue a JSON object (no prose preamble,
-// no refusal text). Returns the reconstructed text ("{" + continuation) ready
-// for parseJson. Do NOT use with web search (prefill + server tools conflict).
+// Force a valid structured object via FORCED TOOL USE. The model must call the
+// given tool, whose input_schema defines the shape, so we get a schema-valid
+// JSON object with no prose, no prefill, no text parsing — and it works on
+// models that reject assistant prefill. Do NOT combine with web search.
 // deno-lint-ignore no-explicit-any
-export async function createJsonText(
+export async function createViaTool<T>(
   anthropic: Anthropic,
   params: Record<string, any>,
-): Promise<{ text: string; model: string }> {
-  const msgs = [...(params.messages ?? []), { role: 'assistant', content: '{' }];
-  const { resp, model } = await createWithFallback(anthropic, { ...params, messages: msgs });
-  const raw = extractText(resp).trimStart();
-  return { text: raw.startsWith('{') ? raw : '{' + raw, model };
+  // deno-lint-ignore no-explicit-any
+  tool: { name: string; description: string; input_schema: Record<string, any> },
+): Promise<{ result: T; model: string }> {
+  const { resp, model } = await createWithFallback(anthropic, {
+    ...params,
+    tools: [...(params.tools ?? []), tool],
+    tool_choice: { type: 'tool', name: tool.name },
+  });
+  const block = (resp?.content ?? []).find((b: { type?: string }) => b.type === 'tool_use');
+  if (!block) throw new Error('O modelo não retornou o resultado estruturado (tool_use).');
+  return { result: (block as { input: T }).input, model };
 }
 
 // Turn any thrown error into a clear message (Anthropic API errors include a nested message).

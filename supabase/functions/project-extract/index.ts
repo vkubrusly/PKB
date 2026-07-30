@@ -11,8 +11,29 @@
 import Anthropic from 'npm:@anthropic-ai/sdk@0.68.0';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { encodeBase64 } from 'jsr:@std/encoding@1/base64';
-import { cors, json, parseJson } from '../_shared/cors.ts';
-import { aiErrorMessage, createJsonText } from '../_shared/ai.ts';
+import { cors, json } from '../_shared/cors.ts';
+import { aiErrorMessage, createViaTool } from '../_shared/ai.ts';
+
+const N = { type: ['number', 'null'] };
+const I = { type: ['integer', 'null'] };
+const S = { type: ['string', 'null'] };
+const EXTRACT_TOOL = {
+  name: 'emit_project',
+  description: 'Return the project data and room program read from the plans.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      name: S, base_model: S, county: S, market: S,
+      living_area_sf: N, total_area_sf: N, garage_area_sf: N, lanai_area_sf: N,
+      wind_speed_mph: N, flood_zone: S,
+      bedrooms: I, full_baths: I, half_baths: I, kitchens: I, laundries: I,
+      garage_bays: I, stories: I, doors: I, windows: I,
+      has_inlaw: { type: ['boolean', 'null'] },
+      notes: { type: 'string' }, confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
+    },
+    required: ['notes', 'confidence'],
+  },
+};
 
 interface Extracted {
   name: string | null;
@@ -62,7 +83,7 @@ Deno.serve(async (req) => {
     const b64 = encodeBase64(buf); // fast native base64 (avoids CPU/memory limit → 546)
 
     const anthropic = new Anthropic({ apiKey });
-    const { text } = await createJsonText(anthropic, {
+    const { result } = await createViaTool<Extracted>(anthropic, {
       max_tokens: 4000,
       messages: [{
         role: 'user',
@@ -97,9 +118,8 @@ Respond with ONLY this JSON:
           },
         ],
       }],
-    });
+    }, EXTRACT_TOOL);
 
-    const result = parseJson<Extracted>(text);
     return json({ result });
   } catch (e) {
     // Surface Anthropic API errors clearly (bad model, PDF too large/too many
