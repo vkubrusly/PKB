@@ -144,28 +144,41 @@ PROGRAM: ${pg.bedrooms ?? '?'} bed / ${pg.full_baths ?? '?'} full bath / ${pg.ha
       max_tokens: 8000,
       messages: [{
         role: 'user',
-        content: [{
-          type: 'text',
-          text:
-`You are the PKB Homes senior estimator. Build a COMPLETE construction estimate for a new home
-that has no reference model, using these sources IN PRIORITY ORDER:
+        content: [
+          {
+            // STATIC prefix — identical on every estimate → prompt-cached (saves
+            // cost/latency). No interpolation may appear in this block.
+            type: 'text',
+            cache_control: { type: 'ephemeral' },
+            text:
+`You are the PKB Homes senior estimator. Build a COMPLETE construction estimate for a new home with no
+reference model, anchored to the PKB COST BOOK below (HIGHEST PRIORITY — the company's real calibrated
+Central-FL costs, benchmarks, builder-fee rules and add-ons; only deviate with a clear reason in the note).
+Priority order: (1) PKB cost book, (2) the current web research provided, (3) the internal price book,
+(4) your Florida market knowledge. Never leave a needed line unpriced. Apply the builder fee per the
+cost-book rules (section 21).
 
-(PKB COST BOOK — HIGHEST PRIORITY: the company's real calibrated Central-FL costs, benchmarks, builder-fee
- rules and add-ons. Anchor every line to this; only deviate with a clear reason in the note.)
-${PKB_COSTBOOK}
+For EACH line output: line_code (the WBS code), wbs_code (its parent leaf code), description, qty (derive
+from areas/program — slab & framing by total sf, plumbing by baths, cabinetry/appliances by kitchens,
+openings by doors+windows), unit, unit_cost, origin ("market" if from the live research, "internal" if from
+the PKB cost book / internal history, "estimated" if a rough placeholder), and a short note on how you
+derived it (e.g. "web: ABC Supply $X/sq" or "PKB realized +15% signature"). Call emit_estimate with the result.
 
-(0) CURRENT MARKET RESEARCH — live web results for ${project.county ?? 'FL'}. UPDATE cost-book numbers where
-    these are fresher (especially volatile items). Cite the source in the line note when you use one:
+PKB COST BOOK:
+${PKB_COSTBOOK}`,
+          },
+          {
+            // VARIABLE part — project, research, internal history, WBS list.
+            type: 'text',
+            text:
+`CURRENT MARKET RESEARCH (live web, ${project.county ?? 'FL'}) — update cost-book numbers where fresher:
 ${research || '(web research unavailable this run — rely on the cost book + internal data)'}
 
-(A) INTERNAL PRICE BOOK — this company's OWN historical unit costs by line/category (anchor when a line has
-    data; adjust for the target spec level and size). Format: "code ~$avg/unit (n=samples; level:$avg …)".
+INTERNAL PRICE BOOK ("code ~$avg/unit (n=samples; level:$avg …)"):
 ${priceBook || '(no internal estimate history yet)'}
 
-(B) INTERNAL MATERIAL PRICES by category:
+INTERNAL MATERIAL PRICES by category:
 ${catBook || '(none)'}
-
-Never leave a needed line unpriced. Apply the builder fee per the cost-book rules (section 21).
 
 TARGET PROJECT:
 ${projText}
@@ -174,19 +187,9 @@ Produce line items across these WBS categories (use these codes/names; add sub-l
 code when useful):
 ${lineList}
 
-For EACH line output: line_code (the WBS code), wbs_code (its parent leaf code from the list),
-description, qty (derive from areas/program — slab & framing by total sf, plumbing by baths,
-cabinetry/appliances by kitchens, openings by doors+windows), unit, unit_cost, and:
-- origin: "market" if the number came from the live research, "internal" if from PKB cost book / internal
-  history, "estimated" if a rough placeholder.
-- note: one short line on how you derived it (e.g. "web: ABC Supply $X/sq" or "PKB realized +15% signature").
-Prices must reflect the ${project.level ?? 'essential'} level and ${project.county ?? 'the region'}.
-
-Respond with ONLY this JSON:
-{"lines": [{"line_code": <str>, "wbs_code": <str>, "description": <str>, "qty": <num>, "unit": <str>,
-  "unit_cost": <num>, "origin": "internal"|"market"|"estimated", "note": <str>}],
- "notes": <str>, "confidence": "high"|"medium"|"low"}`,
-        }],
+Prices must reflect the ${project.level ?? 'essential'} level and ${project.county ?? 'the region'}.`,
+          },
+        ],
       }],
     };
     const { result, model } = await createViaTool<Result>(anthropic, params, RESULT_TOOL);
