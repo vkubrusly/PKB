@@ -6,7 +6,8 @@ import type { Program, SpecLevel, Unit } from '../lib/database.types';
 import {
   generateFromProgram, toRefLines, EMPTY_PROGRAM, type GeneratedLine,
 } from '../lib/estimateEngine';
-import { money, number, psf, UNIT_LABEL } from '../lib/format';
+import { money, number, psf, SPEC_LEVEL_LABEL, UNIT_LABEL } from '../lib/format';
+import { downloadCSV, printEstimate } from '../lib/exportEstimate';
 
 interface RefOption {
   estimate_id: string; project_id: string | null; label: string; level: string;
@@ -348,6 +349,16 @@ export function NewEstimatePage() {
   const cats = useMemo(() => [...new Set(lines.map((l) => (l.line_code ?? l.wbs_code).split('.')[0]))]
     .sort((a, b) => Number(a) - Number(b)), [lines]);
 
+  const expMeta = () => ({
+    projectName: f.name || 'Novo orçamento',
+    levelLabel: SPEC_LEVEL_LABEL[f.level],
+    county: f.county || null,
+    address: null,
+    totalSf: target.total_sf || null,
+    livingSf: target.living_sf || null,
+    grandTotal: total,
+  });
+
   function editCost(idx: number, val: string) {
     setLines((prev) => prev.map((l, i) =>
       i === idx ? { ...l, unit_cost: Number(val) || 0, line_total: Math.round(l.qty * (Number(val) || 0) * 100) / 100 } : l));
@@ -545,6 +556,10 @@ export function NewEstimatePage() {
 
           <div className="row-actions" style={{ marginTop: '1rem' }}>
             <button className="btn" onClick={() => setStep(2)}>Voltar</button>
+            <button className="btn" disabled={!lines.length}
+              onClick={() => printEstimate(lines, expMeta(), catName)}>🖨 Imprimir / PDF</button>
+            <button className="btn" disabled={!lines.length}
+              onClick={() => downloadCSV(lines, expMeta(), catName)}>⬇ Exportar Excel</button>
             <button className="btn primary" disabled={busy} onClick={save}>{busy ? 'Salvando…' : 'Salvar orçamento'}</button>
           </div>
         </>

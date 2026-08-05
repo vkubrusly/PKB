@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { Estimate, EstimateItem, Program, Project, WbsNode } from '../lib/database.types';
 import { EMPTY_PROGRAM } from '../lib/estimateEngine';
+import { downloadCSV, printEstimate, type ExpLine } from '../lib/exportEstimate';
 import {
   money, number, psf, SPEC_LEVEL_LABEL, UNIT_LABEL, WATER_LABEL, SEWER_LABEL,
 } from '../lib/format';
@@ -65,6 +66,20 @@ export function ProjectDetailPage() {
   if (!project) return <p className="error">Projeto não encontrado. <Link to="/projetos">Voltar</Link></p>;
 
   const est = estimates.find((e) => e.id === activeEstimate);
+
+  function exportData() {
+    const expLines: ExpLine[] = items.map((it) => ({
+      line_code: it.line_code, wbs_code: it.wbs_code, description: it.description ?? it.wbs_code,
+      qty: Number(it.qty), unit: it.unit, unit_cost: Number(it.unit_cost), line_total: Number(it.line_total),
+    }));
+    const catNameMap = Object.fromEntries(categories.map((c) => [c.code, c.name]));
+    const meta = {
+      projectName: project!.name, levelLabel: est ? SPEC_LEVEL_LABEL[est.level] : undefined,
+      county: project!.county, address: project!.address,
+      totalSf: project!.total_area_sf, livingSf: project!.living_area_sf, grandTotal,
+    };
+    return { expLines, catNameMap, meta };
+  }
 
   async function saveProgram() {
     if (!project || !prog) return;
@@ -150,6 +165,13 @@ export function ProjectDetailPage() {
                 {SPEC_LEVEL_LABEL[e.level]} · v{e.version} · {e.status}
               </button>
             ))}
+          </div>
+
+          <div className="row-actions" style={{ margin: '0 0 .75rem' }}>
+            <button className="btn" disabled={items.length === 0}
+              onClick={() => { const d = exportData(); printEstimate(d.expLines, d.meta, d.catNameMap); }}>🖨 Imprimir / PDF</button>
+            <button className="btn" disabled={items.length === 0}
+              onClick={() => { const d = exportData(); downloadCSV(d.expLines, d.meta, d.catNameMap); }}>⬇ Exportar Excel</button>
           </div>
 
           <div className="totals-bar">
