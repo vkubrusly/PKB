@@ -316,9 +316,10 @@ export function ProjectDetailPage() {
           </div>
 
           <div className="totals-bar">
-            <div><span className="muted small">Total{displayed.some((i) => i.actual_unit_cost != null) ? ' (c/ real)' : ''}</span><strong>{money(grandTotal)}</strong></div>
-            <div><span className="muted small">$/sf (total)</span><strong>{psf(grandTotal, project.total_area_sf)}</strong></div>
-            <div><span className="muted small">$/sf (living)</span><strong>{psf(grandTotal, project.living_area_sf)}</strong></div>
+            <div><span className="muted small">Total base</span><strong>{money(baseGrand)}</strong></div>
+            <div><span className="muted small">Total real</span><strong>{money(grandTotal)}</strong></div>
+            <div><span className="muted small">Diferença</span><strong>{deltaCell(grandTotal - baseGrand)}</strong></div>
+            <div><span className="muted small">$/sf (real)</span><strong>{psf(grandTotal, project.total_area_sf)}</strong></div>
             <div><span className="muted small">Linhas</span><strong>{displayed.length}</strong></div>
           </div>
 
@@ -409,9 +410,11 @@ export function ProjectDetailPage() {
             </tbody>
             <tfoot>
               <tr className="grand">
-                <td colSpan={7}>TOTAL {est ? `— ${SPEC_LEVEL_LABEL[est.level]}` : ''}</td>
-                <td className="num">{money(grandTotal)}</td>
-                <td className="num">{deltaCell(grandTotal - baseGrand)}</td>
+                <td colSpan={5}>TOTAL {est ? `— ${SPEC_LEVEL_LABEL[est.level]}` : ''}</td>
+                <td className="num" title="Somatório base"><strong>{money(baseGrand)}</strong></td>
+                <td></td>
+                <td className="num" title="Somatório real"><strong>{money(grandTotal)}</strong></td>
+                <td className="num" title="Soma da diferença"><strong>{deltaCell(grandTotal - baseGrand)}</strong></td>
                 {editing && <td></td>}
               </tr>
             </tfoot>
