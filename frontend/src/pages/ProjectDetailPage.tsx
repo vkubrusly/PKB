@@ -131,15 +131,19 @@ export function ProjectDetailPage() {
     setSavingEst(true); setErr(null);
     try {
       const num = (v: unknown) => (v === '' || v === null || v === undefined ? null : Number(v));
+      // Base (unit_cost) is FROZEN: never send it on update, so the AI-suggested
+      // base is preserved. Only the real price and editable fields change.
       const toUpdate = draft.filter((it) => origIds.has(it.id)).map((it, i) => ({
         id: it.id, wbs_code: it.wbs_code, line_code: it.line_code, description: it.description,
-        qty: Number(it.qty) || 0, unit: it.unit, unit_cost: Number(it.unit_cost) || 0,
+        qty: Number(it.qty) || 0, unit: it.unit,
         actual_unit_cost: num(it.actual_unit_cost), sort_order: i + 1,
       }));
+      // New manual lines have no AI base → base = the real price entered (Δ = 0).
       const toInsert = draft.filter((it) => !origIds.has(it.id)).map((it, i) => ({
         org_id: project!.org_id, estimate_id: activeEstimate, wbs_code: it.wbs_code,
         line_code: it.line_code, description: it.description || null, qty: Number(it.qty) || 0,
-        unit: it.unit, unit_cost: Number(it.unit_cost) || 0, actual_unit_cost: num(it.actual_unit_cost),
+        unit: it.unit, unit_cost: num(it.actual_unit_cost) ?? (Number(it.unit_cost) || 0),
+        actual_unit_cost: num(it.actual_unit_cost),
         price_source: 'estimated', needs_review: true, sort_order: draft.length + i,
       }));
       if (toUpdate.length) { const { error } = await supabase.from('estimate_items').upsert(toUpdate); if (error) throw error; }
@@ -160,15 +164,22 @@ export function ProjectDetailPage() {
 
   async function uploadFiles(itemId: string, list: FileList | null) {
     if (!list?.length) return;
+    setErr(null);
     for (const file of Array.from(list)) {
       const safe = file.name.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w.\-]+/g, '_');
       const path = `${project!.org_id}/quotes/${itemId}/${Date.now()}-${safe}`;
       const up = await supabase.storage.from('plantas').upload(path, file);
-      if (up.error) { setErr(up.error.message); continue; }
+      if (up.error) { setErr(`Falha ao subir o arquivo: ${up.error.message}`); continue; }
       const { data, error } = await supabase.from('estimate_item_files')
         .insert({ org_id: project!.org_id, estimate_item_id: itemId, file_path: path, file_name: file.name })
         .select('*').single();
-      if (!error && data) setFiles((f) => ({ ...f, [itemId]: [...(f[itemId] || []), data] }));
+      if (error) {
+        // roll back the orphaned upload so we don't leave dangling files
+        await supabase.storage.from('plantas').remove([path]).catch(() => {});
+        setErr(`Anexo não registrado: ${error.message}. Rode a migration 0012/0013 (tabela estimate_item_files).`);
+      } else if (data) {
+        setFiles((f) => ({ ...f, [itemId]: [...(f[itemId] || []), data] }));
+      }
     }
   }
   async function openFile(f: EstimateItemFile) {
@@ -353,9 +364,8 @@ export function ProjectDetailPage() {
                             {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
                           </select>
                         </td>
-                        <td className="num"><input className="cost-input" type="number" step="0.01" value={it.unit_cost}
-                          onChange={(e) => patch(it.id, { unit_cost: Number(e.target.value) })} /></td>
-                        <td className="num"><input className="cost-input" type="number" step="0.01"
+                        <td className="num" title="Preço base sugerido — congelado">{money(Number(it.unit_cost))}</td>
+                        <td className="num"><input className="cost-input" type="number" step="0.01" autoFocus={false}
                           value={it.actual_unit_cost ?? ''} placeholder="—"
                           onChange={(e) => patch(it.id, { actual_unit_cost: e.target.value === '' ? null : Number(e.target.value) } as Partial<Item>)} /></td>
                         <td className="num">{money(realTot(it))}</td>

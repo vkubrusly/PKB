@@ -42,3 +42,17 @@ create policy "plantas_org_read"
         and m.org_id = ((storage.foldername(name))[1])::uuid
     )
   );
+
+-- Delete: an org member may remove files inside their own org folder (used to
+-- remove per-line quote attachments).
+drop policy if exists "plantas_org_delete" on storage.objects;
+create policy "plantas_org_delete"
+  on storage.objects for delete to authenticated
+  using (
+    bucket_id = 'plantas'
+    and exists (
+      select 1 from public.org_members m
+      where m.user_id = auth.uid()
+        and m.org_id = ((storage.foldername(name))[1])::uuid
+    )
+  );
