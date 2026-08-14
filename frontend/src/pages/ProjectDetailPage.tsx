@@ -39,18 +39,22 @@ export function ProjectDetailPage() {
   const [savingEst, setSavingEst] = useState(false);
   const [files, setFiles] = useState<Record<string, EstimateItemFile[]>>({});
   const [removed, setRemoved] = useState<string[]>([]); // ids to delete on save
+  const [suppliers, setSuppliers] = useState<string[]>([]); // known supplier names (autocomplete)
 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [{ data: p, error: pe }, { data: es, error: ee }, { data: w }] = await Promise.all([
+      const [{ data: p, error: pe }, { data: es, error: ee }, { data: w }, { data: sup }] = await Promise.all([
         supabase.from('projects').select('*').eq('id', id).single(),
         supabase.from('estimates').select('*').eq('project_id', id).order('level'),
         supabase.from('wbs_nodes').select('*').order('sort_order'),
+        supabase.from('suppliers').select('name, org_id'),
       ]);
       if (pe) setErr(pe.message);
       if (ee) setErr(ee.message);
       setProject(p ?? null);
+      setSuppliers(((sup ?? []) as { name: string; org_id: string }[])
+        .filter((s) => !p || s.org_id === p.org_id).map((s) => s.name));
       setProg(p ? { ...EMPTY_PROGRAM, ...(p.program ?? {}) } : null);
       setEstimates(es ?? []);
       setWbs(w ?? []);
@@ -196,8 +200,16 @@ export function ProjectDetailPage() {
     if (!already) await supabase.from('estimate_item_files').update({ is_chosen: true }).eq('id', fileId);
   }
   async function setSupplier(itemId: string, fileId: string, supplier: string) {
-    setFiles((fm) => ({ ...fm, [itemId]: (fm[itemId] || []).map((f) => (f.id === fileId ? { ...f, supplier } : f)) }));
-    await supabase.from('estimate_item_files').update({ supplier: supplier || null }).eq('id', fileId);
+    const name = supplier.trim();
+    setFiles((fm) => ({ ...fm, [itemId]: (fm[itemId] || []).map((f) => (f.id === fileId ? { ...f, supplier: name } : f)) }));
+    await supabase.from('estimate_item_files').update({ supplier: name || null }).eq('id', fileId);
+    // Not a known supplier → offer to register it in the suppliers catalog.
+    if (name && !suppliers.some((s) => s.toLowerCase() === name.toLowerCase())) {
+      if (confirm(`Fornecedor "${name}" não está cadastrado. Cadastrar agora?`)) {
+        const { error } = await supabase.from('suppliers').insert({ org_id: project!.org_id, name });
+        if (error) setErr(error.message); else setSuppliers((prev) => [...prev, name]);
+      }
+    }
   }
   // 3-state line status:
   //  🟢 green  — decided: a quote is chosen, OR (no quotes) the real price is set.
@@ -326,6 +338,9 @@ export function ProjectDetailPage() {
             <div><span className="muted small">Linhas</span><strong>{displayed.length}</strong></div>
           </div>
 
+          <datalist id="suppliers-dl">
+            {suppliers.map((s) => <option key={s} value={s} />)}
+          </datalist>
           <div className="tablewrap">
           <table className="table estimate">
             <thead>
@@ -455,7 +470,7 @@ function LineFiles({ files, isNew, editing, onUpload, onOpen, onDelete, onChoose
               onClick={() => onChoose(f.id)}>{f.is_chosen ? '★' : '☆'}</button>
           )}
           {editing ? (
-            <input className="sup" placeholder="fornecedor" defaultValue={f.supplier ?? ''}
+            <input className="sup" placeholder="fornecedor" list="suppliers-dl" defaultValue={f.supplier ?? ''}
               onBlur={(e) => { if ((e.target.value || '') !== (f.supplier ?? '')) onSupplier(f.id, e.target.value); }} />
           ) : (f.supplier && <span className="sup-name">{f.supplier}</span>)}
           <button type="button" className="fname" onClick={() => onOpen(f)}>📎 {f.file_name ?? 'anexo'}</button>
