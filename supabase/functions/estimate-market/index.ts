@@ -105,6 +105,22 @@ Deno.serve(async (req) => {
       book.set(key, a);
     }
 
+    // ---- REAL quoted prices (accumulated memory) — highest-signal internal data.
+    // Best-effort: table may not exist yet before the 0012 migration is applied.
+    const realBook = new Map<string, { sum: number; n: number; unit: string }>();
+    try {
+      const { data: obs } = await supabase.from('price_observations')
+        .select('wbs_code, line_code, unit, unit_price')
+        .eq('org_id', org_id).order('observed_at', { ascending: false }).limit(3000);
+      for (const o of (obs ?? []) as Record<string, unknown>[]) {
+        const key = (o.line_code as string) || (o.wbs_code as string);
+        const price = Number(o.unit_price) || 0;
+        if (!key || price <= 0) continue;
+        const a = realBook.get(key) ?? { sum: 0, n: 0, unit: String(o.unit || 'ea') };
+        a.sum += price; a.n += 1; realBook.set(key, a);
+      }
+    } catch { /* pre-migration: skip */ }
+
     // ---- Category price signals from material_prices ----
     const { data: mprices } = await supabase.from('material_prices')
       .select('unit, unit_price, county, source, materials(wbs_code)')
@@ -126,6 +142,8 @@ Deno.serve(async (req) => {
       return `${code} ~$${avg}/${a.unit} (n=${a.n}${lvls ? `; ${lvls}` : ''})`;
     }).join('\n');
     const catBook = [...catPrice.entries()]
+      .map(([code, a]) => `${code} ~$${round2(a.sum / a.n)}/${a.unit} (n=${a.n})`).join('\n');
+    const realPricesText = [...realBook.entries()]
       .map(([code, a]) => `${code} ~$${round2(a.sum / a.n)}/${a.unit} (n=${a.n})`).join('\n');
     const lineList = leaves.map((n) => `${n.code} · ${n.name}`).join('\n');
 
@@ -173,6 +191,9 @@ ${PKB_COSTBOOK}`,
             text:
 `CURRENT MARKET RESEARCH (live web, ${project.county ?? 'FL'}) — update cost-book numbers where fresher:
 ${research || '(web research unavailable this run — rely on the cost book + internal data)'}
+
+REAL QUOTED PRICES (the company's OWN accumulated negotiated prices — STRONGEST signal; prefer over estimates):
+${realPricesText || '(no real-price history yet)'}
 
 INTERNAL PRICE BOOK ("code ~$avg/unit (n=samples; level:$avg …)"):
 ${priceBook || '(no internal estimate history yet)'}
