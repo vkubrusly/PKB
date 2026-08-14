@@ -143,5 +143,7 @@ export interface EstimateItemFile {
   estimate_item_id: string;
   file_path: string;
   file_name: string | null;
+  supplier: string | null;
+  is_chosen: boolean;
   created_at: string;
 }

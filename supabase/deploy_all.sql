@@ -416,9 +416,13 @@ create table if not exists estimate_item_files (
   estimate_item_id  uuid not null references estimate_items(id) on delete cascade,
   file_path         text not null,
   file_name         text,
+  supplier          text,                                -- which supplier the quote is from
+  is_chosen         boolean not null default false,      -- the quote decided for this line
   created_at        timestamptz not null default now()
 );
 create index if not exists idx_eif_item on estimate_item_files(estimate_item_id);
+alter table estimate_item_files add column if not exists supplier text;              -- idempotent (0013)
+alter table estimate_item_files add column if not exists is_chosen boolean not null default false;
 create or replace trigger trg_estimate_items_updated before update on estimate_items
   for each row execute function set_updated_at();
 

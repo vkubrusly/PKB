@@ -11,7 +11,14 @@ import {
 type Item = EstimateItem;
 const UNITS = ['ea', 'sf', 'lf', 'cy', 'ls', 'hr', 'gal', 'sq', 'ton', 'bid', 'mo'] as const;
 const eff = (it: Item) => Number(it.qty || 0) * (1 + Number(it.waste_factor || 0));
+const baseTot = (it: Item) => eff(it) * Number(it.unit_cost || 0);
 const realTot = (it: Item) => eff(it) * Number(it.actual_unit_cost ?? it.unit_cost ?? 0);
+
+// Δ vs base: red when over base, green when under (savings).
+function deltaCell(d: number) {
+  if (Math.abs(d) < 0.005) return <span className="muted">—</span>;
+  return <span className={d > 0 ? 'delta-up' : 'delta-down'}>{d > 0 ? '+' : '−'}{money(Math.abs(d))}</span>;
+}
 
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -83,6 +90,7 @@ export function ProjectDetailPage() {
   const est = estimates.find((e) => e.id === activeEstimate);
   const displayed = editing ? draft : items;
   const grandTotal = displayed.reduce((s, it) => s + realTot(it), 0);
+  const baseGrand = displayed.reduce((s, it) => s + baseTot(it), 0);
   const origIds = new Set(items.map((i) => i.id));
 
   function exportData() {
@@ -167,6 +175,25 @@ export function ProjectDetailPage() {
     const { data } = await supabase.storage.from('plantas').createSignedUrl(f.file_path, 3600);
     if (data?.signedUrl) window.open(data.signedUrl, '_blank');
   }
+  // Mark one quote as the chosen one for its line (unmarks the siblings).
+  async function chooseFile(itemId: string, fileId: string) {
+    const cur = files[itemId] ?? [];
+    const already = cur.find((f) => f.id === fileId)?.is_chosen;
+    const next = cur.map((f) => ({ ...f, is_chosen: f.id === fileId ? !already : false }));
+    setFiles((fm) => ({ ...fm, [itemId]: next }));
+    await supabase.from('estimate_item_files').update({ is_chosen: false }).eq('estimate_item_id', itemId);
+    if (!already) await supabase.from('estimate_item_files').update({ is_chosen: true }).eq('id', fileId);
+  }
+  async function setSupplier(itemId: string, fileId: string, supplier: string) {
+    setFiles((fm) => ({ ...fm, [itemId]: (fm[itemId] || []).map((f) => (f.id === fileId ? { ...f, supplier } : f)) }));
+    await supabase.from('estimate_item_files').update({ supplier: supplier || null }).eq('id', fileId);
+  }
+  // A line is "defined" (green) when there's nothing pending to decide: no
+  // quotes attached (base/typed value stands), or one quote marked as chosen.
+  const isDefined = (it: Item) => {
+    const fs = files[it.id] ?? [];
+    return fs.length === 0 || fs.some((f) => f.is_chosen);
+  };
   async function deleteFile(f: EstimateItemFile) {
     await supabase.storage.from('plantas').remove([f.file_path]);
     await supabase.from('estimate_item_files').delete().eq('id', f.id);
@@ -288,8 +315,9 @@ export function ProjectDetailPage() {
           <table className="table estimate">
             <thead>
               <tr>
-                <th>COD</th><th>Item</th><th className="num">Qtd</th><th>Un</th>
-                <th className="num">Base (un)</th><th className="num">Real orçado (un)</th><th className="num">Total</th>
+                <th></th><th>COD</th><th>Item</th><th className="num">Qtd</th><th>Un</th>
+                <th className="num">Base (un)</th><th className="num">Real orçado (un)</th>
+                <th className="num">Total</th><th className="num">Δ</th>
                 {editing && <th></th>}
               </tr>
             </thead>
@@ -298,21 +326,25 @@ export function ProjectDetailPage() {
                 const catItems = displayed.filter((it) => catOf(it) === cat.code);
                 if (catItems.length === 0 && !editing) return null;
                 const sub = catItems.reduce((s, it) => s + realTot(it), 0);
+                const subBase = catItems.reduce((s, it) => s + baseTot(it), 0);
                 return (
                   <Fragment key={cat.code}>
                     <tr className="cat-row">
-                      <td>{cat.code}</td><td>{cat.name}</td><td colSpan={editing ? 4 : 3}></td>
+                      <td></td><td>{cat.code}</td><td>{cat.name}</td><td colSpan={4}></td>
                       <td className="num"><strong>{money(sub)}</strong></td>
+                      <td className="num">{deltaCell(sub - subBase)}</td>
                       {editing && <td></td>}
                     </tr>
                     {catItems.map((it) => (editing ? (
                       <tr key={it.id}>
+                        <td className="center"><StatusDot defined={isDefined(it)} /></td>
                         <td className="mono">{it.line_code ?? it.wbs_code}</td>
                         <td>
                           <input value={it.description ?? ''} placeholder={nameByCode[it.wbs_code] ?? it.wbs_code}
                             onChange={(e) => patch(it.id, { description: e.target.value })} style={{ minWidth: 170 }} />
-                          <LineFiles files={files[it.id] ?? []} isNew={!origIds.has(it.id)}
-                            onUpload={(l) => uploadFiles(it.id, l)} onOpen={openFile} onDelete={deleteFile} />
+                          <LineFiles files={files[it.id] ?? []} isNew={!origIds.has(it.id)} editing
+                            onUpload={(l) => uploadFiles(it.id, l)} onOpen={openFile} onDelete={deleteFile}
+                            onChoose={(fid) => chooseFile(it.id, fid)} onSupplier={(fid, v) => setSupplier(it.id, fid, v)} />
                         </td>
                         <td className="num"><input className="cost-input" type="number" value={it.qty}
                           onChange={(e) => patch(it.id, { qty: Number(e.target.value) })} /></td>
@@ -327,10 +359,12 @@ export function ProjectDetailPage() {
                           value={it.actual_unit_cost ?? ''} placeholder="—"
                           onChange={(e) => patch(it.id, { actual_unit_cost: e.target.value === '' ? null : Number(e.target.value) } as Partial<Item>)} /></td>
                         <td className="num">{money(realTot(it))}</td>
+                        <td className="num">{deltaCell(realTot(it) - baseTot(it))}</td>
                         <td><button className="link danger" title="Remover" onClick={() => removeLine(it.id)}>×</button></td>
                       </tr>
                     ) : (
                       <tr key={it.id} className={it.needs_review ? 'flagged' : undefined}>
+                        <td className="center"><StatusDot defined={isDefined(it)} /></td>
                         <td className="mono">{it.line_code ?? it.wbs_code}</td>
                         <td>
                           {it.description ?? nameByCode[it.wbs_code] ?? it.wbs_code}
@@ -338,7 +372,10 @@ export function ProjectDetailPage() {
                           {(files[it.id]?.length ?? 0) > 0 && (
                             <span className="attach-chips">
                               {files[it.id].map((f) => (
-                                <button key={f.id} type="button" className="chip-file" onClick={() => openFile(f)}>📎 {f.file_name ?? 'anexo'}</button>
+                                <button key={f.id} type="button" className={f.is_chosen ? 'chip-file chosen' : 'chip-file'}
+                                  onClick={() => openFile(f)} title={f.is_chosen ? 'orçamento escolhido' : undefined}>
+                                  {f.is_chosen ? '✓ ' : '📎 '}{f.supplier ? `${f.supplier}: ` : ''}{f.file_name ?? 'anexo'}
+                                </button>
                               ))}
                             </span>
                           )}
@@ -348,10 +385,11 @@ export function ProjectDetailPage() {
                         <td className="num">{money(Number(it.unit_cost))}</td>
                         <td className="num">{it.actual_unit_cost != null ? money(Number(it.actual_unit_cost)) : <span className="muted">—</span>}</td>
                         <td className="num">{money(realTot(it))}</td>
+                        <td className="num">{deltaCell(realTot(it) - baseTot(it))}</td>
                       </tr>
                     )))}
                     {editing && (
-                      <tr><td></td><td colSpan={7}>
+                      <tr><td colSpan={10}>
                         <button className="link" onClick={() => addLine(cat.code)}>＋ linha em {cat.code} · {cat.name}</button>
                       </td></tr>
                     )}
@@ -361,8 +399,9 @@ export function ProjectDetailPage() {
             </tbody>
             <tfoot>
               <tr className="grand">
-                <td colSpan={6}>TOTAL {est ? `— ${SPEC_LEVEL_LABEL[est.level]}` : ''}</td>
+                <td colSpan={7}>TOTAL {est ? `— ${SPEC_LEVEL_LABEL[est.level]}` : ''}</td>
                 <td className="num">{money(grandTotal)}</td>
+                <td className="num">{deltaCell(grandTotal - baseGrand)}</td>
                 {editing && <td></td>}
               </tr>
             </tfoot>
@@ -374,31 +413,46 @@ export function ProjectDetailPage() {
   );
 }
 
-// Per-line attachments (supplier quotes). Multiple files; new lines must be
-// saved before attaching (they need a persisted id).
-function LineFiles({ files, isNew, onUpload, onOpen, onDelete }: {
-  files: EstimateItemFile[]; isNew: boolean;
+function StatusDot({ defined }: { defined: boolean }) {
+  return <span className={defined ? 'dot green' : 'dot red'}
+    title={defined ? 'Definido' : 'Pendente: escolha o orçamento a usar'} />;
+}
+
+// Per-line supplier quotes. Multiple files from different suppliers; mark the
+// chosen one and label its supplier. New lines must be saved before attaching.
+function LineFiles({ files, isNew, editing, onUpload, onOpen, onDelete, onChoose, onSupplier }: {
+  files: EstimateItemFile[]; isNew: boolean; editing?: boolean;
   onUpload: (l: FileList | null) => void;
   onOpen: (f: EstimateItemFile) => void;
   onDelete: (f: EstimateItemFile) => void;
+  onChoose: (fileId: string) => void;
+  onSupplier: (fileId: string, v: string) => void;
 }) {
   return (
-    <div className="attach-chips">
+    <div className="quote-list">
       {files.map((f) => (
-        <span key={f.id} className="chip-file">
-          <button type="button" onClick={() => onOpen(f)}>📎 {f.file_name ?? 'anexo'}</button>
-          <button type="button" className="x" title="Remover anexo" onClick={() => onDelete(f)}>×</button>
-        </span>
+        <div key={f.id} className={f.is_chosen ? 'quote-row chosen' : 'quote-row'}>
+          {editing && (
+            <button type="button" className="star" title={f.is_chosen ? 'Escolhido — clique para desmarcar' : 'Usar este orçamento'}
+              onClick={() => onChoose(f.id)}>{f.is_chosen ? '★' : '☆'}</button>
+          )}
+          {editing ? (
+            <input className="sup" placeholder="fornecedor" defaultValue={f.supplier ?? ''}
+              onBlur={(e) => { if ((e.target.value || '') !== (f.supplier ?? '')) onSupplier(f.id, e.target.value); }} />
+          ) : (f.supplier && <span className="sup-name">{f.supplier}</span>)}
+          <button type="button" className="fname" onClick={() => onOpen(f)}>📎 {f.file_name ?? 'anexo'}</button>
+          {editing && <button type="button" className="x" title="Remover anexo" onClick={() => onDelete(f)}>×</button>}
+        </div>
       ))}
-      {isNew ? (
-        <span className="muted small">salve a linha para anexar</span>
+      {editing && (isNew ? (
+        <span className="muted small">salve a linha para anexar cotações</span>
       ) : (
         <label className="chip-file" style={{ cursor: 'pointer' }}>
-          ＋ cotação
+          ＋ cotação de fornecedor
           <input type="file" multiple style={{ display: 'none' }}
             onChange={(e) => { onUpload(e.target.files); e.currentTarget.value = ''; }} />
         </label>
-      )}
+      ))}
     </div>
   );
 }

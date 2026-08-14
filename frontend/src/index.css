@@ -257,3 +257,19 @@ label.checkbox input { width: auto; }
 .chip-file button { background: none; border: none; cursor: pointer; color: inherit; font: inherit; padding: 0; }
 .chip-file .x { color: var(--danger); font-weight: 700; }
 .table.estimate .cost-input { width: 88px; }
+
+/* ---- estimate line status light + delta + quote list ---- */
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+.dot.green { background: var(--ok); box-shadow: 0 0 0 2px color-mix(in srgb, var(--ok) 25%, transparent); }
+.dot.red { background: var(--danger); box-shadow: 0 0 0 2px color-mix(in srgb, var(--danger) 25%, transparent); }
+.delta-up { color: var(--danger); font-variant-numeric: tabular-nums; }
+.delta-down { color: var(--ok); font-variant-numeric: tabular-nums; }
+.quote-list { display: flex; flex-direction: column; gap: .25rem; margin-top: .3rem; }
+.quote-row { display: inline-flex; align-items: center; gap: .35rem; font-size: .78rem;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: .1rem .4rem; }
+.quote-row.chosen { border-color: var(--ok); background: color-mix(in srgb, var(--ok) 10%, var(--surface)); }
+.quote-row .star { background: none; border: none; cursor: pointer; color: var(--brand); font-size: .95rem; padding: 0; }
+.quote-row .sup { width: 92px; padding: .1rem .3rem; font-size: .76rem; }
+.quote-row .sup-name { font-weight: 600; }
+.quote-row .fname { background: none; border: none; cursor: pointer; color: var(--link); font: inherit; padding: 0; }
+.quote-row .x { background: none; border: none; cursor: pointer; color: var(--danger); font-weight: 700; }
