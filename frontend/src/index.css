@@ -249,3 +249,11 @@ label.checkbox input { width: auto; }
 .basis.internal { color: #2f7d4f; border-color: #2f7d4f; }
 .basis.market { color: #8a6d22; border-color: #8a6d22; }
 .basis.estimated { color: var(--muted); border-color: var(--border); }
+
+/* ---- per-line attachments (estimate) ---- */
+.attach-chips { display: inline-flex; flex-wrap: wrap; gap: .3rem; margin-top: .25rem; }
+.chip-file { display: inline-flex; align-items: center; gap: .25rem; font-size: .74rem;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: .05rem .35rem; color: var(--link); }
+.chip-file button { background: none; border: none; cursor: pointer; color: inherit; font: inherit; padding: 0; }
+.chip-file .x { color: var(--danger); font-weight: 700; }
+.table.estimate .cost-input { width: 88px; }

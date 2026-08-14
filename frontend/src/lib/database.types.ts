@@ -126,7 +126,8 @@ export interface EstimateItem {
   description: string | null;
   qty: number;
   unit: Unit;
-  unit_cost: number;
+  unit_cost: number;               // initial base estimate
+  actual_unit_cost: number | null; // real quoted/negotiated price
   waste_factor: number;
   price_source: PriceSource;
   needs_review: boolean;
@@ -134,4 +135,13 @@ export interface EstimateItem {
   sort_order: number;
   qty_effective: number;
   line_total: number;
+}
+
+export interface EstimateItemFile {
+  id: string;
+  org_id: string;
+  estimate_item_id: string;
+  file_path: string;
+  file_name: string | null;
+  created_at: string;
 }

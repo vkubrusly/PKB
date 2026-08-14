@@ -1,12 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import type { Estimate, EstimateItem, Program, Project, WbsNode } from '../lib/database.types';
+import type { Estimate, EstimateItem, EstimateItemFile, Program, Project, WbsNode } from '../lib/database.types';
 import { EMPTY_PROGRAM } from '../lib/estimateEngine';
 import { downloadCSV, printEstimate, type ExpLine } from '../lib/exportEstimate';
 import {
   money, number, psf, SPEC_LEVEL_LABEL, UNIT_LABEL, WATER_LABEL, SEWER_LABEL,
 } from '../lib/format';
+
+type Item = EstimateItem;
+const UNITS = ['ea', 'sf', 'lf', 'cy', 'ls', 'hr', 'gal', 'sq', 'ton', 'bid', 'mo'] as const;
+const eff = (it: Item) => Number(it.qty || 0) * (1 + Number(it.waste_factor || 0));
+const realTot = (it: Item) => eff(it) * Number(it.actual_unit_cost ?? it.unit_cost ?? 0);
 
 export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +26,12 @@ export function ProjectDetailPage() {
   const [wbs, setWbs] = useState<WbsNode[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  // edit mode (reopen estimate)
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<EstimateItem[]>([]);
+  const [savingEst, setSavingEst] = useState(false);
+  const [files, setFiles] = useState<Record<string, EstimateItemFile[]>>({});
+  const [removed, setRemoved] = useState<string[]>([]); // ids to delete on save
 
   useEffect(() => {
     (async () => {
@@ -41,24 +52,28 @@ export function ProjectDetailPage() {
     })();
   }, [id]);
 
-  useEffect(() => {
-    if (!activeEstimate) { setItems([]); return; }
-    (async () => {
-      const { data, error } = await supabase
-        .from('estimate_items').select('*')
-        .eq('estimate_id', activeEstimate)
-        .order('sort_order');
-      if (error) setErr(error.message);
-      else setItems(data ?? []);
-    })();
-  }, [activeEstimate]);
+  async function loadItems() {
+    if (!activeEstimate) { setItems([]); setFiles({}); return; }
+    const { data, error } = await supabase
+      .from('estimate_items').select('*')
+      .eq('estimate_id', activeEstimate)
+      .order('sort_order');
+    if (error) { setErr(error.message); return; }
+    setItems(data ?? []);
+    const ids = (data ?? []).map((it) => it.id);
+    if (ids.length) {
+      const { data: fs } = await supabase.from('estimate_item_files').select('*').in('estimate_item_id', ids);
+      const map: Record<string, EstimateItemFile[]> = {};
+      for (const f of fs ?? []) (map[f.estimate_item_id] ??= []).push(f);
+      setFiles(map);
+    } else setFiles({});
+  }
+  useEffect(() => { loadItems(); setEditing(false); /* eslint-disable-next-line */ }, [activeEstimate]);
 
   const categories = useMemo(() => wbs.filter((n) => n.depth === 1), [wbs]);
   const nameByCode = useMemo(
     () => Object.fromEntries(wbs.map((n) => [n.code, n.name])), [wbs],
   );
-
-  const grandTotal = useMemo(() => items.reduce((s, it) => s + Number(it.line_total), 0), [items]);
 
   const catOf = (it: EstimateItem) => (it.line_code ?? it.wbs_code).split('.')[0];
 
@@ -66,11 +81,16 @@ export function ProjectDetailPage() {
   if (!project) return <p className="error">Projeto não encontrado. <Link to="/projetos">Voltar</Link></p>;
 
   const est = estimates.find((e) => e.id === activeEstimate);
+  const displayed = editing ? draft : items;
+  const grandTotal = displayed.reduce((s, it) => s + realTot(it), 0);
+  const origIds = new Set(items.map((i) => i.id));
 
   function exportData() {
+    // Export the REAL cost where set, else the base estimate.
     const expLines: ExpLine[] = items.map((it) => ({
       line_code: it.line_code, wbs_code: it.wbs_code, description: it.description ?? it.wbs_code,
-      qty: Number(it.qty), unit: it.unit, unit_cost: Number(it.unit_cost), line_total: Number(it.line_total),
+      qty: Number(it.qty), unit: it.unit,
+      unit_cost: Number(it.actual_unit_cost ?? it.unit_cost), line_total: realTot(it),
     }));
     const catNameMap = Object.fromEntries(categories.map((c) => [c.code, c.name]));
     const meta = {
@@ -79,6 +99,78 @@ export function ProjectDetailPage() {
       totalSf: project!.total_area_sf, livingSf: project!.living_area_sf, grandTotal,
     };
     return { expLines, catNameMap, meta };
+  }
+
+  function startEdit() { setDraft(items.map((it) => ({ ...it }))); setRemoved([]); setEditing(true); }
+  function cancelEdit() { setEditing(false); setDraft([]); setRemoved([]); }
+  function patch(id: string, p: Partial<Item>) { setDraft((d) => d.map((it) => (it.id === id ? { ...it, ...p } : it))); }
+  function addLine(cat: string) {
+    const nu = {
+      id: crypto.randomUUID(), org_id: project!.org_id, estimate_id: activeEstimate!,
+      wbs_code: cat, line_code: null, material_id: null, supplier_id: null, description: '',
+      qty: 1, unit: 'ls', unit_cost: 0, actual_unit_cost: null, waste_factor: 0,
+      price_source: 'estimated', needs_review: true, is_allowance: false,
+      sort_order: draft.length + 1, qty_effective: 1, line_total: 0,
+    } as unknown as Item;
+    setDraft((d) => [...d, nu]);
+  }
+  function removeLine(id: string) {
+    if (origIds.has(id)) setRemoved((r) => [...r, id]);
+    setDraft((d) => d.filter((it) => it.id !== id));
+  }
+
+  async function saveEstimate() {
+    setSavingEst(true); setErr(null);
+    try {
+      const num = (v: unknown) => (v === '' || v === null || v === undefined ? null : Number(v));
+      const toUpdate = draft.filter((it) => origIds.has(it.id)).map((it, i) => ({
+        id: it.id, wbs_code: it.wbs_code, line_code: it.line_code, description: it.description,
+        qty: Number(it.qty) || 0, unit: it.unit, unit_cost: Number(it.unit_cost) || 0,
+        actual_unit_cost: num(it.actual_unit_cost), sort_order: i + 1,
+      }));
+      const toInsert = draft.filter((it) => !origIds.has(it.id)).map((it, i) => ({
+        org_id: project!.org_id, estimate_id: activeEstimate, wbs_code: it.wbs_code,
+        line_code: it.line_code, description: it.description || null, qty: Number(it.qty) || 0,
+        unit: it.unit, unit_cost: Number(it.unit_cost) || 0, actual_unit_cost: num(it.actual_unit_cost),
+        price_source: 'estimated', needs_review: true, sort_order: draft.length + i,
+      }));
+      if (toUpdate.length) { const { error } = await supabase.from('estimate_items').upsert(toUpdate); if (error) throw error; }
+      if (toInsert.length) { const { error } = await supabase.from('estimate_items').insert(toInsert); if (error) throw error; }
+      if (removed.length) { const { error } = await supabase.from('estimate_items').delete().in('id', removed); if (error) throw error; }
+      // Accumulate price knowledge from the REAL prices entered.
+      const obs = draft.filter((it) => num(it.actual_unit_cost) && Number(it.actual_unit_cost) > 0).map((it) => ({
+        org_id: project!.org_id, wbs_code: it.wbs_code, line_code: it.line_code, description: it.description,
+        unit: it.unit, unit_price: Number(it.actual_unit_cost), county: project!.county,
+        source: 'real_quote', estimate_item_id: origIds.has(it.id) ? it.id : null,
+      }));
+      if (obs.length) await supabase.from('price_observations').insert(obs);
+      setEditing(false); setRemoved([]);
+      await loadItems();
+    } catch (e) { setErr(e instanceof Error ? e.message : String(e)); }
+    finally { setSavingEst(false); }
+  }
+
+  async function uploadFiles(itemId: string, list: FileList | null) {
+    if (!list?.length) return;
+    for (const file of Array.from(list)) {
+      const safe = file.name.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w.\-]+/g, '_');
+      const path = `${project!.org_id}/quotes/${itemId}/${Date.now()}-${safe}`;
+      const up = await supabase.storage.from('plantas').upload(path, file);
+      if (up.error) { setErr(up.error.message); continue; }
+      const { data, error } = await supabase.from('estimate_item_files')
+        .insert({ org_id: project!.org_id, estimate_item_id: itemId, file_path: path, file_name: file.name })
+        .select('*').single();
+      if (!error && data) setFiles((f) => ({ ...f, [itemId]: [...(f[itemId] || []), data] }));
+    }
+  }
+  async function openFile(f: EstimateItemFile) {
+    const { data } = await supabase.storage.from('plantas').createSignedUrl(f.file_path, 3600);
+    if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+  }
+  async function deleteFile(f: EstimateItemFile) {
+    await supabase.storage.from('plantas').remove([f.file_path]);
+    await supabase.from('estimate_item_files').delete().eq('id', f.id);
+    setFiles((fm) => ({ ...fm, [f.estimate_item_id]: (fm[f.estimate_item_id] || []).filter((x) => x.id !== f.id) }));
   }
 
   async function saveProgram() {
@@ -167,79 +259,147 @@ export function ProjectDetailPage() {
             ))}
           </div>
 
-          <div className="row-actions" style={{ margin: '0 0 .75rem' }}>
-            <button className="btn" disabled={items.length === 0}
-              onClick={() => { const d = exportData(); printEstimate(d.expLines, d.meta, d.catNameMap); }}>🖨 Imprimir / PDF</button>
-            <button className="btn" disabled={items.length === 0}
-              onClick={() => { const d = exportData(); downloadCSV(d.expLines, d.meta, d.catNameMap); }}>⬇ Exportar Excel</button>
+          <div className="row-actions" style={{ margin: '0 0 .75rem', flexWrap: 'wrap' }}>
+            {!editing ? (
+              <>
+                <button className="btn primary" onClick={startEdit} disabled={!activeEstimate}>✎ Reabrir / editar</button>
+                <button className="btn" disabled={items.length === 0}
+                  onClick={() => { const d = exportData(); printEstimate(d.expLines, d.meta, d.catNameMap); }}>🖨 Imprimir / PDF</button>
+                <button className="btn" disabled={items.length === 0}
+                  onClick={() => { const d = exportData(); downloadCSV(d.expLines, d.meta, d.catNameMap); }}>⬇ Exportar Excel</button>
+              </>
+            ) : (
+              <>
+                <button className="btn primary" onClick={saveEstimate} disabled={savingEst}>{savingEst ? 'Salvando…' : 'Salvar alterações'}</button>
+                <button className="btn" onClick={cancelEdit} disabled={savingEst}>Cancelar</button>
+                <span className="muted small">Base = estimativa inicial (não muda). Real orçado = preço negociado. Anexe cotações por linha — os preços reais alimentam a memória.</span>
+              </>
+            )}
           </div>
 
           <div className="totals-bar">
-            <div><span className="muted small">Total</span><strong>{money(grandTotal)}</strong></div>
+            <div><span className="muted small">Total{displayed.some((i) => i.actual_unit_cost != null) ? ' (c/ real)' : ''}</span><strong>{money(grandTotal)}</strong></div>
             <div><span className="muted small">$/sf (total)</span><strong>{psf(grandTotal, project.total_area_sf)}</strong></div>
             <div><span className="muted small">$/sf (living)</span><strong>{psf(grandTotal, project.living_area_sf)}</strong></div>
-            <div><span className="muted small">Linhas</span><strong>{items.length}</strong></div>
+            <div><span className="muted small">Linhas</span><strong>{displayed.length}</strong></div>
           </div>
 
+          <div className="tablewrap">
           <table className="table estimate">
             <thead>
               <tr>
                 <th>COD</th><th>Item</th><th className="num">Qtd</th><th>Un</th>
-                <th className="num">Custo Un.</th><th className="num">Total</th>
+                <th className="num">Base (un)</th><th className="num">Real orçado (un)</th><th className="num">Total</th>
+                {editing && <th></th>}
               </tr>
             </thead>
             <tbody>
               {categories.map((cat) => {
-                const catItems = items.filter((it) => catOf(it) === cat.code);
-                if (catItems.length === 0) return null;
-                const sub = catItems.reduce((s, it) => s + Number(it.line_total), 0);
+                const catItems = displayed.filter((it) => catOf(it) === cat.code);
+                if (catItems.length === 0 && !editing) return null;
+                const sub = catItems.reduce((s, it) => s + realTot(it), 0);
                 return (
-                  <ItemGroup key={cat.code} code={cat.code} name={cat.name}
-                    subtotal={sub} items={catItems} nameByCode={nameByCode} />
+                  <Fragment key={cat.code}>
+                    <tr className="cat-row">
+                      <td>{cat.code}</td><td>{cat.name}</td><td colSpan={editing ? 4 : 3}></td>
+                      <td className="num"><strong>{money(sub)}</strong></td>
+                      {editing && <td></td>}
+                    </tr>
+                    {catItems.map((it) => (editing ? (
+                      <tr key={it.id}>
+                        <td className="mono">{it.line_code ?? it.wbs_code}</td>
+                        <td>
+                          <input value={it.description ?? ''} placeholder={nameByCode[it.wbs_code] ?? it.wbs_code}
+                            onChange={(e) => patch(it.id, { description: e.target.value })} style={{ minWidth: 170 }} />
+                          <LineFiles files={files[it.id] ?? []} isNew={!origIds.has(it.id)}
+                            onUpload={(l) => uploadFiles(it.id, l)} onOpen={openFile} onDelete={deleteFile} />
+                        </td>
+                        <td className="num"><input className="cost-input" type="number" value={it.qty}
+                          onChange={(e) => patch(it.id, { qty: Number(e.target.value) })} /></td>
+                        <td>
+                          <select value={it.unit} onChange={(e) => patch(it.id, { unit: e.target.value as EstimateItem['unit'] })}>
+                            {UNITS.map((u) => <option key={u} value={u}>{u}</option>)}
+                          </select>
+                        </td>
+                        <td className="num"><input className="cost-input" type="number" step="0.01" value={it.unit_cost}
+                          onChange={(e) => patch(it.id, { unit_cost: Number(e.target.value) })} /></td>
+                        <td className="num"><input className="cost-input" type="number" step="0.01"
+                          value={it.actual_unit_cost ?? ''} placeholder="—"
+                          onChange={(e) => patch(it.id, { actual_unit_cost: e.target.value === '' ? null : Number(e.target.value) } as Partial<Item>)} /></td>
+                        <td className="num">{money(realTot(it))}</td>
+                        <td><button className="link danger" title="Remover" onClick={() => removeLine(it.id)}>×</button></td>
+                      </tr>
+                    ) : (
+                      <tr key={it.id} className={it.needs_review ? 'flagged' : undefined}>
+                        <td className="mono">{it.line_code ?? it.wbs_code}</td>
+                        <td>
+                          {it.description ?? nameByCode[it.wbs_code] ?? it.wbs_code}
+                          {it.needs_review && <span className="tag warn">⚠ revisar</span>}
+                          {(files[it.id]?.length ?? 0) > 0 && (
+                            <span className="attach-chips">
+                              {files[it.id].map((f) => (
+                                <button key={f.id} type="button" className="chip-file" onClick={() => openFile(f)}>📎 {f.file_name ?? 'anexo'}</button>
+                              ))}
+                            </span>
+                          )}
+                        </td>
+                        <td className="num">{number(it.qty)}</td>
+                        <td>{UNIT_LABEL[it.unit] ?? it.unit}</td>
+                        <td className="num">{money(Number(it.unit_cost))}</td>
+                        <td className="num">{it.actual_unit_cost != null ? money(Number(it.actual_unit_cost)) : <span className="muted">—</span>}</td>
+                        <td className="num">{money(realTot(it))}</td>
+                      </tr>
+                    )))}
+                    {editing && (
+                      <tr><td></td><td colSpan={7}>
+                        <button className="link" onClick={() => addLine(cat.code)}>＋ linha em {cat.code} · {cat.name}</button>
+                      </td></tr>
+                    )}
+                  </Fragment>
                 );
               })}
             </tbody>
             <tfoot>
               <tr className="grand">
-                <td colSpan={5}>TOTAL {est ? `— ${SPEC_LEVEL_LABEL[est.level]}` : ''}</td>
+                <td colSpan={6}>TOTAL {est ? `— ${SPEC_LEVEL_LABEL[est.level]}` : ''}</td>
                 <td className="num">{money(grandTotal)}</td>
+                {editing && <td></td>}
               </tr>
             </tfoot>
           </table>
+          </div>
         </>
       )}
     </div>
   );
 }
 
-function ItemGroup({ code, name, subtotal, items, nameByCode }: {
-  code: string; name: string; subtotal: number; items: EstimateItem[];
-  nameByCode: Record<string, string>;
+// Per-line attachments (supplier quotes). Multiple files; new lines must be
+// saved before attaching (they need a persisted id).
+function LineFiles({ files, isNew, onUpload, onOpen, onDelete }: {
+  files: EstimateItemFile[]; isNew: boolean;
+  onUpload: (l: FileList | null) => void;
+  onOpen: (f: EstimateItemFile) => void;
+  onDelete: (f: EstimateItemFile) => void;
 }) {
   return (
-    <>
-      <tr className="cat-row">
-        <td>{code}</td>
-        <td>{name}</td>
-        <td colSpan={2}></td>
-        <td className="num muted small">Sub-total {code}</td>
-        <td className="num"><strong>{money(subtotal)}</strong></td>
-      </tr>
-      {items.map((it) => (
-        <tr key={it.id} className={it.needs_review ? 'flagged' : undefined}>
-          <td className="mono">{it.line_code ?? it.wbs_code}</td>
-          <td>
-            {it.description ?? nameByCode[it.wbs_code] ?? it.wbs_code}
-            {it.is_allowance && <span className="tag">allowance</span>}
-            {it.needs_review && <span className="tag warn">⚠ revisar</span>}
-          </td>
-          <td className="num">{number(it.qty)}</td>
-          <td>{UNIT_LABEL[it.unit] ?? it.unit}</td>
-          <td className="num">{money(Number(it.unit_cost))}</td>
-          <td className="num">{money(Number(it.line_total))}</td>
-        </tr>
+    <div className="attach-chips">
+      {files.map((f) => (
+        <span key={f.id} className="chip-file">
+          <button type="button" onClick={() => onOpen(f)}>📎 {f.file_name ?? 'anexo'}</button>
+          <button type="button" className="x" title="Remover anexo" onClick={() => onDelete(f)}>×</button>
+        </span>
       ))}
-    </>
+      {isNew ? (
+        <span className="muted small">salve a linha para anexar</span>
+      ) : (
+        <label className="chip-file" style={{ cursor: 'pointer' }}>
+          ＋ cotação
+          <input type="file" multiple style={{ display: 'none' }}
+            onChange={(e) => { onUpload(e.target.files); e.currentTarget.value = ''; }} />
+        </label>
+      )}
+    </div>
   );
 }
 

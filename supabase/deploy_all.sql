@@ -374,7 +374,8 @@ create table if not exists estimate_items (
   description   text,                             -- overrides material name when set
   qty           numeric(14,4) not null default 0 check (qty >= 0),
   unit          unit_type not null default 'ea',
-  unit_cost     numeric(14,4) not null default 0 check (unit_cost >= 0),
+  unit_cost     numeric(14,4) not null default 0 check (unit_cost >= 0),  -- initial base estimate
+  actual_unit_cost numeric(14,4) check (actual_unit_cost is null or actual_unit_cost >= 0), -- real quoted price
   waste_factor  numeric(6,4) not null default 0 check (waste_factor >= 0), -- e.g. 0.10 = 10%
   price_source  price_source not null default 'estimated',
   price_link    text,
@@ -388,6 +389,36 @@ create table if not exists estimate_items (
 );
 create index if not exists idx_estimate_items_estimate on estimate_items(estimate_id);
 create index if not exists idx_estimate_items_wbs on estimate_items(wbs_code);
+alter table estimate_items add column if not exists actual_unit_cost numeric(14,4); -- idempotent (0012)
+
+-- Accumulating price memory: real quotes / web / manual observations by category.
+create table if not exists price_observations (
+  id                uuid primary key default gen_random_uuid(),
+  org_id            uuid not null references orgs(id) on delete cascade,
+  wbs_code          text references wbs_nodes(code),
+  line_code         text,
+  description       text,
+  unit              unit_type not null default 'ea',
+  unit_price        numeric(14,4) not null check (unit_price >= 0),
+  county            text,
+  source            text not null default 'real_quote',
+  estimate_item_id  uuid references estimate_items(id) on delete set null,
+  observed_at       date not null default current_date,
+  created_at        timestamptz not null default now()
+);
+create index if not exists idx_price_obs_org on price_observations(org_id);
+create index if not exists idx_price_obs_wbs on price_observations(org_id, wbs_code);
+
+-- 1..N attachments (supplier quotes) per estimate line.
+create table if not exists estimate_item_files (
+  id                uuid primary key default gen_random_uuid(),
+  org_id            uuid not null references orgs(id) on delete cascade,
+  estimate_item_id  uuid not null references estimate_items(id) on delete cascade,
+  file_path         text not null,
+  file_name         text,
+  created_at        timestamptz not null default now()
+);
+create index if not exists idx_eif_item on estimate_item_files(estimate_item_id);
 create or replace trigger trg_estimate_items_updated before update on estimate_items
   for each row execute function set_updated_at();
 
@@ -610,7 +641,8 @@ declare
     'projects', 'project_files', 'estimates', 'estimate_items',
     'invoices', 'invoice_items', 'actual_costs', 'county_parameters',
     'spec_documents', 'change_orders', 'draw_schedules',
-    'bt_costcode_map', 'rfq_requests'
+    'bt_costcode_map', 'rfq_requests',
+    'price_observations', 'estimate_item_files'
   ];
 begin
   foreach t in array org_tables loop
