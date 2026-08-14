@@ -3,7 +3,9 @@ project_id = "pkb-orcamentos"
 
 [db]
 port = 54322
-major_version = 16
+# Supabase Postgres images are 15/17 (16 was skipped); the CLI rejects 16.
+# Local/validation only — CI deploys Edge Functions and never pushes the DB.
+major_version = 17
 
 [db.seed]
 enabled = true
