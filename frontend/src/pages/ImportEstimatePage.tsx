@@ -43,24 +43,37 @@ export function ImportEstimatePage() {
     if (pe) return { inserted: 0, error: pe.message };
 
     const { data: est, error: ee } = await supabase.from('estimates').insert({
-      org_id: activeOrg!.id, project_id: proj!.id, level: f.level, status: 'draft',
-      notes: 'Importado de planilha de orçamento existente.',
+      org_id: activeOrg!.id, project_id: proj!.id, level: f.level, status: 'approved',
+      notes: 'Importado — valores EXECUTADOS (obra concluída).',
     }).select('id').single();
     if (ee) return { inserted: 0, error: ee.message };
 
     // Collapse hierarchical budgets to leaf items and use the Total column as the
     // line amount (see prepareEstimateLines) so category subtotals aren't double-counted.
+    // An imported budget is an EXECUTED job: the value IS the real final cost, so it
+    // fills BOTH base and actual (Δ 0), and is flagged as an invoice (executed).
     const prepared = prepareEstimateLines(mapped, validCodes, defaultCat);
     const rows = prepared.map((l) => ({
       org_id: activeOrg!.id, estimate_id: est!.id,
       wbs_code: l.wbs_code, line_code: l.line_code, description: l.description,
-      qty: l.qty, unit: l.unit, unit_cost: l.unit_cost,
-      price_source: 'catalog' as const, needs_review: false, sort_order: l.sort_order,
+      qty: l.qty, unit: l.unit, unit_cost: l.unit_cost, actual_unit_cost: l.unit_cost,
+      price_source: 'invoice' as const, needs_review: false, sort_order: l.sort_order,
     }));
     if (!rows.length) return { inserted: 0, error: 'Nenhuma linha de item encontrada (só cabeçalhos?).' };
 
     const { error: ie } = await supabase.from('estimate_items').insert(rows);
     if (ie) return { inserted: 0, error: ie.message };
+
+    // Feed the price memory with these EXECUTED unit prices so future AI
+    // estimates learn from real completed-job costs. Best-effort.
+    try {
+      const obs = prepared.filter((l) => Number(l.unit_cost) > 0).map((l) => ({
+        org_id: activeOrg!.id, wbs_code: l.wbs_code, line_code: l.line_code,
+        description: l.description, unit: l.unit, unit_price: l.unit_cost,
+        county: f.county || null, source: 'executed',
+      }));
+      if (obs.length) await supabase.from('price_observations').insert(obs);
+    } catch { /* pre-migration: skip */ }
 
     nav(`/projetos/${proj!.id}`);
     return { inserted: rows.length };
@@ -69,9 +82,10 @@ export function ImportEstimatePage() {
   return (
     <div>
       <header className="page-head"><h1>Importar orçamento existente</h1></header>
-      <p className="muted">Suba uma tabela de orçamento que você já tem (export do Buildertrend ou qualquer
-        planilha). Viram projeto + orçamento e passam a servir de <strong>modelo de referência</strong> para
-        estimar novas casas por área.</p>
+      <p className="muted">Suba uma tabela de orçamento de uma obra que você já fez. O sistema trata esses valores
+        como <strong>EXECUTADOS</strong> (custo real final da obra): eles preenchem a coluna Real, viram
+        <strong> modelo de referência</strong> e <strong>alimentam a memória de preços</strong> — melhorando as
+        próximas estimativas por IA.</p>
 
       <div className="card form-grid">
         <label>Nome do projeto / modelo<input value={f.name} required
