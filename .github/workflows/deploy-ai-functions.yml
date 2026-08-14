@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main, claude/new-session-zkg2g6]   # branch default do repo
-    paths: ['supabase/functions/**']
+    paths: ['supabase/functions/**', 'supabase/config.toml']
 
 env:
   PROJECT_REF: fvjknahpmihueyeasgbx
