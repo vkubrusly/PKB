@@ -9,6 +9,7 @@ const NAV = [
   { to: '/materiais', label: 'Materiais' },
   { to: '/fornecedores', label: 'Fornecedores' },
   { to: '/niveis', label: 'Níveis' },
+  { to: '/equipe', label: 'Equipe' },
 ];
 
 export function Layout() {

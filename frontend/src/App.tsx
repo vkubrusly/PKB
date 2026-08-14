@@ -10,6 +10,7 @@ import { ImportEstimatePage } from './pages/ImportEstimatePage';
 import { SuppliersPage } from './pages/SuppliersPage';
 import { MaterialsPage } from './pages/MaterialsPage';
 import { SpecLevelsPage } from './pages/SpecLevelsPage';
+import { EquipePage } from './pages/EquipePage';
 
 function Gate() {
   const { session, loading, activeOrg } = useAuth();
@@ -27,6 +28,7 @@ function Gate() {
         <Route path="/materiais" element={<MaterialsPage />} />
         <Route path="/fornecedores" element={<SuppliersPage />} />
         <Route path="/niveis" element={<SpecLevelsPage />} />
+        <Route path="/equipe" element={<EquipePage />} />
         <Route path="*" element={<Navigate to="/projetos" replace />} />
       </Route>
     </Routes>
