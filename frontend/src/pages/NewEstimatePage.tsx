@@ -37,8 +37,9 @@ export function NewEstimatePage() {
   const [genNote, setGenNote] = useState<{ text: string; warn: boolean } | null>(null); // step-3 summary of what generation did
   const [research, setResearch] = useState<string | null>(null); // live web findings used by the AI estimate
 
-  // step 2 — method
+  // step 2 — method + builder fee (section 21)
   const [method, setMethod] = useState<Method>('model');
+  const [fee, setFee] = useState<{ type: 'fixed' | 'percent'; value: string }>({ type: 'fixed', value: '25000' });
   const [refs, setRefs] = useState<RefOption[]>([]);
   const [refId, setRefId] = useState('');
   const [busy, setBusy] = useState(false);
@@ -97,7 +98,7 @@ export function NewEstimatePage() {
         target, prog, undefined, ref.level, f.level,
       );
       const reg = await withRegional(out.lines);
-      setLines(reg.lines);
+      setLines(applyBuilderFee(reg.lines));
       const parts: string[] = [];
       if (ref.level && ref.level !== f.level) parts.push(`acabamento ${ref.level}→${f.level} aplicado`);
       if (reg.summary) parts.push(reg.summary);
@@ -185,6 +186,29 @@ export function NewEstimatePage() {
     } catch (e) { return { lines, summary: null, error: 'ajuste regional falhou — ' + (e instanceof Error ? e.message : String(e)) }; }
   }
 
+  // Builder fee (WBS section 21). Replaces any generated fee line with the
+  // user's choice: fixed $ amount, or a % of the CONSTRUCTION base. Per the PKB
+  // cost book, the % base excludes owner items (impact fees & permits).
+  function applyBuilderFee(lines: GeneratedLine[]): GeneratedLine[] {
+    const val = Number(fee.value) || 0;
+    const isFeeLine = (l: GeneratedLine) => (l.line_code ?? l.wbs_code).split('.')[0] === '21';
+    const isOwner = (l: GeneratedLine) => /impact\s*fee|permit/i.test(l.description);
+    const out = lines.filter((l) => !isFeeLine(l)); // drop any existing fee line
+    if (val <= 0) return out;
+    const round2 = (x: number) => Math.round(x * 100) / 100;
+    const base = out.filter((l) => !isOwner(l)).reduce((s, l) => s + l.line_total, 0);
+    const amount = fee.type === 'fixed' ? round2(val) : round2(base * val / 100);
+    const desc = fee.type === 'fixed'
+      ? 'Builder fee (fixo)'
+      : `Builder fee (${val}% da obra)`;
+    out.push({
+      line_code: '21.1', wbs_code: '21', description: desc, qty: 1, unit: 'ls',
+      unit_cost: amount, basis: 'fixed', factor: 1, line_total: amount,
+      needs_review: true, price_source: 'estimated',
+    });
+    return out;
+  }
+
   // Document-first: read the plans and pre-fill the project fields.
   async function extractFromPlan() {
     setExtracting(true); setErr(null); setAiNote(null);
@@ -245,7 +269,7 @@ export function NewEstimatePage() {
       const got = (data?.lines ?? []) as GeneratedLine[];
       if (!got.length) throw new Error('A IA não retornou linhas. Revise as plantas.');
       const reg = await withRegional(got);
-      setLines(reg.lines);
+      setLines(applyBuilderFee(reg.lines));
       setGenNote({ text: 'Take-off por IA das plantas. ' + (reg.summary ?? (reg.error ? '⚠ ' + reg.error : '')), warn: !!reg.error });
       setStep(3);
     } catch (e) {
@@ -300,7 +324,7 @@ export function NewEstimatePage() {
       if (!got.length) throw new Error('A IA não retornou linhas.');
       setResearch(researchText || null);
       const reg = await withRegional(got);
-      setLines(reg.lines);
+      setLines(applyBuilderFee(reg.lines));
       const internal = typeof data.internal_lines === 'number' ? data.internal_lines : 0;
       const base = `Estimativa IA (${data.model ?? 'modelo'}${usedWeb ? ' + busca web' : ''}) — ${got.length} linhas · `
         + `${internal} categorias c/ histórico interno${r.confidence ? ` · confiança ${r.confidence}` : ''}`;
@@ -489,6 +513,30 @@ export function NewEstimatePage() {
               </label>
             </div>
           )}
+
+          <div className="card">
+            <h2 style={{ marginTop: 0 }}>Builder fee <span className="muted small" style={{ fontWeight: 400 }}>— seção 21 (Administration)</span></h2>
+            <p className="muted small">Padrão PKB: Essential até ~$250k → <strong>fixo $25.000</strong>; premium/luxury → <strong>15–18%</strong> da obra.
+              O percentual não incide sobre impact fees e permits (itens do owner).</p>
+            <div className="method-cards" style={{ marginBottom: '.6rem' }}>
+              <button type="button" className={`card method ${fee.type === 'fixed' ? 'sel' : ''}`}
+                onClick={() => setFee({ type: 'fixed', value: fee.type === 'fixed' ? fee.value : '25000' })}>
+                <h2>Valor fixo ($)</h2>
+                <p className="muted small">Um valor fechado, ex.: $25.000.</p>
+              </button>
+              <button type="button" className={`card method ${fee.type === 'percent' ? 'sel' : ''}`}
+                onClick={() => setFee({ type: 'percent', value: fee.type === 'percent' ? fee.value : '18' })}>
+                <h2>Percentual (%)</h2>
+                <p className="muted small">% sobre o custo de obra, ex.: 18%.</p>
+              </button>
+            </div>
+            <label style={{ maxWidth: 260 }}>
+              {fee.type === 'fixed' ? 'Valor do fee (USD)' : 'Percentual (%)'}
+              <input type="number" min={0} step={fee.type === 'fixed' ? 500 : 0.5} value={fee.value}
+                onChange={(e) => setFee({ ...fee, value: e.target.value })}
+                placeholder={fee.type === 'fixed' ? '25000' : '18'} />
+            </label>
+          </div>
 
           <div className="row-actions">
             <button className="btn" onClick={() => setStep(1)}>Voltar</button>
