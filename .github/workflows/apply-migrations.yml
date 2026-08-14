@@ -1,0 +1,82 @@
+name: Apply DB migrations
+
+# Applies additive, idempotent schema changes to the Supabase project using the
+# Management API (the same SUPABASE_ACCESS_TOKEN used to deploy functions).
+# Run manually from the Actions tab ("Run workflow").
+
+on:
+  workflow_dispatch:
+
+env:
+  PROJECT_REF: fvjknahpmihueyeasgbx
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run SQL via Supabase Management API
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          cat > /tmp/mig.sql <<'SQL'
+          -- 0012: real prices + price memory + per-line attachments
+          alter table estimate_items add column if not exists actual_unit_cost numeric(14,4);
+
+          create table if not exists price_observations (
+            id uuid primary key default gen_random_uuid(),
+            org_id uuid not null references orgs(id) on delete cascade,
+            wbs_code text references wbs_nodes(code), line_code text, description text,
+            unit unit_type not null default 'ea',
+            unit_price numeric(14,4) not null check (unit_price >= 0),
+            county text, source text not null default 'real_quote',
+            estimate_item_id uuid references estimate_items(id) on delete set null,
+            observed_at date not null default current_date,
+            created_at timestamptz not null default now());
+          create index if not exists idx_price_obs_org on price_observations(org_id);
+          create index if not exists idx_price_obs_wbs on price_observations(org_id, wbs_code);
+
+          create table if not exists estimate_item_files (
+            id uuid primary key default gen_random_uuid(),
+            org_id uuid not null references orgs(id) on delete cascade,
+            estimate_item_id uuid not null references estimate_items(id) on delete cascade,
+            file_path text not null, file_name text,
+            supplier text, is_chosen boolean not null default false,
+            created_at timestamptz not null default now());
+          create index if not exists idx_eif_item on estimate_item_files(estimate_item_id);
+          -- 0013 (idempotent for pre-existing tables)
+          alter table estimate_item_files add column if not exists supplier text;
+          alter table estimate_item_files add column if not exists is_chosen boolean not null default false;
+
+          alter table price_observations enable row level security;
+          drop policy if exists org_rw on price_observations;
+          create policy org_rw on price_observations for all
+            using (is_org_member(org_id)) with check (is_org_member(org_id));
+          alter table estimate_item_files enable row level security;
+          drop policy if exists org_rw on estimate_item_files;
+          create policy org_rw on estimate_item_files for all
+            using (is_org_member(org_id)) with check (is_org_member(org_id));
+
+          -- storage: allow org members to delete their own quote attachments
+          drop policy if exists "plantas_org_delete" on storage.objects;
+          create policy "plantas_org_delete" on storage.objects for delete to authenticated
+            using (bucket_id = 'plantas' and exists (
+              select 1 from public.org_members m
+              where m.user_id = auth.uid() and m.org_id = ((storage.foldername(name))[1])::uuid));
+          SQL
+
+          jq -Rs '{query: .}' /tmp/mig.sql > /tmp/body.json
+
+          echo "Applying migration to project $PROJECT_REF…"
+          HTTP=$(curl -sS -o /tmp/resp.json -w '%{http_code}' \
+            -X POST "https://api.supabase.com/v1/projects/$PROJECT_REF/database/query" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data @/tmp/body.json)
+          echo "HTTP $HTTP"
+          cat /tmp/resp.json
+          echo
+          if [ "$HTTP" -ge 300 ]; then
+            echo "::error::Migration failed (HTTP $HTTP)"; exit 1
+          fi
+          echo "Migration applied successfully."
