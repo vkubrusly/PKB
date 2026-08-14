@@ -273,3 +273,4 @@ label.checkbox input { width: auto; }
 .quote-row .sup-name { font-weight: 600; }
 .quote-row .fname { background: none; border: none; cursor: pointer; color: var(--link); font: inherit; padding: 0; }
 .quote-row .x { background: none; border: none; cursor: pointer; color: var(--danger); font-weight: 700; }
+.dot.yellow { background: #d9a406; box-shadow: 0 0 0 2px color-mix(in srgb, #d9a406 25%, transparent); }

@@ -199,11 +199,14 @@ export function ProjectDetailPage() {
     setFiles((fm) => ({ ...fm, [itemId]: (fm[itemId] || []).map((f) => (f.id === fileId ? { ...f, supplier } : f)) }));
     await supabase.from('estimate_item_files').update({ supplier: supplier || null }).eq('id', fileId);
   }
-  // A line is "defined" (green) when there's nothing pending to decide: no
-  // quotes attached (base/typed value stands), or one quote marked as chosen.
-  const isDefined = (it: Item) => {
+  // 3-state line status:
+  //  🟢 green  — decided: a quote is chosen, OR (no quotes) the real price is set.
+  //  🔴 red    — quotes attached but none chosen yet (decision pending).
+  //  🟡 yellow — no quotes and no real price yet (waiting for you to enter it).
+  const lineStatus = (it: Item): 'green' | 'red' | 'yellow' => {
     const fs = files[it.id] ?? [];
-    return fs.length === 0 || fs.some((f) => f.is_chosen);
+    if (fs.length > 0) return fs.some((f) => f.is_chosen) ? 'green' : 'red';
+    return it.actual_unit_cost != null ? 'green' : 'yellow';
   };
   async function deleteFile(f: EstimateItemFile) {
     await supabase.storage.from('plantas').remove([f.file_path]);
@@ -349,7 +352,7 @@ export function ProjectDetailPage() {
                     </tr>
                     {catItems.map((it) => (editing ? (
                       <tr key={it.id}>
-                        <td className="center"><StatusDot defined={isDefined(it)} /></td>
+                        <td className="center"><StatusDot status={lineStatus(it)} /></td>
                         <td className="mono">{it.line_code ?? it.wbs_code}</td>
                         <td>
                           <input value={it.description ?? ''} placeholder={nameByCode[it.wbs_code] ?? it.wbs_code}
@@ -375,7 +378,7 @@ export function ProjectDetailPage() {
                       </tr>
                     ) : (
                       <tr key={it.id} className={it.needs_review ? 'flagged' : undefined}>
-                        <td className="center"><StatusDot defined={isDefined(it)} /></td>
+                        <td className="center"><StatusDot status={lineStatus(it)} /></td>
                         <td className="mono">{it.line_code ?? it.wbs_code}</td>
                         <td>
                           {it.description ?? nameByCode[it.wbs_code] ?? it.wbs_code}
@@ -426,9 +429,11 @@ export function ProjectDetailPage() {
   );
 }
 
-function StatusDot({ defined }: { defined: boolean }) {
-  return <span className={defined ? 'dot green' : 'dot red'}
-    title={defined ? 'Definido' : 'Pendente: escolha o orçamento a usar'} />;
+function StatusDot({ status }: { status: 'green' | 'red' | 'yellow' }) {
+  const title = status === 'green' ? 'Definido'
+    : status === 'red' ? 'Pendente: escolha qual cotação usar'
+    : 'Pendente: informe o valor real orçado';
+  return <span className={`dot ${status}`} title={title} />;
 }
 
 // Per-line supplier quotes. Multiple files from different suppliers; mark the
