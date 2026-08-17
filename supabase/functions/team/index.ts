@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
     const { data: { user }, error: uErr } = await userClient.auth.getUser();
     if (uErr || !user) return json({ error: 'Não autenticado.' }, 401);
 
-    const { action, org_id, email, role, redirect } = await req.json();
+    const { action, org_id, email, role, redirect, password } = await req.json();
     if (!org_id) return json({ error: 'org_id é obrigatório.' }, 400);
 
     const svc = createClient(url, svcKey);
@@ -77,21 +77,34 @@ Deno.serve(async (req) => {
       }
 
       let invited = false;
+      let created = false;
       if (!targetId) {
-        // No account yet → send an invite email (creates the user).
-        const { data: inv, error: iErr } = await svc.auth.admin.inviteUserByEmail(
-          target, redirect ? { redirectTo: String(redirect) } : undefined,
-        );
-        if (iErr || !inv?.user) return json({ error: `Não foi possível convidar: ${iErr?.message ?? 'erro'}` }, 400);
-        targetId = inv.user.id;
-        invited = true;
+        const pw = typeof password === 'string' ? password.trim() : '';
+        if (pw) {
+          // Provision the account immediately with the given password (no email step).
+          if (pw.length < 6) return json({ error: 'Senha muito curta (mínimo 6 caracteres).' }, 400);
+          const { data: cu, error: cErr } = await svc.auth.admin.createUser({
+            email: target, password: pw, email_confirm: true,
+          });
+          if (cErr || !cu?.user) return json({ error: `Não foi possível criar a conta: ${cErr?.message ?? 'erro'}` }, 400);
+          targetId = cu.user.id;
+          created = true;
+        } else {
+          // No account yet and no password → send an invite email.
+          const { data: inv, error: iErr } = await svc.auth.admin.inviteUserByEmail(
+            target, redirect ? { redirectTo: String(redirect) } : undefined,
+          );
+          if (iErr || !inv?.user) return json({ error: `Não foi possível convidar: ${iErr?.message ?? 'erro'}` }, 400);
+          targetId = inv.user.id;
+          invited = true;
+        }
       }
 
       const { error: insErr } = await svc.from('org_members')
         .upsert({ org_id, user_id: targetId, role: newRole }, { onConflict: 'org_id,user_id' });
       if (insErr) return json({ error: insErr.message }, 400);
 
-      return json({ ok: true, invited, role: newRole, email: target });
+      return json({ ok: true, invited, created, role: newRole, email: target });
     }
 
     return json({ error: 'action inválida (use "list" ou "add").' }, 400);

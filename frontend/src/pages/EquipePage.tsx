@@ -11,6 +11,7 @@ export function EquipePage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [role, setRole] = useState<'member' | 'admin'>('member');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -45,11 +46,13 @@ export function EquipePage() {
   async function add(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setErr(null); setMsg(null);
     try {
-      const r = await call('add', { email: email.trim(), role, redirect: window.location.origin });
-      setMsg(r.invited
-        ? `Convite enviado para ${r.email}. Ele recebe um e-mail para criar a senha e já entra na sua organização.`
-        : `${r.email} foi adicionado à organização (${r.role}). Ele já vê os mesmos dados no próximo login.`);
-      setEmail('');
+      const r = await call('add', { email: email.trim(), role, password: password.trim() || undefined, redirect: window.location.origin });
+      setMsg(r.created
+        ? `Conta criada para ${r.email} com a senha definida. Ela já pode entrar (e-mail + senha) e vê os mesmos dados.`
+        : r.invited
+          ? `Convite enviado para ${r.email}. Ele recebe um e-mail para criar a senha e já entra na sua organização.`
+          : `${r.email} foi adicionado à organização (${r.role}). Ele já vê os mesmos dados no próximo login.`);
+      setEmail(''); setPassword('');
       load();
     } catch (e) { setErr(e instanceof Error ? e.message : String(e)); }
     finally { setBusy(false); }
@@ -65,6 +68,9 @@ export function EquipePage() {
           <label className="span-all" style={{ maxWidth: 420 }}>E-mail do convidado
             <input type="email" required placeholder="carlos@pkbhomes.com"
               value={email} onChange={(e) => setEmail(e.target.value)} /></label>
+          <label style={{ maxWidth: 240 }}>Senha (opcional — cria a conta na hora)
+            <input type="text" placeholder="deixe vazio p/ enviar convite" autoComplete="off"
+              value={password} onChange={(e) => setPassword(e.target.value)} /></label>
           <label style={{ maxWidth: 220 }}>Papel
             <select value={role} onChange={(e) => setRole(e.target.value as 'member' | 'admin')}>
               <option value="member">Member (usa o sistema)</option>
