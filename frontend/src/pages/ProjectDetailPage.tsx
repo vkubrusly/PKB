@@ -138,7 +138,10 @@ export function ProjectDetailPage() {
       // Base (unit_cost) is FROZEN: never send it on update, so the AI-suggested
       // base is preserved. Only the real price and editable fields change.
       const toUpdate = draft.filter((it) => origIds.has(it.id)).map((it, i) => ({
-        id: it.id, wbs_code: it.wbs_code, line_code: it.line_code, description: it.description,
+        // include the NOT NULL keys so upsert's insert-branch validates (base
+        // unit_cost is intentionally omitted so it stays frozen).
+        id: it.id, org_id: project!.org_id, estimate_id: activeEstimate,
+        wbs_code: it.wbs_code, line_code: it.line_code, description: it.description,
         qty: Number(it.qty) || 0, unit: it.unit,
         actual_unit_cost: num(it.actual_unit_cost), sort_order: i + 1,
       }));
