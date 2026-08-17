@@ -39,6 +39,7 @@ export function ProjectDetailPage() {
   const [savingEst, setSavingEst] = useState(false);
   const [files, setFiles] = useState<Record<string, EstimateItemFile[]>>({});
   const [removed, setRemoved] = useState<string[]>([]); // ids to delete on save
+  const [hasDraft, setHasDraft] = useState(false); // an unsaved local draft exists
   const [suppliers, setSuppliers] = useState<string[]>([]); // known supplier names (autocomplete)
 
   useEffect(() => {
@@ -79,7 +80,18 @@ export function ProjectDetailPage() {
       setFiles(map);
     } else setFiles({});
   }
-  useEffect(() => { loadItems(); setEditing(false); /* eslint-disable-next-line */ }, [activeEstimate]);
+  useEffect(() => {
+    loadItems(); setEditing(false);
+    setHasDraft(!!(activeEstimate && localStorage.getItem('pkb:draft:' + activeEstimate)));
+    /* eslint-disable-next-line */
+  }, [activeEstimate]);
+
+  // Safety net: persist the in-progress edit locally so a failed save or a
+  // refresh never loses work. Cleared on successful save or cancel.
+  useEffect(() => {
+    if (!activeEstimate) return;
+    if (editing) localStorage.setItem('pkb:draft:' + activeEstimate, JSON.stringify({ draft, removed }));
+  }, [draft, removed, editing, activeEstimate]);
 
   const categories = useMemo(() => wbs.filter((n) => n.depth === 1), [wbs]);
   const nameByCode = useMemo(
@@ -114,7 +126,18 @@ export function ProjectDetailPage() {
   }
 
   function startEdit() { setDraft(items.map((it) => ({ ...it }))); setRemoved([]); setEditing(true); }
-  function cancelEdit() { setEditing(false); setDraft([]); setRemoved([]); }
+  function clearDraftStore() { if (activeEstimate) localStorage.removeItem('pkb:draft:' + activeEstimate); setHasDraft(false); }
+  function cancelEdit() { setEditing(false); setDraft([]); setRemoved([]); clearDraftStore(); }
+  function restoreDraft() {
+    if (!activeEstimate) return;
+    try {
+      const saved = JSON.parse(localStorage.getItem('pkb:draft:' + activeEstimate) || '{}');
+      if (Array.isArray(saved.draft)) {
+        setDraft(saved.draft); setRemoved(Array.isArray(saved.removed) ? saved.removed : []);
+        setEditing(true); setHasDraft(false);
+      }
+    } catch { /* corrupt draft — ignore */ }
+  }
   function patch(id: string, p: Partial<Item>) { setDraft((d) => d.map((it) => (it.id === id ? { ...it, ...p } : it))); }
   function addLine(cat: string) {
     const nu = {
@@ -133,40 +156,55 @@ export function ProjectDetailPage() {
 
   async function saveEstimate() {
     setSavingEst(true); setErr(null);
+    const num = (v: unknown) => (v === '' || v === null || v === undefined ? null : Number(v));
+    // Extract a readable message from Supabase error OBJECTS (not Error instances).
+    const emsg = (e: unknown) => {
+      if (e && typeof e === 'object') {
+        const o = e as { message?: string; details?: string; hint?: string; code?: string };
+        return [o.message, o.details, o.hint, o.code].filter(Boolean).join(' · ') || JSON.stringify(e);
+      }
+      return String(e);
+    };
     try {
-      const num = (v: unknown) => (v === '' || v === null || v === undefined ? null : Number(v));
-      // Base (unit_cost) is FROZEN: never send it on update, so the AI-suggested
-      // base is preserved. Only the real price and editable fields change.
-      const toUpdate = draft.filter((it) => origIds.has(it.id)).map((it, i) => ({
-        // include the NOT NULL keys so upsert's insert-branch validates (base
-        // unit_cost is intentionally omitted so it stays frozen).
-        id: it.id, org_id: project!.org_id, estimate_id: activeEstimate,
-        wbs_code: it.wbs_code, line_code: it.line_code, description: it.description,
-        qty: Number(it.qty) || 0, unit: it.unit,
-        actual_unit_cost: num(it.actual_unit_cost), sort_order: i + 1,
-      }));
-      // New manual lines have no AI base → base = the real price entered (Δ = 0).
-      const toInsert = draft.filter((it) => !origIds.has(it.id)).map((it, i) => ({
+      // 1) UPDATE existing rows one by one — only the editable fields; base
+      //    (unit_cost) is never sent, so it stays frozen. No insert/delete risk.
+      for (const it of draft.filter((d) => origIds.has(d.id))) {
+        const { error } = await supabase.from('estimate_items').update({
+          wbs_code: it.wbs_code, line_code: it.line_code, description: it.description,
+          qty: Number(it.qty) || 0, unit: it.unit, actual_unit_cost: num(it.actual_unit_cost),
+        }).eq('id', it.id);
+        if (error) throw error;
+      }
+      // 2) INSERT new manual lines (base = real price entered → Δ 0).
+      const toInsert = draft.filter((d) => !origIds.has(d.id)).map((it, i) => ({
         org_id: project!.org_id, estimate_id: activeEstimate, wbs_code: it.wbs_code,
         line_code: it.line_code, description: it.description || null, qty: Number(it.qty) || 0,
         unit: it.unit, unit_cost: num(it.actual_unit_cost) ?? (Number(it.unit_cost) || 0),
         actual_unit_cost: num(it.actual_unit_cost),
         price_source: 'estimated', needs_review: true, sort_order: draft.length + i,
       }));
-      if (toUpdate.length) { const { error } = await supabase.from('estimate_items').upsert(toUpdate); if (error) throw error; }
       if (toInsert.length) { const { error } = await supabase.from('estimate_items').insert(toInsert); if (error) throw error; }
+      // 3) DELETE explicitly removed lines.
       if (removed.length) { const { error } = await supabase.from('estimate_items').delete().in('id', removed); if (error) throw error; }
-      // Accumulate price knowledge from the REAL prices entered.
-      const obs = draft.filter((it) => num(it.actual_unit_cost) && Number(it.actual_unit_cost) > 0).map((it) => ({
-        org_id: project!.org_id, wbs_code: it.wbs_code, line_code: it.line_code, description: it.description,
-        unit: it.unit, unit_price: Number(it.actual_unit_cost), county: project!.county,
-        source: 'real_quote', estimate_item_id: origIds.has(it.id) ? it.id : null,
-      }));
-      if (obs.length) await supabase.from('price_observations').insert(obs);
-      setEditing(false); setRemoved([]);
+
+      // Success — the values are saved. Now (best-effort, never blocks the save)
+      // feed the price memory with the real prices.
+      try {
+        const obs = draft.filter((it) => num(it.actual_unit_cost) && Number(it.actual_unit_cost) > 0).map((it) => ({
+          org_id: project!.org_id, wbs_code: it.wbs_code, line_code: it.line_code, description: it.description,
+          unit: it.unit, unit_price: Number(it.actual_unit_cost), county: project!.county,
+          source: 'real_quote', estimate_item_id: origIds.has(it.id) ? it.id : null,
+        }));
+        if (obs.length) await supabase.from('price_observations').insert(obs);
+      } catch { /* price memory is optional — don't fail the save */ }
+
+      setEditing(false); setRemoved([]); clearDraftStore();
       await loadItems();
-    } catch (e) { setErr(e instanceof Error ? e.message : String(e)); }
-    finally { setSavingEst(false); }
+    } catch (e) {
+      const m = emsg(e);
+      setErr(`Falha ao salvar: ${m}`);
+      alert(`Não consegui salvar: ${m}\n\nSuas edições continuam na tela — NÃO atualize a página. Me mande esse texto.`);
+    } finally { setSavingEst(false); }
   }
 
   async function uploadFiles(itemId: string, list: FileList | null) {
@@ -314,6 +352,16 @@ export function ProjectDetailPage() {
               </button>
             ))}
           </div>
+
+          {hasDraft && !editing && (
+            <div className="card" style={{ borderColor: 'var(--brand)', margin: '0 0 .75rem' }}>
+              <strong>Você tem edições não salvas deste orçamento.</strong>
+              <div className="row-actions" style={{ marginTop: '.5rem' }}>
+                <button className="btn primary" onClick={restoreDraft}>Restaurar edições</button>
+                <button className="btn" onClick={clearDraftStore}>Descartar</button>
+              </div>
+            </div>
+          )}
 
           <div className="row-actions" style={{ margin: '0 0 .75rem', flexWrap: 'wrap' }}>
             {!editing ? (
