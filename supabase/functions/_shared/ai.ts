@@ -19,11 +19,33 @@ export function modelChain(): string[] {
 //  • optional web search — attach Anthropic's web_search tool, and if the
 //    account rejects it (400 tool error) retry the same model WITHOUT the tool,
 //    so generation still succeeds (just without live web results).
+// Upload a PDF to the Anthropic Files API and return its file_id. Lets us send
+// large PDFs by reference instead of inline base64 (which inflates ~33% and
+// blows the 32MB request limit). Requires the files-api beta.
+export async function uploadPdf(apiKey: string, bytes: ArrayBuffer, filename: string): Promise<string> {
+  const form = new FormData();
+  form.append('file', new File([bytes], filename || 'plantas.pdf', { type: 'application/pdf' }));
+  const resp = await fetch('https://api.anthropic.com/v1/files', {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-beta': 'files-api-2025-04-14',
+    },
+    body: form,
+  });
+  const j = await resp.json().catch(() => ({}));
+  if (!resp.ok) throw new Error(`Files API ${resp.status}: ${j?.error?.message ?? 'upload falhou'}`);
+  return j.id;
+}
+
+export const FILES_BETA = { 'anthropic-beta': 'files-api-2025-04-14' };
+
 // deno-lint-ignore no-explicit-any
 export async function createWithFallback(
   anthropic: Anthropic,
   params: Record<string, any>,
-  opts: { webSearch?: boolean; maxUses?: number } = {},
+  opts: { webSearch?: boolean; maxUses?: number; headers?: Record<string, string> } = {},
 ) {
   const tool = opts.webSearch
     ? { type: 'web_search_20250305', name: 'web_search', max_uses: opts.maxUses ?? 5 }
@@ -36,7 +58,7 @@ export async function createWithFallback(
         // deno-lint-ignore no-explicit-any
         const body: Record<string, any> = { ...params, model };
         if (useTool && tool) body.tools = [...(params.tools ?? []), tool];
-        const resp = await anthropic.messages.create(body);
+        const resp = await anthropic.messages.create(body, opts.headers ? { headers: opts.headers } : undefined);
         return { resp, model, usedWeb: useTool };
       } catch (e) {
         const status = (e as { status?: number })?.status;
@@ -89,12 +111,13 @@ export async function createViaTool<T>(
   params: Record<string, any>,
   // deno-lint-ignore no-explicit-any
   tool: { name: string; description: string; input_schema: Record<string, any> },
+  headers?: Record<string, string>,
 ): Promise<{ result: T; model: string }> {
   const { resp, model } = await createWithFallback(anthropic, {
     ...params,
     tools: [...(params.tools ?? []), tool],
     tool_choice: { type: 'tool', name: tool.name },
-  });
+  }, headers ? { headers } : {});
   const block = (resp?.content ?? []).find((b: { type?: string }) => b.type === 'tool_use');
   if (!block) throw new Error('O modelo não retornou o resultado estruturado (tool_use).');
   return { result: (block as { input: T }).input, model };

@@ -15,9 +15,9 @@
 
 import Anthropic from 'npm:@anthropic-ai/sdk@0.68.0';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
-import { encodeBase64 } from 'jsr:@std/encoding@1/base64';
+
 import { cors, json } from '../_shared/cors.ts';
-import { aiErrorMessage, createViaTool } from '../_shared/ai.ts';
+import { aiErrorMessage, createViaTool, FILES_BETA, uploadPdf } from '../_shared/ai.ts';
 
 const MATERIALS_TOOL = {
   name: 'emit_materials',
@@ -85,10 +85,10 @@ Deno.serve(async (req) => {
     const { data: file, error: dlErr } = await supabase.storage.from('plantas').download(plan_path);
     if (dlErr || !file) return json({ error: `Falha ao baixar o PDF: ${dlErr?.message}` }, 400);
     const buf = await file.arrayBuffer();
-    if (buf.byteLength > 30 * 1024 * 1024) {
-      return json({ error: `PDF muito grande (${(buf.byteLength / 1048576).toFixed(1)} MB). Limite ~30 MB.` }, 413);
+    if (buf.byteLength > 100 * 1024 * 1024) {
+      return json({ error: `PDF muito grande (${(buf.byteLength / 1048576).toFixed(1)} MB). Limite ~100 MB.` }, 413);
     }
-    const b64 = encodeBase64(buf);
+    const fileId = await uploadPdf(apiKey, buf, plan_path.split('/').pop() ?? 'cotacao.pdf');
 
     const anthropic = new Anthropic({ apiKey });
     const { result } = await createViaTool<Extracted>(anthropic, {
@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
       messages: [{
         role: 'user',
         content: [
-          { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } },
+          { type: 'document', source: { type: 'file', file_id: fileId } },
           {
             type: 'text',
             text:
@@ -132,7 +132,7 @@ Respond with ONLY this JSON:
           },
         ],
       }],
-    }, MATERIALS_TOOL);
+    }, MATERIALS_TOOL, FILES_BETA);
 
     return json({ result });
   } catch (e) {
