@@ -76,10 +76,11 @@ Deno.serve(async (req) => {
         if (data.users.length < 200) break;
       }
 
+      const pw = typeof password === 'string' ? password.trim() : '';
       let invited = false;
       let created = false;
+      let passwordSet = false;
       if (!targetId) {
-        const pw = typeof password === 'string' ? password.trim() : '';
         if (pw) {
           // Provision the account immediately with the given password (no email step).
           if (pw.length < 6) return json({ error: 'Senha muito curta (mínimo 6 caracteres).' }, 400);
@@ -98,13 +99,19 @@ Deno.serve(async (req) => {
           targetId = inv.user.id;
           invited = true;
         }
+      } else if (pw) {
+        // Account already exists → (re)set the provided password and confirm it.
+        if (pw.length < 6) return json({ error: 'Senha muito curta (mínimo 6 caracteres).' }, 400);
+        const { error: uErr2 } = await svc.auth.admin.updateUserById(targetId, { password: pw, email_confirm: true });
+        if (uErr2) return json({ error: `Não foi possível definir a senha: ${uErr2.message}` }, 400);
+        passwordSet = true;
       }
 
       const { error: insErr } = await svc.from('org_members')
         .upsert({ org_id, user_id: targetId, role: newRole }, { onConflict: 'org_id,user_id' });
       if (insErr) return json({ error: insErr.message }, 400);
 
-      return json({ ok: true, invited, created, role: newRole, email: target });
+      return json({ ok: true, invited, created, password_set: created || passwordSet, role: newRole, email: target });
     }
 
     return json({ error: 'action inválida (use "list" ou "add").' }, 400);

@@ -47,8 +47,8 @@ export function EquipePage() {
     e.preventDefault(); setBusy(true); setErr(null); setMsg(null);
     try {
       const r = await call('add', { email: email.trim(), role, password: password.trim() || undefined, redirect: window.location.origin });
-      setMsg(r.created
-        ? `Conta criada para ${r.email} com a senha definida. Ela já pode entrar (e-mail + senha) e vê os mesmos dados.`
+      setMsg(r.password_set
+        ? `${r.email} pronto: senha definida. Já pode entrar (e-mail + senha) e vê os mesmos dados.`
         : r.invited
           ? `Convite enviado para ${r.email}. Ele recebe um e-mail para criar a senha e já entra na sua organização.`
           : `${r.email} foi adicionado à organização (${r.role}). Ele já vê os mesmos dados no próximo login.`);
