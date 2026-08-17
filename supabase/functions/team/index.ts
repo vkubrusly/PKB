@@ -26,7 +26,7 @@ Deno.serve(async (req) => {
     const { data: { user }, error: uErr } = await userClient.auth.getUser();
     if (uErr || !user) return json({ error: 'Não autenticado.' }, 401);
 
-    const { action, org_id, email, role, redirect, password } = await req.json();
+    const { action, org_id, email, role, redirect, password, user_id } = await req.json();
     if (!org_id) return json({ error: 'org_id é obrigatório.' }, 400);
 
     const svc = createClient(url, svcKey);
@@ -114,7 +114,18 @@ Deno.serve(async (req) => {
       return json({ ok: true, invited, created, password_set: created || passwordSet, role: newRole, email: target });
     }
 
-    return json({ error: 'action inválida (use "list" ou "add").' }, 400);
+    if (action === 'remove') {
+      if (!['owner', 'admin'].includes(mem.role)) return json({ error: 'Apenas owner/admin pode excluir membros.' }, 403);
+      if (!user_id) return json({ error: 'user_id é obrigatório.' }, 400);
+      if (user_id === user.id) return json({ error: 'Você não pode excluir a si mesmo.' }, 400);
+      // Fully delete the auth account (org_members cascades), freeing the e-mail
+      // to be recreated with a password.
+      const { error } = await svc.auth.admin.deleteUser(user_id);
+      if (error) return json({ error: `Não foi possível excluir: ${error.message}` }, 400);
+      return json({ ok: true, removed: user_id });
+    }
+
+    return json({ error: 'action inválida (use "list", "add" ou "remove").' }, 400);
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
   }

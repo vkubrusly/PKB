@@ -43,6 +43,17 @@ export function EquipePage() {
   const myRole = members.find((m) => m.is_you)?.role;
   const canManage = myRole === 'owner' || myRole === 'admin';
 
+  async function removeMember(m: Member) {
+    if (m.is_you) return;
+    if (!confirm(`Excluir o usuário ${m.email}? A conta é apagada e o e-mail fica livre para recriar com senha.`)) return;
+    setErr(null); setMsg(null);
+    try {
+      await call('remove', { user_id: m.user_id });
+      setMsg(`${m.email} excluído. O e-mail pode ser recriado com senha.`);
+      load();
+    } catch (e) { setErr(e instanceof Error ? e.message : String(e)); }
+  }
+
   async function add(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setErr(null); setMsg(null);
     try {
@@ -87,13 +98,18 @@ export function EquipePage() {
 
       {loading ? <p className="muted">Carregando…</p> : (
         <table className="table">
-          <thead><tr><th>E-mail</th><th>Papel</th></tr></thead>
+          <thead><tr><th>E-mail</th><th>Papel</th><th></th></tr></thead>
           <tbody>
-            {members.length === 0 && <tr><td colSpan={2} className="muted center">Nenhum membro.</td></tr>}
+            {members.length === 0 && <tr><td colSpan={3} className="muted center">Nenhum membro.</td></tr>}
             {members.map((m) => (
               <tr key={m.user_id}>
                 <td>{m.email}{m.is_you && <span className="tag">você</span>}</td>
                 <td>{m.role}</td>
+                <td className="num">
+                  {canManage && !m.is_you && (
+                    <button className="link danger" onClick={() => removeMember(m)}>Excluir</button>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
