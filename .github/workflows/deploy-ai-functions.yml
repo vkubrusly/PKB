@@ -25,21 +25,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: supabase/setup-cli@v1
-        with:
-          version: latest
-
+      # Install the Supabase CLI via npx (avoids the flaky setup-cli action
+      # download from codeload.github.com, which has been 429/503-ing).
       - name: Set Claude API key (função secret)
-        run: supabase secrets set ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}" --project-ref "$PROJECT_REF"
+        run: npx --yes supabase@latest secrets set ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}" --project-ref "$PROJECT_REF"
 
       - name: Deploy functions
         run: |
-          supabase functions deploy takeoff         --project-ref "$PROJECT_REF"
-          supabase functions deploy price-search    --project-ref "$PROJECT_REF"
-          supabase functions deploy product-detail  --project-ref "$PROJECT_REF"
-          supabase functions deploy project-extract --project-ref "$PROJECT_REF"
-          supabase functions deploy materials-extract --project-ref "$PROJECT_REF"
-          supabase functions deploy estimate-market --project-ref "$PROJECT_REF"
-          supabase functions deploy county-costs --project-ref "$PROJECT_REF"
-          supabase functions deploy market-research --project-ref "$PROJECT_REF"
-          supabase functions deploy team --project-ref "$PROJECT_REF"
+          SB="npx --yes supabase@latest"
+          $SB functions deploy takeoff         --project-ref "$PROJECT_REF"
+          $SB functions deploy price-search    --project-ref "$PROJECT_REF"
+          $SB functions deploy product-detail  --project-ref "$PROJECT_REF"
+          $SB functions deploy project-extract --project-ref "$PROJECT_REF"
+          $SB functions deploy materials-extract --project-ref "$PROJECT_REF"
+          $SB functions deploy estimate-market --project-ref "$PROJECT_REF"
+          $SB functions deploy county-costs --project-ref "$PROJECT_REF"
+          $SB functions deploy market-research --project-ref "$PROJECT_REF"
+          $SB functions deploy team --project-ref "$PROJECT_REF"
