@@ -17,7 +17,7 @@ export function EquipePage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
-  async function call(action: 'list' | 'add', body: Record<string, unknown> = {}) {
+  async function call(action: 'list' | 'add' | 'remove', body: Record<string, unknown> = {}) {
     const { data, error } = await supabase.functions.invoke('team', {
       body: { action, org_id: activeOrg!.id, ...body },
     });
