@@ -321,7 +321,12 @@ export function NewEstimatePage() {
           needs_review: true, price_source: 'estimated' as const,
         };
       }).filter((l) => l.wbs_code);
-      if (!got.length) throw new Error('A IA não retornou linhas.');
+      if (!got.length) {
+        const diag = [data.model && `modelo ${data.model}`, data.stop_reason && `stop=${data.stop_reason}`,
+          typeof data.lines_count === 'number' && `linhas=${data.lines_count}`, data.notes && `nota: ${data.notes}`]
+          .filter(Boolean).join(' · ');
+        throw new Error(`A IA não retornou linhas${diag ? ` (${diag})` : ''}.`);
+      }
       setResearch(researchText || null);
       const reg = await withRegional(got);
       setLines(applyBuilderFee(reg.lines));

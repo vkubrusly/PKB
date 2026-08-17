@@ -159,7 +159,7 @@ PROGRAM: ${pg.bedrooms ?? '?'} bed / ${pg.full_baths ?? '?'} full bath / ${pg.ha
     // exceeds the Edge Function resource limit). `research` arrives pre-fetched.
     const anthropic = new Anthropic({ apiKey });
     const params = {
-      max_tokens: 8000,
+      max_tokens: 12000,
       messages: [{
         role: 'user',
         content: [
@@ -213,8 +213,12 @@ Prices must reflect the ${project.level ?? 'essential'} level and ${project.coun
         ],
       }],
     };
-    const { result, model } = await createViaTool<Result>(anthropic, params, RESULT_TOOL);
-    return json({ result, model, used_web: research.length > 0, research: research.slice(0, 3000), internal_lines: book.size });
+    const { result, model, stop_reason } = await createViaTool<Result>(anthropic, params, RESULT_TOOL);
+    return json({
+      result, model, stop_reason, used_web: research.length > 0,
+      lines_count: result?.lines?.length ?? 0, notes: result?.notes ?? null,
+      research: research.slice(0, 3000), internal_lines: book.size,
+    });
   } catch (e) {
     return json({ error: aiErrorMessage(e) }, 500);
   }

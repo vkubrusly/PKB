@@ -119,8 +119,11 @@ export async function createViaTool<T>(
     tool_choice: { type: 'tool', name: tool.name },
   }, headers ? { headers } : {});
   const block = (resp?.content ?? []).find((b: { type?: string }) => b.type === 'tool_use');
-  if (!block) throw new Error('O modelo não retornou o resultado estruturado (tool_use).');
-  return { result: (block as { input: T }).input, model };
+  if (!block) {
+    const sr = resp?.stop_reason ? ` (stop_reason: ${resp.stop_reason})` : '';
+    throw new Error(`O modelo não retornou o resultado estruturado${sr}.`);
+  }
+  return { result: (block as { input: T }).input, model, stop_reason: resp?.stop_reason };
 }
 
 // Turn any thrown error into a clear message (Anthropic API errors include a nested message).
