@@ -3,6 +3,10 @@ name: Apply DB migrations
 # Applies additive, idempotent schema changes to the Supabase project using the
 # Management API (the same SUPABASE_ACCESS_TOKEN used to deploy functions).
 # Run manually from the Actions tab ("Run workflow").
+#
+# Current payload: 0014 — BuilderTrend cost-code taxonomy + Variance codes.
+# (0012/0013 were applied in a previous run; this migration is self-contained
+#  and idempotent — safe to run more than once.)
 
 on:
   workflow_dispatch:
@@ -20,49 +24,266 @@ jobs:
         run: |
           set -euo pipefail
           cat > /tmp/mig.sql <<'SQL'
-          -- 0012: real prices + price memory + per-line attachments
-          alter table estimate_items add column if not exists actual_unit_cost numeric(14,4);
+          -- =============================================================================
+          -- 0014_bt_costcodes_variances.sql
+          --
+          -- Replaces the legacy 22-category WBS reference tree with the updated
+          -- BuilderTrend cost-code taxonomy (11 categories / 91 leaf cost codes,
+          -- from BTCostCodes_20260901). Existing estimate lines are PRESERVED and
+          -- remapped to the matching NEW category — their description / qty / costs are
+          -- untouched; only the structural bucket (wbs_code) moves. A per-line cost code
+          -- (leaf) can then be assigned in the UI.
+          --
+          -- Also adds a global Variance-code catalog (8 categories / 37 codes) and lets
+          -- each estimate line carry a variance code + note (why actual != estimate).
+          --
+          -- Codes stay dotted-numeric ('NN' category, 'NN.NN.NN' leaf) so the
+          -- wbs_code_format guard and the split('.')[0] category logic keep working.
+          -- Idempotent: the one-time data remap is guarded by a sentinel so a re-run
+          -- never touches already-migrated rows (new categories '10'/'11' would
+          -- otherwise collide with the legacy Hardware/Sewer categories).
+          -- =============================================================================
 
-          create table if not exists price_observations (
-            id uuid primary key default gen_random_uuid(),
-            org_id uuid not null references orgs(id) on delete cascade,
-            wbs_code text references wbs_nodes(code), line_code text, description text,
-            unit unit_type not null default 'ea',
-            unit_price numeric(14,4) not null check (unit_price >= 0),
-            county text, source text not null default 'real_quote',
-            estimate_item_id uuid references estimate_items(id) on delete set null,
-            observed_at date not null default current_date,
-            created_at timestamptz not null default now());
-          create index if not exists idx_price_obs_org on price_observations(org_id);
-          create index if not exists idx_price_obs_wbs on price_observations(org_id, wbs_code);
+          -- ---------------------------------------------------------------------------
+          -- 1) New cost-code nodes. Inserted BEFORE the legacy tree is removed so
+          --    estimate_items never lose their FK target mid-migration.
+          -- ---------------------------------------------------------------------------
 
-          create table if not exists estimate_item_files (
-            id uuid primary key default gen_random_uuid(),
-            org_id uuid not null references orgs(id) on delete cascade,
-            estimate_item_id uuid not null references estimate_items(id) on delete cascade,
-            file_path text not null, file_name text,
-            supplier text, is_chosen boolean not null default false,
-            created_at timestamptz not null default now());
-          create index if not exists idx_eif_item on estimate_item_files(estimate_item_id);
-          -- 0013 (idempotent for pre-existing tables)
-          alter table estimate_item_files add column if not exists supplier text;
-          alter table estimate_item_files add column if not exists is_chosen boolean not null default false;
+          -- 1a) Categories (depth 1). NOTE: '10' and '11' intentionally overwrite the
+          --     legacy Hardware / Sewer categories (same code); all their old lines are
+          --     remapped away in step 2 before anything is deleted.
+          insert into wbs_nodes (code, parent_code, name, depth, sort_order, is_leaf) values
+            ('01', null, 'Planning & Pre-construction', 1, 1, false),
+            ('02', null, 'Demolition & Site Work', 1, 2, false),
+            ('03', null, 'Estructure', 1, 3, false),
+            ('04', null, 'M.P.E. System', 1, 4, false),
+            ('05', null, 'Insulation & Drywall', 1, 5, false),
+            ('06', null, 'Flooring', 1, 6, false),
+            ('07', null, 'Interior finishes', 1, 7, false),
+            ('08', null, 'Exterior finishes', 1, 8, false),
+            ('09', null, 'Completion & Inspection', 1, 9, false),
+            ('10', null, 'General Conditions', 1, 10, false),
+            ('11', null, 'Upgrades', 1, 11, false)
+          on conflict (code) do update
+            set parent_code = excluded.parent_code, name = excluded.name,
+                depth = excluded.depth, sort_order = excluded.sort_order, is_leaf = excluded.is_leaf;
 
-          alter table price_observations enable row level security;
-          drop policy if exists org_rw on price_observations;
-          create policy org_rw on price_observations for all
-            using (is_org_member(org_id)) with check (is_org_member(org_id));
-          alter table estimate_item_files enable row level security;
-          drop policy if exists org_rw on estimate_item_files;
-          create policy org_rw on estimate_item_files for all
-            using (is_org_member(org_id)) with check (is_org_member(org_id));
+          -- 1b) Leaf cost codes (depth 2, parent = its category). 'Lumber' arrived in the
+          --     source sheet sharing 03.30.02 with 'Framing'; the duplicate is stored as
+          --     03.30.03 so both survive as distinct codes.
+          insert into wbs_nodes (code, parent_code, name, depth, sort_order, is_leaf) values
+            ('01.10.01', '01', 'Architect / Engineering', 2, 1, true),
+            ('01.10.02', '01', 'Interior design', 2, 2, true),
+            ('01.10.03', '01', 'Surveys', 2, 3, true),
+            ('01.20.01', '01', 'Permit fees', 2, 4, true),
+            ('01.20.02', '01', 'Impact fees', 2, 5, true),
+            ('01.20.03', '01', 'Inspection fees', 2, 6, true),
+            ('01.30.01', '01', 'Builders risk', 2, 7, true),
+            ('01.30.02', '01', 'General liability insurance', 2, 8, true),
+            ('01.40.01', '01', 'Power connection', 2, 9, true),
+            ('01.40.02', '01', 'Water connection', 2, 10, true),
+            ('01.50.01', '01', 'Septic system', 2, 11, true),
+            ('02.10.01', '02', 'Demolition', 2, 12, true),
+            ('02.10.02', '02', 'Lot clearing', 2, 13, true),
+            ('02.20.01', '02', 'Excavation and backfill', 2, 14, true),
+            ('02.30.01', '02', 'Rough grading', 2, 15, true),
+            ('03.10.01', '03', 'Foundation - labor', 2, 16, true),
+            ('03.10.02', '03', 'Foundation - material', 2, 17, true),
+            ('03.10.03', '03', 'Compaction test', 2, 18, true),
+            ('03.10.04', '03', 'Termite protection', 2, 19, true),
+            ('03.20.01', '03', 'Block and lintel - labor', 2, 20, true),
+            ('03.20.02', '03', 'Block and lintel - material', 2, 21, true),
+            ('03.30.01', '03', 'Trusses', 2, 22, true),
+            ('03.30.02', '03', 'Framing', 2, 23, true),
+            ('03.30.03', '03', 'Lumber', 2, 24, true),
+            ('03.40.01', '03', 'Housewrap - labor', 2, 25, true),
+            ('03.40.02', '03', 'Housewrap - material', 2, 26, true),
+            ('03.50.01', '03', 'Exterior doors and windows - labor', 2, 27, true),
+            ('03.50.02', '03', 'Exterior doors and windows - material', 2, 28, true),
+            ('03.60.01', '03', 'Roofing', 2, 29, true),
+            ('04.10.01', '04', 'HVAC - labor', 2, 30, true),
+            ('04.10.02', '04', 'HVAC - material', 2, 31, true),
+            ('04.20.01', '04', 'Plumbing - labor', 2, 32, true),
+            ('04.20.02', '04', 'Plumbing - material', 2, 33, true),
+            ('04.30.01', '04', 'Electrical - labor', 2, 34, true),
+            ('04.30.02', '04', 'Electrical - material', 2, 35, true),
+            ('04.40.01', '04', 'Gas', 2, 36, true),
+            ('05.10.01', '05', 'Insulation', 2, 37, true),
+            ('05.20.01', '05', 'Drywall - labor', 2, 38, true),
+            ('05.20.02', '05', 'Drywall - material', 2, 39, true),
+            ('06.10.01', '06', 'Vinyl - labor', 2, 40, true),
+            ('06.10.02', '06', 'Vinyl - material', 2, 41, true),
+            ('06.20.01', '06', 'Ceramic tiles - labor', 2, 42, true),
+            ('06.20.02', '06', 'Ceramic tiles - material', 2, 43, true),
+            ('06.30.01', '06', 'Hardwood - labor', 2, 44, true),
+            ('06.30.02', '06', 'Hardwood - material', 2, 45, true),
+            ('06.40.01', '06', 'Garage floor coating', 2, 46, true),
+            ('07.10.01', '07', 'Painting - labor', 2, 47, true),
+            ('07.10.02', '07', 'Painting - material', 2, 48, true),
+            ('07.20.01', '07', 'Interior trim - labor', 2, 49, true),
+            ('07.20.03', '07', 'Interior doors - labor', 2, 50, true),
+            ('07.20.04', '07', 'Interior doors - material', 2, 51, true),
+            ('07.20.05', '07', 'Hardware - labor', 2, 52, true),
+            ('07.20.06', '07', 'Hardware - material', 2, 53, true),
+            ('07.20.07', '07', 'Stairs and Railings - labor', 2, 54, true),
+            ('07.20.08', '07', 'Stairs and Railings - material', 2, 55, true),
+            ('07.30.01', '07', 'Cabinets', 2, 56, true),
+            ('07.30.02', '07', 'Countertops', 2, 57, true),
+            ('07.30.03', '07', 'Closet shelves', 2, 58, true),
+            ('07.40.01', '07', 'Light fixtures', 2, 59, true),
+            ('07.40.02', '07', 'Plumbing trims', 2, 60, true),
+            ('07.50.01', '07', 'Mirrors - labor', 2, 61, true),
+            ('07.50.02', '07', 'Mirrors - material', 2, 62, true),
+            ('07.50.03', '07', 'Bath accessories - labor', 2, 63, true),
+            ('07.50.04', '07', 'Bath accessories - material', 2, 64, true),
+            ('07.60.01', '07', 'Appliances - labor', 2, 65, true),
+            ('07.60.02', '07', 'Appliances - material', 2, 66, true),
+            ('08.10.01', '08', 'Stucco', 2, 67, true),
+            ('08.10.02', '08', 'Exterior brick/stone', 2, 68, true),
+            ('08.20.01', '08', 'Soffit and fascia', 2, 69, true),
+            ('08.20.02', '08', 'Gutters and downspots', 2, 70, true),
+            ('08.30.01', '08', 'Final grading', 2, 71, true),
+            ('08.40.01', '08', 'Garage door', 2, 72, true),
+            ('08.50.01', '08', 'Driveway', 2, 73, true),
+            ('08.50.02', '08', 'Patios and walks', 2, 74, true),
+            ('08.60.01', '08', 'Irrigation system', 2, 75, true),
+            ('08.60.02', '08', 'Landscaping', 2, 76, true),
+            ('08.70.01', '08', 'Fencing', 2, 77, true),
+            ('08.80.01', '08', 'Mailbox and number', 2, 78, true),
+            ('09.10.01', '09', 'Final clean up', 2, 79, true),
+            ('09.20.01', '09', 'Punch list', 2, 80, true),
+            ('10.10.01', '10', 'Site maintenance', 2, 81, true),
+            ('10.20.01', '10', 'Construction utilities', 2, 82, true),
+            ('10.20.02', '10', 'Portable toilets', 2, 83, true),
+            ('10.20.03', '10', 'Dumpster', 2, 84, true),
+            ('10.30.01', '10', 'Builder''s fee', 2, 85, true),
+            ('11.10.01', '11', 'Shower glass', 2, 86, true),
+            ('11.20.01', '11', 'Blinds', 2, 87, true),
+            ('11.40.01', '11', 'Washer and dryer', 2, 88, true),
+            ('11.50.01', '11', 'Summer kitchen', 2, 89, true),
+            ('11.60.01', '11', 'Pool and deck', 2, 90, true),
+            ('11.70.01', '11', 'Wine cooler', 2, 91, true)
+          on conflict (code) do update
+            set parent_code = excluded.parent_code, name = excluded.name,
+                depth = excluded.depth, sort_order = excluded.sort_order, is_leaf = excluded.is_leaf;
 
-          -- storage: allow org members to delete their own quote attachments
-          drop policy if exists "plantas_org_delete" on storage.objects;
-          create policy "plantas_org_delete" on storage.objects for delete to authenticated
-            using (bucket_id = 'plantas' and exists (
-              select 1 from public.org_members m
-              where m.user_id = auth.uid() and m.org_id = ((storage.foldername(name))[1])::uuid));
+          -- ---------------------------------------------------------------------------
+          -- 2) One-time data remap + removal of the legacy tree. Guarded by a sentinel
+          --    (legacy bare '3' node) so re-running is a no-op.
+          -- ---------------------------------------------------------------------------
+          do $$
+          begin
+            if exists (select 1 from wbs_nodes where code = '3') then
+              -- Preserve every estimate line: repoint to the mapped NEW category, drop the
+              -- stale dotted line_code so the cost-code cell shows the new code cleanly.
+              update estimate_items
+                 set wbs_code  = case split_part(wbs_code, '.', 1)
+                when '1'  then '01' when '2'  then '02' when '3'  then '03' when '4'  then '04'
+                when '5'  then '05' when '6'  then '05' when '7'  then '07' when '8'  then '07'
+                when '9'  then '07' when '10' then '07' when '11' then '04' when '12' then '06'
+                when '13' then '08' when '14' then '07' when '15' then '08' when '16' then '08'
+                when '17' then '08' when '18' then '08' when '19' then '09' when '20' then '09'
+                when '21' then '10' when '22' then '11'
+                else wbs_code end,
+                     line_code = null
+               where split_part(wbs_code, '.', 1) in
+                     ('1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22');
+
+              -- Repoint the price memory the same way (FK to wbs_nodes, no cascade).
+              update price_observations
+                 set wbs_code = case split_part(wbs_code, '.', 1)
+                when '1'  then '01' when '2'  then '02' when '3'  then '03' when '4'  then '04'
+                when '5'  then '05' when '6'  then '05' when '7'  then '07' when '8'  then '07'
+                when '9'  then '07' when '10' then '07' when '11' then '04' when '12' then '06'
+                when '13' then '08' when '14' then '07' when '15' then '08' when '16' then '08'
+                when '17' then '08' when '18' then '08' when '19' then '09' when '20' then '09'
+                when '21' then '10' when '22' then '11'
+                else wbs_code end
+               where wbs_code is not null
+                 and split_part(wbs_code, '.', 1) in
+                     ('1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22');
+
+              -- Repoint any BuilderTrend map rows (usually empty) before deleting nodes.
+              update bt_costcode_map
+                 set wbs_code = case split_part(wbs_code, '.', 1)
+                when '1'  then '01' when '2'  then '02' when '3'  then '03' when '4'  then '04'
+                when '5'  then '05' when '6'  then '05' when '7'  then '07' when '8'  then '07'
+                when '9'  then '07' when '10' then '07' when '11' then '04' when '12' then '06'
+                when '13' then '08' when '14' then '07' when '15' then '08' when '16' then '08'
+                when '17' then '08' when '18' then '08' when '19' then '09' when '20' then '09'
+                when '21' then '10' when '22' then '11'
+                else wbs_code end
+               where split_part(wbs_code, '.', 1) in
+                     ('1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22');
+
+              -- Remove the legacy nodes (categories '1'..'9','12'..'22' + subcats).
+              -- '10' and '11' are kept: they are now the new General Conditions / Upgrades.
+              delete from wbs_nodes where code in ('1','2','3','4','5','6','7','8','9','12','13','14','15','16','17','18','19','20','21','22','1.1','1.2','1.3','3.1','3.2','3.3','3.4','3.5','3.6','3.7','4.1','4.2','4.3');
+            end if;
+          end $$;
+
+          -- ---------------------------------------------------------------------------
+          -- 3) Variance-code catalog (global reference, like wbs_nodes).
+          -- ---------------------------------------------------------------------------
+          create table if not exists variance_codes (
+            code       text primary key,             -- '01','11','21',...  (BT variance code)
+            name       text not null,                -- 'Price change'
+            category   text not null,                -- '20 - 29 Purchasing'
+            sort_order int  not null default 0,
+            created_at timestamptz not null default now()
+          );
+
+          insert into variance_codes (code, name, category, sort_order) values
+            ('01', 'Dimensioning Error', '0 - 9 Plans', 1),
+            ('02', 'Unclear detail', '0 - 9 Plans', 2),
+            ('03', 'Code violation', '0 - 9 Plans', 3),
+            ('11', 'Omitted from estimate', '10 - 19 Estimating', 4),
+            ('12', 'Data entry error (typo)', '10 - 19 Estimating', 5),
+            ('13', 'Take-off error', '10 - 19 Estimating', 6),
+            ('14', 'Missed in EPO review', '10 - 19 Estimating', 7),
+            ('21', 'Price change', '20 - 29 Purchasing', 8),
+            ('22', 'Vendor change', '20 - 29 Purchasing', 9),
+            ('23', 'Omitted in SOW', '20 - 29 Purchasing', 10),
+            ('24', 'Short-shipped', '20 - 29 Purchasing', 11),
+            ('25', 'Wrong material shipped', '20 - 29 Purchasing', 12),
+            ('26', 'Poor quality of material', '20 - 29 Purchasing', 13),
+            ('27', 'Tax-rate difference', '20 - 29 Purchasing', 14),
+            ('31', 'Wet weather', '30 - 39 Weather', 15),
+            ('32', 'Freezing conditions', '30 - 39 Weather', 16),
+            ('33', 'Wind/storm damage', '30 - 39 Weather', 17),
+            ('34', 'Weather precaution', '30 - 39 Weather', 18),
+            ('41', 'Unanticipated sub-surface', '40 - 49 Site Conditions', 19),
+            ('42', 'Elevation varies from standard', '40 - 49 Site Conditions', 20),
+            ('43', 'Special sites cleaning', '40 - 49 Site Conditions', 21),
+            ('44', 'Streets not in', '40 - 49 Site Conditions', 22),
+            ('45', 'Dirt needed for grade', '40 - 49 Site Conditions', 23),
+            ('46', 'Dirt removal needed', '40 - 49 Site Conditions', 24),
+            ('47', 'Code Official Mandated', '40 - 49 Site Conditions', 25),
+            ('51', 'Error/damage by trade', '50 - 59 Trade Contractor/Vendor', 26),
+            ('52', 'Incorrect use of material', '50 - 59 Trade Contractor/Vendor', 27),
+            ('53', 'Failure to protect work', '50 - 59 Trade Contractor/Vendor', 28),
+            ('54', 'Replace inferior work', '50 - 59 Trade Contractor/Vendor', 29),
+            ('61', 'Superintendent error', '60 - 69 Field Supervision', 30),
+            ('62', 'Management concession', '60 - 69 Field Supervision', 31),
+            ('63', 'Theft', '60 - 69 Field Supervision', 32),
+            ('64', 'Vandalism', '60 - 69 Field Supervision', 33),
+            ('65', 'Transfer materials', '60 - 69 Field Supervision', 34),
+            ('71', 'Sales concession', '70 - 79 Sales & Marketing', 35),
+            ('72', 'Client change order', '70 - 79 Sales & Marketing', 36),
+            ('73', 'Allowance change order', '70 - 79 Sales & Marketing', 37)
+          on conflict (code) do update
+            set name = excluded.name, category = excluded.category, sort_order = excluded.sort_order;
+
+          alter table variance_codes enable row level security;
+          drop policy if exists variance_read on variance_codes;
+          create policy variance_read on variance_codes
+            for select using (auth.role() = 'authenticated');
+
+          -- ---------------------------------------------------------------------------
+          -- 4) Let each estimate line carry a variance code + free note.
+          -- ---------------------------------------------------------------------------
+          alter table estimate_items add column if not exists variance_code text references variance_codes(code);
+          alter table estimate_items add column if not exists variance_note text;
           SQL
 
           jq -Rs '{query: .}' /tmp/mig.sql > /tmp/body.json

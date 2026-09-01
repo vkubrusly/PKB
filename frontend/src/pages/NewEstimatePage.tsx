@@ -37,7 +37,7 @@ export function NewEstimatePage() {
   const [genNote, setGenNote] = useState<{ text: string; warn: boolean } | null>(null); // step-3 summary of what generation did
   const [research, setResearch] = useState<string | null>(null); // live web findings used by the AI estimate
 
-  // step 2 — method + builder fee (section 21)
+  // step 2 — method + builder fee (General Conditions · 10.30.01)
   const [method, setMethod] = useState<Method>('model');
   const [fee, setFee] = useState<{ type: 'fixed' | 'percent'; value: string }>({ type: 'fixed', value: '25000' });
   const [refs, setRefs] = useState<RefOption[]>([]);
@@ -167,18 +167,18 @@ export function NewEstimatePage() {
           applied.push(`${label} $${number(c)} (ajustado)`);
         } else {
           out.push({
-            line_code: code, wbs_code: cat === '1' ? '1.1' : cat, description: desc, qty: 1, unit: 'ls' as Unit,
+            line_code: code, wbs_code: code, description: desc, qty: 1, unit: 'ls' as Unit,
             unit_cost: c, basis: 'fixed', factor: 1, line_total: c, needs_review: true, price_source: 'estimated',
           });
           applied.push(`${label} $${number(c)} (inserido)`);
         }
       };
       const cty = r.county ?? f.county;
-      setOrInsert('impact fees', /impact fee/i, '1', '1.1.IMPACT', `Impact fees — ${cty}`, r.impact_fees);
-      setOrInsert('permit', /permit/i, '1', '1.1.PERMIT', `Building permit — ${cty}`, r.building_permit);
-      if (f.water) setOrInsert(f.water === 'well' ? 'poço' : 'água', /well|po[çc]o|water (tap|meter|connection|impact)/i, '11', '11.WATER',
+      setOrInsert('impact fees', /impact fee/i, '01', '01.20.02', `Impact fees — ${cty}`, r.impact_fees);
+      setOrInsert('permit', /permit/i, '01', '01.20.01', `Building permit — ${cty}`, r.building_permit);
+      if (f.water) setOrInsert(f.water === 'well' ? 'poço' : 'água', /well|po[çc]o|water (tap|meter|connection|impact)/i, '01', '01.40.02',
         r.water?.description ?? (f.water === 'well' ? 'Poço (perfuração + bomba)' : 'Água municipal (tap)'), r.water?.cost);
-      if (f.sewer) setOrInsert(f.sewer.startsWith('septic') ? 'séptico' : 'esgoto', /septic|s[ée]ptico|sewer (tap|connection)|drainfield/i, '11', '11.SEWER',
+      if (f.sewer) setOrInsert(f.sewer.startsWith('septic') ? 'séptico' : 'esgoto', /septic|s[ée]ptico|sewer (tap|connection)|drainfield/i, '01', '01.50.01',
         r.sewer?.description ?? 'Sistema de esgoto', r.sewer?.cost);
       const web = data.used_web ? ' · web' : '';
       const summary = applied.length ? `Ajuste ${cty}${web}: ${applied.join(' · ')}` : `Sem ajustes regionais para ${cty}`;
@@ -186,12 +186,12 @@ export function NewEstimatePage() {
     } catch (e) { return { lines, summary: null, error: 'ajuste regional falhou — ' + (e instanceof Error ? e.message : String(e)) }; }
   }
 
-  // Builder fee (WBS section 21). Replaces any generated fee line with the
-  // user's choice: fixed $ amount, or a % of the CONSTRUCTION base. Per the PKB
-  // cost book, the % base excludes owner items (impact fees & permits).
+  // Builder fee (General Conditions · 10.30.01). Replaces any generated fee line
+  // with the user's choice: fixed $ amount, or a % of the CONSTRUCTION base. Per
+  // the PKB cost book, the % base excludes owner items (impact fees & permits).
   function applyBuilderFee(lines: GeneratedLine[]): GeneratedLine[] {
     const val = Number(fee.value) || 0;
-    const isFeeLine = (l: GeneratedLine) => (l.line_code ?? l.wbs_code).split('.')[0] === '21';
+    const isFeeLine = (l: GeneratedLine) => (l.line_code ?? l.wbs_code) === '10.30.01';
     const isOwner = (l: GeneratedLine) => /impact\s*fee|permit/i.test(l.description);
     const out = lines.filter((l) => !isFeeLine(l)); // drop any existing fee line
     if (val <= 0) return out;
@@ -202,7 +202,7 @@ export function NewEstimatePage() {
       ? 'Builder fee (fixo)'
       : `Builder fee (${val}% da obra)`;
     out.push({
-      line_code: '21.1', wbs_code: '21', description: desc, qty: 1, unit: 'ls',
+      line_code: '10.30.01', wbs_code: '10.30.01', description: desc, qty: 1, unit: 'ls',
       unit_cost: amount, basis: 'fixed', factor: 1, line_total: amount,
       needs_review: true, price_source: 'estimated',
     });
@@ -520,7 +520,7 @@ export function NewEstimatePage() {
           )}
 
           <div className="card">
-            <h2 style={{ marginTop: 0 }}>Builder fee <span className="muted small" style={{ fontWeight: 400 }}>— seção 21 (Administration)</span></h2>
+            <h2 style={{ marginTop: 0 }}>Builder fee <span className="muted small" style={{ fontWeight: 400 }}>— General Conditions (10.30.01)</span></h2>
             <p className="muted small">Padrão PKB: Essential até ~$250k → <strong>fixo $25.000</strong>; premium/luxury → <strong>15–18%</strong> da obra.
               O percentual não incide sobre impact fees e permits (itens do owner).</p>
             <div className="method-cards" style={{ marginBottom: '.6rem' }}>

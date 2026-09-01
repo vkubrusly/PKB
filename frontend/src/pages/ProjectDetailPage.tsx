@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import type { Estimate, EstimateItem, EstimateItemFile, Program, Project, WbsNode } from '../lib/database.types';
+import type { Estimate, EstimateItem, EstimateItemFile, Program, Project, VarianceCode, WbsNode } from '../lib/database.types';
 import { EMPTY_PROGRAM } from '../lib/estimateEngine';
 import { downloadCSV, printEstimate, type ExpLine } from '../lib/exportEstimate';
 import {
@@ -31,6 +31,7 @@ export function ProjectDetailPage() {
   const [activeEstimate, setActiveEstimate] = useState<string | null>(null);
   const [items, setItems] = useState<EstimateItem[]>([]);
   const [wbs, setWbs] = useState<WbsNode[]>([]);
+  const [variances, setVariances] = useState<VarianceCode[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   // edit mode (reopen estimate)
@@ -45,11 +46,12 @@ export function ProjectDetailPage() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const [{ data: p, error: pe }, { data: es, error: ee }, { data: w }, { data: sup }] = await Promise.all([
+      const [{ data: p, error: pe }, { data: es, error: ee }, { data: w }, { data: sup }, { data: vc }] = await Promise.all([
         supabase.from('projects').select('*').eq('id', id).single(),
         supabase.from('estimates').select('*').eq('project_id', id).order('level'),
         supabase.from('wbs_nodes').select('*').order('sort_order'),
         supabase.from('suppliers').select('name, org_id'),
+        supabase.from('variance_codes').select('*').order('sort_order'),
       ]);
       if (pe) setErr(pe.message);
       if (ee) setErr(ee.message);
@@ -59,6 +61,7 @@ export function ProjectDetailPage() {
       setProg(p ? { ...EMPTY_PROGRAM, ...(p.program ?? {}) } : null);
       setEstimates(es ?? []);
       setWbs(w ?? []);
+      setVariances((vc ?? []) as VarianceCode[]);
       setActiveEstimate((es ?? [])[0]?.id ?? null);
       setLoading(false);
     })();
@@ -96,6 +99,15 @@ export function ProjectDetailPage() {
   const categories = useMemo(() => wbs.filter((n) => n.depth === 1), [wbs]);
   const nameByCode = useMemo(
     () => Object.fromEntries(wbs.map((n) => [n.code, n.name])), [wbs],
+  );
+  // Leaf cost codes grouped by their category (for the per-line cost-code picker).
+  const leavesByCat = useMemo(() => {
+    const m: Record<string, WbsNode[]> = {};
+    for (const n of wbs) if (n.is_leaf) (m[n.code.split('.')[0]] ??= []).push(n);
+    return m;
+  }, [wbs]);
+  const varByCode = useMemo(
+    () => Object.fromEntries(variances.map((v) => [v.code, v])), [variances],
   );
 
   const catOf = (it: EstimateItem) => (it.line_code ?? it.wbs_code).split('.')[0];
@@ -146,6 +158,7 @@ export function ProjectDetailPage() {
       qty: 1, unit: 'ls', unit_cost: 0, actual_unit_cost: null, waste_factor: 0,
       price_source: 'estimated', needs_review: true, is_allowance: false,
       sort_order: draft.length + 1, qty_effective: 1, line_total: 0,
+      variance_code: null, variance_note: null,
     } as unknown as Item;
     setDraft((d) => [...d, nu]);
   }
@@ -172,6 +185,7 @@ export function ProjectDetailPage() {
         const { error } = await supabase.from('estimate_items').update({
           wbs_code: it.wbs_code, line_code: it.line_code, description: it.description,
           qty: Number(it.qty) || 0, unit: it.unit, actual_unit_cost: num(it.actual_unit_cost),
+          variance_code: it.variance_code || null, variance_note: it.variance_note || null,
         }).eq('id', it.id);
         if (error) throw error;
       }
@@ -181,6 +195,7 @@ export function ProjectDetailPage() {
         line_code: it.line_code, description: it.description || null, qty: Number(it.qty) || 0,
         unit: it.unit, unit_cost: num(it.actual_unit_cost) ?? (Number(it.unit_cost) || 0),
         actual_unit_cost: num(it.actual_unit_cost),
+        variance_code: it.variance_code || null, variance_note: it.variance_note || null,
         price_source: 'estimated', needs_review: true, sort_order: draft.length + i,
       }));
       if (toInsert.length) { const { error } = await supabase.from('estimate_items').insert(toInsert); if (error) throw error; }
@@ -419,13 +434,37 @@ export function ProjectDetailPage() {
                     {catItems.map((it) => (editing ? (
                       <tr key={it.id}>
                         <td className="center"><StatusDot status={lineStatus(it)} /></td>
-                        <td className="mono">{it.line_code ?? it.wbs_code}</td>
+                        <td className="mono">
+                          <select className="cc-select" value={it.wbs_code}
+                            title="Cost code (BuilderTrend)"
+                            onChange={(e) => patch(it.id, { wbs_code: e.target.value, line_code: e.target.value })}>
+                            {!(leavesByCat[catOf(it)] ?? []).some((n) => n.code === it.wbs_code) && (
+                              <option value={it.wbs_code}>{it.wbs_code} · (categoria)</option>
+                            )}
+                            {(leavesByCat[catOf(it)] ?? []).map((n) => (
+                              <option key={n.code} value={n.code}>{n.code} · {n.name}</option>
+                            ))}
+                          </select>
+                        </td>
                         <td>
                           <input value={it.description ?? ''} placeholder={nameByCode[it.wbs_code] ?? it.wbs_code}
                             onChange={(e) => patch(it.id, { description: e.target.value })} style={{ minWidth: 170 }} />
                           <LineFiles files={files[it.id] ?? []} isNew={!origIds.has(it.id)} editing
                             onUpload={(l) => uploadFiles(it.id, l)} onOpen={openFile} onDelete={deleteFile}
                             onChoose={(fid) => chooseFile(it.id, fid)} onSupplier={(fid, v) => setSupplier(it.id, fid, v)} />
+                          <div className="line-variance">
+                            <select value={it.variance_code ?? ''} title="Código de variância"
+                              onChange={(e) => patch(it.id, { variance_code: e.target.value || null } as Partial<Item>)}>
+                              <option value="">± variância —</option>
+                              {variances.map((v) => (
+                                <option key={v.code} value={v.code}>{v.code} · {v.name}</option>
+                              ))}
+                            </select>
+                            {it.variance_code && (
+                              <input className="variance-note" value={it.variance_note ?? ''} placeholder="motivo (opcional)"
+                                onChange={(e) => patch(it.id, { variance_note: e.target.value || null } as Partial<Item>)} />
+                            )}
+                          </div>
                         </td>
                         <td className="num"><input className="cost-input" type="number" value={it.qty}
                           onChange={(e) => patch(it.id, { qty: Number(e.target.value) })} /></td>
@@ -449,6 +488,11 @@ export function ProjectDetailPage() {
                         <td>
                           {it.description ?? nameByCode[it.wbs_code] ?? it.wbs_code}
                           {it.needs_review && <span className="tag warn">⚠ revisar</span>}
+                          {it.variance_code && (
+                            <span className="tag variance" title={it.variance_note ?? undefined}>
+                              ± {it.variance_code} · {varByCode[it.variance_code]?.name ?? ''}
+                            </span>
+                          )}
                           {(files[it.id]?.length ?? 0) > 0 && (
                             <span className="attach-chips">
                               {files[it.id].map((f) => (

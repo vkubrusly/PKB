@@ -37,36 +37,30 @@ export interface GeneratedLine extends RefLine {
 
 const round2 = (x: number) => Math.round(x * 100) / 100;
 
-// Default driver per top-level WBS category (1–22).
+// Default driver per top-level BT cost-code category (01–11, migration 0014).
 export const DRIVER_BY_CATEGORY: Record<string, Driver> = {
-  '1': 'fixed',    // Planning & Preconstruction (permits, impact fees)
-  '2': 'total',    // Site Work
-  '3': 'total',    // Shell Construction (slab, wall, framing, stucco, roof, soffit)
-  '4': 'living',   // M.P.E.G. (HVAC, plumbing, electrical)
-  '5': 'living',   // Insulation
-  '6': 'living',   // Drywall
-  '7': 'opening',  // Interior Doors / Trims
-  '8': 'living',   // Paint
-  '9': 'kitchen',  // Cabinetry / Counter Top
-  '10': 'living',  // Hardware
-  '11': 'fixed',   // Sewer / Water Treatment
-  '12': 'living',  // Flooring
-  '13': 'garage',  // Garage Door
-  '14': 'kitchen', // Appliances
-  '15': 'total',   // Final Grading
-  '16': 'fixed',   // Driveway
-  '17': 'fixed',   // Irrigation
-  '18': 'fixed',   // Landscaping
-  '19': 'living',  // Clean-Up
-  '20': 'fixed',   // Punch List / Contingency
-  '21': 'fixed',   // Administration Fee
-  '22': 'fixed',   // Upgrades
+  '01': 'fixed',   // Planning & Pre-construction (permits, impact fees, insurance)
+  '02': 'total',   // Demolition & Site Work
+  '03': 'total',   // Estructure (foundation, block, trusses, framing, roofing)
+  '04': 'living',  // M.P.E. System (HVAC, plumbing, electrical, gas)
+  '05': 'living',  // Insulation & Drywall
+  '06': 'living',  // Flooring
+  '07': 'living',  // Interior finishes (paint, trim, cabinets, fixtures, appliances)
+  '08': 'fixed',   // Exterior finishes (stucco, driveway, irrigation, landscaping)
+  '09': 'living',  // Completion & Inspection (clean-up, punch list)
+  '10': 'fixed',   // General Conditions (site maint., utilities, builder's fee)
+  '11': 'fixed',   // Upgrades
 };
 
 // Sub-category overrides (matched by code prefix; most specific wins).
+// Keyed on the 'CC.SS' sub-group of the BT cost code.
 export const DRIVER_BY_LINE: Record<string, Driver> = {
-  '3.4': 'opening', // Windows & Exterior Doors
-  '4.2': 'bath',    // Plumbing (fixtures scale with bathrooms/kitchens)
+  '03.50': 'opening', // Exterior doors and windows
+  '04.20': 'bath',    // Plumbing (fixtures scale with bathrooms/kitchens)
+  '07.30': 'kitchen', // Cabinets, countertops, closet shelves
+  '07.60': 'kitchen', // Appliances
+  '08.30': 'total',   // Final grading
+  '08.40': 'garage',  // Garage door
 };
 
 export function resolveDriver(lineCode: string | null, wbsCode: string): Driver {
@@ -86,8 +80,9 @@ export function resolveDriver(lineCode: string | null, wbsCode: string): Driver 
 export const FINISH_INDEX: Record<string, number> = {
   affordable: 1, essential: 1.25, signature: 1.6, luxury: 2.2, any: 1.25,
 };
-// Categories whose cost is driven by finish level (not structural).
-const FINISH_CATEGORIES = new Set(['4', '7', '8', '9', '10', '12', '14']);
+// Categories whose cost is driven by finish level (not structural):
+// M.P.E. System, Flooring, Interior finishes.
+const FINISH_CATEGORIES = new Set(['04', '06', '07']);
 
 export function finishFactor(cat: string, refLevel?: string | null, tgtLevel?: string | null): number {
   if (!refLevel || !tgtLevel || !FINISH_CATEGORIES.has(cat)) return 1;

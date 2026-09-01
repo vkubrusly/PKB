@@ -114,6 +114,13 @@ label.checkbox input { width: auto; }
 
 .tag { display: inline-block; margin-left: .4rem; padding: .05rem .4rem; border-radius: 5px; background: var(--surface-2); border: 1px solid var(--border); font-size: .72rem; color: var(--muted); }
 .tag.warn { color: var(--danger); border-color: var(--danger); }
+.tag.variance { color: var(--accent, #b45309); border-color: color-mix(in srgb, var(--accent, #b45309) 45%, var(--border)); }
+
+/* per-line cost-code + variance controls (edit mode) */
+.cc-select { max-width: 210px; font-size: .78rem; }
+.line-variance { display: flex; gap: .35rem; align-items: center; margin-top: .3rem; flex-wrap: wrap; }
+.line-variance select { font-size: .74rem; max-width: 220px; }
+.variance-note { font-size: .74rem; min-width: 150px; }
 
 .level-badge { padding: .1rem .5rem; border-radius: 999px; font-size: .75rem; font-weight: 600; color: #fff; }
 .level-badge.affordable { background: var(--affordable); }

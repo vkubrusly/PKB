@@ -135,6 +135,16 @@ export interface EstimateItem {
   sort_order: number;
   qty_effective: number;
   line_total: number;
+  variance_code: string | null;    // why actual differs from estimate (BT variance code)
+  variance_note: string | null;
+}
+
+// Global BuilderTrend variance-code catalog (see migration 0014).
+export interface VarianceCode {
+  code: string;      // '21'
+  name: string;      // 'Price change'
+  category: string;  // '20 - 29 Purchasing'
+  sort_order: number;
 }
 
 export interface EstimateItemFile {

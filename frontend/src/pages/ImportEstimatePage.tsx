@@ -18,7 +18,7 @@ export function ImportEstimatePage() {
     name: '', level: 'affordable' as Exclude<SpecLevel, 'any'>,
     living: '', total: '', county: '', market: '',
   });
-  const [defaultCat, setDefaultCat] = useState('20'); // fallback category for uncoded lines
+  const [defaultCat, setDefaultCat] = useState('09'); // fallback category (Completion & Inspection) for uncoded lines
   const [prog, setProg] = useState<Program>({ ...EMPTY_PROGRAM, garage_bays: 2 });
   const [importing, setImporting] = useState(false);
   const setP = (k: Exclude<keyof Program, 'has_inlaw'>, v: string) =>
