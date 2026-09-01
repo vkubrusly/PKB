@@ -190,6 +190,96 @@ begin
      where split_part(wbs_code, '.', 1) in
            ('1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22');
 
+    -- Repoint the rest of the tables that reference wbs_nodes(code) so the
+
+    -- legacy nodes can be dropped (materials/catalog, invoices, costs, RFQs).
+
+    update materials
+       set wbs_code = case split_part(wbs_code, '.', 1)
+      when '1'  then '01' when '2'  then '02' when '3'  then '03' when '4'  then '04'
+      when '5'  then '05' when '6'  then '05' when '7'  then '07' when '8'  then '07'
+      when '9'  then '07' when '10' then '07' when '11' then '04' when '12' then '06'
+      when '13' then '08' when '14' then '07' when '15' then '08' when '16' then '08'
+      when '17' then '08' when '18' then '08' when '19' then '09' when '20' then '09'
+      when '21' then '10' when '22' then '11'
+      else wbs_code end
+     where wbs_code is not null
+       and split_part(wbs_code, '.', 1) in
+           ('1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22');
+
+    -- spec_level_options has unique(org_id, wbs_code, level, base_model); merged
+    -- categories (e.g. 7/8/9/10 -> 07) could collide, so drop the would-be
+    -- duplicates first, keeping one row per (org, mapped code, level, base_model).
+    delete from spec_level_options a
+     using spec_level_options b
+     where a.ctid > b.ctid
+       and a.org_id = b.org_id
+       and a.level  = b.level
+       and coalesce(a.base_model, '') = coalesce(b.base_model, '')
+       and (case split_part(a.wbs_code, '.', 1)
+        when '1'  then '01' when '2'  then '02' when '3'  then '03' when '4'  then '04'
+        when '5'  then '05' when '6'  then '05' when '7'  then '07' when '8'  then '07'
+        when '9'  then '07' when '10' then '07' when '11' then '04' when '12' then '06'
+        when '13' then '08' when '14' then '07' when '15' then '08' when '16' then '08'
+        when '17' then '08' when '18' then '08' when '19' then '09' when '20' then '09'
+        when '21' then '10' when '22' then '11' else a.wbs_code end) = (case split_part(b.wbs_code, '.', 1)
+        when '1'  then '01' when '2'  then '02' when '3'  then '03' when '4'  then '04'
+        when '5'  then '05' when '6'  then '05' when '7'  then '07' when '8'  then '07'
+        when '9'  then '07' when '10' then '07' when '11' then '04' when '12' then '06'
+        when '13' then '08' when '14' then '07' when '15' then '08' when '16' then '08'
+        when '17' then '08' when '18' then '08' when '19' then '09' when '20' then '09'
+        when '21' then '10' when '22' then '11' else b.wbs_code end);
+
+    update spec_level_options
+       set wbs_code = case split_part(wbs_code, '.', 1)
+      when '1'  then '01' when '2'  then '02' when '3'  then '03' when '4'  then '04'
+      when '5'  then '05' when '6'  then '05' when '7'  then '07' when '8'  then '07'
+      when '9'  then '07' when '10' then '07' when '11' then '04' when '12' then '06'
+      when '13' then '08' when '14' then '07' when '15' then '08' when '16' then '08'
+      when '17' then '08' when '18' then '08' when '19' then '09' when '20' then '09'
+      when '21' then '10' when '22' then '11'
+      else wbs_code end
+     where split_part(wbs_code, '.', 1) in
+           ('1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22');
+
+    update invoice_items
+       set wbs_code = case split_part(wbs_code, '.', 1)
+      when '1'  then '01' when '2'  then '02' when '3'  then '03' when '4'  then '04'
+      when '5'  then '05' when '6'  then '05' when '7'  then '07' when '8'  then '07'
+      when '9'  then '07' when '10' then '07' when '11' then '04' when '12' then '06'
+      when '13' then '08' when '14' then '07' when '15' then '08' when '16' then '08'
+      when '17' then '08' when '18' then '08' when '19' then '09' when '20' then '09'
+      when '21' then '10' when '22' then '11'
+      else wbs_code end
+     where wbs_code is not null
+       and split_part(wbs_code, '.', 1) in
+           ('1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22');
+
+    update actual_costs
+       set wbs_code = case split_part(wbs_code, '.', 1)
+      when '1'  then '01' when '2'  then '02' when '3'  then '03' when '4'  then '04'
+      when '5'  then '05' when '6'  then '05' when '7'  then '07' when '8'  then '07'
+      when '9'  then '07' when '10' then '07' when '11' then '04' when '12' then '06'
+      when '13' then '08' when '14' then '07' when '15' then '08' when '16' then '08'
+      when '17' then '08' when '18' then '08' when '19' then '09' when '20' then '09'
+      when '21' then '10' when '22' then '11'
+      else wbs_code end
+     where split_part(wbs_code, '.', 1) in
+           ('1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22');
+
+    update rfq_requests
+       set wbs_code = case split_part(wbs_code, '.', 1)
+      when '1'  then '01' when '2'  then '02' when '3'  then '03' when '4'  then '04'
+      when '5'  then '05' when '6'  then '05' when '7'  then '07' when '8'  then '07'
+      when '9'  then '07' when '10' then '07' when '11' then '04' when '12' then '06'
+      when '13' then '08' when '14' then '07' when '15' then '08' when '16' then '08'
+      when '17' then '08' when '18' then '08' when '19' then '09' when '20' then '09'
+      when '21' then '10' when '22' then '11'
+      else wbs_code end
+     where wbs_code is not null
+       and split_part(wbs_code, '.', 1) in
+           ('1','2','3','4','5','6','7','8','9','10','11','12','13','14','15','16','17','18','19','20','21','22');
+
     -- Remove the legacy nodes (categories '1'..'9','12'..'22' + subcats).
     -- '10' and '11' are kept: they are now the new General Conditions / Upgrades.
     delete from wbs_nodes where code in ('1','2','3','4','5','6','7','8','9','12','13','14','15','16','17','18','19','20','21','22','1.1','1.2','1.3','3.1','3.2','3.3','3.4','3.5','3.6','3.7','4.1','4.2','4.3');
