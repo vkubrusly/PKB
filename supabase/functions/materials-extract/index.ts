@@ -56,7 +56,7 @@ interface MaterialRow {
   brand: string | null;
   model: string | null;
   unit: string | null;        // ea, sf, lf, cy, ls, hr, gal, sq, ton, bid, mo
-  wbs_code: string | null;    // best WBS category, e.g. "4.2", "12", "9"
+  wbs_code: string | null;    // best BT cost code, e.g. "04.20.02", "06.10.02", "07.30.01"
   spec_level: 'affordable' | 'essential' | 'signature' | 'luxury' | 'any';
   fl_approval: string | null; // FL# if shown
   unit_price: number | null;  // quoted price if present (reference only)
@@ -107,9 +107,11 @@ For each item determine:
 - name: the material (e.g. "Kohler Highline toilet", "5/8\\" drywall", "R-30 blown insulation").
 - brand, model: manufacturer and model/SKU if shown, else null.
 - unit: one of ea, sf, lf, cy, ls, hr, gal, sq, ton, bid, mo (best match; default ea).
-- wbs_code: the construction category it belongs to, as a number like "4.2" (plumbing), "12" (flooring),
-  "9" (cabinetry/countertops), "3.6" (roofing), "5" (insulation), "8" (paint), "14" (appliances),
-  "3.4" (windows/exterior doors), "7" (interior doors/trim). Use your best single code; null if unsure.
+- wbs_code: the BuilderTrend cost code it belongs to, as a dotted code like "04.20.02" (plumbing material),
+  "06.10.02" (vinyl flooring), "07.30.01" (cabinets), "07.30.02" (countertops), "03.60.01" (roofing),
+  "05.10.01" (insulation), "07.10.02" (paint material), "07.60.02" (appliances),
+  "03.50.02" (exterior doors/windows material), "07.20.04" (interior doors). If you only know the category,
+  use its 2-digit code ("04" M.P.E., "06" flooring, "07" interior finishes). Use your best single code; null if unsure.
 - fl_approval: Florida Product Approval "FL#" if present (required for envelope products), else null.
 - unit_price: the quoted unit price as a number if the quote shows one, else null.
 - specs: a short spec/description (size, rating, finish).

@@ -84,7 +84,7 @@ Paint mat+labor $4,500; Cabinets+countertop+backsplash $5,050; Vinyl floor $4,26
 Paver $1,175; Epoxy garage $450; Garage door+opener $1,950; Appliances (basic kit) $2,826;
 Final grading $600; Driveway $5,510; Irrigation $994; Landscaping/Bahia sod $5,500–6,000 min; Final cleaning $350.
 
-BUILDER FEE (section 21 Administration):
+BUILDER FEE (General Conditions · cost code 10.30.01 "Builder's fee"):
 - Essential up to ~$250k: FIXED $25,000.
 - Premium/Luxury: 15–18% of construction cost.
 - Multifamily: 15% of real cost.
@@ -101,11 +101,11 @@ SPECIFIC ADD-ONS:
 - Wind 150 mph (vs 140): +5% block, +3% framing/straps.
 - Duplex/TH party wall (1-hr fire): 5/8" Type X + acoustic insulation.
 - Sprinkler NFPA 13R (multifamily): $5.50/sf — MANDATORY.
-- Pool + deck: $72–90k (section 22). Summer kitchen: $5k basic / $8–22k premium.
+- Pool + deck: $72–90k (Upgrades · section 11). Summer kitchen: $5k basic / $8–22k premium.
 - Smart home: pre-wire $2k / base $8–15k / full $40–60k.
 
 GOLDEN RULES:
-1) 22 standard sections; upgrades ALWAYS in section 22.
+1) 11 standard BuilderTrend cost-code categories (01–11); upgrades ALWAYS in section 11.
 2) $/sf refers ONLY to physical construction — impact fees & utility fees are owner Change Orders without fee.
 3) Punch list: 1.5–2% of construction cost on projects >$500k (not a $450 flat).
 4) Smaller house = higher $/sf; tell the client.

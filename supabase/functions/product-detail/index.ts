@@ -25,8 +25,11 @@ interface DetailResult {
   is_envelope: boolean;
 }
 
-// WBS codes whose products are part of the building envelope → need FL Product Approval.
-const ENVELOPE = new Set(['3.4', '3.5', '3.6', '3.7']); // windows/ext doors, stucco, roofing, soffit/fascia
+// BT cost-code prefixes whose products are part of the building envelope → need FL Product Approval.
+// housewrap, exterior doors/windows, roofing (cat 03) + stucco/brick, soffit/fascia/gutters (cat 08).
+const ENVELOPE_PREFIXES = ['03.40', '03.50', '03.60', '08.10', '08.20'];
+const isEnvelopeCode = (code: string | null) =>
+  !!code && ENVELOPE_PREFIXES.some((p) => code === p || code.startsWith(p));
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
@@ -45,7 +48,7 @@ Deno.serve(async (req) => {
     const { data: mat, error } = await supabase.from('materials').select('*').eq('id', material_id).single();
     if (error || !mat) return json({ error: `Material não encontrado: ${error?.message}` }, 404);
 
-    const isEnvelope = mat.wbs_code && ENVELOPE.has(String(mat.wbs_code));
+    const isEnvelope = isEnvelopeCode(mat.wbs_code ? String(mat.wbs_code) : null);
     const lang = language === 'en' ? 'English' : 'Portuguese (Brazil)';
     const query = [mat.brand, mat.model, mat.name].filter(Boolean).join(' ');
 

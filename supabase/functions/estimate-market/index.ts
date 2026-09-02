@@ -174,7 +174,7 @@ reference model, anchored to the PKB COST BOOK below (HIGHEST PRIORITY — the c
 Central-FL costs, benchmarks, builder-fee rules and add-ons; only deviate with a clear reason in the note).
 Priority order: (1) PKB cost book, (2) the current web research provided, (3) the internal price book,
 (4) your Florida market knowledge. Never leave a needed line unpriced. Apply the builder fee per the
-cost-book rules (section 21).
+cost-book rules (General Conditions · code 10.30.01).
 
 For EACH line output: line_code (the WBS code), wbs_code (its parent leaf code), description, qty (derive
 from areas/program — slab & framing by total sf, plumbing by baths, cabinetry/appliances by kitchens,
