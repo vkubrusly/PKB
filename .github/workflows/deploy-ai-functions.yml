@@ -27,8 +27,12 @@ jobs:
 
       # Install the Supabase CLI via npx (avoids the flaky setup-cli action
       # download from codeload.github.com, which has been 429/503-ing).
-      - name: Set Claude API key (função secret)
-        run: npx --yes supabase@latest secrets set ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}" --project-ref "$PROJECT_REF"
+      # The ANTHROPIC_API_KEY secret is already set from earlier deploys; re-setting
+      # it needs project-admin scope. Keep it best-effort so a token that can deploy
+      # functions but not manage secrets (or an unchanged key) doesn't abort the job.
+      - name: Set Claude API key (função secret, best-effort)
+        continue-on-error: true
+        run: npx --yes supabase@latest secrets set ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}" --project-ref "$PROJECT_REF" || echo "secret unchanged / insufficient privilege — continuing to deploy"
 
       - name: Deploy functions
         run: |
