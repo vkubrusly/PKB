@@ -400,7 +400,8 @@ export function ProjectDetailPage() {
             <div><span className="muted small">Total base</span><strong>{money(baseGrand)}</strong></div>
             <div><span className="muted small">Total real</span><strong>{money(grandTotal)}</strong></div>
             <div><span className="muted small">Diferença</span><strong>{deltaCell(grandTotal - baseGrand)}</strong></div>
-            <div><span className="muted small">$/sf (real)</span><strong>{psf(grandTotal, project.total_area_sf)}</strong></div>
+            <div><span className="muted small">$/sf total</span><strong>{psf(grandTotal, project.total_area_sf)}</strong></div>
+            <div><span className="muted small">$/sf heated</span><strong>{psf(grandTotal, project.living_area_sf)}</strong></div>
             <div><span className="muted small">Linhas</span><strong>{displayed.length}</strong></div>
           </div>
 

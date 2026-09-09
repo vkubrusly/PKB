@@ -563,7 +563,7 @@ export function NewEstimatePage() {
           <div className="totals">
             <div><div className="k muted small">Total estimado</div><div className="v accent">{money(total)}</div></div>
             <div><div className="k muted small">$/sf (total)</div><div className="v">{psf(total, target.total_sf)}</div></div>
-            <div><div className="k muted small">$/sf (living)</div><div className="v">{psf(total, target.living_sf)}</div></div>
+            <div><div className="k muted small">$/sf (heated)</div><div className="v">{psf(total, target.living_sf)}</div></div>
             <div><div className="k muted small">Linhas</div><div className="v">{lines.length}</div></div>
           </div>
           {genNote && <p className={genNote.warn ? 'error small' : 'success small'}>{genNote.text}</p>}

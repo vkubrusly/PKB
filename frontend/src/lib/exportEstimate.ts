@@ -55,7 +55,7 @@ export function downloadCSV(lines: ExpLine[], meta: ExpMeta, catName: Record<str
   if (meta.county) out.push(row([`Condado: ${meta.county}`]));
   if (meta.address) out.push(row([`Endereço: ${meta.address}`]));
   if (meta.totalSf) out.push(row([`Área total (sf): ${meta.totalSf}`, `$/sf total: ${num(meta.grandTotal / meta.totalSf)}`]));
-  if (meta.livingSf) out.push(row([`Área living (sf): ${meta.livingSf}`, `$/sf living: ${num(meta.grandTotal / meta.livingSf)}`]));
+  if (meta.livingSf) out.push(row([`Área living (sf): ${meta.livingSf}`, `$/sf heated: ${num(meta.grandTotal / meta.livingSf)}`]));
   out.push('');
   out.push(row(['COD', 'Item', 'Qtd', 'Unidade', 'Custo Unit. (USD)', 'Total (USD)']));
   for (const g of groups) {
@@ -122,7 +122,7 @@ export function printEstimate(lines: ExpLine[], meta: ExpMeta, catName: Record<s
     ${meta.livingSf ? `<span><b>Living:</b> ${meta.livingSf.toLocaleString('pt-BR')} sf</span>` : ''}
     <span><b>Total:</b> ${usd(meta.grandTotal)}</span>
     <span><b>$/sf total:</b> ${psfTotal}</span>
-    <span><b>$/sf living:</b> ${psfLiving}</span>
+    <span><b>$/sf heated:</b> ${psfLiving}</span>
   </div>
   <table>
     <thead><tr><th>COD</th><th>Item</th><th class="num">Qtd</th><th>Un</th><th class="num">Custo Un.</th><th class="num">Total</th></tr></thead>
