@@ -24,7 +24,15 @@ export function autoMap(headers: string[], fields: ImportField[]): Record<string
   const out: Record<string, string> = {};
   for (const f of fields) {
     const aliases = [f.key, ...f.aliases].map(norm);
-    let hit = nh.find(({ h, n }) => !used.has(h) && aliases.includes(n));
+    // Exact alias match wins, preferring the EARLIEST alias in the field's list
+    // (so "Cost Code" beats "Category" for the code field even when the Category
+    // column appears first in the sheet). Fall back to a substring match.
+    let hit: { h: string; n: string } | undefined; let bestRank = Infinity;
+    for (const cand of nh) {
+      if (used.has(cand.h)) continue;
+      const rank = aliases.indexOf(cand.n);
+      if (rank !== -1 && rank < bestRank) { bestRank = rank; hit = cand; }
+    }
     if (!hit) hit = nh.find(({ h, n }) => !used.has(h) && aliases.some((a) => a.length >= 3 && (n.includes(a) || a.includes(n))));
     if (hit) { out[f.key] = hit.h; used.add(hit.h); }
   }
@@ -57,8 +65,18 @@ export const ESTIMATE_FIELDS: ImportField[] = [
   { key: 'qty', label: 'Quantidade', aliases: ['quantity', 'qty', 'qtd', 'quantidade'] },
   { key: 'unit', label: 'Unidade', aliases: ['unit', 'uom', 'un', 'unit type', 'unidade'] },
   { key: 'unit_cost', label: 'Custo unitário', aliases: ['unit cost', 'unit price', 'cost', 'price', 'rate', 'custo unitário', 'custo unitario', 'custo', 'preço', 'preco'] },
-  { key: 'total', label: 'Total da linha', aliases: ['total', 'amount', 'line total', 'valor', 'valor total', 'extended'] },
+  // 'builder cost' first: on a Buildertrend estimate that is the line COST
+  // (qty × unit cost, no markup) — the right basis for an executed cost import,
+  // instead of 'Total Price' which already bakes in the builder fee.
+  { key: 'total', label: 'Total da linha', aliases: ['builder cost', 'total', 'amount', 'line total', 'total price', 'valor', 'valor total', 'extended'] },
 ];
+
+// The label that trails a leading dotted-numeric code in a combined cell:
+// "01.10.01 Architect / Engineering" → "Architect / Engineering".
+export function nameFromCode(raw: string | undefined): string {
+  const m = (raw ?? '').trim().match(/^\d+(?:\.\d+)*\s+(.*)$/);
+  return m ? m[1].trim() : '';
+}
 
 export interface PreparedLine {
   wbs_code: string; line_code: string | null; description: string;
@@ -86,7 +104,10 @@ export function prepareEstimateLines(
 ): PreparedLine[] {
   const norm = rows.map((r) => ({
     code: normalizeCode(r.wbs_code),
-    desc: (r.description ?? '').trim(),
+    // Buildertrend puts the item name in the "Cost Code" cell ("01.10.01 Foundation")
+    // and leaves Description blank — so when Description is empty, take the label
+    // that trails the code as the description.
+    desc: (r.description ?? '').trim() || nameFromCode(r.wbs_code),
     qty: parseNumber(r.qty),
     uc: parseNumber(r.unit_cost),
     tot: parseNumber(r.total),

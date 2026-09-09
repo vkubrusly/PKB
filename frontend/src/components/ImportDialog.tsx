@@ -73,9 +73,9 @@ export function ImportDialog({ title, fields, onClose, onImport, intro, extra }:
 
         {!parsed ? (
           <div className="import-drop">
-            <input ref={inputRef} type="file" accept=".csv,.tsv,.xlsx"
+            <input ref={inputRef} type="file" accept=".csv,.tsv,.xlsx,.xls"
               onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
-            <p className="muted small">Aceita <strong>.xlsx</strong> (Excel/Buildertrend), <strong>.csv</strong> e <strong>.tsv</strong>.</p>
+            <p className="muted small">Aceita <strong>.xls</strong> e <strong>.xlsx</strong> (Excel/Buildertrend), <strong>.csv</strong> e <strong>.tsv</strong>.</p>
           </div>
         ) : (
           <>
