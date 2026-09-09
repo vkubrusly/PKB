@@ -60,8 +60,13 @@ export const MATERIAL_FIELDS: ImportField[] = [
 ];
 
 export const ESTIMATE_FIELDS: ImportField[] = [
-  { key: 'wbs_code', label: 'Código (COD)', required: true, aliases: ['cod', 'wbs', 'cost code', 'code', 'category', 'group', 'grupo'] },
-  { key: 'description', label: 'Descrição / Item', required: true, aliases: ['item name', 'description', 'title', 'item', 'name', 'scope', 'descrição', 'descricao'] },
+  { key: 'wbs_code', label: 'Código (COD)', required: true, aliases: ['cost code', 'cod', 'wbs', 'code', 'category', 'group', 'grupo'] },
+  // Not required: Buildertrend's estimate report leaves Description blank and
+  // carries the item name inside the Cost Code cell — prepareEstimateLines
+  // derives the name from the code, so we must not drop these rows for a blank
+  // Description column. Lines with neither a description nor a derivable name
+  // are filtered out downstream.
+  { key: 'description', label: 'Descrição / Item', aliases: ['item name', 'description', 'title', 'item', 'name', 'scope', 'descrição', 'descricao'] },
   { key: 'qty', label: 'Quantidade', aliases: ['quantity', 'qty', 'qtd', 'quantidade'] },
   { key: 'unit', label: 'Unidade', aliases: ['unit', 'uom', 'un', 'unit type', 'unidade'] },
   { key: 'unit_cost', label: 'Custo unitário', aliases: ['unit cost', 'unit price', 'cost', 'price', 'rate', 'custo unitário', 'custo unitario', 'custo', 'preço', 'preco'] },
