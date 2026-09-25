@@ -1,0 +1,13 @@
+{
+  "name": "pkb-ops",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "PKB Ops — coletores (portais de condado, e-mail), regras e KPIs de permits/inspections",
+  "scripts": {
+    "collect:marion": "node collectors/energov/collect.mjs --county marion"
+  },
+  "dependencies": {
+    "playwright": "^1.63.0"
+  }
+}
