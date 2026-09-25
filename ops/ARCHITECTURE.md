@@ -50,7 +50,7 @@ From contract signature to permit issued, including Septic (FDEP), Civic
 Association (Citrus), impact fees, NOC, and the blockers below.
 
 - Input: EnerGov collector (public), e-mail (designer, FDEP/septic designer, surveyor, county), spreadsheet (initial load).
-- State per permit: portal status + **"ball with"** (county / designer / PKB / owner / FDEP / blocked).
+- State per permit: portal status + **"ball with"** (county / sovereign / surveyor / shady / fdep / pkb / owner / blocked).
 - Output: correction e-mail to the designer; 48 h follow-up; vendor requests on triggers; Buildertrend Daily Log on every change.
 
 **Blockers and pauses.** Two things stop a job without being a permit process:
@@ -88,7 +88,7 @@ Association (Citrus), impact fees, NOC, and the blockers below.
 | EnerGov Marion | read | Playwright over the public UI; captures the portal's own JSON | none | **validated** |
 | EnerGov Citrus / Orange / Charlotte | read | same, if they run EnerGov | tbd | waiting for URLs |
 | Bot mailbox (Gmail) | read / send | IMAP + SMTP with an app password | `BOT_EMAIL_PASSWORD` | waiting for variable |
-| Buildertrend | read notifications / write Daily Log, photos, schedule | notification e-mails (read); RPA with the `PKB Ops Bot` user (write); API if granted | `BUILDERTREND_PASS` | user to be created |
+| Buildertrend | read notifications (invoice paid, overdue) / write Daily Log, photos, schedule | notification e-mails to the bot mailbox (read); RPA with the `PKB Ops Bot` user (write); API if granted | `BUILDERTREND_PASS` | user to be created |
 | Website (contract form) | read | the e-mail the form already sends | — | phase 2 |
 | Claude API | process | read review comments, classify causes, draft e-mails, transcribe audio | `ANTHROPIC_API_KEY` | — |
 
@@ -110,7 +110,7 @@ job_pauses           reason (owner_deferred_start | awaiting_1st_draw | awaiting
 job_contacts         designer (Sovereign), surveyor (Bailey), septic designer, subs; e-mails for requests
 
 permit_cases         one per job and process type: building | septic | civic_assoc | impact_fees | noc | survey
-                     county, portal_case_id, number, portal_status, ops_status, ball_with (county|designer|pkb|owner|fdep|blocked),
+                     county, portal_case_id, number, portal_status, ops_status, ball_with (county|sovereign|surveyor|shady|fdep|pkb|owner|blocked),
                      applied_at, issued_at, last_collected_at
 submittals           rounds: version, submitted_at, due_at, completed_at, status
 review_items         per round and department: department, status, reviewer, reviewer_email, due_at, completed_at,
@@ -138,6 +138,7 @@ Idempotency keys: `events.dedupe_key` (e.g. `energov:review_item:<ItemReviewId>:
 
 | # | Trigger | Action |
 |---|---|---|
+| R0 | `invoice.paid` for the 1st (licensing) invoice (Buildertrend payment e-mail) | draft the "start licensing" e-mail to Sovereign with the job data; on send `ball_with = sovereign`; open `permit_cases` building + septic + survey (see `docs/PROCESS_PERMITS.md`) |
 | R1 | new `review_item.status = Requires Re-submit` | draft e-mail to the designer with the corrections itemized from the reviewer's comment; `ball_with = designer`; follow-up task at +48 h |
 | R2 | follow-up task due and no new `submittal` | new follow-up to the designer; every 2 cycles escalate to `OPS_NOTIFY_EMAIL` |
 | R3 | new `submittal` appears | close follow-ups; `ball_with = county`; Daily Log "Resubmitted v{n}" |
