@@ -65,27 +65,27 @@ rows.sort((a, b) => (b.total ?? 0) - (a.total ?? 0));
 const issued = rows.filter(r => r.issuedAt);
 const inReview = rows.filter(r => !r.issuedAt);
 const L = [];
-L.push(`# KPIs de permits — ${county} (${permits.length} permits coletados em ${today})`, '');
-L.push(`| | n | mediana | média |`, `|---|---|---|---|`);
-L.push(`| Dias applied → issued (emitidos) | ${issued.length} | ${median(issued.map(r => r.total))} | ${mean(issued.map(r => r.total))} |`);
-L.push(`| Rodadas de submittal por permit | ${roundsAll.length} | ${median(roundsAll)} | ${mean(roundsAll)} |`);
-L.push(`| Dias no condado (soma das rodadas) | ${countyDaysAll.length} | ${median(countyDaysAll)} | ${mean(countyDaysAll)} |`);
-L.push(`| Dias em resubmissão (do nosso lado) | ${resubmitDaysAll.length} | ${median(resubmitDaysAll)} | ${mean(resubmitDaysAll)} |`, '');
+L.push(`# Permit KPIs — ${county} (${permits.length} permits collected on ${today})`, '');
+L.push(`| | n | median | mean |`, `|---|---|---|---|`);
+L.push(`| Days applied → issued (issued only) | ${issued.length} | ${median(issued.map(r => r.total))} | ${mean(issued.map(r => r.total))} |`);
+L.push(`| Submittal rounds per permit | ${roundsAll.length} | ${median(roundsAll)} | ${mean(roundsAll)} |`);
+L.push(`| Days at the county (sum of rounds) | ${countyDaysAll.length} | ${median(countyDaysAll)} | ${mean(countyDaysAll)} |`);
+L.push(`| Days in resubmission (our side) | ${resubmitDaysAll.length} | ${median(resubmitDaysAll)} | ${mean(resubmitDaysAll)} |`, '');
 const totalCounty = countyDaysAll.reduce((a, b) => a + b, 0), totalResub = resubmitDaysAll.reduce((a, b) => a + b, 0);
-if (totalCounty + totalResub) L.push(`Do tempo total em revisão, **${Math.round(100 * totalCounty / (totalCounty + totalResub))}% foi o condado** e **${Math.round(100 * totalResub / (totalCounty + totalResub))}% foi resubmissão** (projetista/PKB).`, '');
+if (totalCounty + totalResub) L.push(`Of the total review time, **${Math.round(100 * totalCounty / (totalCounty + totalResub))}% was the county** and **${Math.round(100 * totalResub / (totalCounty + totalResub))}% was resubmission** (designer/PKB).`, '');
 
-L.push(`## Departamentos que mais reprovam`, '', `| Departamento | reviews | reprovações | % | permits afetados |`, `|---|---|---|---|---|`);
+L.push(`## Departments that fail most`, '', `| Department | reviews | failures | % | permits affected |`, `|---|---|---|---|---|`);
 for (const [d, v] of Object.entries(deptFails).sort((a, b) => b[1].fails - a[1].fails)) {
   if (!v.fails) continue;
   L.push(`| ${d} | ${v.reviews} | ${v.fails} | ${Math.round(100 * v.fails / v.reviews)}% | ${deptFailPermits[d]?.size ?? 0} |`);
 }
 L.push('');
 
-L.push(`## Em andamento — com quem está a bola`, '', `| Permit | Endereço | Status | Rodadas | Dias condado | Dias resubmissão | Esperando condado há | Esperando nós há | Holds ativos |`, `|---|---|---|---|---|---|---|---|---|`);
+L.push(`## In progress — who has the ball`, '', `| Permit | Address | Status | Rounds | County days | Resubmit days | Waiting on county for | Waiting on us for | Active holds |`, `|---|---|---|---|---|---|---|---|---|`);
 for (const r of inReview) L.push(`| ${r.number} | ${r.address} | ${r.status} | ${r.rounds} | ${r.countyDays} | ${r.resubmitDays} | ${r.waitingOnCounty || ''} | ${r.waitingOnUs || ''} | ${r.activeHolds.join('; ')} |`);
 L.push('');
 
-L.push(`## Emitidos — histórico`, '', `| Permit | Endereço | Applied | Issued | Total dias | Rodadas | Dias condado | Dias resubmissão | Reprovou em |`, `|---|---|---|---|---|---|---|---|---|`);
+L.push(`## Issued — history`, '', `| Permit | Address | Applied | Issued | Total days | Rounds | County days | Resubmit days | Failed in |`, `|---|---|---|---|---|---|---|---|---|`);
 for (const r of issued) L.push(`| ${r.number} | ${r.address} | ${r.appliedAt} | ${r.issuedAt} | ${r.total} | ${r.rounds} | ${r.countyDays} | ${r.resubmitDays} | ${r.failedDepts.join('; ')} |`);
 
 const out = L.join('\n');

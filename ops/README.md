@@ -1,55 +1,62 @@
-# PKB Ops — permits, inspections e acompanhamento de obra
+# PKB Ops — permits, inspections and construction tracking
 
-Módulo operacional da PKB Homes (separado do orçamentador em `frontend/` +
-`supabase/`). Objetivo: substituir a planilha *Permits Control* por um sistema
-que **lê as fontes de verdade sozinho** (portais dos condados, e-mail,
-Buildertrend), guarda o histórico como eventos e devolve dashboard, alertas e
-automações (e-mail de revisão para o projetista, follow-up, disparos a
-fornecedores).
+Operations module for PKB Homes (separate from the estimator in `frontend/` +
+`supabase/`). Goal: replace the *Permits Control* spreadsheet with a system that
+**reads the sources of truth by itself** (county portals, e-mail, Buildertrend),
+keeps history as events, and gives back a dashboard, alerts and automations
+(review e-mail to the designer, follow-ups, vendor requests).
+
+Design: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ```
 ops/
-  collectors/energov/   coletor dos portais Tyler EnerGov CSS (Marion; Citrus/Orange a confirmar)
-  data/permits/         planilha Permits Control importada (CSV UTF-8)
-  data/portal/<county>/ um JSON por permit, como o portal devolveu + bloco normalizado
+  collectors/energov/   collector for Tyler EnerGov CSS portals (Marion; Citrus/Orange to confirm)
+  analysis/             first KPIs straight from collected JSON
+  data/permits/         imported Permits Control spreadsheet (UTF-8 CSV)
+  data/portal/<county>/ one JSON per permit, as the portal returned it + a normalized block
 ```
 
-## Coletor EnerGov (portais de condado)
+## EnerGov collector (county portals)
 
-Marion County usa Tyler EnerGov *Citizen Self Service*. A consulta é **pública**
-(sem login) e expõe, por permit: status e datas, rodadas de submittal, itens de
-review por departamento **com o comentário completo do revisor**, inspeções,
-holds, contatos (contratante e subs), fees e sub-records. Só anexos, e-reviews
-e eventos exigem ser contato no registro.
+Marion County runs Tyler EnerGov *Citizen Self Service*. Lookup is **public**
+(no login) and exposes, per permit: status and dates, submittal rounds, review
+items per department **with the reviewer's full comments**, inspections, holds,
+contacts (contractor and subs), fees and sub-records. Only attachments,
+e-reviews and events require being a contact on the record.
 
 ```bash
 cd ops && npm install
 node collectors/energov/collect.mjs --county marion BLDR-26-05-13402
 node collectors/energov/collect.mjs --county marion --from-csv data/permits/permits_control_2026-09-25.csv
+node analysis/permits_kpi.mjs --county marion --md data/portal/marion/_kpi.md
 ```
 
-Saída em `data/portal/marion/<PERMIT>.json`:
+Output in `data/portal/marion/<PERMIT>.json`:
 
-- `raw` — as respostas JSON que o próprio portal carregou (por rota), para auditoria
-- `permit` — o bloco normalizado que o resto do sistema usa:
-  `submittals[]` (versão, datas), `reviewItems[]` (departamento, status, revisor,
-  e-mail, prazo, comentário), `workflow[]`, `inspections[]`, `holds[]`,
+- `raw` — the JSON responses the portal itself loaded (by route), for auditing
+- `permit` — the normalized block the rest of the system consumes:
+  `submittals[]` (version, dates), `reviewItems[]` (department, status, reviewer,
+  e-mail, due date, comments), `workflow[]`, `inspections[]`, `holds[]`,
   `contacts[]`, `feeSummary`, `subRecords[]`
 
-O coletor dirige o portal de verdade num Chromium headless (Playwright) e captura
-o JSON que a interface pede; não reimplementa as chamadas. Isso mantém o mesmo
-caminho de um visitante humano e sobrevive a mudanças cosméticas de tela.
+The collector drives the real portal in headless Chromium (Playwright) and
+captures the JSON the UI requests; it does not re-implement the calls. That keeps
+us on the same path as a human visitor and survives cosmetic UI changes.
 
-Variáveis opcionais: `CHROMIUM_PATH` (binário do Chromium), `HTTPS_PROXY`.
+Optional variables: `CHROMIUM_PATH` (Chromium binary), `HTTPS_PROXY`.
 
-## Próximos passos (ordem)
+## Credentials
 
-1. Citrus e Orange: confirmar se também são EnerGov; se sim, só adicionar em `PORTALS`.
-2. Modelo de dados (Supabase): `projects`, `permit_cases`, `submittals`,
-   `review_items`, `inspections`, `holds`, `events` + regras/notificações.
-3. Leitor de e-mail da caixa do bot (IMAP) → eventos (Sovereign, FDEP, Bailey, Buildertrend).
-4. Regras: review "Requires Re-submit" → rascunho de e-mail ao projetista com as
-   correções itemizadas → follow-up 48h até `submittals[+1]` aparecer.
-5. Dashboard de KPI: dias por rodada (condado × projetista), causas de reprovação
-   por departamento, permits parados, holds ativos.
-6. Buildertrend (RPA com usuário `PKB Ops Bot`): daily log por checagem, job por contrato.
+Copy `.env.example` to `.env` and fill it in. `.env` is never committed.
+
+## Next steps (in order)
+
+1. Citrus and Orange: confirm they run EnerGov; if so, add them to `PORTALS`.
+2. Data model (Supabase, schema `ops`): `jobs`, `job_pauses`, `permit_cases`,
+   `submittals`, `review_items`, `inspections`, `holds`, `events` + rules/notifications.
+3. Bot mailbox reader (IMAP) → events (designer, FDEP, surveyor, Buildertrend).
+4. Rules: "Requires Re-submit" review → draft e-mail to the designer with the
+   corrections itemized → 48 h follow-up until `submittals[+1]` appears.
+5. KPI dashboard: days per round (county × designer), failure causes by
+   department, stalled permits, active holds, pauses excluded from clocks.
+6. Buildertrend (RPA with the `PKB Ops Bot` user): Daily Log per check, Job per contract.
