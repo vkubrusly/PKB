@@ -34,7 +34,8 @@ const deptFails = {};   // department → { fails, reviews }
 const deptFailPermits = {};
 let countyDaysAll = [], resubmitDaysAll = [], roundsAll = [];
 for (const p of permits) {
-  const subs = p.submittals;
+  // Order rounds by date: the portal restarts its version counter per workflow step.
+  const subs = [...p.submittals].sort((a, b) => (a.submittedAt || '').localeCompare(b.submittedAt || ''));
   let countyDays = 0, resubmitDays = 0, openSince = null;
   for (let i = 0; i < subs.length; i++) {
     const s = subs[i];
@@ -53,7 +54,8 @@ for (const p of permits) {
     d.reviews++;
     if (/re-?submit|denied|fail/i.test(r.status)) { d.fails++; (deptFailPermits[r.department] ||= new Set()).add(p.number); }
   }
-  const activeHolds = p.holds.filter(h => h.active).map(h => h.comments || h.name);
+  // Only blocking holds count; 'Alert Message Only' entries are parcel/project notes.
+  const activeHolds = p.holds.filter(h => h.active && /stop/i.test(h.type || '')).map(h => h.comments || h.name);
   const total = days(p.appliedAt, p.issuedAt || today);
   rows.push({ number: p.number, address: p.address, status: p.status, appliedAt: p.appliedAt, issuedAt: p.issuedAt, total,
     rounds: subs.length, countyDays, resubmitDays, waitingOnCounty, waitingOnUs, failedDepts, activeHolds,

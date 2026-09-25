@@ -147,21 +147,23 @@ function normalize(hit, raw) {
   const submittals = (last('/api/energov/entity/submittals/search')?.Result || []).map(s => ({
     submittalId: s.SubmittalId, version: s.VersionNumber, type: s.SubmittalTypeName, status: s.SubmittalStatusName,
     submittedAt: day(s.SubmittalDateSubmitted), dueAt: day(s.SubmittalDueDate), completedAt: day(s.SubmittalCompleteDate),
-  })).sort((a, b) => a.version - b.version);
-  const versionOf = Object.fromEntries(submittals.map(s => [s.submittalId, s.version]));
+  })).sort((a, b) => (a.submittedAt || '').localeCompare(b.submittedAt || '') || a.version - b.version)
+    // EnerGov restarts VersionNumber per workflow step, so we number rounds ourselves.
+    .map((s, i) => ({ ...s, round: i + 1 }));
+  const versionOf = Object.fromEntries(submittals.map(s => [s.submittalId, s.round]));
   const reviewItems = [];
   for (const b of raw['/api/energov/entity/submittals/itemreviews/search/items'] || []) {
     for (const i of b.Result || []) {
       if (reviewItems.some(r => r.itemReviewId === i.ItemReviewId)) continue;
       reviewItems.push({
-        itemReviewId: i.ItemReviewId, submittalId: i.SubmittalId, version: versionOf[i.SubmittalId] ?? null,
+        itemReviewId: i.ItemReviewId, submittalId: i.SubmittalId, round: versionOf[i.SubmittalId] ?? null,
         department: i.TypeName, status: i.StatusName, assignedTo: (i.AssignedTo || '').trim() || null, assignedToEmail: i.AssignedToEmail || null,
         dueAt: day(i.DueDate), completedAt: day(i.CompletedDate), comments: (i.Comments || '').trim() || null,
         corrections: i.Corrections || [], recommendations: i.Recommendations || [],
       });
     }
   }
-  reviewItems.sort((a, b) => (a.version - b.version) || a.department.localeCompare(b.department));
+  reviewItems.sort((a, b) => (a.round - b.round) || a.department.localeCompare(b.department));
   const workflow = (last('/api/energov/workflow/summary/activities/:n/:id')?.Result || []).map(a => ({
     name: a.FriendlyName || a.Name, type: a.ActivityTypeName, status: a.Status, completedAt: a.CompletedOn ? a.CompletedOn.slice(0, 10) : null, scheduledStart: day(a.ScheduledStartDate),
   }));
