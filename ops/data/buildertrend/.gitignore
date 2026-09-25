@@ -1,2 +1,3 @@
-probe/*.png
-probe/*.txt
+jobs.json
+jobpicker_raw.json
+probe/
