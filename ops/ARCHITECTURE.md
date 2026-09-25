@@ -111,6 +111,7 @@ job_contacts         designer (Sovereign), surveyor (Bailey), septic designer, s
 
 permit_cases         one per job and process type: building | septic | civic_assoc | impact_fees | noc | survey
                      county, portal_case_id, number, portal_status, ops_status, ball_with (county|sovereign|surveyor|shady|fdep|pkb|owner|blocked),
+                     tracked_by (designer|pkb)  -- affordable: Sovereign drives resubmissions; custom: PKB does
                      applied_at, issued_at, last_collected_at
 submittals           rounds: version, submitted_at, due_at, completed_at, status
 review_items         per round and department: department, status, reviewer, reviewer_email, due_at, completed_at,

@@ -51,5 +51,5 @@ fast (20-odd days) the septic may finish later.
 
 1. The exact content of the start e-mail (forward a real one to the bot mailbox).
 2. Contact e-mails: Sovereign, Shady, Bailey.
-3. Custom homes: same designer and flow, or a different one (Michele, Ariadne, Bossan appear in the spreadsheet)?
+3. ~~Custom homes: same designer?~~ **Answered:** custom homes use other designers and **PKB tracks the permit itself**. Modeled as `job_contacts.designer` per job and `permit_cases.tracked_by = designer | pkb`. For `pkb`-tracked cases the correction e-mail goes to that job's designer, the 48 h follow-up is PKB's, and R0 (start e-mail to Sovereign) does not apply.
 4. Who pays impact fees and when, and how the NOC is recorded (county workflow shows "Confirm Notice of Commencement").
