@@ -86,7 +86,10 @@ Association (Citrus), impact fees, NOC, and the blockers below.
 | Connector | Direction | Technique | Credential | Status |
 |---|---|---|---|---|
 | EnerGov Marion | read | Playwright over the public UI; captures the portal's own JSON | none | **validated** |
-| EnerGov Citrus / Orange / Charlotte | read | same, if they run EnerGov | tbd | waiting for URLs |
+| EnerGov Winter Park (city) | read | same collector as Marion (`--county winterpark`) | none | **validated** (BLDR-2026-0437: 4 rounds, 15 review items, slab failed 3× before passing) |
+| Accela ACA Citrus | read | Playwright over the public Citizen Access record page: Processing Status (per-department status, reviewer, date, comment), conditions, fees, NOC, revision child records `.RR01…` | none | **validated** (BLD2605-0966); collector to write; Inspections tab to confirm |
+| Fast Track Orange County | read | public search is behind a CAPTCHA (not bypassed); use the contractor's **My Permits** area with a PKB/Prime Fast Track login | `ORANGE_PORTAL_USER/PASS` | waiting for credentials |
+| Charlotte / Sarasota / Lake | read | tbd (low volume: 4 + 2 + 1 jobs) | tbd | waiting for URLs |
 | Bot mailbox (Gmail) | read / send | IMAP + SMTP with an app password | `BOT_EMAIL_PASSWORD` | waiting for variable |
 | Buildertrend | read notifications (invoice paid, overdue) / write Daily Log, photos, schedule | notification e-mails to the bot mailbox (read); RPA with the `PKB Ops Bot` user (write); API if granted | `BUILDERTREND_PASS` | user to be created |
 | Website (contract form) | read | the e-mail the form already sends | — | phase 2 |
