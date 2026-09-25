@@ -32,7 +32,8 @@ export async function openBuildertrend({ headless = true } = {}) {
   const ctx = await browser.newContext({ viewport: { width: 1400, height: 1000 }, ignoreHTTPSErrors: true });
   await ctx.addCookies(cookiesFromExport(file));
   const page = await ctx.newPage();
-  await page.goto('https://buildertrend.net/app/Landing', { waitUntil: 'networkidle', timeout: 120000 });
+  await page.goto('https://buildertrend.net/app/Landing', { waitUntil: 'domcontentloaded', timeout: 120000 });
+  await page.waitForLoadState('networkidle', { timeout: 30000 }).catch(() => {});
   await page.waitForTimeout(3000);
   const loggedIn = !/login\.buildertrend\.com/.test(page.url());
   return { browser, ctx, page, loggedIn };
