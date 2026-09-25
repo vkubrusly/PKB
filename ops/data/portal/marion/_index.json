@@ -1,0 +1,12 @@
+{
+  "county": "marion",
+  "collectedAt": "2026-09-25T20:53:14.999Z",
+  "permits": [
+    {
+      "permit": "BLDR-26-05-13402",
+      "found": true,
+      "status": "In Review",
+      "file": "/home/user/PKB/ops/data/portal/marion/BLDR-26-05-13402.json"
+    }
+  ]
+}
