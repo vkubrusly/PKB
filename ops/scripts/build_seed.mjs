@@ -87,6 +87,17 @@ for (const j of Object.values(bt)) {
   (btByKey[k.key] ||= []).push(j);
   (btByCore[k.core] ||= []).push(j);
 }
+const normParcel = (p) => String(p || '').toUpperCase().replace(/[^0-9A-Z]/g, '');
+const fieldsFile = join(ROOT, 'data', 'buildertrend', 'job_fields.json');
+const btFields = existsSync(fieldsFile) ? JSON.parse(readFileSync(fieldsFile, 'utf8')).jobs : [];
+const btByParcel = {};
+for (const f of btFields) if (f.parcel) (btByParcel[normParcel(f.parcel)] ||= []).push(f);
+const fieldsOf = (jobId) => btFields.find(f => f.jobId === jobId) || null;
+function matchBtByParcel(parcel) {
+  const hits = btByParcel[normParcel(parcel)] || [];
+  if (hits.length !== 1) return null;
+  return Object.values(bt).find(j => j.jobId === hits[0].jobId) || null;
+}
 function matchBt(address) {
   const k = addrKey(address);
   if (k.house !== 'tbd' && btByKey[k.key]?.length === 1) return btByKey[k.key][0];
@@ -106,16 +117,24 @@ const permitToJob = {};
 const unmatched = [];
 for (const r of rows) {
   // job_number = the Buildertrend number when matched, else "S" + spreadsheet row.
-  const b = matchBt(r.Address);
+  // Parcel ID first (Buildertrend custom field "Parcial ID"), address as fallback.
+  const b = (r.Parcel && matchBtByParcel(r.Parcel)) || matchBt(r.Address);
   const num = b ? String(b.jobName).slice(0, 4) : 'S' + r['#'].padStart(3, '0');
   if (!b) unmatched.push(`#${r['#']} ${r.Address}`);
   const turtle = r.Status === 'Turtle' || /turtle/i.test(r['Current Note']) ? 'relocation_pending' : 'none';
   w(`insert into ops.jobs (org_id, job_number, bt_job_id, bt_job_name, company, address, parcel, county, model, owner_name, contract_value, signed_at, first_draw_at, second_draw_at, status, turtle_state, note)
 select id, ${q(num)}, ${b ? b.jobId : 'null'}, ${q(b?.jobName)}, ${q(r.Company === 'Prime' ? 'Prime' : 'PKB')}, ${q(r.Address)}, ${q(r.Parcel)}, ${q(r.County)}, ${q(r.Model)}, ${q(r.Owner)}, ${qn(r['Contract $'])}, ${qd(r['Signed Date'])}, ${qd(r['1st Draw'])}, ${qd(r['2nd Draw'])}, ${q(STATUS[r.Status] || 'starting')}, ${q(turtle)}, ${q(r['Current Note'])} from _org
 on conflict (org_id, job_number) do update set bt_job_id = excluded.bt_job_id, bt_job_name = excluded.bt_job_name, company = excluded.company, address = excluded.address, parcel = excluded.parcel, county = excluded.county, model = excluded.model, owner_name = excluded.owner_name, contract_value = excluded.contract_value, signed_at = excluded.signed_at, first_draw_at = excluded.first_draw_at, second_draw_at = excluded.second_draw_at, status = excluded.status, turtle_state = excluded.turtle_state, note = excluded.note;`);
+  // Supervisor and project managers from Buildertrend (who gets inspection alerts).
+  const bf = b ? fieldsOf(b.jobId) : null;
+  if (bf) {
+    const people = [...(bf.supervisor ? [['supervisor', bf.supervisor]] : []), ...[].concat(bf.projectManagers || []).filter(Boolean).map(n => ['pm', n])];
+    w(`delete from ops.job_contacts where job_id = (select id from ops.jobs where org_id = (select id from _org) and job_number = ${q(num)}) and role in ('supervisor', 'pm');`);
+    for (const [role, name] of people) w(`insert into ops.job_contacts (org_id, job_id, role, name) select j.org_id, j.id, ${q(role)}, ${q(name)} from ops.jobs j join _org o on o.id = j.org_id where j.job_number = ${q(num)};`);
+  }
   // Building permit case from the spreadsheet (portal data overlays it below).
   const ov = PERMIT_OVERRIDES[r['#']];
-  const number = ov?.number || (r['Permit N'] && r['Permit N'] !== '-' ? r['Permit N'] : null);
+  const number = ov?.number || (r['Permit N'] && r['Permit N'] !== '-' ? r['Permit N'] : null) || bf?.permit || null;
   if (number) {
     const portal = ov?.portal || PORTAL_OF_COUNTY[r.County] || null;
     permitToJob[number] = num;
