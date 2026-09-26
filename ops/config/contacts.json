@@ -1,0 +1,40 @@
+{
+  "_note": "Business contacts used by the rules engine (R0/R1/R2 and vendor requests). Loaded into ops.job_contacts / vendors when the database is set up.",
+  "designers": {
+    "sovereign": {
+      "company": "Sovereign",
+      "role": "designer + permit expediter for the affordable models (building + septic)",
+      "to": ["sovereignpermit@gmail.com"],
+      "cc": ["fernada.quiterio@sconsult.us", "leonardo@sovereigninc.us"],
+      "people": [
+        { "name": "Sarah", "email": "sovereignpermit@gmail.com" },
+        { "name": "Fernanda", "email": "fernada.quiterio@sconsult.us" },
+        { "name": "Leonardo Quiterio", "email": "leonardo@sovereigninc.us" }
+      ],
+      "language": "pt-BR"
+    },
+    "michele": {
+      "company": "Frediani Putini",
+      "role": "designer for custom homes (PKB tracks the permit itself)",
+      "to": ["michele@fredianiputini.com"],
+      "people": [{ "name": "Michele", "email": "michele@fredianiputini.com" }]
+    }
+  },
+  "vendors": {
+    "shady": {
+      "company": "Shady Environmental",
+      "role": "septic design / septic permit application",
+      "to": ["shady_environmental@yahoo.com"]
+    },
+    "bailey": {
+      "company": "Bailey Surveying",
+      "role": "boundary survey, stake-out",
+      "to": ["kbailey@baileysurveying.com"],
+      "people": [{ "name": "Kiel Bailey", "email": "kbailey@baileysurveying.com" }]
+    }
+  },
+  "internal": {
+    "permits_owner": { "name": "Guilherme Pinto", "email": "guilherme@pkbhomes.com" },
+    "director": { "name": "Victor Kubrusly", "email": "victor@pkbhomes.com" }
+  }
+}
