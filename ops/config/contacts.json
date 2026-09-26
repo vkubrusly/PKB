@@ -5,10 +5,10 @@
       "company": "Sovereign",
       "role": "designer + permit expediter for the affordable models (building + septic)",
       "to": ["sovereignpermit@gmail.com"],
-      "cc": ["fernada.quiterio@sconsult.us", "leonardo@sovereigninc.us"],
+      "cc": ["fernanda.quiterio@sconsult.us", "leonardo@sovereigninc.us"],
       "people": [
         { "name": "Sarah", "email": "sovereignpermit@gmail.com" },
-        { "name": "Fernanda", "email": "fernada.quiterio@sconsult.us" },
+        { "name": "Fernanda", "email": "fernanda.quiterio@sconsult.us" },
         { "name": "Leonardo Quiterio", "email": "leonardo@sovereigninc.us" }
       ],
       "language": "pt-BR"
