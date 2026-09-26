@@ -138,7 +138,15 @@ async function collectOne(permitNumber) {
   await settle(4000);
   // Stage 'inspections' (permit already issued): only what changes until the CO.
   const tabs = STAGE === 'inspections' ? ['Inspections', 'Holds', 'Sub-Records'] : ['Reviews', 'Inspections', 'Holds', 'Contacts', 'Fees', 'Sub-Records'];
-  for (const tab of tabs) await clickTab(tab);
+  for (const tab of tabs) {
+    await clickTab(tab);
+    // Grids page at 10 rows; switch every "Results per page" selector on the tab to 100.
+    const sizers = page.locator('select:visible').filter({ has: page.locator('option', { hasText: /^100$/ }) });
+    for (let i = 0; i < Math.min(await sizers.count(), 4); i++) {
+      await sizers.nth(i).selectOption({ label: '100' }, { timeout: 5000 }).catch(() => {});
+      await page.waitForTimeout(2500);
+    }
+  }
 
   const raw = {};
   for (const c of captured) {
