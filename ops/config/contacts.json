@@ -88,12 +88,18 @@
     }
   },
   "notifications": {
-    "_note": "Who is notified on automated Buildertrend Daily Logs (permit/inspection events). 'job_supervisors' = the supervisors assigned to that job in Buildertrend.",
-    "bt_daily_log_notify": [
-      "carlos@pkbhomes.com",
-      "camila@pkbhomes.com",
-      "cristiano@pkbhomes.com",
-      "job_supervisors"
-    ]
+    "_note": "Who is notified on automated Buildertrend Daily Logs. 'job_supervisors' = the supervisors assigned to that job in Buildertrend.",
+    "bt_daily_log_notify": {
+      "permit": [
+        "cristiano@pkbhomes.com",
+        "guilherme@pkbhomes.com"
+      ],
+      "inspection": [
+        "carlos@pkbhomes.com",
+        "camila@pkbhomes.com",
+        "cristiano@pkbhomes.com",
+        "job_supervisors"
+      ]
+    }
   }
 }
