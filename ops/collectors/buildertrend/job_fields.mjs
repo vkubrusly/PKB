@@ -51,7 +51,9 @@ const cf = (row, label) => {
   if (!f || f.value == null || f.value === '') return null;
   const vals = Array.isArray(f.value) ? f.value : [f.value];
   const names = vals.map(v => (optionNames[String(f.customFieldId)] || {})[v] ?? (f.type === 4 ? (optionNames.users || {})[v] : undefined) ?? allNames[v] ?? v);
-  return names.length === 1 ? names[0] : names;
+  const real = names.filter(n => n != null && !/^\s*--.*--\s*$|^unassigned$/i.test(String(n)));
+  if (!real.length) return null;
+  return real.length === 1 ? real[0] : real;
 };
 const parseList = (v) => { try { const a = JSON.parse(v); return Array.isArray(a) ? a : v; } catch { return v; } };
 const jobs = rows.map(r => {
