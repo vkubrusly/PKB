@@ -48,8 +48,9 @@ const env = () => ({
 // E.164 without '+', as the Cloud API expects ("14073041234").
 export function normalizePhone(p) {
   const digits = String(p || '').replace(/\D/g, '');
-  if (digits.length === 10) return '1' + digits; // US number without country code
-  return digits;
+  const n = digits.length === 10 ? '1' + digits : digits; // US number without country code
+  if (n.length < 11 || n.length > 15) throw new Error(`invalid WhatsApp number "${p}"`);
+  return n;
 }
 
 async function post(body) {
