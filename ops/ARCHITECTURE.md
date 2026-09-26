@@ -66,6 +66,15 @@ Association (Citrus), impact fees, NOC, and the blockers below.
   construction time). A pause closes automatically when construction actually
   starts (first inspection requested, or the supervisor marks the start).
 
+**Monitoring lifecycle (decided 2026-09-26).** Portal monitoring of a building
+permit has two stages and then stops (`ops.monitoring_queue`, migration 0016):
+
+| Stage | From → to | What the collector reads |
+|---|---|---|
+| `permit` | application → permit issued | reviews and corrections, holds, fees, workflow |
+| `inspections` | permit issued → CO | inspections only (plus holds and sub-permits) |
+| `done` | CO received / permit finaled | nothing — the job leaves the daily run |
+
 ### 3.2 Inspections (phase 1, same collector)
 - Input: the portal's Inspections tab (status, inspector, dates, reinspection) + county e-mail.
 - Output: pass/fail notice to supervisor and sub with the inspector's comment; next step from the standard sequence; failure KPIs by type / inspector / sub.

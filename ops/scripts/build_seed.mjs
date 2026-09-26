@@ -125,6 +125,8 @@ for (const r of rows) {
   w(`insert into ops.jobs (org_id, job_number, bt_job_id, bt_job_name, company, address, parcel, county, model, owner_name, contract_value, signed_at, first_draw_at, second_draw_at, status, turtle_state, note)
 select id, ${q(num)}, ${b ? b.jobId : 'null'}, ${q(b?.jobName)}, ${q(r.Company === 'Prime' ? 'Prime' : 'PKB')}, ${q(r.Address)}, ${q(r.Parcel)}, ${q(r.County)}, ${q(r.Model)}, ${q(r.Owner)}, ${qn(r['Contract $'])}, ${qd(r['Signed Date'])}, ${qd(r['1st Draw'])}, ${qd(r['2nd Draw'])}, ${q(STATUS[r.Status] || 'starting')}, ${q(turtle)}, ${q(r['Current Note'])} from _org
 on conflict (org_id, job_number) do update set bt_job_id = excluded.bt_job_id, bt_job_name = excluded.bt_job_name, company = excluded.company, address = excluded.address, parcel = excluded.parcel, county = excluded.county, model = excluded.model, owner_name = excluded.owner_name, contract_value = excluded.contract_value, signed_at = excluded.signed_at, first_draw_at = excluded.first_draw_at, second_draw_at = excluded.second_draw_at, status = excluded.status, turtle_state = excluded.turtle_state, note = excluded.note;`);
+  // CO date ends monitoring for the job (see migration 0016).
+  if (toDate(r.CO)) w(`update ops.jobs set co_at = ${qd(r.CO)} where org_id = (select id from _org) and job_number = ${q(num)};`);
   // Supervisor and project managers from Buildertrend (who gets inspection alerts).
   const bf = b ? fieldsOf(b.jobId) : null;
   if (bf) {

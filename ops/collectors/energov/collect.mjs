@@ -52,7 +52,9 @@ const portal = PORTALS[county];
 if (!portal) { console.error(`unknown county "${county}" (known: ${Object.keys(PORTALS).join(', ')})`); process.exit(2); }
 const fromCsv = flag('--from-csv');
 const limit = Number(flag('--limit') || 0);
-const positional = args.filter((a, i) => !a.startsWith('--') && !['--county', '--from-csv', '--limit'].includes(args[i - 1]));
+// --stage permit|inspections (see ops.monitoring_queue). Default: full collection.
+const STAGE = flag('--stage') || 'permit';
+const positional = args.filter((a, i) => !a.startsWith('--') && !['--county', '--from-csv', '--limit', '--stage'].includes(args[i - 1]));
 
 let permits = positional;
 if (fromCsv) permits = permits.concat(permitsFromCsv(fromCsv, county));
@@ -134,7 +136,9 @@ async function collectOne(permitNumber) {
   captured = [];
   await page.goto(`${portal.base}/#/permit/${hit.CaseId}`, { waitUntil: 'networkidle', timeout: 120000 });
   await settle(4000);
-  for (const tab of ['Reviews', 'Inspections', 'Holds', 'Contacts', 'Fees', 'Sub-Records']) await clickTab(tab);
+  // Stage 'inspections' (permit already issued): only what changes until the CO.
+  const tabs = STAGE === 'inspections' ? ['Inspections', 'Holds', 'Sub-Records'] : ['Reviews', 'Inspections', 'Holds', 'Contacts', 'Fees', 'Sub-Records'];
+  for (const tab of tabs) await clickTab(tab);
 
   const raw = {};
   for (const c of captured) {
