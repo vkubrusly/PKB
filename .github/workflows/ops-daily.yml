@@ -1,0 +1,69 @@
+name: PKB Ops — daily collection
+
+# Every morning: read Buildertrend jobs, collect the county portals for every
+# permit still being monitored (ops.monitoring_queue: 'permit' until issued,
+# 'inspections' until the CO), then load everything into Supabase.
+#
+# Secrets (GitHub → Settings → Secrets and variables → Actions):
+#   SUPABASE_ACCESS_TOKEN  already used by the other workflows
+#   BT_COOKIES_JSON        the bot's Buildertrend session (Cookie-Editor → Export → JSON)
+#
+# Schedules only run from the repository's default branch.
+
+on:
+  schedule:
+    - cron: '15 10 * * *'   # 06:15 in Florida (EDT)
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Max permits per portal/stage (blank = all)'
+        required: false
+
+concurrency: { group: ops-daily, cancel-in-progress: false }
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    defaults: { run: { working-directory: ops } }
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      BT_COOKIES_FILE: ${{ github.workspace }}/bt_cookies.json
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: ops/package-lock.json }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      - name: Buildertrend session
+        env: { BT_COOKIES_JSON: '${{ secrets.BT_COOKIES_JSON }}' }
+        run: |
+          if [ -z "$BT_COOKIES_JSON" ]; then echo "::warning::BT_COOKIES_JSON not set — Buildertrend steps will be skipped"; exit 0; fi
+          printf '%s' "$BT_COOKIES_JSON" > "$BT_COOKIES_FILE"
+
+      - name: Buildertrend jobs and custom fields
+        continue-on-error: true   # an expired session must not block the portal run
+        run: |
+          [ -f "$BT_COOKIES_FILE" ] || exit 0
+          node collectors/buildertrend/list_jobs.mjs > /dev/null
+          node collectors/buildertrend/job_fields.mjs
+
+      - name: County portals (queue-driven)
+        continue-on-error: true
+        run: node scripts/collect_all.mjs ${{ inputs.limit && format('--limit {0}', inputs.limit) || '' }}
+
+      - name: Load into Supabase
+        run: |
+          node scripts/build_seed.mjs --parts
+          node scripts/apply_seed.mjs
+
+      - name: Keep the raw snapshots (7 days)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ops-snapshots
+          path: |
+            ops/data/portal
+            ops/data/buildertrend/job_fields.json
+          retention-days: 7

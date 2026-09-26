@@ -1,0 +1,449 @@
+{
+  "_note": "PKB standard construction sequence (source: Buildertrend checklist sent by Victor, 2026-09-26). Order matters: 'next_step' after an inspection passes = the following items until the next inspection. 'portal' = regex matched against the county inspection type (Marion EnerGov names; Winter Park/Citrus to confirm). Items marked (cancel) in the source are kept with optional=true. Confirmed by Victor 2026-09-26: Paper Raised Seal happens twice (#7 slab, #24 final); #31/#32 are a single Final Building inspection; checklist order (not number) is the real order.",
+  "phases": [
+    {
+      "code": "P0",
+      "name": "Contract & Permit",
+      "items": [
+        {
+          "type": "draw",
+          "name": "1st Draw"
+        },
+        {
+          "type": "task",
+          "name": "Survey"
+        },
+        {
+          "type": "task",
+          "name": "Site Plan"
+        },
+        {
+          "type": "task",
+          "name": "Permit Application"
+        },
+        {
+          "type": "task",
+          "name": "Utilities Fee payment"
+        },
+        {
+          "type": "task",
+          "name": "Septic Application"
+        },
+        {
+          "type": "task",
+          "name": "Septic Approval"
+        },
+        {
+          "type": "milestone",
+          "name": "Permit Issued"
+        }
+      ]
+    },
+    {
+      "code": "P1",
+      "name": "Phase 1 - Construction",
+      "items": [
+        {
+          "type": "draw",
+          "name": "2nd Draw"
+        },
+        {
+          "type": "inspection",
+          "seq": 1,
+          "name": "Erosion control",
+          "portal": "erosion|silt|pre-?work"
+        },
+        {
+          "type": "inspection",
+          "seq": 2,
+          "name": "T-pole",
+          "optional": true,
+          "portal": "t-?pole|temporary (power|pole)"
+        },
+        {
+          "type": "task",
+          "name": "Site Clearing"
+        },
+        {
+          "type": "task",
+          "name": "Stake out"
+        },
+        {
+          "type": "task",
+          "name": "Pad and Soil Compaction & Silt Fence"
+        },
+        {
+          "type": "task",
+          "name": "Footing Rebar"
+        },
+        {
+          "type": "inspection",
+          "seq": 3,
+          "name": "Footing",
+          "portal": "footing|foundation pre-?pour"
+        },
+        {
+          "type": "task",
+          "name": "Underground Plumbing"
+        },
+        {
+          "type": "inspection",
+          "seq": 4,
+          "name": "Plumbing Rough I",
+          "portal": "^(rough|underground) plumbing|plumbing rough( i)?$|plumbing underground"
+        },
+        {
+          "type": "task",
+          "name": "Underground Electrical"
+        },
+        {
+          "type": "inspection",
+          "seq": 5,
+          "name": "Concrete Encased Ground",
+          "portal": "concrete encased|ufer|electrical underground"
+        },
+        {
+          "type": "task",
+          "name": "Slab Pouring"
+        },
+        {
+          "type": "inspection",
+          "seq": 6,
+          "name": "Mono / Slab",
+          "portal": "mono|slab|flatwork pre-?pour"
+        },
+        {
+          "type": "inspection",
+          "seq": 7,
+          "name": "Paper Raised Seal",
+          "portal": "raised seal|form board|elevation certificate"
+        },
+        {
+          "type": "task",
+          "name": "Blocks and Precast Installation"
+        },
+        {
+          "type": "task",
+          "name": "Rebar tie-in"
+        },
+        {
+          "type": "task",
+          "name": "Lintel Concrete"
+        },
+        {
+          "type": "inspection",
+          "seq": 8,
+          "name": "Lintel (Fill Cell)",
+          "portal": "lintel|tie beam|fill cell"
+        },
+        {
+          "type": "task",
+          "name": "Straps"
+        },
+        {
+          "type": "inspection",
+          "seq": 9,
+          "name": "TUG",
+          "portal": "\\btug\\b|electrical service"
+        }
+      ]
+    },
+    {
+      "code": "P2",
+      "name": "Phase 2 - Construction",
+      "items": [
+        {
+          "type": "draw",
+          "name": "3rd Draw"
+        },
+        {
+          "type": "task",
+          "name": "Trusses & Roof Framing"
+        },
+        {
+          "type": "inspection",
+          "seq": 10,
+          "name": "Sheathing / Roof and Wall",
+          "portal": "sheathing|roof assembly|sub-?siding"
+        },
+        {
+          "type": "inspection",
+          "seq": 12,
+          "name": "Soffit in Progress",
+          "portal": "soffit"
+        },
+        {
+          "type": "inspection",
+          "seq": 13,
+          "name": "Roof Dry-in & Flashing",
+          "portal": "dry-?in|roofing|flashing"
+        },
+        {
+          "type": "task",
+          "name": "Interior Wood Frame"
+        },
+        {
+          "type": "inspection",
+          "seq": 11,
+          "name": "Structural Frame",
+          "portal": "structural frame"
+        },
+        {
+          "type": "task",
+          "name": "Windows Installation"
+        },
+        {
+          "type": "task",
+          "name": "Sliding Door and Exit Doors Installation"
+        },
+        {
+          "type": "task",
+          "name": "Rough Plumbing"
+        },
+        {
+          "type": "inspection",
+          "seq": 14,
+          "name": "Plumbing Rough II",
+          "portal": "second rough plumbing|plumbing rough ii|rough plumbing"
+        },
+        {
+          "type": "task",
+          "name": "Rough Electrical"
+        },
+        {
+          "type": "inspection",
+          "seq": 15,
+          "name": "Electrical Rough-in",
+          "portal": "rough electric"
+        },
+        {
+          "type": "task",
+          "name": "Rough HVAC"
+        },
+        {
+          "type": "inspection",
+          "seq": 16,
+          "name": "Mechanical Rough-in",
+          "portal": "rough mechanical"
+        },
+        {
+          "type": "inspection",
+          "seq": 17,
+          "name": "Rough Gas",
+          "optional": true,
+          "portal": "rough gas"
+        },
+        {
+          "type": "inspection",
+          "seq": 18,
+          "name": "Frame",
+          "portal": "^framing"
+        }
+      ]
+    },
+    {
+      "code": "P3",
+      "name": "Phase 3 - Construction",
+      "items": [
+        {
+          "type": "draw",
+          "name": "4th Draw"
+        },
+        {
+          "type": "task",
+          "name": "Insulation"
+        },
+        {
+          "type": "inspection",
+          "seq": 19,
+          "name": "Insulation",
+          "portal": "insulation"
+        },
+        {
+          "type": "task",
+          "name": "Septic Tank Installation"
+        },
+        {
+          "type": "inspection",
+          "seq": 20,
+          "name": "Water and Sewer Service",
+          "portal": "water service|sewer|septic hook-?up"
+        },
+        {
+          "type": "task",
+          "name": "Lath Installation"
+        },
+        {
+          "type": "inspection",
+          "seq": 21,
+          "name": "Building Lath Nailing",
+          "portal": "lath"
+        },
+        {
+          "type": "task",
+          "name": "Stucco"
+        },
+        {
+          "type": "inspection",
+          "seq": 22,
+          "name": "Firewall",
+          "portal": "fire ?wall"
+        },
+        {
+          "type": "inspection",
+          "seq": 23,
+          "name": "Pre-power",
+          "portal": "pre-?power|power release"
+        },
+        {
+          "type": "inspection",
+          "seq": 24,
+          "name": "Paper Raised Seal (final)",
+          "portal": "raised seal|final elevation"
+        },
+        {
+          "type": "inspection",
+          "seq": 25,
+          "name": "Interim Tax Assessment Fees",
+          "portal": "interim tax|assessment"
+        },
+        {
+          "type": "inspection",
+          "seq": 26,
+          "name": "Stormwater Affidavit and Final Inspection",
+          "portal": "stormwater|affidavit"
+        }
+      ]
+    },
+    {
+      "code": "P4",
+      "name": "Phase 4 - Construction",
+      "items": [
+        {
+          "type": "draw",
+          "name": "5th Draw"
+        },
+        {
+          "type": "task",
+          "name": "Drywall Install and texture"
+        },
+        {
+          "type": "task",
+          "name": "Roof Shingles"
+        },
+        {
+          "type": "task",
+          "name": "Soffit and fascia"
+        },
+        {
+          "type": "task",
+          "name": "Interior Paint"
+        },
+        {
+          "type": "task",
+          "name": "Exterior Paint"
+        },
+        {
+          "type": "task",
+          "name": "Flooring Installation Vinyl"
+        },
+        {
+          "type": "task",
+          "name": "Flooring Installation Tile"
+        },
+        {
+          "type": "task",
+          "name": "Interior door e bifold door Installation"
+        },
+        {
+          "type": "task",
+          "name": "Digital Lock"
+        },
+        {
+          "type": "task",
+          "name": "Cabinets, Countertops"
+        },
+        {
+          "type": "task",
+          "name": "Plumbing Trim"
+        },
+        {
+          "type": "task",
+          "name": "Electrical Trim"
+        },
+        {
+          "type": "task",
+          "name": "Door knobs and Door stops, mirrors and bath kits"
+        },
+        {
+          "type": "task",
+          "name": "Appliances Installation"
+        },
+        {
+          "type": "task",
+          "name": "Driveway & Sidewalks"
+        },
+        {
+          "type": "task",
+          "name": "House Number"
+        },
+        {
+          "type": "inspection",
+          "seq": 27,
+          "name": "Blower Door Test Report",
+          "portal": "blower door"
+        },
+        {
+          "type": "inspection",
+          "seq": 28,
+          "name": "Final Septic Approval",
+          "portal": "dep final|final septic"
+        },
+        {
+          "type": "inspection",
+          "seq": 29,
+          "name": "Final Utilities",
+          "portal": "final (utilit|electric|plumbing|mech)"
+        },
+        {
+          "type": "inspection",
+          "seq": 30,
+          "name": "Final Driveway Apron",
+          "portal": "driveway"
+        },
+        {
+          "type": "inspection",
+          "seq": 31,
+          "name": "Final Building Inspection",
+          "portal": "final structural|final building"
+        }
+      ]
+    },
+    {
+      "code": "CO",
+      "name": "CO Issued",
+      "items": [
+        {
+          "type": "milestone",
+          "name": "CO Issued"
+        },
+        {
+          "type": "draw",
+          "name": "6th Draw"
+        },
+        {
+          "type": "task",
+          "name": "Bahia Grass Sod Installed"
+        },
+        {
+          "type": "task",
+          "name": "Final Cleaning Services"
+        },
+        {
+          "type": "task",
+          "name": "Irrigation System"
+        }
+      ]
+    }
+  ]
+}

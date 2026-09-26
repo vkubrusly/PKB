@@ -1,0 +1,12 @@
+{
+  "county": "winterpark",
+  "collectedAt": "2026-09-26T18:38:01.985Z",
+  "permits": [
+    {
+      "permit": "BLDR-2026-0437",
+      "found": true,
+      "status": "Issued",
+      "file": "/home/user/PKB/ops/data/portal/winterpark/BLDR-2026-0437.json"
+    }
+  ]
+}
