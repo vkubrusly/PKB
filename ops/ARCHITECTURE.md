@@ -76,6 +76,12 @@ permit has two stages and then stops (`ops.monitoring_queue`, migration 0016):
 | `done` | CO received / permit finaled | nothing — the job leaves the daily run |
 
 ### 3.2 Inspections (phase 1, same collector)
+
+The PKB standard sequence (32 inspections across Phases 1–4, draws 1–6, CO) lives in
+`config/construction_sequence.json`. Each inspection carries a regex that matches the
+county's inspection type, so a portal result maps to "inspection #N" and the next
+step is the list of tasks until inspection #N+1 (used by R8's reminder). Validated
+against the Marion and Winter Park inspections collected so far: every type maps.
 - Input: the portal's Inspections tab (status, inspector, dates, reinspection) + county e-mail.
 - Output: pass/fail notice to supervisor and sub with the inspector's comment; next step from the standard sequence; failure KPIs by type / inspector / sub.
 
