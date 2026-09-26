@@ -1,0 +1,10 @@
+{
+  "_note": "Copy to team.json (not committed: it holds phone numbers). channels: which ways each person receives alerts. whatsapp: number with country code.",
+  "people": [
+    { "name": "Guilherme Pinto",   "email": "guilherme@pkbhomes.com", "whatsapp": "+1XXXXXXXXXX", "channels": ["email", "whatsapp"] },
+    { "name": "Cristiano Pedrosa", "email": "cristiano@pkbhomes.com", "whatsapp": "+1XXXXXXXXXX", "channels": ["email", "whatsapp"] },
+    { "name": "Carlos",            "email": "carlos@pkbhomes.com",    "whatsapp": "+1XXXXXXXXXX", "channels": ["email", "whatsapp"] },
+    { "name": "Camila",            "email": "camila@pkbhomes.com",    "whatsapp": "+1XXXXXXXXXX", "channels": ["email", "whatsapp"] },
+    { "name": "Victor Kubrusly",   "email": "victor@pkbhomes.com",    "whatsapp": "+1XXXXXXXXXX", "channels": ["email"] }
+  ]
+}

@@ -8,6 +8,7 @@
     "collect:marion": "node collectors/energov/collect.mjs --county marion"
   },
   "dependencies": {
+    "nodemailer": "^6.10.1",
     "playwright": "^1.63.0"
   }
 }

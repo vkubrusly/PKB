@@ -174,7 +174,7 @@ Idempotency keys: `events.dedupe_key` (e.g. `energov:review_item:<ItemReviewId>:
 
 ## 9. Decisions (2026-09-26)
 
-1. **Team notifications:** e-mail in phase 1, plus the Buildertrend Daily Log notification. WhatsApp in phase 2.
+1. **Team notifications:** e-mail plus the Buildertrend Daily Log notification. **WhatsApp is wired and ready** (`notify/whatsapp.mjs`, Meta WhatsApp Cloud API): each person picks channels in `config/team.json`; it goes live once PKB registers a number and the alert templates are approved by Meta.
 2. **Company:** one dashboard. Prime is being phased out in favor of PKB; historical Prime jobs stay visible with a company filter.
 3. **Hosting:** a small cloud VM (Node + Chromium, `pm2`), ~US$10–20/month. Supabase stays the database.
 4. **Outbound e-mail:** **automatic from day one**, with **Guilherme always in Cc** (guilherme@pkbhomes.com). Safeguards: a global kill switch (`OPS_SEND_ENABLED=false` falls back to drafts), a per-recipient daily cap, and every message logged in `outbound_messages`.
