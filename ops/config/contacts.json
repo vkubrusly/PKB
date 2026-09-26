@@ -85,6 +85,14 @@
     "contractor_of_record": {
       "name": "Cristiano Pedrosa",
       "email": "cristiano@pkbhomes.com"
+    },
+    "impact_fees_noc": {
+      "to": [
+        "daniela@pkbhomes.com"
+      ],
+      "cc": [
+        "guilherme@pkbhomes.com"
+      ]
     }
   },
   "notifications": {
@@ -95,11 +103,15 @@
         "guilherme@pkbhomes.com"
       ],
       "inspection": [
-        "carlos@pkbhomes.com",
-        "camila@pkbhomes.com",
-        "cristiano@pkbhomes.com",
-        "job_supervisors"
+        "job_supervisors",
+        "job_project_managers",
+        "cristiano@pkbhomes.com"
       ]
-    }
+    },
+    "inspection_failed": [
+      "job_supervisors",
+      "job_project_managers",
+      "cristiano@pkbhomes.com"
+    ]
   }
 }

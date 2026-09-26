@@ -47,6 +47,15 @@ fast (20-odd days) the septic may finish later.
 | R0b | no survey request seen within 3 business days of the start e-mail | follow-up to Sovereign |
 | R0c | septic design not returned by Shady within 15 days of the site plan | follow-up to Shady, Sovereign in copy |
 
+## Answers (2026-09-26)
+
+- **PP Requested** = *Permit Plan requested*: the date Sovereign was asked to start the process (the R0 start e-mail).
+- Every permit-related e-mail (Sovereign, county, Shady, Bailey) will be copied to the bot mailbox.
+- Corrections: today Guilherme only warns Sovereign; the itemized corrections e-mail (R1) becomes the new standard.
+- After issuance, vendors are requested by the job's supervisor; the system creates the task/reminder.
+- Impact fees and NOC → daniela@pkbhomes.com, Cc guilherme@pkbhomes.com.
+- Septic: e-mails until it shows on the county portal.
+
 ## Open questions
 
 1. The exact content of the start e-mail (forward a real one to the bot mailbox).

@@ -152,16 +152,16 @@ Idempotency keys: `events.dedupe_key` (e.g. `energov:review_item:<ItemReviewId>:
 | # | Trigger | Action |
 |---|---|---|
 | R0 | `invoice.paid` for the 1st (licensing) invoice (Buildertrend payment e-mail) | draft the "start licensing" e-mail to Sovereign with the job data; on send `ball_with = sovereign`; open `permit_cases` building + septic + survey (see `docs/PROCESS_PERMITS.md`) |
-| R1 | new `review_item.status = Requires Re-submit` | draft e-mail to the designer with the corrections itemized from the reviewer's comment; `ball_with = designer`; follow-up task at +48 h |
-| R2 | follow-up task due and no new `submittal` | new follow-up to the designer; every 2 cycles escalate to `OPS_NOTIFY_EMAIL` |
+| R1 | new `review_item.status = Requires Re-submit` | e-mail to the designer with the corrections itemized from the reviewer's comment (**new PKB standard** — today Guilherme only warns them); `ball_with = sovereign`; first follow-up at +48 h |
+| R2 | follow-up due and no new `submittal` | follow-up to the designer. Follow-ups exist **only after a correction request**; spacing adapts to the designer's reply ("resubmitting tomorrow" → next check after that date; no reply → 48 h). Escalate to `OPS_NOTIFY_EMAIL` after 2 unanswered follow-ups. |
 | R3 | new `submittal` appears | close follow-ups; `ball_with = county`; Daily Log "Resubmitted v{n}" |
-| R4 | `permit_case.status → Issued` | `permit.issued` event; fire `vendor_requests` configured for "after issuance"; Daily Log |
+| R4 | `permit_case.status → Issued` | `permit.issued` event; **task for the job's supervisor** to request vendors (stake-out, power, water, dumpster…) — PKB does not e-mail vendors directly; impact fees / NOC → daniela@pkbhomes.com, Cc Guilherme; Daily Log |
 | R5 | new `hold.active = true` | immediate alert (e-mail) with the reason; `ball_with = pkb` |
 | R6 | `permit_case` with no event for N days (N per status), and no open pause | "stalled" flag on the dashboard and in the weekly digest |
-| R7 | new `inspection.failed` | notice to supervisor + responsible sub with the comment; "reschedule" task; Daily Log |
-| R8 | new `inspection.passed` | notice to supervisor with the next step in the sequence; Daily Log; closes an open `owner_deferred_start` pause if it is the first inspection |
+| R7 | new `inspection.failed` | notice to the job's supervisor + project manager(s) + Cristiano with the inspector's comment; "reschedule" reminder; Daily Log |
+| R8 | new `inspection.passed` | notice to the supervisor with the next step in the sequence; **reminder to request the next inspection** (supervisors schedule their own inspections); Daily Log; closes an open `owner_deferred_start` pause if it is the first inspection |
 | R9 | any permit/inspection change | Buildertrend Daily Log with the change text (one entry per day per job) |
-| R10 | website form e-mail (phase 2) | create draft `contract`; task for Guilherme; follow-up until `signed` |
+| R10 | website "new job" e-mail (the form will also send to the bot mailbox) | "new job" alert on the dashboard; create draft `contract`; follow-up until `signed` (phase 2; may move into Buildertrend) |
 
 ## 7. Dashboard (v1 screens)
 
@@ -185,6 +185,9 @@ Idempotency keys: `events.dedupe_key` (e.g. `energov:review_item:<ItemReviewId>:
 
 1. **Team notifications:** e-mail plus the Buildertrend Daily Log notification. **WhatsApp is wired and ready** (`notify/whatsapp.mjs`, Meta WhatsApp Cloud API): each person picks channels in `config/team.json`; it goes live once PKB registers a number and the alert templates are approved by Meta.
 2. **Company:** one dashboard. Prime is being phased out in favor of PKB; historical Prime jobs stay visible with a company filter.
-3. **Hosting:** a small cloud VM (Node + Chromium, `pm2`), ~US$10–20/month. Supabase stays the database.
+3. **Hosting:** for now everything on **Supabase** (database, auth, dashboard API). The portal/Buildertrend collectors need a real browser, which Supabase functions cannot run, so they run as a **scheduled GitHub Actions job** (daily, free tier) writing into Supabase. A VM can replace it later without code changes.
 4. **Outbound e-mail:** **automatic from day one**, with **Guilherme always in Cc** (guilherme@pkbhomes.com). Safeguards: a global kill switch (`OPS_SEND_ENABLED=false` falls back to drafts), a per-recipient daily cap, and every message logged in `outbound_messages`.
+6. **Access levels:** *admin* (Victor and partners) sees everything; *operational* (supervisors) sees only their own jobs — enforced with RLS on `job_contacts`.
+7. **Septic:** tracked from e-mails until it appears on the county portal.
+8. **Field module (phase 2):** 3 supervisors, mostly iPhone; audio in Portuguese, English or Spanish (mostly Portuguese); they send audio + photos per house and the system writes the Daily Log / photos in Buildertrend.
 5. **Daily Log notifications:** permit events → Cristiano + Guilherme; inspection events → Carlos, Camila, Cristiano + the job's supervisors (`config/contacts.json`).
