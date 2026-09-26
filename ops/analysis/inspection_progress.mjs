@@ -55,6 +55,7 @@ export function stepStatus(inspections, checklist) {
     if (isPass(i) && !st.passedAt) st.passedAt = when(i);
     st.lastAt = when(i);
     st.lastStatus = i.status;
+    st.lastComments = i.comments || null;
   }
   for (const st of steps) {
     st.state = st.passedAt ? 'passed'
@@ -129,7 +130,7 @@ export function jobProgress(job, checklists, bench, asOf = new Date()) {
     required: required.length,
     percent: Math.round((passed.length / required.length) * 100),
     lastPassed: passed.sort((x, y) => String(y.passedAt).localeCompare(String(x.passedAt)))[0]?.name || null,
-    failedOpen: failedOpen.map((s) => ({ name: s.name, since: s.lastAt, failures: s.failures })),
+    failedOpen: failedOpen.map((s) => ({ name: s.name, since: s.lastAt, failures: s.failures, comments: s.lastComments })),
     // Next = open failures first (re-inspection), then the remaining step expected soonest.
     next: (failedOpen[0] || [...projected].sort((x, y) => String(x.estimate || '9').localeCompare(String(y.estimate || '9')))[0])?.name || null,
     remaining: projected,
@@ -137,14 +138,14 @@ export function jobProgress(job, checklists, bench, asOf = new Date()) {
     coEstimate,
     coEstimateNote: coEstimate ? null : `final inspections lack history (${insufficient.filter((n) => finals.some((f) => f.name === n)).join(', ') || 'n/a'}); estimate CO from ready-for-finals plus the finals turnaround once more jobs close`,
     unmatchedTypes: unmatched,
-    steps: steps.map((s) => ({ name: s.name, state: s.state, optional: s.optional, final: s.final, passedAt: s.passedAt, failures: s.failures })),
+    steps: steps.map((s) => ({ name: s.name, state: s.state, optional: s.optional, final: s.final, passedAt: s.passedAt, failures: s.failures, lastComments: s.state === 'failed_open' ? s.lastComments : undefined })),
   };
 }
 
 async function main() {
   const { sql } = await import('../scripts/sb.mjs');
   const rows = await sql(`
-    select j.job_number, c.portal, c.issued_at, i.type, i.status, i.passed, i.failed, i.requested_at, i.scheduled_at, i.actual_at
+    select j.job_number, c.portal, c.issued_at, i.type, i.status, i.passed, i.failed, i.requested_at, i.scheduled_at, i.actual_at, i.comments
     from ops.permit_cases c join ops.jobs j on j.id = c.job_id
     left join ops.inspections i on i.permit_case_id = c.id
     where c.kind = 'building' and c.issued_at is not null`);

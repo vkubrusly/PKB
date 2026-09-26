@@ -23,6 +23,7 @@
 // consumes (see normalize()).
 // =============================================================================
 
+import { fetchChecklist, commentsText } from './inspection_comments.mjs';
 import { chromium } from 'playwright';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -188,7 +189,7 @@ function normalize(hit, raw) {
   for (const b of raw['/api/energov/entity/inspections/search/search'] || []) {
     for (const i of b.Result || []) {
       const num = i.InspectionNumber || i.CaseNumber; if (!num || inspections.some(x => x.number === num)) continue;
-      inspections.push({ number: num, type: i.InspectionType, description: i.InspectionTypeDescription || null, status: i.InspectionStatus || i.StatusName,
+      inspections.push({ id: i.InspectionId || null, number: num, type: i.InspectionType, description: i.InspectionTypeDescription || null, status: i.InspectionStatus || i.StatusName,
         requestedAt: day(i.RequestedDate), scheduledAt: day(i.ScheduledStartDate), actualAt: day(i.ActualDate), inspector: i.PrimaryInspector || null,
         reinspection: !!i.Reinspection, passed: !!i.IsSuccessFlag, failed: !!i.IsFailureFlag, cancelled: !!i.IsCancelledFlag });
     }
@@ -223,6 +224,12 @@ for (const p of permits) {
   const t0 = Date.now();
   let res;
   try { res = await collectOne(p); } catch (e) { res = { permitNumber: p, found: false, error: e.message }; }
+  // Inspector comments (Checklist tab) for inspections that did not pass — public JSON, no browser.
+  if (res.found) for (const i of res.permit.inspections) {
+    if (!i.id || !/disapprov|fail|partial|correction/i.test(i.status || '')) continue;
+    try { i.checklist = await fetchChecklist(county, i.id); i.comments = commentsText(i.checklist); }
+    catch (e) { i.commentsError = e.message; }
+  }
   const file = join(OUT_DIR, `${p.replace(/[^A-Za-z0-9-]/g, '_')}.json`);
   writeFileSync(file, JSON.stringify(res, null, 2));
   const s = res.found ? `${res.permit.status} · ${res.permit.submittals.length} submittals · ${res.permit.reviewItems.length} review items · ${res.permit.inspections.length} inspections · ${res.permit.holds.length} holds` : `NOT FOUND (${res.error})`;
