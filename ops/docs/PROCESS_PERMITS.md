@@ -26,6 +26,21 @@ Charlotte) may differ — to be confirmed.
 Septic usually comes out before the building permit; when the building permit is
 fast (20-odd days) the septic may finish later.
 
+## City of Orlando (different start)
+
+Source: Guilherme, 2026-09-26.
+
+1. PKB sends a **signed and notarized form** with the job information to the City of Orlando.
+2. The city answers, after a few business days, with a **link to upload the documents**.
+3. Only then does the application exist in the city's system (permit numbers like `BLD2026-16696`).
+
+Tracking: steps 1–2 come from e-mail (bot mailbox in copy); after step 3 the city portal
+(URL to be confirmed). Rule: if the upload link has not arrived **5 business days** after
+the form was sent, remind Guilherme to call the city.
+
+Status 2026-09-26: 725 Palm Dr — form sent Tuesday 2026-09-22, waiting for the upload link
+(expected around Monday 2026-09-28).
+
 ## Blockers seen in practice
 
 - **Turtle** (gopher tortoise on the lot): tortoise survey + relocation before impact fees can be paid.

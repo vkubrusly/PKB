@@ -14,6 +14,8 @@ Updated 2026-09-26 after Victor's answers. Answers are recorded in
 7. **WhatsApp** — PKB Ops number and Meta Business account (later).
 8. **Contracts (phase 2)** — Victor is checking whether it can be done inside Buildertrend; the website form will also e-mail the bot.
 
+9. **City of Orlando** — portal URL once the upload link arrives (725 Palm Dr is the first case).
+
 ## Security (deferred by decision)
 
 - Credentials that appeared in a screenshot are still to be rotated; the bot's Buildertrend role stays Admin for now.

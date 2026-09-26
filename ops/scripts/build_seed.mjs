@@ -197,9 +197,13 @@ from ops.permit_cases c where c.id = ${caseSel} on conflict (org_id, dedupe_key)
       }
     }
     for (const i of p.inspections) {
-      w(`insert into ops.inspections (org_id, permit_case_id, number, type, status, passed, failed, reinspection, requested_at, scheduled_at, actual_at, inspector)
-select (select id from _org), ${caseSel}, ${q(i.number)}, ${q(i.type)}, ${q(i.status)}, ${!!i.passed || /pass|approv/i.test(i.status || '')}, ${!!i.failed || /fail/i.test(i.status || '')}, ${!!i.reinspection}, ${qd(i.requestedAt)}, ${qd(i.scheduledAt)}, ${qd(i.actualAt)}, ${q(i.inspector)}
-on conflict (permit_case_id, number) do update set status = excluded.status, passed = excluded.passed, failed = excluded.failed, actual_at = excluded.actual_at;`);
+      // Status text wins over the portal flags: EnerGov sets IsSuccessFlag on "Disapproved - no fees".
+      const st = i.status || '';
+      const failed = /disapprov|fail|partial|denied/i.test(st) || (!!i.failed && !/^(approved|passed)/i.test(st));
+      const passed = !failed && (/^(approved|passed)/i.test(st) || (!!i.passed && !st));
+      w(`insert into ops.inspections (org_id, permit_case_id, number, type, status, passed, failed, reinspection, requested_at, scheduled_at, actual_at, inspector, comments)
+select (select id from _org), ${caseSel}, ${q(i.number)}, ${q(i.type)}, ${q(i.status)}, ${passed}, ${failed}, ${!!i.reinspection}, ${qd(i.requestedAt)}, ${qd(i.scheduledAt)}, ${qd(i.actualAt)}, ${q(i.inspector)}, ${q(i.comments || null)}
+on conflict (permit_case_id, number) do update set status = excluded.status, passed = excluded.passed, failed = excluded.failed, actual_at = excluded.actual_at, comments = coalesce(excluded.comments, ops.inspections.comments);`);
     }
     for (const h of p.holds) {
       const key = `${h.name}|${h.createdAt}|${(h.comments || '').slice(0, 40)}`;
