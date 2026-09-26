@@ -137,6 +137,7 @@ export function jobProgress(job, checklists, bench, asOf = new Date()) {
     coEstimate,
     coEstimateNote: coEstimate ? null : `final inspections lack history (${insufficient.filter((n) => finals.some((f) => f.name === n)).join(', ') || 'n/a'}); estimate CO from ready-for-finals plus the finals turnaround once more jobs close`,
     unmatchedTypes: unmatched,
+    steps: steps.map((s) => ({ name: s.name, state: s.state, optional: s.optional, final: s.final, passedAt: s.passedAt, failures: s.failures })),
   };
 }
 
