@@ -29,7 +29,8 @@ if (!captured || !views) { console.error('grid request not seen'); await browser
 const cols = {};
 const walk = (o) => { if (Array.isArray(o)) o.forEach(walk); else if (o && typeof o === 'object') { if (o.id != null && o.name && o.jsonKey) cols[o.name] = { id: String(o.id), key: String(o.jsonKey) }; Object.values(o).forEach(walk); } };
 walk(views);
-const want = ['Job Name', 'Street Address', 'Parcial ID', 'County', 'Model', 'Supervisor', 'Project Manager', 'Permit', 'Lot', 'Job Status'];
+const want = ['Job Name', 'Street Address', 'Parcial ID', 'County', 'Model', 'Supervisor', 'Project Manager', 'Permit', 'Lot', 'Job Status',
+  'Actual Start', 'Actual Completion', 'Projected Start', 'Projected Completion', 'Status Last Updated Date', 'Created Date', 'Map Status'];
 const body = JSON.parse(captured.body);
 body.gridRequest.selectedColumns = [...new Set([...body.gridRequest.selectedColumns, ...want.filter(n => cols[n]).map(n => cols[n].id)])];
 body.pagingData = { ...body.pagingData, pageSize: 500, lastRow: 500, totalRowsAllPages: 500 };
@@ -59,6 +60,8 @@ const parseList = (v) => { try { const a = JSON.parse(v); return Array.isArray(a
 const jobs = rows.map(r => {
   let name = r.jobNameLink; if (typeof name === 'string') { try { name = JSON.parse(name); } catch {} } if (name && typeof name === 'object') name = name.title;
   return { jobId: r.jobId, name, street: r.street, city: r.city, zip: r.zip, parcel: cf(r, 'Parcial ID'), county: cf(r, 'County'), model: cf(r, 'Model'), supervisor: cf(r, 'Supervisor'), projectManagers: parseList(r.projectManager), permit: r.permit || null, lot: r.lot || null, owner: r.ownerDisplayName || null, status: r.status,
+    actualStart: r.actualStart || null, actualCompletion: r.actualCompletion || null, projectedStart: r.projectedStart || null, projectedCompletion: r.projectedCompletion || null,
+    statusUpdatedAt: r.statusLastUpdatedDate || null, createdAt: r.createdDate || null,
     latitude: r.mappingData?.coordinates?.latitude ?? null, longitude: r.mappingData?.coordinates?.longitude ?? null };
 });
 writeFileSync(join(OUT, 'job_fields.json'), JSON.stringify({ collectedAt: new Date().toISOString(), count: jobs.length, jobs }, null, 2));
