@@ -4,37 +4,96 @@
     "sovereign": {
       "company": "Sovereign",
       "role": "designer + permit expediter for the affordable models (building + septic)",
-      "to": ["sovereignpermit@gmail.com"],
-      "cc": ["fernanda.quiterio@sconsult.us", "leonardo@sovereigninc.us"],
+      "to": [
+        "sovereignpermit@gmail.com"
+      ],
+      "cc": [
+        "fernanda.quiterio@sconsult.us",
+        "leonardo@sovereigninc.us"
+      ],
       "people": [
-        { "name": "Sarah", "email": "sovereignpermit@gmail.com" },
-        { "name": "Fernanda", "email": "fernanda.quiterio@sconsult.us" },
-        { "name": "Leonardo Quiterio", "email": "leonardo@sovereigninc.us" }
+        {
+          "name": "Sarah",
+          "email": "sovereignpermit@gmail.com"
+        },
+        {
+          "name": "Fernanda",
+          "email": "fernanda.quiterio@sconsult.us"
+        },
+        {
+          "name": "Leonardo Quiterio",
+          "email": "leonardo@sovereigninc.us"
+        }
       ],
       "language": "pt-BR"
     },
     "michele": {
       "company": "Frediani Putini",
       "role": "designer for custom homes (PKB tracks the permit itself)",
-      "to": ["michele@fredianiputini.com"],
-      "people": [{ "name": "Michele", "email": "michele@fredianiputini.com" }]
+      "to": [
+        "michele@fredianiputini.com"
+      ],
+      "people": [
+        {
+          "name": "Michele",
+          "email": "michele@fredianiputini.com"
+        }
+      ]
     }
   },
   "vendors": {
     "shady": {
       "company": "Shady Environmental",
       "role": "septic design / septic permit application",
-      "to": ["shady_environmental@yahoo.com"]
+      "to": [
+        "shady_environmental@yahoo.com"
+      ]
     },
     "bailey": {
       "company": "Bailey Surveying",
       "role": "boundary survey, stake-out",
-      "to": ["kbailey@baileysurveying.com"],
-      "people": [{ "name": "Kiel Bailey", "email": "kbailey@baileysurveying.com" }]
+      "to": [
+        "kbailey@baileysurveying.com"
+      ],
+      "people": [
+        {
+          "name": "Kiel Bailey",
+          "email": "kbailey@baileysurveying.com"
+        }
+      ]
     }
   },
   "internal": {
-    "permits_owner": { "name": "Guilherme Pinto", "email": "guilherme@pkbhomes.com" },
-    "director": { "name": "Victor Kubrusly", "email": "victor@pkbhomes.com" }
+    "permits_owner": {
+      "name": "Guilherme Pinto",
+      "email": "guilherme@pkbhomes.com"
+    },
+    "director": {
+      "name": "Victor Kubrusly",
+      "email": "victor@pkbhomes.com"
+    },
+    "project_managers": [
+      {
+        "name": "Carlos",
+        "email": "carlos@pkbhomes.com"
+      },
+      {
+        "name": "Camila",
+        "email": "camila@pkbhomes.com"
+      }
+    ],
+    "contractor_of_record": {
+      "name": "Cristiano Pedrosa",
+      "email": "cristiano@pkbhomes.com"
+    }
+  },
+  "notifications": {
+    "_note": "Who is notified on automated Buildertrend Daily Logs (permit/inspection events). 'job_supervisors' = the supervisors assigned to that job in Buildertrend.",
+    "bt_daily_log_notify": [
+      "carlos@pkbhomes.com",
+      "camila@pkbhomes.com",
+      "cristiano@pkbhomes.com",
+      "job_supervisors"
+    ]
   }
 }
