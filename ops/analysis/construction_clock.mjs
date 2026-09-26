@@ -1,11 +1,11 @@
 // Construction clock per job: when the build started, how long it has been going,
 // and how long the job waited between permit issued and start.
 //
-// Start date, first available of:
+// Start date, first available of (rule set by Victor, 2026-09-26):
 //   1. Buildertrend "Actual Start" (when the supervisor fills it)
-//   2. first field inspection on the county portal after issuance (not Pre-Work / Erosion)
-//   3. 2nd draw date, only when it falls after the permit was issued (Citrus until its
-//      inspections are collected)
+//   2. 2nd draw (2nd payment) date; when it was paid before the permit was issued,
+//      the clock starts at issuance (no work before the permit)
+//   3. first field inspection on the county portal after issuance (not Pre-Work / Erosion)
 // A job with the permit issued and no start is "waiting to start". When it has an open
 // pause (owner deferred start, waiting 1st draw / impact fees / warranty deed) the wait
 // is not PKB's and is left out of the CEO numbers.
@@ -27,9 +27,10 @@ export function clock(job, asOf) {
     .filter((i) => i.at && iso(i.at) >= issued && !/pre-?work|erosion/i.test(i.type || ''))
     .map((i) => iso(i.at)).sort()[0] || null;
   let start = null, source = null;
+  const draw2 = iso(job.second_draw_at);
   if (job.bt_actual_start) { start = iso(job.bt_actual_start); source = 'buildertrend'; }
+  else if (draw2) { start = draw2 >= issued ? draw2 : issued; source = draw2 >= issued ? 'second_draw' : 'second_draw_before_permit'; }
   else if (field) { start = field; source = 'first_inspection'; }
-  else if (job.second_draw_at && iso(job.second_draw_at) >= issued) { start = iso(job.second_draw_at); source = 'second_draw'; }
   const openPause = (job.pauses || []).find((p) => !p.ended && NOT_OUR_FAULT.includes(p.reason));
   const end = iso(job.co_at) || today;
   if (!start && ['construction', 'completed'].includes(job.status)) {
