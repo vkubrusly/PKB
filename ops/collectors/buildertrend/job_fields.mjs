@@ -58,7 +58,8 @@ const cf = (row, label) => {
 const parseList = (v) => { try { const a = JSON.parse(v); return Array.isArray(a) ? a : v; } catch { return v; } };
 const jobs = rows.map(r => {
   let name = r.jobNameLink; if (typeof name === 'string') { try { name = JSON.parse(name); } catch {} } if (name && typeof name === 'object') name = name.title;
-  return { jobId: r.jobId, name, street: r.street, city: r.city, zip: r.zip, parcel: cf(r, 'Parcial ID'), county: cf(r, 'County'), model: cf(r, 'Model'), supervisor: cf(r, 'Supervisor'), projectManagers: parseList(r.projectManager), permit: r.permit || null, lot: r.lot || null, owner: r.ownerDisplayName || null, status: r.status };
+  return { jobId: r.jobId, name, street: r.street, city: r.city, zip: r.zip, parcel: cf(r, 'Parcial ID'), county: cf(r, 'County'), model: cf(r, 'Model'), supervisor: cf(r, 'Supervisor'), projectManagers: parseList(r.projectManager), permit: r.permit || null, lot: r.lot || null, owner: r.ownerDisplayName || null, status: r.status,
+    latitude: r.mappingData?.coordinates?.latitude ?? null, longitude: r.mappingData?.coordinates?.longitude ?? null };
 });
 writeFileSync(join(OUT, 'job_fields.json'), JSON.stringify({ collectedAt: new Date().toISOString(), count: jobs.length, jobs }, null, 2));
 console.log(`jobs: ${jobs.length} | with parcel: ${jobs.filter(j => j.parcel).length} | with supervisor: ${jobs.filter(j => j.supervisor).length} | with permit: ${jobs.filter(j => j.permit).length}`);
