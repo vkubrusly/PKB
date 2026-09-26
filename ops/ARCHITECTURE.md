@@ -14,9 +14,9 @@ Marion County collector in `collectors/energov/`.
    history.
 3. **One engine, several modules.** Permits, Inspections, Contracts and Field are
    configurations of the same skeleton: *connector → event → rule → action*.
-4. **AI proposes, a person approves** (at first). E-mails to the designer,
-   vendors and clients are born as drafts with a "Send" button. Once the edit
-   rate drops, rules are switched to automatic one by one.
+4. **Automatic, with a human in copy.** E-mails to the designer and vendors go
+   out automatically with Guilherme in Cc; a kill switch turns every rule back
+   into draft mode. Client-facing messages stay drafts until decided otherwise.
 5. **Portable.** Runs on Supabase + Node; secrets in `.env`; nothing tied to the
    development environment.
 
@@ -138,7 +138,7 @@ rules                active rules and mode (draft|auto) per rule
 Idempotency keys: `events.dedupe_key` (e.g. `energov:review_item:<ItemReviewId>:<status>`),
 `submittals(permit_case_id, version)`, `inspections(permit_case_id, number)`.
 
-## 6. Rules v1 (all start in *draft* mode)
+## 6. Rules v1 (automatic, Guilherme in Cc — see §9)
 
 | # | Trigger | Action |
 |---|---|---|
@@ -172,9 +172,10 @@ Idempotency keys: `events.dedupe_key` (e.g. `energov:review_item:<ItemReviewId>:
 | 2 | Contracts (R10) + Field (audio/photo) | how the website sends the request; e-signature tool; contract template; who the supervisors are and which phones they use |
 | 3 | Full construction tracking + Finance | separate conversation |
 
-## 9. Open decisions
+## 9. Decisions (2026-09-26)
 
-1. Team notification channel: e-mail only, or WhatsApp/SMS already in phase 1? (Proposal: e-mail in phase 1; WhatsApp in phase 2.)
-2. Prime and PKB on the same dashboard with a company filter? (Proposal: yes; the portal already exposes the contractor.)
-3. Where the workers run: Supabase Edge Functions + cron, or your own Node server? (Proposal: a Node server with `pm2`, because the Buildertrend RPA needs Chromium.)
-4. Who approves drafts in phase 1: you, Guilherme, or both?
+1. **Team notifications:** e-mail in phase 1, plus the Buildertrend Daily Log notification. WhatsApp in phase 2.
+2. **Company:** one dashboard. Prime is being phased out in favor of PKB; historical Prime jobs stay visible with a company filter.
+3. **Hosting:** a small cloud VM (Node + Chromium, `pm2`), ~US$10–20/month. Supabase stays the database.
+4. **Outbound e-mail:** **automatic from day one**, with **Guilherme always in Cc** (guilherme@pkbhomes.com). Safeguards: a global kill switch (`OPS_SEND_ENABLED=false` falls back to drafts), a per-recipient daily cap, and every message logged in `outbound_messages`.
+5. **Daily Log notifications:** permit events → Cristiano + Guilherme; inspection events → Carlos, Camila, Cristiano + the job's supervisors (`config/contacts.json`).
