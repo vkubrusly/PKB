@@ -1,5 +1,5 @@
 {
-  "_note": "PKB standard construction sequence (source: Buildertrend checklist sent by Victor, 2026-09-26). Order matters: 'next_step' after an inspection passes = the following items until the next inspection. 'portal' = regex matched against the county inspection type (Marion EnerGov names; Winter Park/Citrus to confirm). Items marked (cancel) in the source are kept with optional=true.",
+  "_note": "PKB standard construction sequence (source: Buildertrend checklist sent by Victor, 2026-09-26). Order matters: 'next_step' after an inspection passes = the following items until the next inspection. 'portal' = regex matched against the county inspection type (Marion EnerGov names; Winter Park/Citrus to confirm). Items marked (cancel) in the source are kept with optional=true. Confirmed by Victor 2026-09-26: Paper Raised Seal happens twice (#7 slab, #24 final); #31/#32 are a single Final Building inspection; checklist order (not number) is the real order.",
   "phases": [
     {
       "code": "P0",
@@ -414,13 +414,7 @@
         {
           "type": "inspection",
           "seq": 31,
-          "name": "Final Building Inspections",
-          "portal": "final structural|final building"
-        },
-        {
-          "type": "inspection",
-          "seq": 32,
-          "name": "Final Building Inspections (2)",
+          "name": "Final Building Inspection",
           "portal": "final structural|final building"
         }
       ]

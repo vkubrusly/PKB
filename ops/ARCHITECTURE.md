@@ -195,5 +195,5 @@ Idempotency keys: `events.dedupe_key` (e.g. `energov:review_item:<ItemReviewId>:
 4. **Outbound e-mail:** **automatic from day one**, with **Guilherme always in Cc** (guilherme@pkbhomes.com). Safeguards: a global kill switch (`OPS_SEND_ENABLED=false` falls back to drafts), a per-recipient daily cap, and every message logged in `outbound_messages`.
 6. **Access levels:** *admin* (Victor and partners) sees everything; *operational* (supervisors) sees only their own jobs — enforced with RLS on `job_contacts`.
 7. **Septic:** tracked from e-mails until it appears on the county portal.
-8. **Field module (phase 2):** 3 supervisors, mostly iPhone; audio in Portuguese, English or Spanish (mostly Portuguese); they send audio + photos per house and the system writes the Daily Log / photos in Buildertrend.
+8. **Field module (phase 2):** 3 supervisors, mostly iPhone; audio in Portuguese, English or Spanish (mostly Portuguese); they send audio + photos per house and the system writes the Daily Log / photos in Buildertrend **and ticks the matching items of the job's Buildertrend checklist** (`config/construction_sequence.json`) — the supervisor confirms with one tap before anything is marked done.
 5. **Daily Log notifications:** permit events → Cristiano + Guilherme; inspection events → Carlos, Camila, Cristiano + the job's supervisors (`config/contacts.json`).
