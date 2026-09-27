@@ -27,7 +27,7 @@ export async function createDailyLog(page, { jobName, title, notes, privateLog =
   if ((notes || '').length > 4000) throw new Error('notes must be ≤ 4000 characters');
   await selectJob(page, jobName);
   await page.goto('https://buildertrend.net/app/DailyLogs', { waitUntil: 'domcontentloaded' });
-  const newBtn = page.getByRole('button', { name: /Daily Log$/ }).filter({ hasNotText: 'Logs' }).first();
+  const newBtn = page.getByRole('button', { name: /Create new Daily Log|^Daily Log$/ }).first();
   await newBtn.waitFor({ timeout: 90000 });
   await newBtn.click();
   const titleBox = page.locator('textarea[name="logTitle"], textarea#logTitle').first();
@@ -41,7 +41,7 @@ export async function createDailyLog(page, { jobName, title, notes, privateLog =
   if (!privateLog) { await setBox('canShareSubs', shareWithSubs); await setBox('canShareOwner', shareWithClient); }
 
   // Clear the default notify list, then add the requested people (by display name).
-  const notifySelect = page.locator('input#usersToNotify').locator('xpath=ancestor::div[contains(@class,"select")][1]');
+  const notifySelect = page.locator('input#usersToNotify').locator('xpath=ancestor::div[contains(@class,"ant-select-multiple")][1]');
   for (let i = 0; i < 20; i++) {
     const close = notifySelect.locator('.ant-select-selection-item-remove, [aria-label="close"], .anticon-close').first();
     if (!(await close.count())) break;

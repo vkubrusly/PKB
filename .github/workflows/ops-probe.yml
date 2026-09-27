@@ -1,0 +1,32 @@
+name: PKB Ops — portal probe
+
+# One-off diagnostics for a portal that needs a login (credentials live only in
+# GitHub secrets). Prints what the portal shows; never prints the credentials.
+on:
+  workflow_dispatch:
+    inputs:
+      probe:
+        description: 'Probe to run'
+        type: choice
+        options: [fasttrack]
+        default: fasttrack
+      arg:
+        description: 'Optional argument (e.g. permit number)'
+        required: false
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults: { run: { working-directory: ops } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: ops/package-lock.json }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Run probe
+        env:
+          ORANGE_PORTAL_USER: ${{ secrets.ORANGE_PORTAL_USER }}
+          ORANGE_PORTAL_PASS: ${{ secrets.ORANGE_PORTAL_PASS }}
+        run: node collectors/${{ inputs.probe }}/probe.mjs ${{ inputs.arg }}

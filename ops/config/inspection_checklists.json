@@ -1,0 +1,28 @@
+{
+  "_note": "Required inspections per county portal, in field order. 'match' is a case-insensitive regex tested against the portal inspection type. The portal only lists an inspection after it is requested, so 'what is left' comes from this list, not from the portal. 'final: true' marks the close-out inspections that lead to the CO. Marion list built from 35 PKB jobs (2025-2026); In Marion 'Foundation Pre-Pour' is the monolithic slab and 'Flatwork Pre-Pour' is the late garage/driveway/sidewalk pour. Final names marked 'confirm' have not been seen on the portal yet.",
+  "energov:marion": [
+    { "key": "prework",     "name": "OCE Pre-Work Site Review",   "match": "pre-?work site review" },
+    { "key": "plumb1",      "name": "Rough Plumbing (underground)", "match": "^rough plumbing" },
+    { "key": "footing",     "name": "Foundation Pre-Pour (mono slab)", "match": "foundation pre-?pour|res slab" },
+    { "key": "lintel",      "name": "Lintel or Tie Beam",         "match": "lintel|tie beam" },
+    { "key": "sheathing",   "name": "Roof Assembly",              "match": "roof assembly" },
+    { "key": "subsiding",   "name": "Sub-Siding",                 "match": "sub-?siding", "optional": true },
+    { "key": "dryin",       "name": "Roofing Dry-In",             "match": "dry-?in" },
+    { "key": "tug",         "name": "Electrical Service / TUG",   "match": "\\btug\\b|electrical service", "optional": true },
+    { "key": "plumb2",      "name": "Second Rough Plumbing",      "match": "second rough plumbing" },
+    { "key": "elec",        "name": "Rough Electrical",           "match": "rough electrical" },
+    { "key": "mech",        "name": "Rough Mechanical",           "match": "rough mechanical" },
+    { "key": "framing",     "name": "Framing",                    "match": "^framing" },
+    { "key": "insulation",  "name": "Wall & Vault Insulation",    "match": "insulation" },
+    { "key": "lath",        "name": "Wire Lath",                  "match": "wire lath" },
+    { "key": "sewer",       "name": "Sewer/Septic Hook-Up",       "match": "sewer|septic hook" },
+    { "key": "flatwork",    "name": "Flatwork Pre-Pour (garage/driveway/walks)", "match": "flatwork pre-?pour" },
+    { "key": "water",       "name": "Water Service",              "match": "water service" },
+    { "key": "ppr",         "name": "Preliminary Power Release",  "match": "preliminary power release|^power release" },
+    { "key": "driveway",    "name": "OCE Driveway",               "match": "driveway", "final": true },
+    { "key": "fplumb",      "name": "Final Plumbing",             "match": "final plumbing", "final": true },
+    { "key": "fmech",       "name": "Final Mechanical",           "match": "final mechanical", "final": true },
+    { "key": "felec",       "name": "Final Electrical",           "match": "final electric", "final": true, "confirm": true },
+    { "key": "fbuilding",   "name": "Final Building",             "match": "final (building|structural)", "final": true, "confirm": true }
+  ]
+}

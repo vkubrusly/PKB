@@ -16,7 +16,13 @@ const EXEC = process.env.CHROMIUM_PATH || (existsSync('/opt/pw-browsers/chromium
 
 // Cookie-Editor export → Playwright cookie objects.
 export function cookiesFromExport(path) {
-  const raw = JSON.parse(readFileSync(path, 'utf8'));
+  let raw = JSON.parse(readFileSync(path, 'utf8').trim());
+  if (typeof raw === 'string') raw = JSON.parse(raw);           // pasted as a quoted JSON string
+  if (raw && !Array.isArray(raw) && Array.isArray(raw.cookies)) raw = raw.cookies; // {cookies:[...]} exports
+  if (!Array.isArray(raw)) {
+    const keys = raw && typeof raw === 'object' ? Object.keys(raw).slice(0, 5).join(', ') : typeof raw;
+    throw new Error(`BT cookies are not a Cookie-Editor JSON array (got ${keys}). Export again with Cookie-Editor → Export → JSON, without encryption.`);
+  }
   const sameSite = (v) => ({ strict: 'Strict', lax: 'Lax', no_restriction: 'None', none: 'None' }[String(v || '').toLowerCase()] || 'Lax');
   return raw.map(c => ({
     name: c.name, value: c.value, domain: c.domain, path: c.path || '/',
