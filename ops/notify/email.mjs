@@ -19,8 +19,9 @@ function getTransport() {
   return transport;
 }
 
-export async function sendEmail({ to, cc = [], subject, text, html, attachments = [] }) {
-  const always = (process.env.OPS_ALWAYS_CC || '').split(',').map(s => s.trim()).filter(Boolean);
+// alwaysCc=false for internal alerts (the Guilherme Cc rule applies to e-mails that leave PKB).
+export async function sendEmail({ to, cc = [], subject, text, html, attachments = [], alwaysCc = true }) {
+  const always = alwaysCc ? (process.env.OPS_ALWAYS_CC || '').split(',').map(s => s.trim()).filter(Boolean) : [];
   const ccAll = [...new Set([...cc, ...always])].filter(a => ![].concat(to).includes(a));
   const msg = { from: `PKB Ops <${process.env.BOT_EMAIL}>`, to, cc: ccAll, subject, text, html, attachments };
   if (process.env.OPS_SEND_ENABLED === 'false' || !process.env.BOT_EMAIL_PASSWORD) {
