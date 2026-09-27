@@ -19,8 +19,9 @@ await page.screenshot({ path: join(OUT, 'probe', 'landing.png') }).catch(() => {
 // The job picker loads all jobs as JSON; capture it instead of scraping the sidebar.
 let picker = null;
 page.on('response', async (r) => { if (/jobpicker\/GetJobPickerData/i.test(r.url())) { try { picker = await r.json(); } catch {} } });
-await page.reload({ waitUntil: 'networkidle', timeout: 120000 });
-for (let i = 0; i < 30 && !picker; i++) await page.waitForTimeout(500);
+// Buildertrend keeps polling, so 'networkidle' never settles on CI runners: wait for the JSON itself.
+await page.reload({ waitUntil: 'domcontentloaded', timeout: 90000 });
+for (let i = 0; i < 120 && !picker; i++) await page.waitForTimeout(500);
 if (!picker) { console.error('job picker JSON not seen'); await browser.close(); process.exit(1); }
 writeFileSync(join(OUT, 'jobpicker_raw.json'), JSON.stringify(picker, null, 2));
 // Find the array of jobs wherever it sits in the payload.
