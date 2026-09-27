@@ -111,6 +111,23 @@ function matchBt(address) {
   return byCore.length === 1 ? byCore[0] : null;
 }
 
+// ---- Jobs already in the database ----
+// A run without Buildertrend data (expired session) must reuse the job numbers already
+// assigned instead of minting "S###" twins. Matched by parcel, then normalized address.
+const normAddr = (a) => String(a || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+const existingByParcel = {}, existingByAddr = {};
+if (process.env.SUPABASE_ACCESS_TOKEN) {
+  try {
+    const { sql } = await import('./sb.mjs');
+    for (const j of await sql(`select job_number, parcel, address from ops.jobs where job_number !~ '^S' and org_id = (select id from public.orgs where name = '${(process.env.OPS_ORG_NAME || 'PKB Homes').replace(/'/g, "''")}' limit 1)`)) {
+      if (j.parcel) existingByParcel[normParcel(j.parcel)] = j.job_number;
+      existingByAddr[normAddr(j.address)] = j.job_number;
+    }
+    console.error(`existing jobs in database: ${Object.keys(existingByAddr).length}`);
+  } catch (e) { console.error('could not read existing jobs:', e.message); }
+}
+const existingJob = (r) => (r.Parcel && existingByParcel[normParcel(r.Parcel)]) || existingByAddr[normAddr(r.Address)] || null;
+
 // ---- Jobs from the spreadsheet ----
 const rows = parseCsv(readFileSync(csvPath, 'utf8'));
 const permitToJob = {};
@@ -119,12 +136,12 @@ for (const r of rows) {
   // job_number = the Buildertrend number when matched, else "S" + spreadsheet row.
   // Parcel ID first (Buildertrend custom field "Parcial ID"), address as fallback.
   const b = (r.Parcel && matchBtByParcel(r.Parcel)) || matchBt(r.Address);
-  const num = b ? String(b.jobName).slice(0, 4) : 'S' + r['#'].padStart(3, '0');
-  if (!b) unmatched.push(`#${r['#']} ${r.Address}`);
+  const num = b ? String(b.jobName).slice(0, 4) : existingJob(r) || 'S' + r['#'].padStart(3, '0');
+  if (!b && !existingJob(r)) unmatched.push(`#${r['#']} ${r.Address}`);
   const turtle = r.Status === 'Turtle' || /turtle/i.test(r['Current Note']) ? 'relocation_pending' : 'none';
   w(`insert into ops.jobs (org_id, job_number, bt_job_id, bt_job_name, company, address, parcel, county, model, owner_name, contract_value, signed_at, first_draw_at, second_draw_at, status, turtle_state, note)
 select id, ${q(num)}, ${b ? b.jobId : 'null'}, ${q(b?.jobName)}, ${q(r.Company === 'Prime' ? 'Prime' : 'PKB')}, ${q(r.Address)}, ${q(r.Parcel)}, ${q(r.County)}, ${q(r.Model)}, ${q(r.Owner)}, ${qn(r['Contract $'])}, ${qd(r['Signed Date'])}, ${qd(r['1st Draw'])}, ${qd(r['2nd Draw'])}, ${q(STATUS[r.Status] || 'starting')}, ${q(turtle)}, ${q(r['Current Note'])} from _org
-on conflict (org_id, job_number) do update set bt_job_id = excluded.bt_job_id, bt_job_name = excluded.bt_job_name, company = excluded.company, address = excluded.address, parcel = excluded.parcel, county = excluded.county, model = excluded.model, owner_name = excluded.owner_name, contract_value = excluded.contract_value, signed_at = excluded.signed_at, first_draw_at = excluded.first_draw_at, second_draw_at = excluded.second_draw_at, status = excluded.status, turtle_state = excluded.turtle_state, note = excluded.note;`);
+on conflict (org_id, job_number) do update set bt_job_id = coalesce(excluded.bt_job_id, ops.jobs.bt_job_id), bt_job_name = coalesce(excluded.bt_job_name, ops.jobs.bt_job_name), company = excluded.company, address = excluded.address, parcel = excluded.parcel, county = excluded.county, model = excluded.model, owner_name = excluded.owner_name, contract_value = excluded.contract_value, signed_at = excluded.signed_at, first_draw_at = excluded.first_draw_at, second_draw_at = excluded.second_draw_at, status = excluded.status, turtle_state = excluded.turtle_state, note = excluded.note;`);
   // CO date ends monitoring for the job (see migration 0016).
   if (toDate(r.CO)) w(`update ops.jobs set co_at = ${qd(r.CO)} where org_id = (select id from _org) and job_number = ${q(num)};`);
   // Supervisor and project managers from Buildertrend (who gets inspection alerts).
