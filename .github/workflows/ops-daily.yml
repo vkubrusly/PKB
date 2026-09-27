@@ -7,6 +7,8 @@ name: PKB Ops — daily collection
 # Secrets (GitHub → Settings → Secrets and variables → Actions):
 #   SUPABASE_ACCESS_TOKEN  already used by the other workflows
 #   BT_COOKIES_JSON        the bot's Buildertrend session (Cookie-Editor → Export → JSON)
+#   BOT_EMAIL_PASSWORD     Gmail app password of botpkbhomes@gmail.com (alerts)
+# Variables: OPS_SEND_ENABLED = 'true' to send e-mails (otherwise drafts only)
 #
 # Schedules only run from the repository's default branch.
 
@@ -17,6 +19,9 @@ on:
     inputs:
       limit:
         description: 'Max permits per portal/stage (blank = all)'
+        required: false
+      test_email:
+        description: 'Send one test e-mail to this address first (checks the Gmail app password)'
         required: false
 
 concurrency: { group: ops-daily, cancel-in-progress: false }
@@ -35,6 +40,14 @@ jobs:
         with: { node-version: 22, cache: npm, cache-dependency-path: ops/package-lock.json }
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+
+      - name: Test e-mail
+        if: ${{ inputs.test_email != '' && inputs.test_email != null }}
+        env:
+          BOT_EMAIL: ${{ secrets.BOT_EMAIL || 'botpkbhomes@gmail.com' }}
+          BOT_EMAIL_PASSWORD: ${{ secrets.BOT_EMAIL_PASSWORD }}
+          OPS_SEND_ENABLED: ${{ vars.OPS_SEND_ENABLED || 'false' }}
+        run: node notify/test_email.mjs "${{ inputs.test_email }}"
 
       - name: Buildertrend session
         env: { BT_COOKIES_JSON: '${{ secrets.BT_COOKIES_JSON }}' }
