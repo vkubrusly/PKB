@@ -74,17 +74,20 @@
     },
     "project_managers": [
       {
-        "name": "Carlos",
+        "name": "Carlos Basilio",
+        "bt_name": "Carlos Basilio",
         "email": "carlos@pkbhomes.com"
       },
       {
-        "name": "Camila",
+        "name": "Camila Haase",
+        "bt_name": "Camila Haase",
         "email": "camila@pkbhomes.com"
       }
     ],
     "contractor_of_record": {
       "name": "Cristiano Pedrosa",
-      "email": "cristiano@pkbhomes.com"
+      "email": "cristiano@pkbhomes.com",
+      "bt_name": "Cristiano Pedrosa"
     },
     "impact_fees_noc": {
       "to": [
@@ -93,7 +96,25 @@
       "cc": [
         "guilherme@pkbhomes.com"
       ]
-    }
+    },
+    "supervisors": [
+      {
+        "name": "Raphael Martins",
+        "bt_name": "Raphael Martins",
+        "email": null
+      },
+      {
+        "name": "Gustavo",
+        "bt_name": "Gustavo Supervisor",
+        "email": null
+      },
+      {
+        "name": "Denis",
+        "bt_name": "Denis PKB",
+        "email": null
+      }
+    ],
+    "_supervisors_note": "Supervisor e-mails still to be filled in (Victor). Until then the supervisor is only notified through the Buildertrend Daily Log notification."
   },
   "notifications": {
     "_note": "Who is notified on automated Buildertrend Daily Logs. 'job_supervisors' = the supervisors assigned to that job in Buildertrend.",

@@ -58,6 +58,17 @@ jobs:
           node scripts/build_seed.mjs --parts
           node scripts/apply_seed.mjs
 
+      # R-INSP-FAIL: e-mail supervisor/PMs/Cristiano about new failed inspections (with the
+      # inspector's comments) and queue a Buildertrend Daily Log. Sends only when the repo
+      # variable OPS_SEND_ENABLED is 'true'; otherwise every message is stored as a draft.
+      - name: Rules — failed inspections
+        continue-on-error: true
+        env:
+          BOT_EMAIL: ${{ secrets.BOT_EMAIL }}
+          BOT_EMAIL_PASSWORD: ${{ secrets.BOT_EMAIL_PASSWORD }}
+          OPS_SEND_ENABLED: ${{ vars.OPS_SEND_ENABLED || 'false' }}
+        run: node rules/inspection_failed.mjs
+
       - name: Keep the raw snapshots (7 days)
         if: always()
         uses: actions/upload-artifact@v4
