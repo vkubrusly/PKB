@@ -64,7 +64,7 @@ jobs:
       - name: Rules — failed inspections
         continue-on-error: true
         env:
-          BOT_EMAIL: ${{ secrets.BOT_EMAIL }}
+          BOT_EMAIL: ${{ secrets.BOT_EMAIL || 'botpkbhomes@gmail.com' }}
           BOT_EMAIL_PASSWORD: ${{ secrets.BOT_EMAIL_PASSWORD }}
           OPS_SEND_ENABLED: ${{ vars.OPS_SEND_ENABLED || 'false' }}
         run: node rules/inspection_failed.mjs
