@@ -1,0 +1,31 @@
+name: PKB Ops — read bot mailbox
+
+# Every hour: read new messages in botpkbhomes@gmail.com, store them in ops.inbound_emails
+# (classified and linked to the job), turn Buildertrend activity into ops.events, and mark
+# the messages read. Manual run with backfill=true reads the whole inbox once.
+
+on:
+  schedule:
+    - cron: '7 * * * *'
+  workflow_dispatch:
+    inputs:
+      backfill:
+        description: 'Read every message in the inbox (not only unread)'
+        type: boolean
+        default: false
+
+concurrency: { group: ops-mail, cancel-in-progress: false }
+
+jobs:
+  read:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults: { run: { working-directory: ops } }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read mailbox
+        env:
+          BOT_EMAIL: ${{ secrets.BOT_EMAIL || 'botpkbhomes@gmail.com' }}
+          BOT_EMAIL_PASSWORD: ${{ secrets.BOT_EMAIL_PASSWORD }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: python3 collectors/mail/collect_mail.py ${{ inputs.backfill && '--all' || '' }}
