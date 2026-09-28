@@ -49,7 +49,8 @@ export function stepStatus(inspections, checklist) {
     const idx = checklist.findIndex((s) => s.re.test(i.type || ''));
     if (idx < 0) { unmatched.push(i.type); continue; }
     const st = steps[idx];
-    if (isCancel(i)) continue;
+    // Accela lists every required inspection up front as "Pending"; that is not a request.
+    if (isCancel(i) || (/^pending$/i.test(i.status || '') && !when(i))) continue;
     st.attempts++;
     if (isFail(i)) st.failures++;
     if (isPass(i) && !st.passedAt) st.passedAt = when(i);
