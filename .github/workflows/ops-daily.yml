@@ -43,6 +43,7 @@ jobs:
 
       - name: Test e-mail
         if: ${{ inputs.test_email != '' && inputs.test_email != null }}
+        continue-on-error: true   # a bad mail password must not stop the collection
         env:
           BOT_EMAIL: ${{ secrets.BOT_EMAIL || 'botpkbhomes@gmail.com' }}
           BOT_EMAIL_PASSWORD: ${{ secrets.BOT_EMAIL_PASSWORD }}
