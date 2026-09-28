@@ -1,0 +1,29 @@
+name: PKB Ops — test e-mail
+
+# Sends one short message through the same SMTP path the alerts use (bot mailbox),
+# without running the daily collection. Checks BOT_EMAIL_PASSWORD and OPS_SEND_ENABLED.
+
+on:
+  workflow_dispatch:
+    inputs:
+      to:
+        description: 'Send the test e-mail to'
+        required: true
+        default: 'victor@pkbhomes.com'
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults: { run: { working-directory: ops } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: ops/package-lock.json }
+      - run: npm ci
+      - name: Test e-mail
+        env:
+          BOT_EMAIL: ${{ secrets.BOT_EMAIL || 'botpkbhomes@gmail.com' }}
+          BOT_EMAIL_PASSWORD: ${{ secrets.BOT_EMAIL_PASSWORD }}
+          OPS_SEND_ENABLED: ${{ vars.OPS_SEND_ENABLED || 'false' }}
+        run: node notify/test_email.mjs "${{ inputs.to }}"
