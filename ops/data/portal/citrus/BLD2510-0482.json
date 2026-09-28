@@ -1,0 +1,1426 @@
+{
+  "permitNumber": "BLD2510-0482",
+  "found": true,
+  "url": "https://aca-prod.accela.com/CITRUS/Cap/CapDetail.aspx?Module=Building&TabName=Building&capID1=REC25&capID2=00000&capID3=004CH&agencyCode=CITRUS&IsToShowInspection=",
+  "permit": {
+    "number": "BLD2510-0482",
+    "caseId": "REC25-00000-004CH",
+    "county": "citrus",
+    "type": "Residential",
+    "workclass": null,
+    "status": "More Info Required",
+    "projectName": null,
+    "address": "7712 N TIDE PT DUNNELLON 34434 * View Additional Locations>>",
+    "parcel": null,
+    "appliedAt": "2025-10-13",
+    "issuedAt": "2025-12-23",
+    "expiresAt": null,
+    "finalizedAt": "2026-09-15",
+    "squareFeet": null,
+    "valuation": null,
+    "description": null,
+    "submittals": [
+      {
+        "submittalId": "round-1",
+        "version": 1,
+        "type": "Plan Review",
+        "status": "Revisions Required",
+        "submittedAt": "2025-11-13",
+        "dueAt": "2025-11-20",
+        "completedAt": "2025-11-26"
+      },
+      {
+        "submittalId": "round-2",
+        "version": 2,
+        "type": "Plan Review",
+        "status": "Revisions Required",
+        "submittedAt": "2025-12-09",
+        "dueAt": "2026-09-03",
+        "completedAt": "2026-09-04"
+      }
+    ],
+    "reviewItems": [
+      {
+        "itemReviewId": "Flood Plain Initial Review|2025-11-17|2025-11-13|Not Required",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Flood Plain Initial Review",
+        "status": "Not Required",
+        "assignedTo": "Dawson Retter",
+        "assignedToEmail": null,
+        "dueAt": "2025-11-17",
+        "completedAt": "2025-11-13",
+        "comments": null,
+        "by": "Michael Scalzi"
+      },
+      {
+        "itemReviewId": "Zoning Review|2025-11-20|2025-11-19|Approved",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Zoning Review",
+        "status": "Approved",
+        "assignedTo": "Erin Tewawina",
+        "assignedToEmail": null,
+        "dueAt": "2025-11-20",
+        "completedAt": "2025-11-19",
+        "comments": "SITE APPROVED FOR NEW SFD, GAR, DW, ENT AND LANAI ONLY; MINIMUM 4 TREES TO REMAIN ON SITE OR BE REPLANTED",
+        "by": "Erin Tewawina"
+      },
+      {
+        "itemReviewId": "Technical Services Review|2025-11-20|2025-11-19|Approved",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Technical Services Review",
+        "status": "Approved",
+        "assignedTo": "Technical Services",
+        "assignedToEmail": null,
+        "dueAt": "2025-11-20",
+        "completedAt": "2025-11-19",
+        "comments": "Lorrie.Schwenneker@citrusbocc.com352-527-5374",
+        "by": "Technical Services"
+      },
+      {
+        "itemReviewId": "Addressing Review|2025-11-20|2025-11-13|Approved",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Addressing Review",
+        "status": "Approved",
+        "assignedTo": "Addressing Department",
+        "assignedToEmail": null,
+        "dueAt": "2025-11-20",
+        "completedAt": "2025-11-13",
+        "comments": null,
+        "by": "Addressing Department"
+      },
+      {
+        "itemReviewId": "SWPPP|2025-11-20|2025-11-13|Not Required",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "SWPPP",
+        "status": "Not Required",
+        "assignedTo": "Technical Services",
+        "assignedToEmail": null,
+        "dueAt": "2025-11-20",
+        "completedAt": "2025-11-13",
+        "comments": "Quincy.wylupek@citrusbocc.com   352-527-5247",
+        "by": "Technical Services"
+      },
+      {
+        "itemReviewId": "Utilities Review|2025-11-20|2025-11-26|Revisions Required",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Utilities Review",
+        "status": "Revisions Required",
+        "assignedTo": "Utilities Department",
+        "assignedToEmail": null,
+        "dueAt": "2025-11-20",
+        "completedAt": "2025-11-26",
+        "comments": "See IssuesBrittany Cofield - (352) 527-7650 Opt# 4",
+        "by": "Utilities Department"
+      },
+      {
+        "itemReviewId": "Utilities Review|2025-12-16|2025-12-10|Approved",
+        "submittalId": "round-2",
+        "round": 2,
+        "department": "Utilities Review",
+        "status": "Approved",
+        "assignedTo": "Utilities Department",
+        "assignedToEmail": null,
+        "dueAt": "2025-12-16",
+        "completedAt": "2025-12-10",
+        "comments": "See ConditionsBrittany Cofield - (352) 527-7650 Opt# 4",
+        "by": "Utilities Department"
+      },
+      {
+        "itemReviewId": "Building Review|2025-11-20|2025-11-19|Revisions Required",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Building Review",
+        "status": "Revisions Required",
+        "assignedTo": "Thomas Drummonds",
+        "assignedToEmail": null,
+        "dueAt": "2025-11-20",
+        "completedAt": "2025-11-19",
+        "comments": null,
+        "by": "Thomas Drummonds"
+      },
+      {
+        "itemReviewId": "Building Review|2025-12-16|2025-12-09|Approved",
+        "submittalId": "round-2",
+        "round": 2,
+        "department": "Building Review",
+        "status": "Approved",
+        "assignedTo": "Thomas Drummonds",
+        "assignedToEmail": null,
+        "dueAt": "2025-12-16",
+        "completedAt": "2025-12-09",
+        "comments": null,
+        "by": "Thomas Drummonds"
+      },
+      {
+        "itemReviewId": "Preliminary Inspection|2025-11-20|2025-11-19|Revisions Required",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Preliminary Inspection",
+        "status": "Revisions Required",
+        "assignedTo": "Road Maintenance",
+        "assignedToEmail": null,
+        "dueAt": "2025-11-20",
+        "completedAt": "2025-11-19",
+        "comments": null,
+        "by": "Road Maintenance"
+      },
+      {
+        "itemReviewId": "Preliminary Inspection|2025-12-16|2025-12-15|Passed",
+        "submittalId": "round-2",
+        "round": 2,
+        "department": "Preliminary Inspection",
+        "status": "Passed",
+        "assignedTo": "Road Maintenance",
+        "assignedToEmail": null,
+        "dueAt": "2025-12-16",
+        "completedAt": "2025-12-15",
+        "comments": "Swale’ d apron to follow existing grade and allow for proper drainage from high to low side of entire property frontage within the Right of Way. Must maintain swale within the right of way. See attached photos of current roadway conditions.",
+        "by": "Road Maintenance"
+      },
+      {
+        "itemReviewId": "Notice of Commencement Review|2025-12-29|2026-01-02|Review Pending - Revision Required",
+        "submittalId": "round-2",
+        "round": 2,
+        "department": "Notice of Commencement Review",
+        "status": "Review Pending - Revision Required",
+        "assignedTo": null,
+        "assignedToEmail": null,
+        "dueAt": "2025-12-29",
+        "completedAt": "2026-01-02",
+        "comments": "CHANGE OF OWNERSHIP PAPERWORK NEEDED",
+        "by": "Angel R Jakob"
+      },
+      {
+        "itemReviewId": "Notice of Commencement Review|2025-12-29|2026-01-22|Review Complete",
+        "submittalId": "round-2",
+        "round": 2,
+        "department": "Notice of Commencement Review",
+        "status": "Review Complete",
+        "assignedTo": null,
+        "assignedToEmail": null,
+        "dueAt": "2025-12-29",
+        "completedAt": "2026-01-22",
+        "comments": "** NOC ON FILE FOR NEW SINGLE FAMILY IN OR BK:3630 PG:830 **",
+        "by": "Shannon Lutton"
+      },
+      {
+        "itemReviewId": "Document Review-Insulation Certificate-1 - Insulation Certificate|2026-09-03|2026-09-03|Review Complete",
+        "submittalId": "round-2",
+        "round": 2,
+        "department": "Document Review-Insulation Certificate-1 - Insulation Certificate",
+        "status": "Review Complete",
+        "assignedTo": null,
+        "assignedToEmail": null,
+        "dueAt": "2026-09-03",
+        "completedAt": "2026-09-03",
+        "comments": null,
+        "by": "James Anderson"
+      },
+      {
+        "itemReviewId": "Document Review-Termite Certificate-1 - Termite Certificate|2026-09-03|2026-09-03|Review Pending - Revision Required",
+        "submittalId": "round-2",
+        "round": 2,
+        "department": "Document Review-Termite Certificate-1 - Termite Certificate",
+        "status": "Review Pending - Revision Required",
+        "assignedTo": null,
+        "assignedToEmail": null,
+        "dueAt": "2026-09-03",
+        "completedAt": "2026-09-03",
+        "comments": "The termite certificate must state the following per 2023 FBC R318 - The building has received complete treatment for the prevention of subterranean termites. Treatment is in accordance with rules and laws established by the Florida Department of Agriculture and Consumer Services.",
+        "by": "James Anderson"
+      },
+      {
+        "itemReviewId": "Document Review-Termite Certificate-2 - Termite Certificate|2026-09-03|2026-09-03|Review Pending - Revision Required",
+        "submittalId": "round-2",
+        "round": 2,
+        "department": "Document Review-Termite Certificate-2 - Termite Certificate",
+        "status": "Review Pending - Revision Required",
+        "assignedTo": null,
+        "assignedToEmail": null,
+        "dueAt": "2026-09-03",
+        "completedAt": "2026-09-03",
+        "comments": "The termite certificate must state the following per 2023 FBC R318 - The building has received complete treatment for the prevention of subterranean termites. Treatment is in accordance with rules and laws established by the Florida Department of Agriculture and Consumer Services.",
+        "by": "James Anderson"
+      },
+      {
+        "itemReviewId": "Document Review-Envelope Leakage Test Report-1 - Envelope Leakage Test Report|2026-09-03|2026-09-03|Review Complete",
+        "submittalId": "round-2",
+        "round": 2,
+        "department": "Document Review-Envelope Leakage Test Report-1 - Envelope Leakage Test Report",
+        "status": "Review Complete",
+        "assignedTo": null,
+        "assignedToEmail": null,
+        "dueAt": "2026-09-03",
+        "completedAt": "2026-09-03",
+        "comments": null,
+        "by": "James Anderson"
+      },
+      {
+        "itemReviewId": "Notice of Commencement Review|2026-09-03|2026-09-04|Review Complete",
+        "submittalId": "round-2",
+        "round": 2,
+        "department": "Notice of Commencement Review",
+        "status": "Review Complete",
+        "assignedTo": "Michael Scalzi",
+        "assignedToEmail": null,
+        "dueAt": "2026-09-03",
+        "completedAt": "2026-09-04",
+        "comments": "RECORDED NOC FOR NEW SFD IN BK 3630 PG 830",
+        "by": "Michael Scalzi"
+      }
+    ],
+    "workflow": [
+      {
+        "task": "Document Acceptance",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": "2025-10-13",
+            "assignedTo": null,
+            "status": "Awaiting Required Documents",
+            "completedAt": "2025-10-13",
+            "by": "DPR USER",
+            "comments": null
+          },
+          {
+            "dueAt": "2025-10-13",
+            "assignedTo": null,
+            "status": "Required Documents Submitted",
+            "completedAt": "2025-11-10",
+            "by": "DPR USER",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Fee Review",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": "2025-11-12",
+            "assignedTo": "Michael Scalzi",
+            "status": "Invoice Fee Paid",
+            "completedAt": "2025-11-13",
+            "by": "Michael Scalzi",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Application Acceptance",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": "2025-11-16",
+            "assignedTo": "Michael Scalzi",
+            "status": "Application Approved",
+            "completedAt": "2025-11-13",
+            "by": "Michael Scalzi",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Flood Plain Initial Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2025-11-17",
+            "assignedTo": "Dawson Retter",
+            "status": "Not Required",
+            "completedAt": "2025-11-13",
+            "by": "Michael Scalzi",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Reviewer Routing",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": "2025-11-17",
+            "assignedTo": "Michael Scalzi",
+            "status": "Assign to Reviewers",
+            "completedAt": "2025-11-13",
+            "by": "Michael Scalzi",
+            "comments": null
+          },
+          {
+            "dueAt": "2025-12-10",
+            "assignedTo": "Michael Scalzi",
+            "status": "Assign to Reviewers",
+            "completedAt": "2025-12-09",
+            "by": "Michael Scalzi",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Flood Plain Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Zoning Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2025-11-20",
+            "assignedTo": "Erin Tewawina",
+            "status": "Approved",
+            "completedAt": "2025-11-19",
+            "by": "Erin Tewawina",
+            "comments": "SITE APPROVED FOR NEW SFD, GAR, DW, ENT AND LANAI ONLY; MINIMUM 4 TREES TO REMAIN ON SITE OR BE REPLANTED"
+          }
+        ]
+      },
+      {
+        "task": "Fire Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Health Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Land Development Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Technical Services Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2025-11-20",
+            "assignedTo": "Technical Services",
+            "status": "Approved",
+            "completedAt": "2025-11-19",
+            "by": "Technical Services",
+            "comments": "Lorrie.Schwenneker@citrusbocc.com352-527-5374"
+          }
+        ]
+      },
+      {
+        "task": "Mechanical Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Plumbing Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Electrical Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Affordable Housing",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Addressing Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2025-11-20",
+            "assignedTo": "Addressing Department",
+            "status": "Approved",
+            "completedAt": "2025-11-13",
+            "by": "Addressing Department",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "SWPPP",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2025-11-20",
+            "assignedTo": "Technical Services",
+            "status": "Not Required",
+            "completedAt": "2025-11-13",
+            "by": "Technical Services",
+            "comments": "Quincy.wylupek@citrusbocc.com   352-527-5247"
+          }
+        ]
+      },
+      {
+        "task": "Private Provider Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Utilities Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2025-11-20",
+            "assignedTo": "Utilities Department",
+            "status": "Revisions Required",
+            "completedAt": "2025-11-26",
+            "by": "Utilities Department",
+            "comments": "See IssuesBrittany Cofield - (352) 527-7650 Opt# 4"
+          },
+          {
+            "dueAt": "2025-12-16",
+            "assignedTo": "Utilities Department",
+            "status": "Approved",
+            "completedAt": "2025-12-10",
+            "by": "Utilities Department",
+            "comments": "See ConditionsBrittany Cofield - (352) 527-7650 Opt# 4"
+          }
+        ]
+      },
+      {
+        "task": "Building Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2025-11-20",
+            "assignedTo": "Thomas Drummonds",
+            "status": "Revisions Required",
+            "completedAt": "2025-11-19",
+            "by": "Thomas Drummonds",
+            "comments": null
+          },
+          {
+            "dueAt": "2025-12-16",
+            "assignedTo": "Thomas Drummonds",
+            "status": "Approved",
+            "completedAt": "2025-12-09",
+            "by": "Thomas Drummonds",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Preliminary Inspection",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2025-11-20",
+            "assignedTo": "Road Maintenance",
+            "status": "Revisions Required",
+            "completedAt": "2025-11-19",
+            "by": "Road Maintenance",
+            "comments": null
+          },
+          {
+            "dueAt": "2025-12-16",
+            "assignedTo": "Road Maintenance",
+            "status": "Passed",
+            "completedAt": "2025-12-15",
+            "by": "Road Maintenance",
+            "comments": "Swale’ d apron to follow existing grade and allow for proper drainage from high to low side of entire property frontage within the Right of Way. Must maintain swale within the right of way. See attached photos of current roadway conditions."
+          }
+        ]
+      },
+      {
+        "task": "Plan Review Verification",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": "2025-11-30",
+            "assignedTo": null,
+            "status": "Revisions Required",
+            "completedAt": "2025-11-26",
+            "by": "DPR USER",
+            "comments": null
+          },
+          {
+            "dueAt": "2025-11-30",
+            "assignedTo": "Michael Scalzi",
+            "status": "Revisions Received",
+            "completedAt": "2025-12-08",
+            "by": "DPR USER",
+            "comments": null
+          },
+          {
+            "dueAt": "2025-11-30",
+            "assignedTo": "Michael Scalzi",
+            "status": "Revision Routing",
+            "completedAt": "2025-12-08",
+            "by": "DPR USER",
+            "comments": null
+          },
+          {
+            "dueAt": "2025-12-17",
+            "assignedTo": "Michael Scalzi",
+            "status": "Ready to Issue",
+            "completedAt": "2025-12-15",
+            "by": "Michael Scalzi",
+            "comments": null
+          },
+          {
+            "dueAt": "2025-12-17",
+            "assignedTo": "Michael Scalzi",
+            "status": "Validation in Review",
+            "completedAt": "2025-12-15",
+            "by": "DPR USER",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Permit Issuance",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": "2025-12-16",
+            "assignedTo": null,
+            "status": "Fees Due",
+            "completedAt": "2025-12-15",
+            "by": "Michael Scalzi",
+            "comments": null
+          },
+          {
+            "dueAt": "2025-12-16",
+            "assignedTo": null,
+            "status": "Issued",
+            "completedAt": "2025-12-23",
+            "by": "Accela Administrator",
+            "comments": "Updated by EMSE PRA Script 129"
+          }
+        ]
+      },
+      {
+        "task": "Inspection",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": "2025-12-23",
+            "assignedTo": null,
+            "status": "Inspection Passed",
+            "completedAt": "2026-08-17",
+            "by": "Peter Ovaska",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Closure",
+        "state": "active",
+        "history": [
+          {
+            "dueAt": "2026-08-18",
+            "assignedTo": null,
+            "status": "More Info Required",
+            "completedAt": "2026-09-15",
+            "by": "Casey Walker",
+            "comments": "Multiple unmet conditions must be met for CO to be issued. Please login to your Accela portal and review your conditions."
+          },
+          {
+            "dueAt": "2026-08-18",
+            "assignedTo": null,
+            "status": null,
+            "completedAt": null,
+            "by": null,
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Notice of Commencement Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2025-12-29",
+            "assignedTo": null,
+            "status": "Review Pending - Revision Required",
+            "completedAt": "2026-01-02",
+            "by": "Angel R Jakob",
+            "comments": "CHANGE OF OWNERSHIP PAPERWORK NEEDED"
+          },
+          {
+            "dueAt": "2025-12-29",
+            "assignedTo": null,
+            "status": "Review Complete",
+            "completedAt": "2026-01-22",
+            "by": "Shannon Lutton",
+            "comments": "** NOC ON FILE FOR NEW SINGLE FAMILY IN OR BK:3630 PG:830 **"
+          }
+        ]
+      },
+      {
+        "task": "Document Review-Insulation Certificate-1 - Insulation Certificate",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-09-03",
+            "assignedTo": null,
+            "status": "Review Complete",
+            "completedAt": "2026-09-03",
+            "by": "James Anderson",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Document Review-Termite Certificate-1 - Termite Certificate",
+        "state": "active",
+        "history": [
+          {
+            "dueAt": "2026-09-03",
+            "assignedTo": null,
+            "status": "Review Pending - Revision Required",
+            "completedAt": "2026-09-03",
+            "by": "James Anderson",
+            "comments": "The termite certificate must state the following per 2023 FBC R318 - The building has received complete treatment for the prevention of subterranean termites. Treatment is in accordance with rules and laws established by the Florida Department of Agriculture and Consumer Services."
+          }
+        ]
+      },
+      {
+        "task": "Document Review-Termite Certificate-2 - Termite Certificate",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-09-03",
+            "assignedTo": null,
+            "status": "Review Pending - Revision Required",
+            "completedAt": "2026-09-03",
+            "by": "James Anderson",
+            "comments": "The termite certificate must state the following per 2023 FBC R318 - The building has received complete treatment for the prevention of subterranean termites. Treatment is in accordance with rules and laws established by the Florida Department of Agriculture and Consumer Services."
+          }
+        ]
+      },
+      {
+        "task": "Document Review-Envelope Leakage Test Report-1 - Envelope Leakage Test Report",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-09-03",
+            "assignedTo": null,
+            "status": "Review Complete",
+            "completedAt": "2026-09-03",
+            "by": "James Anderson",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Notice of Commencement Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-09-03",
+            "assignedTo": "Michael Scalzi",
+            "status": "Review Complete",
+            "completedAt": "2026-09-04",
+            "by": "Michael Scalzi",
+            "comments": "RECORDED NOC FOR NEW SFD IN BK 3630 PG 830"
+          }
+        ]
+      }
+    ],
+    "inspections": [
+      {
+        "number": "88842",
+        "code": "401",
+        "type": "PLUMBING ROUGH I",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-01-23",
+        "inspector": null,
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  401 PLUMBING ROUGH I (88842)  Result by: Steven Chmura on 01/23/2026 at 11:49 AM"
+      },
+      {
+        "number": "88839",
+        "code": "219",
+        "type": "CONCRETE ENCASED GROUND",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-01-29",
+        "inspector": null,
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  219 CONCRETE ENCASED GROUND (88839)  Result by: Peter Ovaska on 01/29/2026 at 12:49 PM"
+      },
+      {
+        "number": "88822",
+        "code": "103",
+        "type": "SLAB",
+        "status": "Failed - First",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-01-30",
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": true,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Failed - First  103 SLAB (88822)  Result by: David Crum on 01/30/2026 at 07:37 AM"
+      },
+      {
+        "number": "146491",
+        "code": "103",
+        "type": "SLAB",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-02-02",
+        "inspector": null,
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  103 SLAB (146491)  Result by: David Crum on 02/02/2026 at 11:56 AM"
+      },
+      {
+        "number": "88823",
+        "code": "105",
+        "type": "LINTEL",
+        "status": "Failed - First",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-02-10",
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": true,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Failed - First  105 LINTEL (88823)  Result by: Vincent Artese on 02/10/2026 at 12:24 PM"
+      },
+      {
+        "number": "157051",
+        "code": "105",
+        "type": "LINTEL",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-02-12",
+        "inspector": null,
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  105 LINTEL (157051)  Result by: Peter Ovaska on 02/12/2026 at 08:54 AM"
+      },
+      {
+        "number": "88824",
+        "code": "106",
+        "type": "ROOF SHEATHING",
+        "status": "Rescheduled",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-02-19",
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Rescheduled  106 ROOF SHEATHING (88824)  Rescheduled by: Thomas Drummonds on 02/19/2026 at 10:17 AM"
+      },
+      {
+        "number": "88830",
+        "code": "119",
+        "type": "STRUCTURAL FRAME",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-02-19",
+        "inspector": null,
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  119 STRUCTURAL FRAME (88830)  Result by: Vincent Artese on 02/19/2026 at 10:18 AM"
+      },
+      {
+        "number": "165494",
+        "code": "106",
+        "type": "ROOF SHEATHING",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-02-19",
+        "inspector": null,
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  106 ROOF SHEATHING (165494)  Result by: Vincent Artese on 02/19/2026 at 10:33 AM"
+      },
+      {
+        "number": "186616",
+        "code": "107",
+        "type": "WALL SHEATHING",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-03-13",
+        "inspector": null,
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  107 WALL SHEATHING (186616)  Result by: Thomas Drummonds on 03/13/2026 at 11:20 AM"
+      },
+      {
+        "number": "88840",
+        "code": "301",
+        "type": "MECHANICAL ROUGH IN",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-03-17",
+        "inspector": null,
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  301 MECHANICAL ROUGH IN (88840)  Result by: Vincent Artese on 03/17/2026 at 10:12 AM"
+      },
+      {
+        "number": "88832",
+        "code": "140",
+        "type": "ROOF DRY IN & FLASHING",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-03-17",
+        "inspector": null,
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  140 ROOF DRY IN & FLASHING (88832)  Result by: Vincent Artese on 03/17/2026 at 10:12 AM"
+      },
+      {
+        "number": "88843",
+        "code": "402",
+        "type": "PLUMBING ROUGH II",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-03-17",
+        "inspector": null,
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  402 PLUMBING ROUGH II (88843)  Result by: Vincent Artese on 03/17/2026 at 10:13 AM"
+      },
+      {
+        "number": "88836",
+        "code": "204",
+        "type": "ELECTRICAL ROUGH IN",
+        "status": "Failed - First",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-03-17",
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": true,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Failed - First  204 ELECTRICAL ROUGH IN (88836)  Result by: Jeremy Lentz on 03/17/2026 at 11:05 AM"
+      },
+      {
+        "number": "88825",
+        "code": "108",
+        "type": "FRAME",
+        "status": "Cancelled",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-03-17",
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": true,
+        "completed": true,
+        "raw": "Cancelled  108 FRAME (88825)  Cancelled by: Vincent Artese on 03/17/2026 at 12:52 PM"
+      },
+      {
+        "number": "190333",
+        "code": "204",
+        "type": "ELECTRICAL ROUGH IN",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-03-20",
+        "inspector": null,
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  204 ELECTRICAL ROUGH IN (190333)  Result by: Jeremy Lentz on 03/20/2026 at 09:24 AM"
+      },
+      {
+        "number": "190452",
+        "code": "108",
+        "type": "FRAME",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-03-26",
+        "inspector": null,
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  108 FRAME (190452)  Result by: Vincent Artese on 03/26/2026 at 12:20 PM"
+      },
+      {
+        "number": "88833",
+        "code": "146",
+        "type": "BUILDING LATH NAILING",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-03-31",
+        "inspector": null,
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  146 BUILDING LATH NAILING (88833)  Result by: David Crum on 03/31/2026 at 01:12 PM"
+      },
+      {
+        "number": "88826",
+        "code": "110",
+        "type": "INSULATION",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-04-01",
+        "inspector": null,
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  110 INSULATION (88826)  Result by: Peter Ovaska on 04/01/2026 at 02:14 PM"
+      },
+      {
+        "number": "88831",
+        "code": "133",
+        "type": "SOFFIT IN PROGRESS",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-04-24",
+        "inspector": null,
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  133 SOFFIT IN PROGRESS (88831)  Result by: Vincent Artese on 04/24/2026 at 12:33 PM"
+      },
+      {
+        "number": "87892",
+        "code": "150",
+        "type": "RESIDENTIAL DRIVEWAY PRE-POUR",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-05-04",
+        "inspector": null,
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  150 RESIDENTIAL DRIVEWAY PRE-POUR (87892)  Result by: Road Maintenance on 05/04/2026 at 12:00 AM"
+      },
+      {
+        "number": "88844",
+        "code": "403",
+        "type": "SEWER",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-05-06",
+        "inspector": null,
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  403 SEWER (88844)  Result by: Steven Chmura on 05/06/2026 at 12:00 AM"
+      },
+      {
+        "number": "88838",
+        "code": "209",
+        "type": "PRE POWER",
+        "status": "Failed - First",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-05-07",
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": true,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Failed - First  209 PRE POWER (88838)  Result by: Peter Ovaska on 05/07/2026 at 10:58 AM"
+      },
+      {
+        "number": "88845",
+        "code": "404",
+        "type": "WATER SERVICE",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-05-07",
+        "inspector": null,
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  404 WATER SERVICE (88845)  Result by: Peter Ovaska on 05/07/2026 at 02:05 PM"
+      },
+      {
+        "number": "241133",
+        "code": "209",
+        "type": "PRE POWER",
+        "status": "Failed - Second",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-05-08",
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": true,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Failed - Second  209 PRE POWER (241133)  Result by: Jeremy Lentz on 05/08/2026 at 10:09 AM"
+      },
+      {
+        "number": "243211",
+        "code": "209",
+        "type": "PRE POWER",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-05-12",
+        "inspector": null,
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  209 PRE POWER (243211)  Result by: Jeremy Lentz on 05/12/2026 at 12:42 PM"
+      },
+      {
+        "number": "88846",
+        "code": "405",
+        "type": "PLUMBING FINAL",
+        "status": "Failed - First",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-06-17",
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": true,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Failed - First  405 PLUMBING FINAL (88846)  Result by: Thomas Drummonds on 06/17/2026 at 12:07 PM"
+      },
+      {
+        "number": "88841",
+        "code": "302",
+        "type": "MECHANICAL FINAL",
+        "status": "Failed - First",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-06-17",
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": true,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Failed - First  302 MECHANICAL FINAL (88841)  Result by: Thomas Drummonds on 06/17/2026 at 12:09 PM"
+      },
+      {
+        "number": "88837",
+        "code": "205",
+        "type": "ELECTRICAL FINAL",
+        "status": "Cancelled",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-06-17",
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": true,
+        "completed": true,
+        "raw": "Cancelled  205 ELECTRICAL FINAL (88837)  Cancelled by: Thomas Drummonds on 06/17/2026 at 12:10 PM"
+      },
+      {
+        "number": "87891",
+        "code": "148",
+        "type": "RESIDENTIAL DRIVEWAY FINAL",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-06-17",
+        "inspector": null,
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  148 RESIDENTIAL DRIVEWAY FINAL (87891)  Result by: Road Maintenance on 06/17/2026 at 12:00 AM"
+      },
+      {
+        "number": "105775",
+        "code": "154",
+        "type": "RESIDENTIAL UTILITY FINAL",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-06-17",
+        "inspector": null,
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  154 RESIDENTIAL UTILITY FINAL (105775)  Result by: Utilities Department on 06/17/2026 at 10:09 AM"
+      },
+      {
+        "number": "278617",
+        "code": "205",
+        "type": "ELECTRICAL FINAL",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-08-17",
+        "inspector": null,
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  205 ELECTRICAL FINAL (278617)  Result by: Peter Ovaska on 08/17/2026 at 02:38 PM"
+      },
+      {
+        "number": "279132",
+        "code": "302",
+        "type": "MECHANICAL FINAL",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-08-17",
+        "inspector": null,
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  302 MECHANICAL FINAL (279132)  Result by: Peter Ovaska on 08/17/2026 at 02:38 PM"
+      },
+      {
+        "number": "279697",
+        "code": "405",
+        "type": "PLUMBING FINAL",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-08-17",
+        "inspector": null,
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  405 PLUMBING FINAL (279697)  Result by: Peter Ovaska on 08/17/2026 at 02:38 PM"
+      },
+      {
+        "number": "88828",
+        "code": "117",
+        "type": "BUILDING FINAL",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-08-17",
+        "inspector": null,
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  117 BUILDING FINAL (88828)  Result by: Peter Ovaska on 08/17/2026 at 02:38 PM"
+      },
+      {
+        "number": "88834",
+        "code": "201",
+        "type": "T-POLE",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  201 T-POLE (88834)  Inspector: unassigned"
+      },
+      {
+        "number": "88835",
+        "code": "202",
+        "type": "TUG",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  202 TUG (88835)  Inspector: unassigned"
+      },
+      {
+        "number": "88827",
+        "code": "112",
+        "type": "STEMWALL FOOTING",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  112 STEMWALL FOOTING (88827)  Inspector: unassigned"
+      },
+      {
+        "number": "88829",
+        "code": "118",
+        "type": "STEMWALL",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  118 STEMWALL (88829)  Inspector: unassigned"
+      }
+    ],
+    "holds": [
+      {
+        "name": "Building - 5 Applied, 3 Complied Building Permit Duct Leakage Test Report",
+        "type": "Notice",
+        "reason": null,
+        "comments": "Building - 5 Applied, 3 Complied Building Permit Duct Leakage Test ReportPlease provide a Duck Leakage Test Report. Upload a copy of this document to your online account under document type ‘Duck Leakage Test Report’. If you do not see this document type, or have further questions regarding this condition or document, please contact planreview@citrusbocc.com Please do not upload this under any other incorrect document type.Applied",
+        "createdAt": "2025-11-19",
+        "active": true,
+        "status": "Applied"
+      },
+      {
+        "name": "Truss Package",
+        "type": "Notice",
+        "reason": null,
+        "comments": "Truss PackagePlease provide a copy of the Truss Package. This is to be submitted as an amendment, and should include the following: stamped truss profile, truss layout, letter for EOR of truss design compliance with structure. If you have further questions regarding this condition or document, please contact planreview@citrusbocc.comApplied",
+        "createdAt": "2025-11-19",
+        "active": true,
+        "status": "Applied"
+      },
+      {
+        "name": "Health Department Final Approval",
+        "type": "Notice",
+        "reason": null,
+        "comments": "Health Department Final ApprovalPlease provide a Health Department Final Approval. Upload a copy of this document to your online account under the document type ‘Health Department Final Approval’. If you do not see this document type, or have further questions regarding this condition or document, please contact inspectionsupportstaff@citrusbocc.com Please do not upload this under any other incorrect document type.Applied",
+        "createdAt": "2025-11-13",
+        "active": true,
+        "status": "Applied"
+      },
+      {
+        "name": "Land Section",
+        "type": "Notice",
+        "reason": null,
+        "comments": "Land Section“Per Section 86-46 of the Citrus County Code of Ordinances, the County has implemented procedures for collecting an assessment prior to the issuance of the Certificate of Occupancy for: • new single-family residences, • new mobile homes, • new non-residential buildings, and • may also include any modifications to the size/impervious area of a structure or property within the County. Please submit a request for Interim Assessment Fees to be applied on a permit to Land-NoReply@citrusbocc.com. Be sure to include the complete permit number, site address and contact information so we may better assist you. Thank you.Applied",
+        "createdAt": "2025-11-13",
+        "active": true,
+        "status": "Applied"
+      },
+      {
+        "name": "Termite Treatment Certificate",
+        "type": "Notice",
+        "reason": null,
+        "comments": "Termite Treatment CertificatePlease provide a Final Termite Treatment Certificate. Upload a copy of this document to your online account under the document type ‘Termite Certificate’. **Please note that if a termite bait system has been used for termite treatment compliance a copy of the contract/agreement for the installation, monitoring and maintenance is required. Both documents may be uploaded into ‘Termite Treatment Certificate’.** If you do not see this document type, or have further questions regarding this condition or document, please contact planreview@citrusbocc.com Please do not upload this under any other incorrect document type.Applied",
+        "createdAt": "2025-10-13",
+        "active": true,
+        "status": "Applied"
+      }
+    ],
+    "contacts": [],
+    "feeSummary": null,
+    "subRecords": [
+      {
+        "number": "BLD2510-0482.RR01",
+        "type": "BLD2510-0482.RR01",
+        "status": null,
+        "date": "2026-01-22"
+      },
+      {
+        "number": "CSR2609-0236",
+        "type": "CSR2609-0236",
+        "status": null,
+        "date": "2026-09-03"
+      },
+      {
+        "number": "CSR2609-0626",
+        "type": "CSR2609-0626",
+        "status": null,
+        "date": "2026-09-11"
+      }
+    ],
+    "collectedAt": "2026-09-28T21:38:42.065Z"
+  }
+}

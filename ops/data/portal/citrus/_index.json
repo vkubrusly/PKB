@@ -1,0 +1,19 @@
+{
+  "county": "citrus",
+  "stage": "permit",
+  "collectedAt": "2026-09-28T21:47:07.381Z",
+  "permits": [
+    {
+      "permit": "BLD2601-1080",
+      "found": true,
+      "status": "Permit Issued",
+      "file": "/home/user/PKB/ops/data/portal/citrus/BLD2601-1080.json"
+    },
+    {
+      "permit": "BLD2607-0748",
+      "found": true,
+      "status": "Fees Due",
+      "file": "/home/user/PKB/ops/data/portal/citrus/BLD2607-0748.json"
+    }
+  ]
+}

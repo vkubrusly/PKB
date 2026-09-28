@@ -1,0 +1,1057 @@
+{
+  "permitNumber": "BLD2601-0420",
+  "found": true,
+  "url": "https://aca-prod.accela.com/CITRUS/Cap/CapDetail.aspx?Module=Building&TabName=Building&capID1=REC26&capID2=00000&capID3=000JQ&agencyCode=CITRUS&IsToShowInspection=",
+  "permit": {
+    "number": "BLD2601-0420",
+    "caseId": "REC26-00000-000JQ",
+    "county": "citrus",
+    "type": "Residential",
+    "workclass": null,
+    "status": "Permit Issued",
+    "projectName": null,
+    "address": "2872 W ARBUTUS DR DUNNELLON 34433 * View Additional Locations>>",
+    "parcel": null,
+    "appliedAt": "2026-01-14",
+    "issuedAt": "2026-01-29",
+    "expiresAt": null,
+    "finalizedAt": null,
+    "squareFeet": null,
+    "valuation": null,
+    "description": null,
+    "submittals": [
+      {
+        "submittalId": "round-1",
+        "version": 1,
+        "type": "Plan Review",
+        "status": "Revisions Required",
+        "submittedAt": "2026-01-15",
+        "dueAt": "2026-01-23",
+        "completedAt": "2026-01-22"
+      },
+      {
+        "submittalId": "round-2",
+        "version": 2,
+        "type": "Plan Review",
+        "status": "Revisions Required",
+        "submittedAt": "2026-01-23",
+        "dueAt": "2026-01-30",
+        "completedAt": "2026-01-29"
+      }
+    ],
+    "reviewItems": [
+      {
+        "itemReviewId": "Zoning Review|2026-01-23|2026-01-22|Approved",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Zoning Review",
+        "status": "Approved",
+        "assignedTo": "Donna Harris",
+        "assignedToEmail": null,
+        "dueAt": "2026-01-23",
+        "completedAt": "2026-01-22",
+        "comments": "* SITE APPROVED FOR SFD W/10X20 REAR LANAI ONLY 4 TREES REMAIN*",
+        "by": "Donna Harris"
+      },
+      {
+        "itemReviewId": "Technical Services Review|2026-01-23|2026-01-23|Approved",
+        "submittalId": "round-2",
+        "round": 2,
+        "department": "Technical Services Review",
+        "status": "Approved",
+        "assignedTo": "Technical Services",
+        "assignedToEmail": null,
+        "dueAt": "2026-01-23",
+        "completedAt": "2026-01-23",
+        "comments": "FFE 144 indicated on site plans Laura.Ford@citrusbocc.com 352-527-5369",
+        "by": "Technical Services"
+      },
+      {
+        "itemReviewId": "Preliminary Inspection|2026-01-23|2026-01-22|Passed",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Preliminary Inspection",
+        "status": "Passed",
+        "assignedTo": "Road Maintenance",
+        "assignedToEmail": null,
+        "dueAt": "2026-01-23",
+        "completedAt": "2026-01-22",
+        "comments": "Swale’ d apron to follow existing grade and allow for proper drainage from high to low side of entire property frontage within the Right of Way. Must maintain swale within the right of way. See attached photos of current roadway conditions.",
+        "by": "Road Maintenance"
+      },
+      {
+        "itemReviewId": "Addressing Review|2026-01-23|2026-01-15|Approved",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Addressing Review",
+        "status": "Approved",
+        "assignedTo": "Addressing Department",
+        "assignedToEmail": null,
+        "dueAt": "2026-01-23",
+        "completedAt": "2026-01-15",
+        "comments": "RH",
+        "by": "Addressing Department"
+      },
+      {
+        "itemReviewId": "SWPPP|2026-01-23|2026-01-15|Not Required",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "SWPPP",
+        "status": "Not Required",
+        "assignedTo": "Technical Services",
+        "assignedToEmail": null,
+        "dueAt": "2026-01-23",
+        "completedAt": "2026-01-15",
+        "comments": "Quincy.wylupek@citrusbocc.com   352-527-5247",
+        "by": "Technical Services"
+      },
+      {
+        "itemReviewId": "Utilities Review|2026-01-23|2026-01-20|Revisions Required",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Utilities Review",
+        "status": "Revisions Required",
+        "assignedTo": "Utilities Department",
+        "assignedToEmail": null,
+        "dueAt": "2026-01-23",
+        "completedAt": "2026-01-20",
+        "comments": "See ConditionsDebbie Burns - (352) 527-7650 Opt# 4",
+        "by": "Utilities Department"
+      },
+      {
+        "itemReviewId": "Utilities Review|2026-01-30|2026-01-28|Approved",
+        "submittalId": "round-2",
+        "round": 2,
+        "department": "Utilities Review",
+        "status": "Approved",
+        "assignedTo": "Utilities Department",
+        "assignedToEmail": null,
+        "dueAt": "2026-01-30",
+        "completedAt": "2026-01-28",
+        "comments": "See ConditionsReviewed by Karen Poulin  (352) 527-7650 option 4",
+        "by": "Utilities Department"
+      },
+      {
+        "itemReviewId": "Building Review|2026-01-23|2026-01-15|Revisions Required",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Building Review",
+        "status": "Revisions Required",
+        "assignedTo": "Luis Benitez",
+        "assignedToEmail": null,
+        "dueAt": "2026-01-23",
+        "completedAt": "2026-01-15",
+        "comments": null,
+        "by": "Luis Benitez"
+      },
+      {
+        "itemReviewId": "Building Review|2026-01-23|2026-01-15|Revisions Received",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Building Review",
+        "status": "Revisions Received",
+        "assignedTo": "Luis Benitez",
+        "assignedToEmail": null,
+        "dueAt": "2026-01-23",
+        "completedAt": "2026-01-15",
+        "comments": null,
+        "by": "Luis Benitez"
+      },
+      {
+        "itemReviewId": "Building Review|2026-01-28|2026-01-23|Approved",
+        "submittalId": "round-2",
+        "round": 2,
+        "department": "Building Review",
+        "status": "Approved",
+        "assignedTo": "Luis Benitez",
+        "assignedToEmail": null,
+        "dueAt": "2026-01-28",
+        "completedAt": "2026-01-23",
+        "comments": null,
+        "by": "Luis Benitez"
+      },
+      {
+        "itemReviewId": "Plan Review Verification|2026-01-27|2026-01-23|Revisions Required",
+        "submittalId": "round-2",
+        "round": 2,
+        "department": "Plan Review Verification",
+        "status": "Revisions Required",
+        "assignedTo": null,
+        "assignedToEmail": null,
+        "dueAt": "2026-01-27",
+        "completedAt": "2026-01-23",
+        "comments": null,
+        "by": "DPR USER"
+      },
+      {
+        "itemReviewId": "Plan Review Verification|2026-01-27|2026-01-23|Revisions Received",
+        "submittalId": "round-2",
+        "round": 2,
+        "department": "Plan Review Verification",
+        "status": "Revisions Received",
+        "assignedTo": "Donna Harris",
+        "assignedToEmail": null,
+        "dueAt": "2026-01-27",
+        "completedAt": "2026-01-23",
+        "comments": null,
+        "by": "DPR USER"
+      },
+      {
+        "itemReviewId": "Plan Review Verification|2026-01-27|2026-01-23|Revision Routing",
+        "submittalId": "round-2",
+        "round": 2,
+        "department": "Plan Review Verification",
+        "status": "Revision Routing",
+        "assignedTo": "Donna Harris",
+        "assignedToEmail": null,
+        "dueAt": "2026-01-27",
+        "completedAt": "2026-01-23",
+        "comments": null,
+        "by": "DPR USER"
+      },
+      {
+        "itemReviewId": "Plan Review Verification|2026-01-30|2026-01-28|Validation in Review",
+        "submittalId": "round-2",
+        "round": 2,
+        "department": "Plan Review Verification",
+        "status": "Validation in Review",
+        "assignedTo": "Donna Harris",
+        "assignedToEmail": null,
+        "dueAt": "2026-01-30",
+        "completedAt": "2026-01-28",
+        "comments": null,
+        "by": "DPR USER"
+      },
+      {
+        "itemReviewId": "Plan Review Verification|2026-01-30|2026-01-29|Ready to Issue",
+        "submittalId": "round-2",
+        "round": 2,
+        "department": "Plan Review Verification",
+        "status": "Ready to Issue",
+        "assignedTo": "Donna Harris",
+        "assignedToEmail": null,
+        "dueAt": "2026-01-30",
+        "completedAt": "2026-01-29",
+        "comments": null,
+        "by": "Donna Harris"
+      }
+    ],
+    "workflow": [
+      {
+        "task": "Document Acceptance",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": "2026-01-14",
+            "assignedTo": null,
+            "status": "Awaiting Required Documents",
+            "completedAt": "2026-01-14",
+            "by": "DPR USER",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-01-14",
+            "assignedTo": null,
+            "status": "Required Documents Submitted",
+            "completedAt": "2026-01-15",
+            "by": "DPR USER",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Fee Review",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": "2026-01-20",
+            "assignedTo": "Donna Harris",
+            "status": "Invoice Fee Paid",
+            "completedAt": "2026-01-15",
+            "by": "Donna Harris",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Application Acceptance",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": "2026-01-16",
+            "assignedTo": "Donna Harris",
+            "status": "Application Approved",
+            "completedAt": "2026-01-15",
+            "by": "Donna Harris",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Reviewer Routing",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": "2026-01-20",
+            "assignedTo": "Donna Harris",
+            "status": "Assign to Reviewers",
+            "completedAt": "2026-01-15",
+            "by": "Donna Harris",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-01-27",
+            "assignedTo": "Donna Harris",
+            "status": "Assign to Reviewers",
+            "completedAt": "2026-01-23",
+            "by": "Donna Harris",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Flood Plain Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Zoning Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-01-23",
+            "assignedTo": "Donna Harris",
+            "status": "Approved",
+            "completedAt": "2026-01-22",
+            "by": "Donna Harris",
+            "comments": "* SITE APPROVED FOR SFD W/10X20 REAR LANAI ONLY 4 TREES REMAIN*"
+          }
+        ]
+      },
+      {
+        "task": "Fire Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Health Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Land Development Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Technical Services Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-01-23",
+            "assignedTo": "Technical Services",
+            "status": "Approved",
+            "completedAt": "2026-01-23",
+            "by": "Technical Services",
+            "comments": "FFE 144 indicated on site plans Laura.Ford@citrusbocc.com 352-527-5369"
+          }
+        ]
+      },
+      {
+        "task": "Mechanical Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Plumbing Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Electrical Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Preliminary Inspection",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-01-23",
+            "assignedTo": "Road Maintenance",
+            "status": "Passed",
+            "completedAt": "2026-01-22",
+            "by": "Road Maintenance",
+            "comments": "Swale’ d apron to follow existing grade and allow for proper drainage from high to low side of entire property frontage within the Right of Way. Must maintain swale within the right of way. See attached photos of current roadway conditions."
+          }
+        ]
+      },
+      {
+        "task": "Affordable Housing",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Addressing Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-01-23",
+            "assignedTo": "Addressing Department",
+            "status": "Approved",
+            "completedAt": "2026-01-15",
+            "by": "Addressing Department",
+            "comments": "RH"
+          }
+        ]
+      },
+      {
+        "task": "SWPPP",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-01-23",
+            "assignedTo": "Technical Services",
+            "status": "Not Required",
+            "completedAt": "2026-01-15",
+            "by": "Technical Services",
+            "comments": "Quincy.wylupek@citrusbocc.com   352-527-5247"
+          }
+        ]
+      },
+      {
+        "task": "Private Provider Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "No Plan Review Required",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Utilities Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-01-23",
+            "assignedTo": "Utilities Department",
+            "status": "Revisions Required",
+            "completedAt": "2026-01-20",
+            "by": "Utilities Department",
+            "comments": "See ConditionsDebbie Burns - (352) 527-7650 Opt# 4"
+          },
+          {
+            "dueAt": "2026-01-30",
+            "assignedTo": "Utilities Department",
+            "status": "Approved",
+            "completedAt": "2026-01-28",
+            "by": "Utilities Department",
+            "comments": "See ConditionsReviewed by Karen Poulin  (352) 527-7650 option 4"
+          }
+        ]
+      },
+      {
+        "task": "Building Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-01-23",
+            "assignedTo": "Luis Benitez",
+            "status": "Revisions Required",
+            "completedAt": "2026-01-15",
+            "by": "Luis Benitez",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-01-23",
+            "assignedTo": "Luis Benitez",
+            "status": "Revisions Received",
+            "completedAt": "2026-01-15",
+            "by": "Luis Benitez",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-01-28",
+            "assignedTo": "Luis Benitez",
+            "status": "Approved",
+            "completedAt": "2026-01-23",
+            "by": "Luis Benitez",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Plan Review Verification",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": "2026-01-27",
+            "assignedTo": null,
+            "status": "Revisions Required",
+            "completedAt": "2026-01-23",
+            "by": "DPR USER",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-01-27",
+            "assignedTo": "Donna Harris",
+            "status": "Revisions Received",
+            "completedAt": "2026-01-23",
+            "by": "DPR USER",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-01-27",
+            "assignedTo": "Donna Harris",
+            "status": "Revision Routing",
+            "completedAt": "2026-01-23",
+            "by": "DPR USER",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-01-30",
+            "assignedTo": "Donna Harris",
+            "status": "Validation in Review",
+            "completedAt": "2026-01-28",
+            "by": "DPR USER",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-01-30",
+            "assignedTo": "Donna Harris",
+            "status": "Ready to Issue",
+            "completedAt": "2026-01-29",
+            "by": "Donna Harris",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Permit Issuance",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": "2026-01-30",
+            "assignedTo": null,
+            "status": "Issued",
+            "completedAt": "2026-01-29",
+            "by": "Accela Administrator",
+            "comments": "Updated by EMSE PRA Script 129"
+          },
+          {
+            "dueAt": "2026-01-30",
+            "assignedTo": null,
+            "status": "Fees Due",
+            "completedAt": "2026-01-29",
+            "by": "Donna Harris",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Inspection",
+        "state": "active",
+        "history": [
+          {
+            "dueAt": "2026-01-29",
+            "assignedTo": null,
+            "status": null,
+            "completedAt": null,
+            "by": null,
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Closure",
+        "state": null,
+        "history": []
+      }
+    ],
+    "inspections": [
+      {
+        "number": "132304",
+        "code": "149",
+        "type": "EROSION",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  149 EROSION (132304)  Inspector: unassigned"
+      },
+      {
+        "number": "132976",
+        "code": "102",
+        "type": "MONO",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  102 MONO (132976)  Inspector: unassigned"
+      },
+      {
+        "number": "132977",
+        "code": "105",
+        "type": "LINTEL",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  105 LINTEL (132977)  Inspector: unassigned"
+      },
+      {
+        "number": "132978",
+        "code": "106",
+        "type": "ROOF SHEATHING",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  106 ROOF SHEATHING (132978)  Inspector: unassigned"
+      },
+      {
+        "number": "132979",
+        "code": "107",
+        "type": "WALL SHEATHING",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  107 WALL SHEATHING (132979)  Inspector: unassigned"
+      },
+      {
+        "number": "132980",
+        "code": "108",
+        "type": "FRAME",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  108 FRAME (132980)  Inspector: unassigned"
+      },
+      {
+        "number": "132981",
+        "code": "110",
+        "type": "INSULATION",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  110 INSULATION (132981)  Inspector: unassigned"
+      },
+      {
+        "number": "132982",
+        "code": "117",
+        "type": "BUILDING FINAL",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  117 BUILDING FINAL (132982)  Inspector: unassigned"
+      },
+      {
+        "number": "132983",
+        "code": "119",
+        "type": "STRUCTURAL FRAME",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  119 STRUCTURAL FRAME (132983)  Inspector: unassigned"
+      },
+      {
+        "number": "132984",
+        "code": "133",
+        "type": "SOFFIT IN PROGRESS",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  133 SOFFIT IN PROGRESS (132984)  Inspector: unassigned"
+      },
+      {
+        "number": "132985",
+        "code": "140",
+        "type": "ROOF DRY IN & FLASHING",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  140 ROOF DRY IN & FLASHING (132985)  Inspector: unassigned"
+      },
+      {
+        "number": "132986",
+        "code": "146",
+        "type": "BUILDING LATH NAILING",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  146 BUILDING LATH NAILING (132986)  Inspector: unassigned"
+      },
+      {
+        "number": "132989",
+        "code": "204",
+        "type": "ELECTRICAL ROUGH IN",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  204 ELECTRICAL ROUGH IN (132989)  Inspector: unassigned"
+      },
+      {
+        "number": "132990",
+        "code": "205",
+        "type": "ELECTRICAL FINAL",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  205 ELECTRICAL FINAL (132990)  Inspector: unassigned"
+      },
+      {
+        "number": "132992",
+        "code": "219",
+        "type": "CONCRETE ENCASED GROUND",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  219 CONCRETE ENCASED GROUND (132992)  Inspector: unassigned"
+      },
+      {
+        "number": "132993",
+        "code": "301",
+        "type": "MECHANICAL ROUGH IN",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  301 MECHANICAL ROUGH IN (132993)  Inspector: unassigned"
+      },
+      {
+        "number": "132994",
+        "code": "302",
+        "type": "MECHANICAL FINAL",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  302 MECHANICAL FINAL (132994)  Inspector: unassigned"
+      },
+      {
+        "number": "132995",
+        "code": "401",
+        "type": "PLUMBING ROUGH I",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  401 PLUMBING ROUGH I (132995)  Inspector: unassigned"
+      },
+      {
+        "number": "132996",
+        "code": "402",
+        "type": "PLUMBING ROUGH II",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  402 PLUMBING ROUGH II (132996)  Inspector: unassigned"
+      },
+      {
+        "number": "132997",
+        "code": "403",
+        "type": "SEWER",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  403 SEWER (132997)  Inspector: unassigned"
+      },
+      {
+        "number": "132998",
+        "code": "404",
+        "type": "WATER SERVICE",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  404 WATER SERVICE (132998)  Inspector: unassigned"
+      },
+      {
+        "number": "132999",
+        "code": "405",
+        "type": "PLUMBING FINAL",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  405 PLUMBING FINAL (132999)  Inspector: unassigned"
+      },
+      {
+        "number": "135066",
+        "code": "154",
+        "type": "RESIDENTIAL UTILITY FINAL",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  154 RESIDENTIAL UTILITY FINAL (135066)  Inspector: unassigned"
+      },
+      {
+        "number": "135093",
+        "code": "148",
+        "type": "RESIDENTIAL DRIVEWAY FINAL",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  148 RESIDENTIAL DRIVEWAY FINAL (135093)  Inspector: unassigned"
+      },
+      {
+        "number": "135094",
+        "code": "150",
+        "type": "RESIDENTIAL DRIVEWAY PRE-POUR",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  150 RESIDENTIAL DRIVEWAY PRE-POUR (135094)  Inspector: unassigned"
+      }
+    ],
+    "holds": [
+      {
+        "name": "Building - 7 Applied Building Permit Duct Leakage Test ReportPlease provide a Duck Leakage Test Report. Upload a copy of",
+        "type": "Notice",
+        "reason": null,
+        "comments": "Building - 7 Applied Building Permit Duct Leakage Test ReportPlease provide a Duck Leakage Test Report. Upload a copy of this document to your online account under document type ‘Duck Leakage Test Report’. If you do not see this document type, or have further questions regarding this condition or document, please contact planreview@citrusbocc.com Please do not upload this under any other incorrect document type.Applied",
+        "createdAt": "2026-01-15",
+        "active": true,
+        "status": "Applied"
+      },
+      {
+        "name": "Health Department Final ApprovalPlease provide a Health Department Final Approval. Upload a copy of this document to you",
+        "type": "Notice",
+        "reason": null,
+        "comments": "Health Department Final ApprovalPlease provide a Health Department Final Approval. Upload a copy of this document to your online account under the document type ‘Health Department Final Approval’. If you do not see this document type, or have further questions regarding this condition or document, please contact inspectionsupportstaff@citrusbocc.com Please do not upload this under any other incorrect document type.Applied",
+        "createdAt": "2026-01-15",
+        "active": true,
+        "status": "Applied"
+      },
+      {
+        "name": "Land Section“Per Section 86-46 of the Citrus County Code of Ordinances, the County has implemented procedures for collec",
+        "type": "Notice",
+        "reason": null,
+        "comments": "Land Section“Per Section 86-46 of the Citrus County Code of Ordinances, the County has implemented procedures for collecting an assessment prior to the issuance of the Certificate of Occupancy for: • new single-family residences, • new mobile homes, • new non-residential buildings, and • may also include any modifications to the size/impervious area of a structure or property within the County. Please submit a request for Interim Assessment Fees to be applied on a permit when scheduling Final Inspections, prior to your Certificate of Occupancy being issued to Land-NoReply@citrusbocc.com. Be sure to include the complete permit number, site address and contact information so we may better assist you. Thank you.Applied",
+        "createdAt": "2026-01-15",
+        "active": true,
+        "status": "Applied"
+      },
+      {
+        "name": "Envelope Leakage TestPlease provide an Envelope Leakage Test. Upload a copy of this document to your online account unde",
+        "type": "Notice",
+        "reason": null,
+        "comments": "Envelope Leakage TestPlease provide an Envelope Leakage Test. Upload a copy of this document to your online account under document type ‘Envelope Leakage Test Report’. If you do not see this document type, or have further questions regarding this condition or document, please contact planreview@citrusbocc.com Please do not upload this under any other incorrect document type.Applied",
+        "createdAt": "2026-01-14",
+        "active": true,
+        "status": "Applied"
+      },
+      {
+        "name": "Insulation CertificatePlease provide an Insulation Certificate. Upload a copy of this document to your online account un",
+        "type": "Notice",
+        "reason": null,
+        "comments": "Insulation CertificatePlease provide an Insulation Certificate. Upload a copy of this document to your online account under the document type ‘Insulation Certificate’. If you do not see this document type, or have further questions regarding this condition or document, please contact planreview@citrusbocc.com Please do not upload this under any other incorrect document type.Applied",
+        "createdAt": "2026-01-14",
+        "active": true,
+        "status": "Applied"
+      },
+      {
+        "name": "Building - 7 Applied Building Permit Notice of CommencementPlease provide a Notice of Commencement. Upload a copy of thi",
+        "type": "Notice",
+        "reason": null,
+        "comments": "Building - 7 Applied Building Permit Notice of CommencementPlease provide a Notice of Commencement. Upload a copy of this document to your online account under the document type ‘Notice of Commencement’. If you do not see this document type, or have further questions regarding this condition or document, please contact permit@citrusbocc.com Please do not upload this under any other incorrect document type.Applied",
+        "createdAt": "2026-01-14",
+        "active": true,
+        "status": "Applied"
+      },
+      {
+        "name": "Termite Treatment CertificatePlease provide a Final Termite Treatment Certificate. Upload a copy of this document to you",
+        "type": "Notice",
+        "reason": null,
+        "comments": "Termite Treatment CertificatePlease provide a Final Termite Treatment Certificate. Upload a copy of this document to your online account under the document type ‘Termite Certificate’. **Please note that if a termite bait system has been used for termite treatment compliance a copy of the contract/agreement for the installation, monitoring and maintenance is required. Both documents may be uploaded into ‘Termite Treatment Certificate’.** If you do not see this document type, or have further questions regarding this condition or document, please contact planreview@citrusbocc.com Please do not upload this under any other incorrect document type.Applied",
+        "createdAt": "2026-01-14",
+        "active": true,
+        "status": "Applied"
+      }
+    ],
+    "contacts": [],
+    "feeSummary": null,
+    "subRecords": [
+      {
+        "number": "BLD2601-0420.RR01",
+        "type": "",
+        "status": null,
+        "date": "2026-07-13"
+      },
+      {
+        "number": "EXTP2607-3014",
+        "type": "",
+        "status": null,
+        "date": "2026-07-23"
+      }
+    ],
+    "collectedAt": "2026-09-28T21:35:25.008Z"
+  }
+}
