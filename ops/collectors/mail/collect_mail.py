@@ -90,9 +90,37 @@ JOB_RE = re.compile(r"(?:^|for |job '|job \")(\d{4}|S\d{3}) - ")
 AMOUNT_RE = re.compile(r'\$([\d,]+(?:\.\d{2})?)')
 
 
+def field(body, label):
+    m = re.search(r'(?:^|\n)\s*' + label + r'\s+(.+?)\s*(?:\n|$)', body or '', re.I)
+    return m.group(1).strip() if m else None
+
+
+def money(v):
+    try:
+        return float(v.replace('$', '').replace(',', '')) if v else None
+    except ValueError:
+        return None
+
+
+def work_request(body):
+    # Website form (noreply@notify.pkbhomes.com): "Nome… Empresa… Telefone… E-mail…" run together.
+    t = re.sub(r'\s+', ' ', body or '')
+    grab = lambda a, b: (re.search(a + r'\s*(.*?)\s*(?=' + b + r'|$)', t) or [None, None])[1]
+    return {k: (v or '').strip() or None for k, v in {
+        'client': grab('CLIENTE Nome', 'Empresa'), 'company': grab('Empresa', 'Telefone'),
+        'phone': grab('Telefone', 'E-mail'), 'email': grab('E-mail', 'PROJETO|🏠'),
+        'address': grab('Endereço-?', 'Cidade'), 'city': grab('Cidade', 'Parcel ID'),
+        'parcel': grab('Parcel ID', 'Modelo'), 'model': grab('Modelo', 'County'),
+        'county': grab('County', 'Preço'), 'price': grab('Preço', 'CORRETOR|📋'),
+        'agent': grab('CORRETOR Nome', 'Telefone'),
+    }.items()}
+
+
 def classify(from_addr, subject, body):
     f, s = (from_addr or '').lower(), subject or ''
     parsed = {}
+    if 'notify.pkbhomes.com' in f or re.search(r'new work request', s, re.I):
+        return 'work_request', work_request(body)
     m = AMOUNT_RE.search(s)
     if m:
         parsed['amount'] = float(m.group(1).replace(',', ''))
@@ -102,10 +130,14 @@ def classify(from_addr, subject, body):
             parsed.update(actor=a.group(1), action=a.group(2))
         if re.search(r'daily log', s, re.I):
             return 'bt_daily_log', parsed
-        if re.search(r'invoice', s, re.I) and re.search(r'\bpaid\b|payment (?:received|made)|has been paid', s + ' ' + body[:500], re.I):
-            parsed['action'] = 'paid'
-            return 'bt_invoice_paid', parsed
         if re.search(r'invoice', s, re.I):
+            # Structured block in the notification: Title / ID # / Status / Invoice amount / Balance due.
+            parsed.update({k: v for k, v in {
+                'title': field(body, 'Title'), 'invoice_id': field(body, 'ID #'), 'status': field(body, 'Status'),
+                'deadline': field(body, 'Deadline'), 'invoice_amount': money(field(body, 'Invoice amount')),
+                'balance_due': money(field(body, 'Balance due'))}.items() if v is not None})
+            if (parsed.get('status') or '').lower() == 'paid' or (parsed.get('balance_due') == 0 and parsed.get('invoice_amount')):
+                return 'bt_invoice_paid', parsed
             return 'bt_invoice', parsed
         if re.search(r'\bbill\b', s, re.I):
             if re.search(r'payment made', s, re.I):
@@ -204,5 +236,17 @@ def main():
     print('by category:', json.dumps(counts, sort_keys=True))
 
 
+def reparse():
+    # Re-classify stored messages with the current rules (no mailbox access needed).
+    rows = sql("select id, from_addr, subject, body_text from ops.inbound_emails")
+    for r in rows:
+        cat, parsed = classify(r['from_addr'], r['subject'], r['body_text'] or '')
+        jm = JOB_RE.search(r['subject'] or '') or JOB_RE.search((r['body_text'] or '')[:400])
+        jn = jm.group(1) if jm else None
+        sql(f"update ops.inbound_emails set category = {q(cat)}, parsed = {q(json.dumps(parsed))}::jsonb, job_number = {q(jn)}, "
+            f"job_id = (select j.id from ops.jobs j where j.org_id = ops.inbound_emails.org_id and j.job_number = {q(jn)}) where id = {q(r['id'])}")
+    print('reparsed', len(rows))
+
+
 if __name__ == '__main__':
-    main()
+    reparse() if '--reparse' in sys.argv else main()
