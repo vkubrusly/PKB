@@ -1,0 +1,25 @@
+name: PKB Ops — bot mailbox (list recent)
+
+# Lists the most recent messages in the bot mailbox (date, from, subject; no bodies)
+# over IMAP with the Gmail app password. First step toward the permit e-mail parser.
+
+on:
+  workflow_dispatch:
+    inputs:
+      count:
+        description: 'How many recent messages to list'
+        required: false
+        default: '40'
+
+jobs:
+  list:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults: { run: { working-directory: ops } }
+    steps:
+      - uses: actions/checkout@v4
+      - name: List recent messages
+        env:
+          BOT_EMAIL: ${{ secrets.BOT_EMAIL || 'botpkbhomes@gmail.com' }}
+          BOT_EMAIL_PASSWORD: ${{ secrets.BOT_EMAIL_PASSWORD }}
+        run: python3 collectors/mail/imap_probe.py "${{ inputs.count || '40' }}"
