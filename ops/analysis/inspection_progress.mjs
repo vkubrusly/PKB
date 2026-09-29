@@ -24,6 +24,29 @@ const median = (a) => {
   return s.length % 2 ? s[m] : Math.round((s[m - 1] + s[m]) / 2);
 };
 
+// The permit's own inspection list (ops.permit_cases.inspection_plan, or for Accela the
+// inspections the portal lists up front) turned into a checklist: steps the portal requires
+// for THIS permit, with names/order/finals from the county template where they match.
+// Types the template does not know become their own steps (legacy "ZZ …" types are optional;
+// unknown non-finals go first, so they read as "not recorded" once later steps pass).
+const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+export function planChecklist(planTypes, template = []) {
+  const types = [...new Set((planTypes || []).map((t) => String(t).trim()).filter(Boolean))];
+  if (!types.length) return null;
+  const used = new Set(), steps = [], extra = [], extraFinal = [];
+  for (const t of types) {
+    const s = /^zz\b/i.test(t) ? null : template.find((x) => x.re.test(t)); // legacy "ZZ …" types never stand for a template step
+    if (s) { if (!used.has(s.key)) used.add(s.key); continue; }
+    const final = /final|^power release|department of health/i.test(t);
+    const step = { key: 'x:' + t.toLowerCase(), name: t.replace(/ - 1 ?& ?2 Res(idential)? Fam(ily)?$/i, '').trim(), match: '^' + esc(t) + '$', re: new RegExp('^' + esc(t) + '$', 'i'), final, optional: /^zz\b/i.test(t) };
+    (final ? extraFinal : extra).push(step);
+  }
+  for (const s of template) if (used.has(s.key)) steps.push({ ...s, optional: !!s.alwaysOptional });
+  const firstFinal = steps.findIndex((s) => s.final);
+  const body = firstFinal < 0 ? steps : steps.slice(0, firstFinal), tail = firstFinal < 0 ? [] : steps.slice(firstFinal);
+  return [...extra, ...body, ...tail, ...extraFinal];
+}
+
 export function loadChecklists() {
   const p = new URL('../config/inspection_checklists.json', import.meta.url);
   const raw = JSON.parse(readFileSync(p, 'utf8'));
@@ -41,7 +64,7 @@ const isCancel = (i) => /cancel/i.test(i.status || '');
 const when = (i) => i.actual_at || i.scheduled_at || i.requested_at;
 
 // inspections: [{type, status, passed, failed, requested_at, scheduled_at, actual_at}]
-export function stepStatus(inspections, checklist) {
+export function stepStatus(inspections, checklist, { inferSkipped = true } = {}) {
   const steps = checklist.map((s) => ({ key: s.key, name: s.name, optional: !!s.optional, final: !!s.final, attempts: 0, failures: 0, passedAt: null, lastAt: null, lastStatus: null }));
   const unmatched = [];
   const sorted = [...inspections].sort((a, b) => String(when(a) || '').localeCompare(String(when(b) || '')));
@@ -66,7 +89,8 @@ export function stepStatus(inspections, checklist) {
   }
   // A never-requested step that sits before the last passed non-final step was done off-portal
   // (or under another permit): don't report it as remaining.
-  const lastPassedIdx = steps.reduce((m, s, i) => (s.state === 'passed' && !s.final ? i : m), -1);
+  // Not for Accela (Citrus): its portal keeps every open inspection on the permit, so pending is real.
+  const lastPassedIdx = inferSkipped ? steps.reduce((m, s, i) => (s.state === 'passed' && !s.final ? i : m), -1) : -1;
   steps.forEach((s, i) => { if (s.state === 'pending' && i < lastPassedIdx) s.state = 'not_recorded'; });
   return { steps, unmatched: [...new Set(unmatched)] };
 }
@@ -75,10 +99,10 @@ export function stepStatus(inspections, checklist) {
 export function benchmarks(jobs, checklists) {
   const acc = {};
   for (const j of jobs) {
-    const cl = checklists[j.portal];
+    const cl = planChecklist(j.plan, checklists[j.portal]) || checklists[j.portal];
     const issued = toDate(j.issued_at);
     if (!cl || !issued) continue;
-    const { steps } = stepStatus(j.inspections, cl);
+    const { steps } = stepStatus(j.inspections, cl, { inferSkipped: !/^accela:/.test(j.portal || '') });
     for (const s of steps) {
       if (!s.passedAt) continue;
       ((acc[j.portal] ??= {})[s.key] ??= []).push(Math.round((toDate(s.passedAt) - issued) / DAY));
@@ -93,9 +117,9 @@ export function benchmarks(jobs, checklists) {
 }
 
 export function jobProgress(job, checklists, bench, asOf = new Date()) {
-  const cl = checklists[job.portal];
+  const cl = planChecklist(job.plan, checklists[job.portal]) || checklists[job.portal];
   if (!cl) return { supported: false, reason: `no checklist for ${job.portal || 'unknown portal'}` };
-  const { steps, unmatched } = stepStatus(job.inspections || [], cl);
+  const { steps, unmatched } = stepStatus(job.inspections || [], cl, { inferSkipped: !/^accela:/.test(job.portal || '') });
   const b = bench[job.portal] || {};
   const today = toDate(iso(asOf));
   const required = steps.filter((s) => !s.optional);
@@ -139,6 +163,7 @@ export function jobProgress(job, checklists, bench, asOf = new Date()) {
     coEstimate,
     coEstimateNote: coEstimate ? null : `final inspections lack history (${insufficient.filter((n) => finals.some((f) => f.name === n)).join(', ') || 'n/a'}); estimate CO from ready-for-finals plus the finals turnaround once more jobs close`,
     unmatchedTypes: unmatched,
+    planSource: job.plan ? 'portal' : 'template',
     steps: steps.map((s) => ({ name: s.name, state: s.state, optional: s.optional, final: s.final, passedAt: s.passedAt, failures: s.failures, lastComments: s.state === 'failed_open' ? s.lastComments : undefined })),
   };
 }
@@ -146,15 +171,19 @@ export function jobProgress(job, checklists, bench, asOf = new Date()) {
 async function main() {
   const { sql } = await import('../scripts/sb.mjs');
   const rows = await sql(`
-    select j.job_number, c.portal, c.issued_at, i.type, i.status, i.passed, i.failed, i.requested_at, i.scheduled_at, i.actual_at, i.comments
+    select j.job_number, c.portal, c.issued_at, c.inspection_plan, i.type, i.status, i.passed, i.failed, i.requested_at, i.scheduled_at, i.actual_at, i.comments
     from ops.permit_cases c join ops.jobs j on j.id = c.job_id
     left join ops.inspections i on i.permit_case_id = c.id
     where c.kind = 'building' and c.issued_at is not null`);
   const jobs = {};
   for (const r of rows) {
-    const j = (jobs[r.job_number] ??= { job_number: r.job_number, portal: r.portal, issued_at: r.issued_at, inspections: [] });
+    const j = (jobs[r.job_number] ??= { job_number: r.job_number, portal: r.portal, issued_at: r.issued_at, inspections: [], plan: r.inspection_plan?.required || null });
     if (r.type) j.inspections.push(r);
   }
+  // Accela (Citrus) lists every required inspection on the permit from day one ("Pending"):
+  // the permit's plan is simply every type it lists, except those marked Not Required.
+  for (const j of Object.values(jobs)) if (!j.plan && /^accela:/.test(j.portal || '') && j.inspections.length)
+    j.plan = [...new Set(j.inspections.filter((i) => !/not required/i.test(i.status || '')).map((i) => i.type))];
   const cls = loadChecklists();
   const bench = benchmarks(Object.values(jobs), cls);
   const out = { benchmarks: bench, jobs: {} };
