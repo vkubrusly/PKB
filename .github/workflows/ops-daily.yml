@@ -93,7 +93,7 @@ jobs:
       # R-INSP-FAIL: e-mail supervisor/PMs/Cristiano about new failed inspections (with the
       # inspector's comments) and queue a Buildertrend Daily Log. Sends only when the repo
       # variable OPS_SEND_ENABLED is 'true'; otherwise every message is stored as a draft.
-      - name: Rules — failed inspections, photo gaps
+      - name: Rules — failed inspections, idle jobs
         continue-on-error: true
         env:
           BOT_EMAIL: ${{ secrets.BOT_EMAIL || 'botpkbhomes@gmail.com' }}
@@ -101,7 +101,7 @@ jobs:
           OPS_SEND_ENABLED: ${{ vars.OPS_SEND_ENABLED || 'false' }}
         run: |
           node rules/inspection_failed.mjs
-          node rules/photos_stale.mjs
+          node rules/job_idle.mjs
 
       # R1/R2: corrections e-mail to Sovereign (Guilherme in Cc) and follow-ups after
       # 2 business days per failed item. Leaves PKB, so it runs only when the repository
