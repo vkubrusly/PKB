@@ -1,0 +1,19 @@
+{
+  "county": "northport",
+  "stage": "permit",
+  "collectedAt": "2026-09-29T23:17:26.853Z",
+  "permits": [
+    {
+      "permit": "PCZC-26-00466",
+      "found": true,
+      "status": "Schedule Inspection",
+      "file": "/home/user/PKB/ops/data/portal/northport/PCZC-26-00466.json"
+    },
+    {
+      "permit": "PCZC-26-00467",
+      "found": false,
+      "status": null,
+      "file": "/home/user/PKB/ops/data/portal/northport/PCZC-26-00467.json"
+    }
+  ]
+}

@@ -51,7 +51,7 @@ function parseCsv(text) {
 }
 
 const STATUS = { 'Completed': 'completed', 'Construction': 'construction', 'Licensing': 'licensing', 'Starting Process': 'starting', 'Stand-By': 'stand_by', 'Turtle': 'licensing' };
-const PORTAL_OF_COUNTY = { Marion: 'energov:marion', Citrus: 'accela:citrus', Orange: 'fasttrack:orange', Charlotte: 'charlotte', Sarasota: 'sarasota', Lake: 'lake' };
+const PORTAL_OF_COUNTY = { Marion: 'energov:marion', Citrus: 'accela:citrus', Orange: 'fasttrack:orange', Charlotte: 'accela:charlotte', Sarasota: 'accela:northport', Lake: 'lake' };
 
 const out = [];
 const w = (s) => out.push(s);
@@ -181,7 +181,7 @@ and not exists (select 1 from ops.job_pauses p where p.job_id = j.id and p.reaso
 
 // ---- Portal data (EnerGov, Accela) ----
 const portalDir = join(ROOT, 'data', 'portal');
-const PORTAL_OF_DIR = { citrus: 'accela:citrus' }; // default: energov:<dir>
+const PORTAL_OF_DIR = { citrus: 'accela:citrus', charlotte: 'accela:charlotte', northport: 'accela:northport' }; // default: energov:<dir>
 for (const county of existsSync(portalDir) ? readdirSync(portalDir) : []) {
   const portal = PORTAL_OF_DIR[county] || `energov:${county}`;
   for (const f of readdirSync(join(portalDir, county)).filter(f => f.endsWith('.json') && !f.startsWith('_'))) {

@@ -1,0 +1,19 @@
+{
+  "county": "charlotte",
+  "stage": "permit",
+  "collectedAt": "2026-09-29T23:18:32.921Z",
+  "permits": [
+    {
+      "permit": "20260204476",
+      "found": true,
+      "status": "Permit Issued",
+      "file": "/home/user/PKB/ops/data/portal/charlotte/20260204476.json"
+    },
+    {
+      "permit": "20260205292",
+      "found": true,
+      "status": "Permit Issued",
+      "file": "/home/user/PKB/ops/data/portal/charlotte/20260205292.json"
+    }
+  ]
+}

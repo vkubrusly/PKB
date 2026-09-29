@@ -1,0 +1,1081 @@
+{
+  "permitNumber": "20260204476",
+  "found": true,
+  "url": "https://aca-prod.accela.com/BOCC/Cap/CapDetail.aspx?Module=Building&TabName=Building&capID1=26SF&capID2=00000&capID3=00316&agencyCode=BOCC&IsToShowInspection=",
+  "permit": {
+    "number": "20260204476",
+    "caseId": "26SF-00000-00316",
+    "county": "charlotte",
+    "type": "Residential Single Family",
+    "workclass": null,
+    "status": "Permit Issued",
+    "projectName": null,
+    "address": "9508 GALAXIE CIR Port Charlotte FL 33981 ADDRESSKEY: 37992 ADDID: 98574 HISTORICAL: HISTORICAL *",
+    "parcel": null,
+    "appliedAt": null,
+    "issuedAt": null,
+    "expiresAt": null,
+    "finalizedAt": null,
+    "squareFeet": null,
+    "valuation": null,
+    "description": null,
+    "submittals": [
+      {
+        "submittalId": "round-1",
+        "version": 1,
+        "type": "Plan Review",
+        "status": "Revisions Required",
+        "submittedAt": "2026-02-25",
+        "dueAt": null,
+        "completedAt": "2026-03-04"
+      },
+      {
+        "submittalId": "round-2",
+        "version": 2,
+        "type": "Plan Review",
+        "status": "In Review",
+        "submittedAt": "2026-03-04",
+        "dueAt": null,
+        "completedAt": null
+      },
+      {
+        "submittalId": "round-3",
+        "version": 3,
+        "type": "Plan Review",
+        "status": "Revisions Required",
+        "submittedAt": "2026-05-21",
+        "dueAt": null,
+        "completedAt": "2026-05-28"
+      },
+      {
+        "submittalId": "round-4",
+        "version": 4,
+        "type": "Plan Review",
+        "status": "Revisions Required",
+        "submittedAt": "2026-05-28",
+        "dueAt": null,
+        "completedAt": "2026-06-09"
+      },
+      {
+        "submittalId": "round-5",
+        "version": 5,
+        "type": "Plan Review",
+        "status": "Approved",
+        "submittedAt": "2026-06-09",
+        "dueAt": null,
+        "completedAt": "2026-07-08"
+      },
+      {
+        "submittalId": "round-6",
+        "version": 6,
+        "type": "Plan Review",
+        "status": "In Review",
+        "submittedAt": "2026-07-08",
+        "dueAt": null,
+        "completedAt": null
+      },
+      {
+        "submittalId": "round-7",
+        "version": 7,
+        "type": "Plan Review",
+        "status": "Revisions Required",
+        "submittedAt": "2026-07-08",
+        "dueAt": null,
+        "completedAt": "2026-07-16"
+      },
+      {
+        "submittalId": "round-8",
+        "version": 8,
+        "type": "Plan Review",
+        "status": "In Review",
+        "submittedAt": "2026-07-16",
+        "dueAt": null,
+        "completedAt": null
+      },
+      {
+        "submittalId": "round-9",
+        "version": 9,
+        "type": "Plan Review",
+        "status": "Approved",
+        "submittedAt": "2026-08-05",
+        "dueAt": null,
+        "completedAt": "2026-08-06"
+      },
+      {
+        "submittalId": "round-10",
+        "version": 10,
+        "type": "Plan Review",
+        "status": "Approved",
+        "submittedAt": "2026-08-06",
+        "dueAt": null,
+        "completedAt": "2026-08-11"
+      }
+    ],
+    "reviewItems": [
+      {
+        "itemReviewId": "Tree Plans Review||1",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Tree Plans Review",
+        "status": "Rejected",
+        "assignedTo": "Jenni Franano",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-02-27",
+        "comments": "Please submit a tree survey with the common names, location and caliper inch measurement of the trees on site.",
+        "by": "Jenni Franano"
+      },
+      {
+        "itemReviewId": "Tree Plans Review||2",
+        "submittalId": "round-3",
+        "round": 3,
+        "department": "Tree Plans Review",
+        "status": "Revision Received",
+        "assignedTo": "Jeanne Spica",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-05-28",
+        "comments": null,
+        "by": "Jeanne Spica"
+      },
+      {
+        "itemReviewId": "Tree Plans Review||3",
+        "submittalId": "round-4",
+        "round": 4,
+        "department": "Tree Plans Review",
+        "status": "Approved",
+        "assignedTo": "Jenni Franano",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-05-29",
+        "comments": "Removing all 4 trees, all exempt.If there are changes to the number of trees to be removed/preserved submit a Plans Change.All prohibited tree species are required to be removed for the CO.  No work is to be done beyond the property line.",
+        "by": "Jenni Franano"
+      },
+      {
+        "itemReviewId": "Natural Resources Plans Review||1",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Natural Resources Plans Review",
+        "status": "Rejected",
+        "assignedTo": "Jenni Franano",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-02-27",
+        "comments": "Please submit a tree survey with the common names, location and caliper inch measurement of the trees on site.",
+        "by": "Jenni Franano"
+      },
+      {
+        "itemReviewId": "Natural Resources Plans Review||2",
+        "submittalId": "round-3",
+        "round": 3,
+        "department": "Natural Resources Plans Review",
+        "status": "Revision Received",
+        "assignedTo": "Jeanne Spica",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-05-28",
+        "comments": null,
+        "by": "Jeanne Spica"
+      },
+      {
+        "itemReviewId": "Natural Resources Plans Review||3",
+        "submittalId": "round-4",
+        "round": 4,
+        "department": "Natural Resources Plans Review",
+        "status": "Approved",
+        "assignedTo": "Jenni Franano",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-05-29",
+        "comments": "Approved per submitted/master site development plan.It is the applicant’s responsibility to follow all mandated federal, state and county guidelines and regulations throughout the project. Failure to do so could subject you to enforcement action by the respective agency. Applicant must maintain a 25’ no disturb buffer from all potential gopher tortoise burrows.  If this is not possible, please contact the Florida Fish & Wildlife Conservation Commission for avoidance/mitigation measures prior to work starting or continuing.",
+        "by": "Jenni Franano"
+      },
+      {
+        "itemReviewId": "Charlotte Co Utilities Plans Review||1",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Charlotte Co Utilities Plans Review",
+        "status": "Approved",
+        "assignedTo": "Dawn Pressley",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-02-25",
+        "comments": "CCU Water and LPS Sewer",
+        "by": "Dawn Pressley"
+      },
+      {
+        "itemReviewId": "Address Plans Review||1",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Address Plans Review",
+        "status": "Approved",
+        "assignedTo": "Chandler Hucknall",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-02-27",
+        "comments": null,
+        "by": "Chandler Hucknall"
+      },
+      {
+        "itemReviewId": "Building Plans Review||1",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Building Plans Review",
+        "status": "Rejected",
+        "assignedTo": "Christopher Bellitt",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-03-02",
+        "comments": "Please Revise: [A]107.2:(1.) Energy Calcs, windows are noted as vinyl frame, NOA list all windows are aluminum, revise as applicable to proposed project.(2.) EOR to identify all required truss to structure connections exceeding #4365.(3.) FFE does not comply with requirements of FBC. R322.2.1. Flood vents may be required in garage depending on revision. Locations and volume calculations would be required. R322.2.2, R322.2.2.1. Stemwall construction may be required for compliance with county ordinances. R322.2Flood hazard areas (including A Zones), R322.2.3Foundation design and construction., CCO 3-5-118: Shall be NAVD., CCO 3-2-283 (1): (Slopes)Not to exceed 6:1 in SFHA., Charlotte County Ordinance (CCO): 3-5-93 (2): Drainage to an approved drainage facility without interfering with the proper drainage of surrounding properties., CCO 3-2-283 (2): Max fill no more than 4’ from average grade at property line.Permit subject to additional review upon resubmittal.",
+        "by": "Christopher Bellitt"
+      },
+      {
+        "itemReviewId": "Building Plans Review||2",
+        "submittalId": "round-3",
+        "round": 3,
+        "department": "Building Plans Review",
+        "status": "Revision Received",
+        "assignedTo": "Jeanne Spica",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-05-28",
+        "comments": null,
+        "by": "Jeanne Spica"
+      },
+      {
+        "itemReviewId": "Building Plans Review||3",
+        "submittalId": "round-4",
+        "round": 4,
+        "department": "Building Plans Review",
+        "status": "Rejected",
+        "assignedTo": "Christopher Bellitt",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-06-03",
+        "comments": "Issue Still Pending,(2.) EOR to identify all required truss to structure connections exceeding #4365.New issue. Revise foundation page to show the required stem wall footer size and reinforcing details.Permit subject to additional review upon resubmittal.",
+        "by": "Christopher Bellitt"
+      },
+      {
+        "itemReviewId": "Building Plans Review||4",
+        "submittalId": "round-5",
+        "round": 5,
+        "department": "Building Plans Review",
+        "status": "Revision Received",
+        "assignedTo": "Jeanne Spica",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-07-08",
+        "comments": null,
+        "by": "Jeanne Spica"
+      },
+      {
+        "itemReviewId": "Building Plans Review||5",
+        "submittalId": "round-7",
+        "round": 7,
+        "department": "Building Plans Review",
+        "status": "Rejected",
+        "assignedTo": "Christopher Bellitt",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-07-16",
+        "comments": "Issue Still Pending,(2.) EOR to identify all required truss to structure connections exceeding #4365. See issue on truss layout page.Permit subject to additional review upon resubmittal.",
+        "by": "Christopher Bellitt"
+      },
+      {
+        "itemReviewId": "Building Plans Review||6",
+        "submittalId": "round-9",
+        "round": 9,
+        "department": "Building Plans Review",
+        "status": "Revision Received",
+        "assignedTo": "Jeanne Spica",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-08-06",
+        "comments": null,
+        "by": "Jeanne Spica"
+      },
+      {
+        "itemReviewId": "Building Plans Review||7",
+        "submittalId": "round-10",
+        "round": 10,
+        "department": "Building Plans Review",
+        "status": "Approved",
+        "assignedTo": "Christopher Bellitt",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-08-11",
+        "comments": "EOR: R.M. Depaula,CMU, BFE 8AE, ACH-6.00, QN-.040",
+        "by": "Christopher Bellitt"
+      },
+      {
+        "itemReviewId": "ROW Plans Review||1",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "ROW Plans Review",
+        "status": "Rejected",
+        "assignedTo": "Robert Lee",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-03-04",
+        "comments": "max width driveway flares are 3', plan shows 5'",
+        "by": "Robert Lee"
+      },
+      {
+        "itemReviewId": "ROW Plans Review||2",
+        "submittalId": "round-3",
+        "round": 3,
+        "department": "ROW Plans Review",
+        "status": "Revision Received",
+        "assignedTo": "Jeanne Spica",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-05-28",
+        "comments": null,
+        "by": "Jeanne Spica"
+      },
+      {
+        "itemReviewId": "ROW Plans Review||3",
+        "submittalId": "round-4",
+        "round": 4,
+        "department": "ROW Plans Review",
+        "status": "Approved",
+        "assignedTo": "Robert Lee",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-06-09",
+        "comments": null,
+        "by": "Robert Lee"
+      },
+      {
+        "itemReviewId": "ROW Plans Review||4",
+        "submittalId": "round-5",
+        "round": 5,
+        "department": "ROW Plans Review",
+        "status": "Revision Received",
+        "assignedTo": "Jeanne Spica",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-07-08",
+        "comments": null,
+        "by": "Jeanne Spica"
+      },
+      {
+        "itemReviewId": "ROW Plans Review||5",
+        "submittalId": "round-7",
+        "round": 7,
+        "department": "ROW Plans Review",
+        "status": "Approved",
+        "assignedTo": "Robert Lee",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-07-09",
+        "comments": null,
+        "by": "Robert Lee"
+      },
+      {
+        "itemReviewId": "ROW Plans Review||6",
+        "submittalId": "round-9",
+        "round": 9,
+        "department": "ROW Plans Review",
+        "status": "Approved",
+        "assignedTo": "Robert Lee",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-08-06",
+        "comments": null,
+        "by": "Robert Lee"
+      },
+      {
+        "itemReviewId": "ROW Plans Review||7",
+        "submittalId": "round-9",
+        "round": 9,
+        "department": "ROW Plans Review",
+        "status": "Revision Received",
+        "assignedTo": "Jeanne Spica",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-08-06",
+        "comments": null,
+        "by": "Jeanne Spica"
+      },
+      {
+        "itemReviewId": "Zoning Plans Review||1",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Zoning Plans Review",
+        "status": "Rejected",
+        "assignedTo": "Dustin J Cuddy",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-02-27",
+        "comments": "1. Survey is missing the letter G in the panel number for the flood zone. Charlotte County Municode 3-9-52. Site plan is missing the letter G in the panel number for the flood zone. Charlotte County Municode 3-9-53. Elevations page needs to have the finished floor elevation labeled where the first habitable floor is located. Cannot accept \"First floor.\"* Due to the missing information, review is incomplete, and more comments may follow. *",
+        "by": "Dustin J Cuddy"
+      },
+      {
+        "itemReviewId": "Zoning Plans Review||2",
+        "submittalId": "round-3",
+        "round": 3,
+        "department": "Zoning Plans Review",
+        "status": "Rejected",
+        "assignedTo": "Dustin J Cuddy",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-05-28",
+        "comments": "The site plan is missing the MAFL(Mean Annual Flood Line) labeled. Site plan should mimic the survey. Cannot accept the verbiage \"Edge of Water.\"* Due to the missing information, review is incomplete, and more comments may follow. *",
+        "by": "Dustin J Cuddy"
+      },
+      {
+        "itemReviewId": "Zoning Plans Review||3",
+        "submittalId": "round-3",
+        "round": 3,
+        "department": "Zoning Plans Review",
+        "status": "Revision Received",
+        "assignedTo": "Jeanne Spica",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-05-28",
+        "comments": null,
+        "by": "Jeanne Spica"
+      },
+      {
+        "itemReviewId": "Zoning Plans Review||4",
+        "submittalId": "round-5",
+        "round": 5,
+        "department": "Zoning Plans Review",
+        "status": "Revision Received",
+        "assignedTo": "Jeanne Spica",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-07-08",
+        "comments": null,
+        "by": "Jeanne Spica"
+      },
+      {
+        "itemReviewId": "Zoning Plans Review||5",
+        "submittalId": "round-7",
+        "round": 7,
+        "department": "Zoning Plans Review",
+        "status": "Approved",
+        "assignedTo": "Dustin J Cuddy",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-07-10",
+        "comments": null,
+        "by": "Dustin J Cuddy"
+      },
+      {
+        "itemReviewId": "Zoning Plans Review||6",
+        "submittalId": "round-9",
+        "round": 9,
+        "department": "Zoning Plans Review",
+        "status": "Revision Received",
+        "assignedTo": "Jeanne Spica",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-08-06",
+        "comments": null,
+        "by": "Jeanne Spica"
+      },
+      {
+        "itemReviewId": "Zoning Plans Review||7",
+        "submittalId": "round-9",
+        "round": 9,
+        "department": "Zoning Plans Review",
+        "status": "Revision Received",
+        "assignedTo": "Jeanne Spica",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-08-06",
+        "comments": null,
+        "by": "Jeanne Spica"
+      },
+      {
+        "itemReviewId": "Zoning Plans Review||8",
+        "submittalId": "round-10",
+        "round": 10,
+        "department": "Zoning Plans Review",
+        "status": "Approved",
+        "assignedTo": "Dustin J Cuddy",
+        "assignedToEmail": null,
+        "dueAt": null,
+        "completedAt": "2026-08-07",
+        "comments": null,
+        "by": "Dustin J Cuddy"
+      }
+    ],
+    "workflow": [
+      {
+        "task": "Pay Fees",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "View Details",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "View Details",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "View Details",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "View Details",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "View Details",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Intake Sufficiency Review",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": null,
+            "assignedTo": "dpr dpr",
+            "status": "Awaiting Plans",
+            "completedAt": "2026-02-15",
+            "by": "dpr dpr",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "dpr dpr",
+            "status": "Plans Submitted",
+            "completedAt": "2026-02-15",
+            "by": "dpr dpr",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Cassandra Gant",
+            "status": "Insufficient",
+            "completedAt": "2026-02-18",
+            "by": "Cassandra Gant",
+            "comments": "- Delete and reupload the Sewer/Water Affidavit after correcting the job address at the top."
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "dpr dpr",
+            "status": "Plans Submitted",
+            "completedAt": "2026-02-22",
+            "by": "dpr dpr",
+            "comments": "Review package submitted by: PUBLICUSER103316"
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Cassandra Gant",
+            "status": "Sufficient",
+            "completedAt": "2026-02-25",
+            "by": "Cassandra Gant",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Plans Distribution",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": null,
+            "assignedTo": "Cassandra Gant",
+            "status": "Routed for Review",
+            "completedAt": "2026-02-25",
+            "by": "Cassandra Gant",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Heidi Clement",
+            "status": "Awaiting Revisions",
+            "completedAt": "2026-03-04",
+            "by": "Heidi Clement",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "dpr dpr",
+            "status": "Revision Received",
+            "completedAt": "2026-05-21",
+            "by": "dpr dpr",
+            "comments": "Review package submitted by: PUBLICUSER103316"
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Jeanne Spica",
+            "status": "Routed for Review",
+            "completedAt": "2026-05-28",
+            "by": "Jeanne Spica",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Heidi Clement",
+            "status": "Awaiting Revisions",
+            "completedAt": "2026-06-09",
+            "by": "Heidi Clement",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Jeanne Spica",
+            "status": "Routed for Review",
+            "completedAt": "2026-07-08",
+            "by": "Jeanne Spica",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "dpr dpr",
+            "status": "Revision Received",
+            "completedAt": "2026-07-08",
+            "by": "dpr dpr",
+            "comments": "Review package submitted by: PUBLICUSER103316"
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Heidi Clement",
+            "status": "Awaiting Revisions",
+            "completedAt": "2026-07-16",
+            "by": "Heidi Clement",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "dpr dpr",
+            "status": "Revision Received",
+            "completedAt": "2026-08-05",
+            "by": "dpr dpr",
+            "comments": "Review package submitted by: PUBLICUSER103316"
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Jeanne Spica",
+            "status": "Routed for Review",
+            "completedAt": "2026-08-06",
+            "by": "Jeanne Spica",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Tree Plans Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": null,
+            "assignedTo": "Jenni Franano",
+            "status": "Rejected",
+            "completedAt": "2026-02-27",
+            "by": "Jenni Franano",
+            "comments": "Please submit a tree survey with the common names, location and caliper inch measurement of the trees on site."
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Jeanne Spica",
+            "status": "Revision Received",
+            "completedAt": "2026-05-28",
+            "by": "Jeanne Spica",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Jenni Franano",
+            "status": "Approved",
+            "completedAt": "2026-05-29",
+            "by": "Jenni Franano",
+            "comments": "Removing all 4 trees, all exempt.If there are changes to the number of trees to be removed/preserved submit a Plans Change.All prohibited tree species are required to be removed for the CO.  No work is to be done beyond the property line."
+          }
+        ]
+      },
+      {
+        "task": "Natural Resources Plans Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": null,
+            "assignedTo": "Jenni Franano",
+            "status": "Rejected",
+            "completedAt": "2026-02-27",
+            "by": "Jenni Franano",
+            "comments": "Please submit a tree survey with the common names, location and caliper inch measurement of the trees on site."
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Jeanne Spica",
+            "status": "Revision Received",
+            "completedAt": "2026-05-28",
+            "by": "Jeanne Spica",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Jenni Franano",
+            "status": "Approved",
+            "completedAt": "2026-05-29",
+            "by": "Jenni Franano",
+            "comments": "Approved per submitted/master site development plan.It is the applicant’s responsibility to follow all mandated federal, state and county guidelines and regulations throughout the project. Failure to do so could subject you to enforcement action by the respective agency. Applicant must maintain a 25’ no disturb buffer from all potential gopher tortoise burrows.  If this is not possible, please contact the Florida Fish & Wildlife Conservation Commission for avoidance/mitigation measures prior to work starting or continuing."
+          }
+        ]
+      },
+      {
+        "task": "Charlotte Co Utilities Plans Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": null,
+            "assignedTo": "Dawn Pressley",
+            "status": "Approved",
+            "completedAt": "2026-02-25",
+            "by": "Dawn Pressley",
+            "comments": "CCU Water and LPS Sewer"
+          }
+        ]
+      },
+      {
+        "task": "Address Plans Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": null,
+            "assignedTo": "Chandler Hucknall",
+            "status": "Approved",
+            "completedAt": "2026-02-27",
+            "by": "Chandler Hucknall",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Health Dept Plans Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Electrical Plans Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Mechanical Plans Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Plumbing Plans Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Building Plans Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": null,
+            "assignedTo": "Christopher Bellitt",
+            "status": "Rejected",
+            "completedAt": "2026-03-02",
+            "by": "Christopher Bellitt",
+            "comments": "Please Revise: [A]107.2:(1.) Energy Calcs, windows are noted as vinyl frame, NOA list all windows are aluminum, revise as applicable to proposed project.(2.) EOR to identify all required truss to structure connections exceeding #4365.(3.) FFE does not comply with requirements of FBC. R322.2.1. Flood vents may be required in garage depending on revision. Locations and volume calculations would be required. R322.2.2, R322.2.2.1. Stemwall construction may be required for compliance with county ordinances. R322.2Flood hazard areas (including A Zones), R322.2.3Foundation design and construction., CCO 3-5-118: Shall be NAVD., CCO 3-2-283 (1): (Slopes)Not to exceed 6:1 in SFHA., Charlotte County Ordinance (CCO): 3-5-93 (2): Drainage to an approved drainage facility without interfering with the proper drainage of surrounding properties., CCO 3-2-283 (2): Max fill no more than 4’ from average grade at property line.Permit subject to additional review upon resubmittal."
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Jeanne Spica",
+            "status": "Revision Received",
+            "completedAt": "2026-05-28",
+            "by": "Jeanne Spica",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Christopher Bellitt",
+            "status": "Rejected",
+            "completedAt": "2026-06-03",
+            "by": "Christopher Bellitt",
+            "comments": "Issue Still Pending,(2.) EOR to identify all required truss to structure connections exceeding #4365.New issue. Revise foundation page to show the required stem wall footer size and reinforcing details.Permit subject to additional review upon resubmittal."
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Jeanne Spica",
+            "status": "Revision Received",
+            "completedAt": "2026-07-08",
+            "by": "Jeanne Spica",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Christopher Bellitt",
+            "status": "Rejected",
+            "completedAt": "2026-07-16",
+            "by": "Christopher Bellitt",
+            "comments": "Issue Still Pending,(2.) EOR to identify all required truss to structure connections exceeding #4365. See issue on truss layout page.Permit subject to additional review upon resubmittal."
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Jeanne Spica",
+            "status": "Revision Received",
+            "completedAt": "2026-08-06",
+            "by": "Jeanne Spica",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Christopher Bellitt",
+            "status": "Approved",
+            "completedAt": "2026-08-11",
+            "by": "Christopher Bellitt",
+            "comments": "EOR: R.M. Depaula,CMU, BFE 8AE, ACH-6.00, QN-.040"
+          }
+        ]
+      },
+      {
+        "task": "ROW Plans Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": null,
+            "assignedTo": "Robert Lee",
+            "status": "Rejected",
+            "completedAt": "2026-03-04",
+            "by": "Robert Lee",
+            "comments": "max width driveway flares are 3', plan shows 5'"
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Jeanne Spica",
+            "status": "Revision Received",
+            "completedAt": "2026-05-28",
+            "by": "Jeanne Spica",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Robert Lee",
+            "status": "Approved",
+            "completedAt": "2026-06-09",
+            "by": "Robert Lee",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Jeanne Spica",
+            "status": "Revision Received",
+            "completedAt": "2026-07-08",
+            "by": "Jeanne Spica",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Robert Lee",
+            "status": "Approved",
+            "completedAt": "2026-07-09",
+            "by": "Robert Lee",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Robert Lee",
+            "status": "Approved",
+            "completedAt": "2026-08-06",
+            "by": "Robert Lee",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Jeanne Spica",
+            "status": "Revision Received",
+            "completedAt": "2026-08-06",
+            "by": "Jeanne Spica",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Zoning Plans Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": null,
+            "assignedTo": "Dustin J Cuddy",
+            "status": "Rejected",
+            "completedAt": "2026-02-27",
+            "by": "Dustin J Cuddy",
+            "comments": "1. Survey is missing the letter G in the panel number for the flood zone. Charlotte County Municode 3-9-52. Site plan is missing the letter G in the panel number for the flood zone. Charlotte County Municode 3-9-53. Elevations page needs to have the finished floor elevation labeled where the first habitable floor is located. Cannot accept \"First floor.\"* Due to the missing information, review is incomplete, and more comments may follow. *"
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Dustin J Cuddy",
+            "status": "Rejected",
+            "completedAt": "2026-05-28",
+            "by": "Dustin J Cuddy",
+            "comments": "The site plan is missing the MAFL(Mean Annual Flood Line) labeled. Site plan should mimic the survey. Cannot accept the verbiage \"Edge of Water.\"* Due to the missing information, review is incomplete, and more comments may follow. *"
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Jeanne Spica",
+            "status": "Revision Received",
+            "completedAt": "2026-05-28",
+            "by": "Jeanne Spica",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Jeanne Spica",
+            "status": "Revision Received",
+            "completedAt": "2026-07-08",
+            "by": "Jeanne Spica",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Dustin J Cuddy",
+            "status": "Approved",
+            "completedAt": "2026-07-10",
+            "by": "Dustin J Cuddy",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Jeanne Spica",
+            "status": "Revision Received",
+            "completedAt": "2026-08-06",
+            "by": "Jeanne Spica",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Jeanne Spica",
+            "status": "Revision Received",
+            "completedAt": "2026-08-06",
+            "by": "Jeanne Spica",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Dustin J Cuddy",
+            "status": "Approved",
+            "completedAt": "2026-08-07",
+            "by": "Dustin J Cuddy",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Plans Consolidation",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": null,
+            "assignedTo": "Heidi Clement",
+            "status": "Corrections Required",
+            "completedAt": "2026-03-04",
+            "by": "Heidi Clement",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Heidi Clement",
+            "status": "Corrections Required",
+            "completedAt": "2026-06-09",
+            "by": "Heidi Clement",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Heidi Clement",
+            "status": "Corrections Required",
+            "completedAt": "2026-07-16",
+            "by": "Heidi Clement",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "Heidi Clement",
+            "status": "Approved",
+            "completedAt": "2026-08-11",
+            "by": "Heidi Clement",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Permit Issued",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": null,
+            "assignedTo": "Melissa McDonough",
+            "status": "Issued",
+            "completedAt": "2026-08-12",
+            "by": "Melissa McDonough",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Finaled",
+        "state": "active",
+        "history": [
+          {
+            "dueAt": null,
+            "assignedTo": "Melissa McDonough",
+            "status": "Pending",
+            "completedAt": "2026-08-12",
+            "by": "Melissa McDonough",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": "TBD",
+            "status": "TBD",
+            "completedAt": null,
+            "by": "TBD",
+            "comments": null
+          }
+        ]
+      }
+    ],
+    "inspections": [],
+    "holds": [
+      {
+        "name": "Building - 1 Applied CC PERMIT Notice of CommencementNOC: missing notary sectionApplied",
+        "type": "Notice",
+        "reason": null,
+        "comments": "Building - 1 Applied CC PERMIT Notice of CommencementNOC: missing notary sectionApplied",
+        "createdAt": "2026-02-15",
+        "active": true,
+        "status": "Applied"
+      },
+      {
+        "name": "Default - 2 Applied CC LIC YANELYS GONZALEZ AGENTApplied",
+        "type": "Notice",
+        "reason": null,
+        "comments": "Default - 2 Applied CC LIC YANELYS GONZALEZ AGENTApplied",
+        "createdAt": "2024-11-14",
+        "active": true,
+        "status": "Applied"
+      },
+      {
+        "name": "ABEL SUAREZ-AUTHORIZED AGENTApplied",
+        "type": "Notice",
+        "reason": null,
+        "comments": "ABEL SUAREZ-AUTHORIZED AGENTApplied",
+        "createdAt": "2021-12-10",
+        "active": true,
+        "status": "Applied"
+      }
+    ],
+    "contacts": [],
+    "feeSummary": null,
+    "subRecords": [],
+    "collectedAt": "2026-09-29T23:17:15.409Z"
+  }
+}

@@ -1,0 +1,1187 @@
+{
+  "permitNumber": "PCZC-26-00466",
+  "found": true,
+  "url": "https://aca-prod.accela.com/NORTHPORT/Cap/CapDetail.aspx?Module=Planning&TabName=Planning&capID1=REC26&capID2=00000&capID3=003AO&agencyCode=NORTHPORT&IsToShowInspection=",
+  "permit": {
+    "number": "PCZC-26-00466",
+    "caseId": "REC26-00000-003AO",
+    "county": "northport",
+    "type": "Certificate of Zoning Compliance",
+    "workclass": null,
+    "status": "Schedule Inspection",
+    "projectName": null,
+    "address": "4528 ANTIOCH ST NORTH PORT FL 34288",
+    "parcel": null,
+    "appliedAt": "2026-02-16",
+    "issuedAt": null,
+    "expiresAt": null,
+    "finalizedAt": null,
+    "squareFeet": null,
+    "valuation": null,
+    "description": null,
+    "submittals": [
+      {
+        "submittalId": "round-1",
+        "version": 1,
+        "type": "Plan Review",
+        "status": "Approved",
+        "submittedAt": "2026-03-19",
+        "dueAt": "2026-03-19",
+        "completedAt": "2026-03-19"
+      },
+      {
+        "submittalId": "round-2",
+        "version": 2,
+        "type": "Plan Review",
+        "status": "Revisions Required",
+        "submittedAt": "2026-03-26",
+        "dueAt": "2026-04-18",
+        "completedAt": "2026-03-25"
+      },
+      {
+        "submittalId": "round-3",
+        "version": 3,
+        "type": "Plan Review",
+        "status": "In Review",
+        "submittedAt": "2026-04-28",
+        "dueAt": null,
+        "completedAt": null
+      },
+      {
+        "submittalId": "round-4",
+        "version": 4,
+        "type": "Plan Review",
+        "status": "In Review",
+        "submittedAt": "2026-04-28",
+        "dueAt": null,
+        "completedAt": null
+      },
+      {
+        "submittalId": "round-5",
+        "version": 5,
+        "type": "Plan Review",
+        "status": "Revisions Required",
+        "submittedAt": "2026-05-01",
+        "dueAt": "2026-05-05",
+        "completedAt": "2026-05-01"
+      },
+      {
+        "submittalId": "round-6",
+        "version": 6,
+        "type": "Plan Review",
+        "status": "In Review",
+        "submittedAt": "2026-05-29",
+        "dueAt": null,
+        "completedAt": null
+      },
+      {
+        "submittalId": "round-7",
+        "version": 7,
+        "type": "Plan Review",
+        "status": "In Review",
+        "submittedAt": "2026-05-29",
+        "dueAt": null,
+        "completedAt": null
+      },
+      {
+        "submittalId": "round-8",
+        "version": 8,
+        "type": "Plan Review",
+        "status": "Revisions Required",
+        "submittedAt": "2026-06-03",
+        "dueAt": "2026-06-05",
+        "completedAt": "2026-06-03"
+      },
+      {
+        "submittalId": "round-9",
+        "version": 9,
+        "type": "Plan Review",
+        "status": "In Review",
+        "submittedAt": "2026-06-26",
+        "dueAt": null,
+        "completedAt": null
+      },
+      {
+        "submittalId": "round-10",
+        "version": 10,
+        "type": "Plan Review",
+        "status": "In Review",
+        "submittedAt": "2026-06-29",
+        "dueAt": null,
+        "completedAt": null
+      },
+      {
+        "submittalId": "round-11",
+        "version": 11,
+        "type": "Plan Review",
+        "status": "Revisions Required",
+        "submittedAt": "2026-07-02",
+        "dueAt": "2026-07-06",
+        "completedAt": "2026-07-02"
+      },
+      {
+        "submittalId": "round-12",
+        "version": 12,
+        "type": "Plan Review",
+        "status": "In Review",
+        "submittedAt": "2026-07-14",
+        "dueAt": null,
+        "completedAt": null
+      },
+      {
+        "submittalId": "round-13",
+        "version": 13,
+        "type": "Plan Review",
+        "status": "In Review",
+        "submittedAt": "2026-07-14",
+        "dueAt": null,
+        "completedAt": null
+      },
+      {
+        "submittalId": "round-14",
+        "version": 14,
+        "type": "Plan Review",
+        "status": "Revisions Required",
+        "submittedAt": "2026-07-20",
+        "dueAt": "2026-07-21",
+        "completedAt": "2026-07-20"
+      },
+      {
+        "submittalId": "round-15",
+        "version": 15,
+        "type": "Plan Review",
+        "status": "In Review",
+        "submittedAt": "2026-07-31",
+        "dueAt": null,
+        "completedAt": null
+      },
+      {
+        "submittalId": "round-16",
+        "version": 16,
+        "type": "Plan Review",
+        "status": "Approved",
+        "submittedAt": "2026-07-31",
+        "dueAt": "2026-08-07",
+        "completedAt": "2026-08-03"
+      }
+    ],
+    "reviewItems": [
+      {
+        "itemReviewId": "Natural Resources Review|2026-04-18|1",
+        "submittalId": "round-2",
+        "round": 2,
+        "department": "Natural Resources Review",
+        "status": "Approved",
+        "assignedTo": "SR",
+        "assignedToEmail": null,
+        "dueAt": "2026-04-18",
+        "completedAt": "2026-03-24",
+        "comments": "no saved trees",
+        "by": "SR"
+      },
+      {
+        "itemReviewId": "Residential Utilities Review|2026-03-19|1",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Residential Utilities Review",
+        "status": "Approved",
+        "assignedTo": "Alexis Genna",
+        "assignedToEmail": null,
+        "dueAt": "2026-03-19",
+        "completedAt": "2026-03-19",
+        "comments": null,
+        "by": "Alexis Genna"
+      },
+      {
+        "itemReviewId": "Zoning Review|2026-04-18|1",
+        "submittalId": "round-2",
+        "round": 2,
+        "department": "Zoning Review",
+        "status": "Approved",
+        "assignedTo": null,
+        "assignedToEmail": null,
+        "dueAt": "2026-04-18",
+        "completedAt": "2026-03-19",
+        "comments": null,
+        "by": "LC"
+      },
+      {
+        "itemReviewId": "Zoning Review|2026-06-05|1",
+        "submittalId": "round-8",
+        "round": 8,
+        "department": "Zoning Review",
+        "status": "Approved",
+        "assignedTo": null,
+        "assignedToEmail": null,
+        "dueAt": "2026-06-05",
+        "completedAt": "2026-06-01",
+        "comments": null,
+        "by": "LC"
+      },
+      {
+        "itemReviewId": "Zoning Review|2026-07-06|1",
+        "submittalId": "round-11",
+        "round": 11,
+        "department": "Zoning Review",
+        "status": "Disapproved",
+        "assignedTo": null,
+        "assignedToEmail": null,
+        "dueAt": "2026-07-06",
+        "completedAt": "2026-06-30",
+        "comments": "Please provide the well equipment pad with setbacks.Version the documents so the new revised documents replace those that have rejection notes.",
+        "by": "KC"
+      },
+      {
+        "itemReviewId": "Zoning Review|2026-07-21|1",
+        "submittalId": "round-14",
+        "round": 14,
+        "department": "Zoning Review",
+        "status": "Disapproved",
+        "assignedTo": null,
+        "assignedToEmail": null,
+        "dueAt": "2026-07-21",
+        "completedAt": "2026-07-14",
+        "comments": "Please provide the well equipment pad with setbacks.Version the documents so the new revised documents replace those that have rejection notes.",
+        "by": "LC"
+      },
+      {
+        "itemReviewId": "Zoning Review|2026-08-07|1",
+        "submittalId": "round-16",
+        "round": 16,
+        "department": "Zoning Review",
+        "status": "Approved",
+        "assignedTo": null,
+        "assignedToEmail": null,
+        "dueAt": "2026-08-07",
+        "completedAt": "2026-08-03",
+        "comments": null,
+        "by": "LC"
+      },
+      {
+        "itemReviewId": "Public Works Review|2026-04-18|1",
+        "submittalId": "round-2",
+        "round": 2,
+        "department": "Public Works Review",
+        "status": "Disapproved",
+        "assignedTo": null,
+        "assignedToEmail": null,
+        "dueAt": "2026-04-18",
+        "completedAt": "2026-03-25",
+        "comments": "Need to show the proposed elevations of the property.  Property needs to drain from the rear to the front.",
+        "by": "James Polak 941-628-4017"
+      },
+      {
+        "itemReviewId": "Public Works Review|2026-05-05|1",
+        "submittalId": "round-5",
+        "round": 5,
+        "department": "Public Works Review",
+        "status": "Disapproved",
+        "assignedTo": null,
+        "assignedToEmail": null,
+        "dueAt": "2026-05-05",
+        "completedAt": "2026-05-01",
+        "comments": "Need to show proposed elevations. Also need to show the proposed septic .",
+        "by": "James Polak 941-628-4017"
+      },
+      {
+        "itemReviewId": "Public Works Review|2026-06-05|1",
+        "submittalId": "round-8",
+        "round": 8,
+        "department": "Public Works Review",
+        "status": "Disapproved",
+        "assignedTo": null,
+        "assignedToEmail": null,
+        "dueAt": "2026-06-05",
+        "completedAt": "2026-06-03",
+        "comments": "No revised site plan has been uploaded.",
+        "by": "James Polak 941-628-4017"
+      },
+      {
+        "itemReviewId": "Public Works Review|2026-07-06|1",
+        "submittalId": "round-11",
+        "round": 11,
+        "department": "Public Works Review",
+        "status": "Disapproved",
+        "assignedTo": null,
+        "assignedToEmail": null,
+        "dueAt": "2026-07-06",
+        "completedAt": "2026-07-02",
+        "comments": "Need to show the proposed driveway culvert",
+        "by": "James Polak 941-628-4017"
+      },
+      {
+        "itemReviewId": "Public Works Review|2026-07-21|1",
+        "submittalId": "round-14",
+        "round": 14,
+        "department": "Public Works Review",
+        "status": "Disapproved",
+        "assignedTo": null,
+        "assignedToEmail": null,
+        "dueAt": "2026-07-21",
+        "completedAt": "2026-07-15",
+        "comments": "Please remove the proposed driveway culvert size.  The size will be provided by the City with the Line and Grade inspection. Also the property will need to be graded from the rear to the front.",
+        "by": "James Polak 941-628-4017"
+      },
+      {
+        "itemReviewId": "Public Works Review|2026-08-07|1",
+        "submittalId": "round-16",
+        "round": 16,
+        "department": "Public Works Review",
+        "status": "Approved",
+        "assignedTo": null,
+        "assignedToEmail": null,
+        "dueAt": "2026-08-07",
+        "completedAt": "2026-07-31",
+        "comments": null,
+        "by": "James Polak 941-628-4017"
+      },
+      {
+        "itemReviewId": "Building Site Review|2026-04-18|1",
+        "submittalId": "round-2",
+        "round": 2,
+        "department": "Building Site Review",
+        "status": "Disapproved",
+        "assignedTo": "Luis Yepes-Lobo 941-429-7048",
+        "assignedToEmail": null,
+        "dueAt": "2026-04-18",
+        "completedAt": "2026-03-25",
+        "comments": "Check site plan issue note.- Drainage.Lot requires to drain back to front swale on Antioch St. Assuming that your proposed elevations are the same as the existing elevations are not having positive drainage to the front. Please revise.-Water supply.Missing well location & setbacks from property lines or indication for City Water service.\"All proposed improvements, structures, and driveway locations; septic system location, if applicable; and well location, if applicable.\"- Sewer service.Missing Septic System location, if applicable or indication of City Sewer service, if applicable.\"All proposed improvements, structures, and driveway locations; septic system location, if applicable; and well location, if applicable.\"- AC & Well pads.AC & Well concrete pads need to be located with setbacks to property lines.",
+        "by": "Luis Yepes-Lobo 941-429-7048"
+      },
+      {
+        "itemReviewId": "Building Site Review|2026-05-05|1",
+        "submittalId": "round-5",
+        "round": 5,
+        "department": "Building Site Review",
+        "status": "Disapproved",
+        "assignedTo": "Luis Yepes-Lobo 941-429-7048",
+        "assignedToEmail": null,
+        "dueAt": "2026-05-05",
+        "completedAt": "2026-04-29",
+        "comments": "Check site plan issue note.- Drainage.No proposed elevations along property lines has been set in the revised site plan either.\"At least ten (10) existing grades referenced on NAVD 88 set at the street center line along the extension of a side property line. Shall be at the four (4) property corners and those along the side property lines opposite the extension of the proposed structure corner.”“The proposed drainage design shall include, at minimum, the following proposed conditions; Elevations referenced to the same datum as the existing grades, depicting the proposed levels at points set forth above as well as a proposed first-floor grade for the structure.\"-Water supply.Still missing well location & setbacks from property lines or indication for City Water Service.\"All proposed improvements, structures, and driveway locations; septic system location, if applicable; and well location, if applicable.\"- Sewer service.No indication for Septic System location, if applicable or indication of City Sewer service, if applicable in the revised site plan either.\"All proposed improvements, structures, and driveway locations; septic system location, if applicable; and well location, if applicable.\"- AC & Well pads.No pads with label and setbacks to property line are shown as well.AC & Well concrete pads need to be located with setbacks to property lines.",
+        "by": "Luis Yepes-Lobo 941-429-7048"
+      },
+      {
+        "itemReviewId": "Building Site Review|2026-06-05|1",
+        "submittalId": "round-8",
+        "round": 8,
+        "department": "Building Site Review",
+        "status": "Disapproved",
+        "assignedTo": "Luis Yepes-Lobo 941-429-7048",
+        "assignedToEmail": null,
+        "dueAt": "2026-06-05",
+        "completedAt": "2026-06-01",
+        "comments": "Check site plan issue notes.- Proposed elevations and flow arrows.Missing proposed elevations along property lot lines and flow arrows to show positive drainage from back to front swale on Antioch St.\"At least ten (10) existing grades referenced on NAVD 88 set at the street center line along the extension of a side property line. Shall be at the four (4) property corners and those along the side property lines opposite the extension of the proposed structure corner.\"\"The proposed drainage design shall include, at minimum, the following proposed conditions; Elevations referenced to the same datum as the existing grades, depicting the proposed levels at points set forth above as well as a proposed first-floor grade for the structure.\"\"Arrows shall be used to depict the positive drainage of stormwater runoff from the rear to the front of the property. Arrows will show half the drainage to the rear and half to the front when the rear of the lot borders on a canal or other drainage feature.\"- Adjacent lots.Adjacent lots are vacant or developed. Need to be indicated in the site plan the status of the lot. If the next lot is developed, site plan needs to show the FFE for existing houses, if it is not, it just need to show that lot is vacant or undeveloped.\"Shall have sufficient information to show no adverse effect of stormwater runoff from the proposed development of the lot onto adjacent properties. Positive drainage shall be demonstrated without causing adverse effects on-site or off-site.\"- Well equipment pad.Missing the well equipment pad location.",
+        "by": "Luis Yepes-Lobo 941-429-7048"
+      },
+      {
+        "itemReviewId": "Building Site Review|2026-07-06|1",
+        "submittalId": "round-11",
+        "round": 11,
+        "department": "Building Site Review",
+        "status": "Disapproved",
+        "assignedTo": "Luis Yepes-Lobo 941-429-7048",
+        "assignedToEmail": null,
+        "dueAt": "2026-07-06",
+        "completedAt": "2026-06-30",
+        "comments": "Check site plan issue notes.- Missing FFE existing residence.Missing FFE existing residence on left side lot.“Shall have sufficient information to show no adverse effect of stormwater runoff from the proposed development of the lot onto adjacent properties. Positive drainage shall be demonstrated without causing adverse effects on-site or off-site.”- Missing proposed elevations.Missing proposed elevation along property lot lines.\"At least ten (10) existing grades referenced on NAVD 88 set at the street center line along the extension of a side property line. Shall be at the four (4) property corners and those along the side property lines opposite the extension of the proposed structure corner.\" \"The proposed drainage design shall include, at minimum, the following proposed conditions; Elevations referenced to the same datum as the existing grades, depicting the proposed levels at points set forth above as well as a proposed first-floor grade for the structure.\"- Well equipment concrete pad.Missing location & setbacks for well equipment concrete pad.",
+        "by": "Luis Yepes-Lobo 941-429-7048"
+      },
+      {
+        "itemReviewId": "Building Site Review|2026-07-21|1",
+        "submittalId": "round-14",
+        "round": 14,
+        "department": "Building Site Review",
+        "status": "Disapproved",
+        "assignedTo": "Luis Yepes-Lobo 941-429-7048",
+        "assignedToEmail": null,
+        "dueAt": "2026-07-21",
+        "completedAt": "2026-07-20",
+        "comments": "Check site plan issue note.- Proposed elevations.Lot requires to drain back to front swale on Antioch St. Proposed elevations shows split 50/50 drainage on both side lot lines that it is not allowed. Please revise.\"Stormwater runoff must drain from the rear lot line to the front drainage swale, except when the property is bound by a City-maintained drainage right-of-way, runoff will be allowed into those facilities.\"",
+        "by": "Luis Yepes-Lobo 941-429-7048"
+      },
+      {
+        "itemReviewId": "Building Site Review|2026-08-07|1",
+        "submittalId": "round-16",
+        "round": 16,
+        "department": "Building Site Review",
+        "status": "Approved",
+        "assignedTo": "Luis Yepes-Lobo 941-429-7048",
+        "assignedToEmail": null,
+        "dueAt": "2026-08-07",
+        "completedAt": "2026-07-31",
+        "comments": "Approved based on accuracy of Site Plan for drainage purpose only.",
+        "by": "Luis Yepes-Lobo 941-429-7048"
+      }
+    ],
+    "workflow": [
+      {
+        "task": "View Details",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "View Details",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "View Details",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "View Details",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "View Details",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Application Intake",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-03-18",
+            "assignedTo": "ADS",
+            "status": "Awaiting Plans",
+            "completedAt": "2026-02-16",
+            "by": "DPR",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-03-18",
+            "assignedTo": null,
+            "status": "File Validation Issues",
+            "completedAt": "2026-03-16",
+            "by": "DPR",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-03-18",
+            "assignedTo": null,
+            "status": "Accepted",
+            "completedAt": "2026-03-19",
+            "by": "Tabitha Baldwin",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-03-18",
+            "assignedTo": null,
+            "status": "Submitted",
+            "completedAt": "2026-03-19",
+            "by": "DPR",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Plans Distribution",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-03-20",
+            "assignedTo": "ADS",
+            "status": "Routed for Review",
+            "completedAt": "2026-03-19",
+            "by": "Tabitha Baldwin",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-03-27",
+            "assignedTo": "ADS",
+            "status": "Revisions Required",
+            "completedAt": "2026-03-26",
+            "by": "Tabitha Baldwin",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-06-24",
+            "assignedTo": null,
+            "status": "Routed for Review",
+            "completedAt": "2026-04-28",
+            "by": "Tabitha Baldwin",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-06-24",
+            "assignedTo": null,
+            "status": "Revisions Received",
+            "completedAt": "2026-04-28",
+            "by": "DPR",
+            "comments": "Review package submitted by: PUBLICUSER41362"
+          },
+          {
+            "dueAt": "2026-05-02",
+            "assignedTo": null,
+            "status": "Revisions Required",
+            "completedAt": "2026-05-01",
+            "by": "Tabitha Baldwin",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-07-30",
+            "assignedTo": null,
+            "status": "Routed for Review",
+            "completedAt": "2026-05-29",
+            "by": "Tabitha Baldwin",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-07-30",
+            "assignedTo": null,
+            "status": "Revisions Received",
+            "completedAt": "2026-05-29",
+            "by": "DPR",
+            "comments": "Review package submitted by: PUBLICUSER41362"
+          },
+          {
+            "dueAt": "2026-06-04",
+            "assignedTo": null,
+            "status": "Revisions Required",
+            "completedAt": "2026-06-03",
+            "by": "Tabitha Baldwin",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-09-01",
+            "assignedTo": null,
+            "status": "Revisions Received",
+            "completedAt": "2026-06-26",
+            "by": "DPR",
+            "comments": "Review package submitted by: PUBLICUSER41362"
+          },
+          {
+            "dueAt": "2026-09-01",
+            "assignedTo": null,
+            "status": "Routed for Review",
+            "completedAt": "2026-06-29",
+            "by": "Tabitha Baldwin",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-07-03",
+            "assignedTo": null,
+            "status": "Revisions Required",
+            "completedAt": "2026-07-02",
+            "by": "Tabitha Baldwin",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-09-30",
+            "assignedTo": null,
+            "status": "Routed for Review",
+            "completedAt": "2026-07-14",
+            "by": "Tabitha Baldwin",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-09-30",
+            "assignedTo": null,
+            "status": "Revisions Received",
+            "completedAt": "2026-07-14",
+            "by": "DPR",
+            "comments": "Review package submitted by: PUBLICUSER41362"
+          },
+          {
+            "dueAt": "2026-07-21",
+            "assignedTo": null,
+            "status": "Revisions Required",
+            "completedAt": "2026-07-20",
+            "by": "Tabitha Baldwin",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-10-18",
+            "assignedTo": null,
+            "status": "Routed for Review",
+            "completedAt": "2026-07-31",
+            "by": "Tabitha Baldwin",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-10-18",
+            "assignedTo": null,
+            "status": "Revisions Received",
+            "completedAt": "2026-07-31",
+            "by": "DPR",
+            "comments": "Review package submitted by: PUBLICUSER41362"
+          }
+        ]
+      },
+      {
+        "task": "Natural Resources Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-04-18",
+            "assignedTo": "SR",
+            "status": "Approved",
+            "completedAt": "2026-03-24",
+            "by": "SR",
+            "comments": "no saved trees"
+          }
+        ]
+      },
+      {
+        "task": "Residential Utilities Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-03-19",
+            "assignedTo": "Alexis Genna",
+            "status": "Approved",
+            "completedAt": "2026-03-19",
+            "by": "Alexis Genna",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Zoning Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-04-18",
+            "assignedTo": null,
+            "status": "Approved",
+            "completedAt": "2026-03-19",
+            "by": "LC",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-06-05",
+            "assignedTo": null,
+            "status": "Approved",
+            "completedAt": "2026-06-01",
+            "by": "LC",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-07-06",
+            "assignedTo": null,
+            "status": "Disapproved",
+            "completedAt": "2026-06-30",
+            "by": "KC",
+            "comments": "Please provide the well equipment pad with setbacks.Version the documents so the new revised documents replace those that have rejection notes."
+          },
+          {
+            "dueAt": "2026-07-21",
+            "assignedTo": null,
+            "status": "Disapproved",
+            "completedAt": "2026-07-14",
+            "by": "LC",
+            "comments": "Please provide the well equipment pad with setbacks.Version the documents so the new revised documents replace those that have rejection notes."
+          },
+          {
+            "dueAt": "2026-08-07",
+            "assignedTo": null,
+            "status": "Approved",
+            "completedAt": "2026-08-03",
+            "by": "LC",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Public Works Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-04-18",
+            "assignedTo": null,
+            "status": "Disapproved",
+            "completedAt": "2026-03-25",
+            "by": "James Polak 941-628-4017",
+            "comments": "Need to show the proposed elevations of the property.  Property needs to drain from the rear to the front."
+          },
+          {
+            "dueAt": "2026-05-05",
+            "assignedTo": null,
+            "status": "Disapproved",
+            "completedAt": "2026-05-01",
+            "by": "James Polak 941-628-4017",
+            "comments": "Need to show proposed elevations. Also need to show the proposed septic ."
+          },
+          {
+            "dueAt": "2026-06-05",
+            "assignedTo": null,
+            "status": "Disapproved",
+            "completedAt": "2026-06-03",
+            "by": "James Polak 941-628-4017",
+            "comments": "No revised site plan has been uploaded."
+          },
+          {
+            "dueAt": "2026-07-06",
+            "assignedTo": null,
+            "status": "Disapproved",
+            "completedAt": "2026-07-02",
+            "by": "James Polak 941-628-4017",
+            "comments": "Need to show the proposed driveway culvert"
+          },
+          {
+            "dueAt": "2026-07-21",
+            "assignedTo": null,
+            "status": "Disapproved",
+            "completedAt": "2026-07-15",
+            "by": "James Polak 941-628-4017",
+            "comments": "Please remove the proposed driveway culvert size.  The size will be provided by the City with the Line and Grade inspection. Also the property will need to be graded from the rear to the front."
+          },
+          {
+            "dueAt": "2026-08-07",
+            "assignedTo": null,
+            "status": "Approved",
+            "completedAt": "2026-07-31",
+            "by": "James Polak 941-628-4017",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Building Site Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-04-18",
+            "assignedTo": "Luis Yepes-Lobo 941-429-7048",
+            "status": "Disapproved",
+            "completedAt": "2026-03-25",
+            "by": "Luis Yepes-Lobo 941-429-7048",
+            "comments": "Check site plan issue note.- Drainage.Lot requires to drain back to front swale on Antioch St. Assuming that your proposed elevations are the same as the existing elevations are not having positive drainage to the front. Please revise.-Water supply.Missing well location & setbacks from property lines or indication for City Water service.\"All proposed improvements, structures, and driveway locations; septic system location, if applicable; and well location, if applicable.\"- Sewer service.Missing Septic System location, if applicable or indication of City Sewer service, if applicable.\"All proposed improvements, structures, and driveway locations; septic system location, if applicable; and well location, if applicable.\"- AC & Well pads.AC & Well concrete pads need to be located with setbacks to property lines."
+          },
+          {
+            "dueAt": "2026-05-05",
+            "assignedTo": "Luis Yepes-Lobo 941-429-7048",
+            "status": "Disapproved",
+            "completedAt": "2026-04-29",
+            "by": "Luis Yepes-Lobo 941-429-7048",
+            "comments": "Check site plan issue note.- Drainage.No proposed elevations along property lines has been set in the revised site plan either.\"At least ten (10) existing grades referenced on NAVD 88 set at the street center line along the extension of a side property line. Shall be at the four (4) property corners and those along the side property lines opposite the extension of the proposed structure corner.”“The proposed drainage design shall include, at minimum, the following proposed conditions; Elevations referenced to the same datum as the existing grades, depicting the proposed levels at points set forth above as well as a proposed first-floor grade for the structure.\"-Water supply.Still missing well location & setbacks from property lines or indication for City Water Service.\"All proposed improvements, structures, and driveway locations; septic system location, if applicable; and well location, if applicable.\"- Sewer service.No indication for Septic System location, if applicable or indication of City Sewer service, if applicable in the revised site plan either.\"All proposed improvements, structures, and driveway locations; septic system location, if applicable; and well location, if applicable.\"- AC & Well pads.No pads with label and setbacks to property line are shown as well.AC & Well concrete pads need to be located with setbacks to property lines."
+          },
+          {
+            "dueAt": "2026-06-05",
+            "assignedTo": "Luis Yepes-Lobo 941-429-7048",
+            "status": "Disapproved",
+            "completedAt": "2026-06-01",
+            "by": "Luis Yepes-Lobo 941-429-7048",
+            "comments": "Check site plan issue notes.- Proposed elevations and flow arrows.Missing proposed elevations along property lot lines and flow arrows to show positive drainage from back to front swale on Antioch St.\"At least ten (10) existing grades referenced on NAVD 88 set at the street center line along the extension of a side property line. Shall be at the four (4) property corners and those along the side property lines opposite the extension of the proposed structure corner.\"\"The proposed drainage design shall include, at minimum, the following proposed conditions; Elevations referenced to the same datum as the existing grades, depicting the proposed levels at points set forth above as well as a proposed first-floor grade for the structure.\"\"Arrows shall be used to depict the positive drainage of stormwater runoff from the rear to the front of the property. Arrows will show half the drainage to the rear and half to the front when the rear of the lot borders on a canal or other drainage feature.\"- Adjacent lots.Adjacent lots are vacant or developed. Need to be indicated in the site plan the status of the lot. If the next lot is developed, site plan needs to show the FFE for existing houses, if it is not, it just need to show that lot is vacant or undeveloped.\"Shall have sufficient information to show no adverse effect of stormwater runoff from the proposed development of the lot onto adjacent properties. Positive drainage shall be demonstrated without causing adverse effects on-site or off-site.\"- Well equipment pad.Missing the well equipment pad location."
+          },
+          {
+            "dueAt": "2026-07-06",
+            "assignedTo": "Luis Yepes-Lobo 941-429-7048",
+            "status": "Disapproved",
+            "completedAt": "2026-06-30",
+            "by": "Luis Yepes-Lobo 941-429-7048",
+            "comments": "Check site plan issue notes.- Missing FFE existing residence.Missing FFE existing residence on left side lot.“Shall have sufficient information to show no adverse effect of stormwater runoff from the proposed development of the lot onto adjacent properties. Positive drainage shall be demonstrated without causing adverse effects on-site or off-site.”- Missing proposed elevations.Missing proposed elevation along property lot lines.\"At least ten (10) existing grades referenced on NAVD 88 set at the street center line along the extension of a side property line. Shall be at the four (4) property corners and those along the side property lines opposite the extension of the proposed structure corner.\" \"The proposed drainage design shall include, at minimum, the following proposed conditions; Elevations referenced to the same datum as the existing grades, depicting the proposed levels at points set forth above as well as a proposed first-floor grade for the structure.\"- Well equipment concrete pad.Missing location & setbacks for well equipment concrete pad."
+          },
+          {
+            "dueAt": "2026-07-21",
+            "assignedTo": "Luis Yepes-Lobo 941-429-7048",
+            "status": "Disapproved",
+            "completedAt": "2026-07-20",
+            "by": "Luis Yepes-Lobo 941-429-7048",
+            "comments": "Check site plan issue note.- Proposed elevations.Lot requires to drain back to front swale on Antioch St. Proposed elevations shows split 50/50 drainage on both side lot lines that it is not allowed. Please revise.\"Stormwater runoff must drain from the rear lot line to the front drainage swale, except when the property is bound by a City-maintained drainage right-of-way, runoff will be allowed into those facilities.\""
+          },
+          {
+            "dueAt": "2026-08-07",
+            "assignedTo": "Luis Yepes-Lobo 941-429-7048",
+            "status": "Approved",
+            "completedAt": "2026-07-31",
+            "by": "Luis Yepes-Lobo 941-429-7048",
+            "comments": "Approved based on accuracy of Site Plan for drainage purpose only."
+          }
+        ]
+      },
+      {
+        "task": "Plans Coordination",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": "2026-03-26",
+            "assignedTo": null,
+            "status": "Revisions Required",
+            "completedAt": "2026-03-26",
+            "by": "Tabitha Baldwin",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-05-02",
+            "assignedTo": null,
+            "status": "Revisions Required",
+            "completedAt": "2026-05-01",
+            "by": "Tabitha Baldwin",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-06-04",
+            "assignedTo": null,
+            "status": "Revisions Required",
+            "completedAt": "2026-06-03",
+            "by": "Tabitha Baldwin",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-07-03",
+            "assignedTo": null,
+            "status": "Revisions Required",
+            "completedAt": "2026-07-02",
+            "by": "Tabitha Baldwin",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-07-21",
+            "assignedTo": null,
+            "status": "Revisions Required",
+            "completedAt": "2026-07-20",
+            "by": "Tabitha Baldwin",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-08-04",
+            "assignedTo": null,
+            "status": "Ready for Issuance",
+            "completedAt": "2026-08-03",
+            "by": "Tabitha Baldwin",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Issuance",
+        "state": "complete",
+        "history": []
+      },
+      {
+        "task": "Inspections",
+        "state": "active",
+        "history": [
+          {
+            "dueAt": "2026-08-03",
+            "assignedTo": null,
+            "status": "Schedule Inspection",
+            "completedAt": "2026-08-05",
+            "by": "CB",
+            "comments": null
+          },
+          {
+            "dueAt": null,
+            "assignedTo": null,
+            "status": null,
+            "completedAt": null,
+            "by": null,
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "As-Built Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Building As-Built Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Utilities As-Built Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Transportation As-Built Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Stormwater As-Built Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Natural Resources As-Built Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Zoning As-Built Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Fire As-Built Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Solid Waste As-Built Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "As-Built Approval",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Final Inspections",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Closed",
+        "state": null,
+        "history": []
+      }
+    ],
+    "inspections": [
+      {
+        "number": "8130038",
+        "type": "Zoning: Final",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  Zoning: Final (8130038)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "8130039",
+        "type": "Zoning: Rough",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  Zoning: Rough (8130039)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "8130040",
+        "type": "Zoning: Spot Survey",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  Zoning: Spot Survey (8130040)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "8130041",
+        "type": "ADMIN ZNG AS BUILT SURVEY",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  ADMIN ZNG AS BUILT SURVEY (8130041)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "8133821",
+        "type": "Arborist: Final",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  Arborist: Final (8133821)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "8133822",
+        "type": "Arborist: Rough",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  Arborist: Rough (8133822)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "8135277",
+        "type": "Site Final",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  Site Final (8135277)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "8135278",
+        "type": "Site Soil Erosion Control",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  Site Soil Erosion Control (8135278)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "8274242",
+        "type": "Site: As-Built",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  Site: As-Built (8274242)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "8274243",
+        "type": "Public Works: Culvert In-Progress",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  Public Works: Culvert In-Progress (8274243)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "8274244",
+        "type": "Public Works: Final",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  Public Works: Final (8274244)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "8274245",
+        "type": "Public Works: Surveyor - Invert Check",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  Public Works: Surveyor - Invert Check (8274245)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "8274246",
+        "type": "Public Works: Surveyor Line & Grade",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  Public Works: Surveyor Line & Grade (8274246)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "8274903",
+        "type": "Site: As-Built",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  Site: As-Built (8274903)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "8274904",
+        "type": "Site: Form Board Verification",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  Site: Form Board Verification (8274904)  Inspector: unassigned",
+        "details": null
+      }
+    ],
+    "holds": [],
+    "contacts": [],
+    "feeSummary": null,
+    "subRecords": [],
+    "collectedAt": "2026-09-29T23:17:15.127Z"
+  }
+}

@@ -28,6 +28,8 @@ const OPS_ROOT = join(HERE, '..', '..');
 
 export const PORTALS = {
   citrus: { base: 'https://aca-prod.accela.com/CITRUS', module: 'Building' },
+  charlotte: { base: 'https://aca-prod.accela.com/BOCC', module: 'Building' },
+  northport: { base: 'https://aca-prod.accela.com/NORTHPORT', module: 'Building', modules: ['Building', 'Planning'] },
 };
 
 const args = process.argv.slice(2);
@@ -45,9 +47,9 @@ mkdirSync(OUT_DIR, { recursive: true });
 // Tasks in Processing Status that are plan reviews (the rest is intake/issuance/inspection workflow).
 const REVIEW_TASK = /review|swppp|preliminary inspection|affordable housing/i;
 // Plan Review Verification is the intake clerk's mirror of the rounds (Revisions Received / Routing / Ready to Issue).
-const NOT_REVIEW = /^(fee review|reviewer routing|private provider review|no plan review required|plan review verification)$/i;
+const NOT_REVIEW = /^(fee review|reviewer routing|private provider review|no plan review required|plan review verification|intake sufficiency review)$/i;
 // A review status that sends the plans back to the applicant.
-export const REVIEW_FAILED = /revisions? required|disapprov|denied|fail|incomplete|re-?submit|corrections?/i;
+export const REVIEW_FAILED = /revisions? required|disapprov|denied|fail|incomplete|re-?submit|corrections?|rejected/i;
 
 const EXEC = process.env.CHROMIUM_PATH || (existsSync('/opt/pw-browsers/chromium-1194/chrome-linux/chrome') ? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' : undefined);
 const browser = await chromium.launch({
@@ -63,7 +65,12 @@ const iso = (s) => { const m = /(\d{2})\/(\d{2})\/(\d{4})/.exec(s || ''); return
 const tidy = (s) => (s || '').replace(/ /g, ' ').replace(/[ \t]+/g, ' ').replace(/\s*\n\s*/g, '\n').trim();
 
 async function openRecord(number) {
-  await page.goto(`${portal.base}/Cap/CapHome.aspx?module=${portal.module}&TabName=${portal.module}`, { waitUntil: 'domcontentloaded' });
+  // Some agencies keep records under more than one module (North Port: Building and Planning).
+  for (const module of portal.modules || [portal.module]) if (await openIn(module, number)) return true;
+  return false;
+}
+async function openIn(module, number) {
+  await page.goto(`${portal.base}/Cap/CapHome.aspx?module=${module}&TabName=${module}`, { waitUntil: 'domcontentloaded' });
   const box = page.locator('input[id$="txtGSPermitNumber"]').first();
   await box.waitFor();
   await box.fill(number);
@@ -130,7 +137,12 @@ function readWorkflow() {
 function parseHistory(line) {
   // "Due on 08/04/2026, assigned to Tiffany Johnson Marked as Approved on 07/31/2026 by Tiffany Johnson"
   const m = /Due on (\S+)\s*, assigned to (.*?)\s*Marked as (.*?) on (\S+) by (.*)$/i.exec(line);
-  if (!m) return { raw: line };
+  if (!m) {
+    // Charlotte: "Marked as Rejected on 03/02/2026 by Christopher Bellitt" (no due date/assignee)
+    const k = /Marked as (.*?) on (\S+) by (.*)$/i.exec(line);
+    if (!k) return { raw: line };
+    return { dueAt: null, assignedTo: k[3], status: k[1], completedAt: iso(k[2]), by: k[3] };
+  }
   return { dueAt: iso(m[1]), assignedTo: m[2] === 'TBD' ? null : m[2], status: m[3] === 'TBD' ? null : m[3], completedAt: iso(m[4]), by: m[5] === 'TBD' ? null : m[5] };
 }
 
@@ -204,7 +216,7 @@ async function collectOne(number) {
   const wf = (await page.evaluate(readWorkflow)).map(t => ({ ...t, history: t.history.map(h => ({ ...parseHistory(h.line), comments: h.comment || null })) }));
 
   // Rounds: every "Assign to Reviewers" in Reviewer Routing starts a review round.
-  const routings = (wf.find(t => /^reviewer routing$/i.test(t.task))?.history || []).filter(h => h.completedAt).map(h => h.completedAt).sort();
+  const routings = (wf.find(t => /^(reviewer routing|plans distribution)$/i.test(t.task))?.history || []).filter(h => h.completedAt).map(h => h.completedAt).sort();
   // A review belongs to the last routing strictly before its due date (the due date is set at routing).
   const roundOf = (d) => { let r = 1; routings.forEach((x, i) => { if (d && x < d) r = i + 1; }); return r; };
   const reviewItems = [];
@@ -236,11 +248,12 @@ async function collectOne(number) {
   });
 
   const first = (task, re) => wf.find(t => re.test(t.task))?.history.filter(h => h.completedAt && (!task || task.test(h.status || ''))) || [];
-  const issued = first(/^issued$/i, /^permit issuance$/i)[0]?.completedAt || null;
-  const docs = wf.find(t => /^document acceptance$/i.test(t.task))?.history.map(h => h.completedAt || h.dueAt).filter(Boolean).sort() || [];
+  const issued = first(/^issued$/i, /^(permit issuance|permit issued|issuance)$/i)[0]?.completedAt || null;
+  // Intake task: Citrus "Document Acceptance", Charlotte "Intake Sufficiency Review", North Port "Application Intake".
+  const docs = wf.find(t => /^(document acceptance|intake sufficiency review|application intake)$/i.test(t.task))?.history.map(h => h.completedAt || h.dueAt).filter(Boolean).sort() || [];
   const mainRel = head.related.find(r => r[0] === number);
   const appliedAt = docs[0] || iso(mainRel?.[mainRel.length - 2] || mainRel?.[3]) || null;
-  const finaled = wf.find(t => /^closure$/i.test(t.task))?.history.find(h => h.completedAt && h.status)?.completedAt || null;
+  const finaled = wf.find(t => /^(closure|finaled|closed)$/i.test(t.task))?.history.find(h => h.completedAt && h.status && !/pending|tbd/i.test(h.status))?.completedAt || null;
 
   const upcoming = await allPages('#ctl00_PlaceHolderMain_InspectionList_gvListUpcoming', readInspectionRows);
   const completed = await allPages('#ctl00_PlaceHolderMain_InspectionList_gvListCompleted', readInspectionRows);
