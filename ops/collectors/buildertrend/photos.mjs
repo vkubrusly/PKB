@@ -30,14 +30,16 @@ if (!loggedIn) { console.error('session expired — re-export the bot cookies');
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const get = async (path) => {
   let r;
-  for (let attempt = 0; attempt < 6; attempt++) {
-    await sleep(700);
+  for (let attempt = 0; attempt < 5; attempt++) {
+    await sleep(500);
     r = await page.request.get('https://buildertrend.net' + path);
-    // 429, and sometimes 403, answer a burst; both clear after a pause.
-    if (![429, 403].includes(r.status())) break;
-    const wait = Number(r.headers()['retry-after']) || 5 * 2 ** attempt;
-    await sleep(Math.min(wait, 60) * 1000);
+    // 429 answers a burst: wait and retry. 403 is retried once (it can also follow a burst),
+    // after that the folder is really off-limits for the bot's role and is skipped.
+    if (r.status() === 429) { await sleep(Math.min(Number(r.headers()['retry-after']) || 5 * 2 ** attempt, 30) * 1000); continue; }
+    if (r.status() === 403 && attempt === 0) { await sleep(5000); continue; }
+    break;
   }
+  if (r.status() === 403) { skipped++; return {}; }
   if (!r.ok()) throw new Error(`${r.status()} ${path}`);
   const b = await r.json();
   if (b.needsToRelogin) throw new Error('session expired');
@@ -45,6 +47,7 @@ const get = async (path) => {
 };
 
 const files = [];
+let skipped = 0;
 async function walk(jobId, media, folder, path, depth = 0) {
   if (depth > 6) return;
   const assoc = folder.specialFolderExtraData?.folderAssociatedType ?? 0;
@@ -73,6 +76,7 @@ for (const j of jobs) {
   try {
     for (const media of [2]) await walk(j.id, media, { folderId: 0 }, '');
     ok++;
+    if (ok % 10 === 0) console.log(`… ${ok}/${jobs.length} jobs, ${files.length} photos`);
   } catch (e) { console.error(`${j.name}: ${e.message}`); if (/session expired/.test(e.message)) break; }
 }
 await browser.close();
@@ -84,4 +88,4 @@ const summary = jobs.map(j => {
   return { bt_job_id: j.id, name: j.name, count: fs.length, last_30d: fs.filter(f => (f.attached_at || '') >= new Date(Date.now() - 30 * 864e5).toISOString()).length, last_at: fs[0]?.attached_at || null, last_by: fs[0]?.added_by || null };
 });
 writeFileSync(join(OUT, 'photos.json'), JSON.stringify({ collectedAt: new Date().toISOString(), jobs: summary, files }, null, 1));
-console.log(`photos: ${files.length} files across ${ok}/${jobs.length} jobs`);
+console.log(`photos: ${files.length} files across ${ok}/${jobs.length} jobs${skipped ? ` · ${skipped} folder(s) not visible to the bot` : ''}`);
