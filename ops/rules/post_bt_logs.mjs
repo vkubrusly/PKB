@@ -36,7 +36,7 @@ for (const d of drafts) {
     console.log(`POSTED ${d.job_number} "${d.subject}" log ${r.logId} · notified ${r.notified.join(', ')}${r.skipped.length ? ` · skipped ${r.skipped.join(', ')}` : ''}`);
     ok++;
   } catch (e) {
-    await page.screenshot({ path: `data/buildertrend/probe/post_fail_${d.job_number}.png` }).catch(() => {});
+    await page.screenshot({ path: new URL(`../data/buildertrend/probe/post_fail_${d.job_number}.png`, import.meta.url).pathname }).catch(() => {}); // gitignored
     await sql(`update ops.outbound_messages set error = ${q(e.message.slice(0, 500))} where id = ${q(d.id)}`);
     console.error(`FAILED ${d.job_number}: ${e.message.split('\n')[0]}`);
   }
