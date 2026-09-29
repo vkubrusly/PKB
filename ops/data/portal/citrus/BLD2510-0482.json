@@ -41,7 +41,7 @@
     ],
     "reviewItems": [
       {
-        "itemReviewId": "Flood Plain Initial Review|2025-11-17|2025-11-13|Not Required",
+        "itemReviewId": "Flood Plain Initial Review|2025-11-17|1",
         "submittalId": "round-1",
         "round": 1,
         "department": "Flood Plain Initial Review",
@@ -54,7 +54,7 @@
         "by": "Michael Scalzi"
       },
       {
-        "itemReviewId": "Zoning Review|2025-11-20|2025-11-19|Approved",
+        "itemReviewId": "Zoning Review|2025-11-20|1",
         "submittalId": "round-1",
         "round": 1,
         "department": "Zoning Review",
@@ -67,7 +67,7 @@
         "by": "Erin Tewawina"
       },
       {
-        "itemReviewId": "Technical Services Review|2025-11-20|2025-11-19|Approved",
+        "itemReviewId": "Technical Services Review|2025-11-20|1",
         "submittalId": "round-1",
         "round": 1,
         "department": "Technical Services Review",
@@ -80,7 +80,7 @@
         "by": "Technical Services"
       },
       {
-        "itemReviewId": "Addressing Review|2025-11-20|2025-11-13|Approved",
+        "itemReviewId": "Addressing Review|2025-11-20|1",
         "submittalId": "round-1",
         "round": 1,
         "department": "Addressing Review",
@@ -93,7 +93,7 @@
         "by": "Addressing Department"
       },
       {
-        "itemReviewId": "SWPPP|2025-11-20|2025-11-13|Not Required",
+        "itemReviewId": "SWPPP|2025-11-20|1",
         "submittalId": "round-1",
         "round": 1,
         "department": "SWPPP",
@@ -106,7 +106,7 @@
         "by": "Technical Services"
       },
       {
-        "itemReviewId": "Utilities Review|2025-11-20|2025-11-26|Revisions Required",
+        "itemReviewId": "Utilities Review|2025-11-20|1",
         "submittalId": "round-1",
         "round": 1,
         "department": "Utilities Review",
@@ -119,7 +119,7 @@
         "by": "Utilities Department"
       },
       {
-        "itemReviewId": "Utilities Review|2025-12-16|2025-12-10|Approved",
+        "itemReviewId": "Utilities Review|2025-12-16|1",
         "submittalId": "round-2",
         "round": 2,
         "department": "Utilities Review",
@@ -132,7 +132,7 @@
         "by": "Utilities Department"
       },
       {
-        "itemReviewId": "Building Review|2025-11-20|2025-11-19|Revisions Required",
+        "itemReviewId": "Building Review|2025-11-20|1",
         "submittalId": "round-1",
         "round": 1,
         "department": "Building Review",
@@ -145,7 +145,7 @@
         "by": "Thomas Drummonds"
       },
       {
-        "itemReviewId": "Building Review|2025-12-16|2025-12-09|Approved",
+        "itemReviewId": "Building Review|2025-12-16|1",
         "submittalId": "round-2",
         "round": 2,
         "department": "Building Review",
@@ -158,7 +158,7 @@
         "by": "Thomas Drummonds"
       },
       {
-        "itemReviewId": "Preliminary Inspection|2025-11-20|2025-11-19|Revisions Required",
+        "itemReviewId": "Preliminary Inspection|2025-11-20|1",
         "submittalId": "round-1",
         "round": 1,
         "department": "Preliminary Inspection",
@@ -171,7 +171,7 @@
         "by": "Road Maintenance"
       },
       {
-        "itemReviewId": "Preliminary Inspection|2025-12-16|2025-12-15|Passed",
+        "itemReviewId": "Preliminary Inspection|2025-12-16|1",
         "submittalId": "round-2",
         "round": 2,
         "department": "Preliminary Inspection",
@@ -184,7 +184,7 @@
         "by": "Road Maintenance"
       },
       {
-        "itemReviewId": "Notice of Commencement Review|2025-12-29|2026-01-02|Review Pending - Revision Required",
+        "itemReviewId": "Notice of Commencement Review|2025-12-29|1",
         "submittalId": "round-2",
         "round": 2,
         "department": "Notice of Commencement Review",
@@ -197,7 +197,7 @@
         "by": "Angel R Jakob"
       },
       {
-        "itemReviewId": "Notice of Commencement Review|2025-12-29|2026-01-22|Review Complete",
+        "itemReviewId": "Notice of Commencement Review|2025-12-29|2",
         "submittalId": "round-2",
         "round": 2,
         "department": "Notice of Commencement Review",
@@ -210,7 +210,7 @@
         "by": "Shannon Lutton"
       },
       {
-        "itemReviewId": "Document Review-Insulation Certificate-1 - Insulation Certificate|2026-09-03|2026-09-03|Review Complete",
+        "itemReviewId": "Document Review-Insulation Certificate-1 - Insulation Certificate|2026-09-03|1",
         "submittalId": "round-2",
         "round": 2,
         "department": "Document Review-Insulation Certificate-1 - Insulation Certificate",
@@ -223,7 +223,7 @@
         "by": "James Anderson"
       },
       {
-        "itemReviewId": "Document Review-Termite Certificate-1 - Termite Certificate|2026-09-03|2026-09-03|Review Pending - Revision Required",
+        "itemReviewId": "Document Review-Termite Certificate-1 - Termite Certificate|2026-09-03|1",
         "submittalId": "round-2",
         "round": 2,
         "department": "Document Review-Termite Certificate-1 - Termite Certificate",
@@ -236,7 +236,7 @@
         "by": "James Anderson"
       },
       {
-        "itemReviewId": "Document Review-Termite Certificate-2 - Termite Certificate|2026-09-03|2026-09-03|Review Pending - Revision Required",
+        "itemReviewId": "Document Review-Termite Certificate-2 - Termite Certificate|2026-09-03|1",
         "submittalId": "round-2",
         "round": 2,
         "department": "Document Review-Termite Certificate-2 - Termite Certificate",
@@ -249,7 +249,7 @@
         "by": "James Anderson"
       },
       {
-        "itemReviewId": "Document Review-Envelope Leakage Test Report-1 - Envelope Leakage Test Report|2026-09-03|2026-09-03|Review Complete",
+        "itemReviewId": "Document Review-Envelope Leakage Test Report-1 - Envelope Leakage Test Report|2026-09-03|1",
         "submittalId": "round-2",
         "round": 2,
         "department": "Document Review-Envelope Leakage Test Report-1 - Envelope Leakage Test Report",
@@ -262,7 +262,7 @@
         "by": "James Anderson"
       },
       {
-        "itemReviewId": "Notice of Commencement Review|2026-09-03|2026-09-04|Review Complete",
+        "itemReviewId": "Notice of Commencement Review|2026-09-03|1",
         "submittalId": "round-2",
         "round": 2,
         "department": "Notice of Commencement Review",
@@ -735,13 +735,14 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-01-23",
-        "inspector": null,
+        "inspector": "Steven Chmura",
         "reinspection": false,
         "passed": true,
         "failed": false,
         "cancelled": false,
         "completed": true,
-        "raw": "Approved  401 PLUMBING ROUGH I (88842)  Result by: Steven Chmura on 01/23/2026 at 11:49 AM"
+        "raw": "Approved  401 PLUMBING ROUGH I (88842)  Result by: Steven Chmura on 01/23/2026 at 11:49 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=88842&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "88839",
@@ -751,29 +752,66 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-01-29",
-        "inspector": null,
+        "inspector": "Peter Ovaska",
         "reinspection": false,
         "passed": true,
         "failed": false,
         "cancelled": false,
         "completed": true,
-        "raw": "Approved  219 CONCRETE ENCASED GROUND (88839)  Result by: Peter Ovaska on 01/29/2026 at 12:49 PM"
+        "raw": "Approved  219 CONCRETE ENCASED GROUND (88839)  Result by: Peter Ovaska on 01/29/2026 at 12:49 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=88839&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "88822",
         "code": "103",
         "type": "SLAB",
         "status": "Failed - First",
-        "requestedAt": null,
-        "scheduledAt": null,
+        "requestedAt": "2026-01-29",
+        "scheduledAt": "2026-01-30",
         "actualAt": "2026-01-30",
-        "inspector": null,
+        "inspector": "David Crum",
         "reinspection": false,
         "passed": false,
         "failed": true,
         "cancelled": false,
         "completed": true,
-        "raw": "Failed - First  103 SLAB (88822)  Result by: David Crum on 01/30/2026 at 07:37 AM"
+        "raw": "Failed - First  103 SLAB (88822)  Result by: David Crum on 01/30/2026 at 07:37 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=88822&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow",
+        "comments": "David Crum (1/30/2026 7:37 AM) not ready",
+        "statusHistory": [
+          {
+            "status": "Failed - First",
+            "at": "1/30/2026 7:37 AM",
+            "inspector": "David Crum",
+            "updatedAt": "1/30/2026 7:37 AM",
+            "by": "David Crum",
+            "comments": "not ready"
+          },
+          {
+            "status": "Scheduled",
+            "at": "1/30/2026 12:00 AM",
+            "inspector": "David Crum",
+            "updatedAt": "1/29/2026 3:26 PM",
+            "by": "Scott Schnettler",
+            "comments": null
+          },
+          {
+            "status": "Scheduled",
+            "at": "1/30/2026 12:00 AM",
+            "inspector": "David Crum",
+            "updatedAt": "1/29/2026 2:57 PM",
+            "by": "Cristiano M Pedrosa",
+            "comments": null
+          },
+          {
+            "status": "Pending",
+            "at": "TBD",
+            "inspector": "David Crum",
+            "updatedAt": "11/19/2025 2:16 PM",
+            "by": "Thomas Drummonds",
+            "comments": null
+          }
+        ]
       },
       {
         "number": "146491",
@@ -783,29 +821,66 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-02-02",
-        "inspector": null,
+        "inspector": "David Crum",
         "reinspection": false,
         "passed": true,
         "failed": false,
         "cancelled": false,
         "completed": true,
-        "raw": "Approved  103 SLAB (146491)  Result by: David Crum on 02/02/2026 at 11:56 AM"
+        "raw": "Approved  103 SLAB (146491)  Result by: David Crum on 02/02/2026 at 11:56 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=146491&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "88823",
         "code": "105",
         "type": "LINTEL",
         "status": "Failed - First",
-        "requestedAt": null,
-        "scheduledAt": null,
+        "requestedAt": "2026-02-09",
+        "scheduledAt": "2026-02-10",
         "actualAt": "2026-02-10",
-        "inspector": null,
+        "inspector": "Vincent Artese",
         "reinspection": false,
         "passed": false,
         "failed": true,
         "cancelled": false,
         "completed": true,
-        "raw": "Failed - First  105 LINTEL (88823)  Result by: Vincent Artese on 02/10/2026 at 12:24 PM"
+        "raw": "Failed - First  105 LINTEL (88823)  Result by: Vincent Artese on 02/10/2026 at 12:24 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=88823&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow",
+        "comments": "Vincent Artese (2/10/2026 12:24 PM) Required paperwork not on job site. No permit posted. (FBC 105.7) All other related paperwork to be readily accessable. Blueprints are submitted as a set and all pages are one set and shall be contained as such. Presently the job box contains various separated pages that must be gathered as one. Full inspection required once paperwork on location.",
+        "statusHistory": [
+          {
+            "status": "Failed - First",
+            "at": "2/10/2026 12:24 PM",
+            "inspector": "Vincent Artese",
+            "updatedAt": "2/10/2026 12:24 PM",
+            "by": "Vincent Artese",
+            "comments": "Required paperwork not on job site. No permit posted. (FBC 105.7) All other related paperwork to be readily accessable. Blueprints are submitted as a set and all pages are one set and shall be contained as such. Presently the job box contains various separated pages that must be gathered as one. Full inspection required once paperwork on location."
+          },
+          {
+            "status": "Scheduled",
+            "at": "2/10/2026 12:00 AM",
+            "inspector": "Vincent Artese",
+            "updatedAt": "2/9/2026 6:56 PM",
+            "by": "Scott Schnettler",
+            "comments": null
+          },
+          {
+            "status": "Scheduled",
+            "at": "2/10/2026 12:00 AM",
+            "inspector": "Vincent Artese",
+            "updatedAt": "2/9/2026 9:30 AM",
+            "by": "Cristiano M Pedrosa",
+            "comments": null
+          },
+          {
+            "status": "Pending",
+            "at": "TBD",
+            "inspector": "Vincent Artese",
+            "updatedAt": "11/19/2025 2:16 PM",
+            "by": "Thomas Drummonds",
+            "comments": null
+          }
+        ]
       },
       {
         "number": "157051",
@@ -815,13 +890,14 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-02-12",
-        "inspector": null,
+        "inspector": "Peter Ovaska",
         "reinspection": false,
         "passed": true,
         "failed": false,
         "cancelled": false,
         "completed": true,
-        "raw": "Approved  105 LINTEL (157051)  Result by: Peter Ovaska on 02/12/2026 at 08:54 AM"
+        "raw": "Approved  105 LINTEL (157051)  Result by: Peter Ovaska on 02/12/2026 at 08:54 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=157051&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "88824",
@@ -831,13 +907,14 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-02-19",
-        "inspector": null,
+        "inspector": "Thomas Drummonds",
         "reinspection": false,
         "passed": false,
         "failed": false,
         "cancelled": false,
         "completed": true,
-        "raw": "Rescheduled  106 ROOF SHEATHING (88824)  Rescheduled by: Thomas Drummonds on 02/19/2026 at 10:17 AM"
+        "raw": "Rescheduled  106 ROOF SHEATHING (88824)  Rescheduled by: Thomas Drummonds on 02/19/2026 at 10:17 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=88824&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "88830",
@@ -847,13 +924,14 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-02-19",
-        "inspector": null,
+        "inspector": "Vincent Artese",
         "reinspection": false,
         "passed": true,
         "failed": false,
         "cancelled": false,
         "completed": true,
-        "raw": "Approved  119 STRUCTURAL FRAME (88830)  Result by: Vincent Artese on 02/19/2026 at 10:18 AM"
+        "raw": "Approved  119 STRUCTURAL FRAME (88830)  Result by: Vincent Artese on 02/19/2026 at 10:18 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=88830&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "165494",
@@ -863,13 +941,14 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-02-19",
-        "inspector": null,
+        "inspector": "Vincent Artese",
         "reinspection": false,
         "passed": true,
         "failed": false,
         "cancelled": false,
         "completed": true,
-        "raw": "Approved  106 ROOF SHEATHING (165494)  Result by: Vincent Artese on 02/19/2026 at 10:33 AM"
+        "raw": "Approved  106 ROOF SHEATHING (165494)  Result by: Vincent Artese on 02/19/2026 at 10:33 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=165494&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "186616",
@@ -879,13 +958,14 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-03-13",
-        "inspector": null,
+        "inspector": "Thomas Drummonds",
         "reinspection": false,
         "passed": true,
         "failed": false,
         "cancelled": false,
         "completed": true,
-        "raw": "Approved  107 WALL SHEATHING (186616)  Result by: Thomas Drummonds on 03/13/2026 at 11:20 AM"
+        "raw": "Approved  107 WALL SHEATHING (186616)  Result by: Thomas Drummonds on 03/13/2026 at 11:20 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=186616&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "88840",
@@ -895,13 +975,14 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-03-17",
-        "inspector": null,
+        "inspector": "Vincent Artese",
         "reinspection": false,
         "passed": true,
         "failed": false,
         "cancelled": false,
         "completed": true,
-        "raw": "Approved  301 MECHANICAL ROUGH IN (88840)  Result by: Vincent Artese on 03/17/2026 at 10:12 AM"
+        "raw": "Approved  301 MECHANICAL ROUGH IN (88840)  Result by: Vincent Artese on 03/17/2026 at 10:12 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=88840&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "88832",
@@ -911,13 +992,14 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-03-17",
-        "inspector": null,
+        "inspector": "Vincent Artese",
         "reinspection": false,
         "passed": true,
         "failed": false,
         "cancelled": false,
         "completed": true,
-        "raw": "Approved  140 ROOF DRY IN & FLASHING (88832)  Result by: Vincent Artese on 03/17/2026 at 10:12 AM"
+        "raw": "Approved  140 ROOF DRY IN & FLASHING (88832)  Result by: Vincent Artese on 03/17/2026 at 10:12 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=88832&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "88843",
@@ -927,29 +1009,66 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-03-17",
-        "inspector": null,
+        "inspector": "Vincent Artese",
         "reinspection": false,
         "passed": true,
         "failed": false,
         "cancelled": false,
         "completed": true,
-        "raw": "Approved  402 PLUMBING ROUGH II (88843)  Result by: Vincent Artese on 03/17/2026 at 10:13 AM"
+        "raw": "Approved  402 PLUMBING ROUGH II (88843)  Result by: Vincent Artese on 03/17/2026 at 10:13 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=88843&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "88836",
         "code": "204",
         "type": "ELECTRICAL ROUGH IN",
         "status": "Failed - First",
-        "requestedAt": null,
-        "scheduledAt": null,
+        "requestedAt": "2026-03-16",
+        "scheduledAt": "2026-03-17",
         "actualAt": "2026-03-17",
-        "inspector": null,
+        "inspector": "Jeremy Lentz",
         "reinspection": false,
         "passed": false,
         "failed": true,
         "cancelled": false,
         "completed": true,
-        "raw": "Failed - First  204 ELECTRICAL ROUGH IN (88836)  Result by: Jeremy Lentz on 03/17/2026 at 11:05 AM"
+        "raw": "Failed - First  204 ELECTRICAL ROUGH IN (88836)  Result by: Jeremy Lentz on 03/17/2026 at 11:05 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=88836&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow",
+        "comments": "Jeremy Lentz (3/17/2026 11:05 AM) NM cable not secured in laundry wall just outside of Master Bedroom door. (NEC 334.30)",
+        "statusHistory": [
+          {
+            "status": "Failed - First",
+            "at": "3/17/2026 11:05 AM",
+            "inspector": "Jeremy Lentz",
+            "updatedAt": "3/17/2026 11:05 AM",
+            "by": "Jeremy Lentz",
+            "comments": "NM cable not secured in laundry wall just outside of Master Bedroom door. (NEC 334.30)"
+          },
+          {
+            "status": "Scheduled",
+            "at": "3/17/2026 12:00 AM",
+            "inspector": "Jeremy Lentz",
+            "updatedAt": "3/16/2026 6:57 PM",
+            "by": "Scott Schnettler",
+            "comments": null
+          },
+          {
+            "status": "Scheduled",
+            "at": "3/17/2026 12:00 AM",
+            "inspector": "Jeremy Lentz",
+            "updatedAt": "3/16/2026 11:55 AM",
+            "by": "Cristiano M Pedrosa",
+            "comments": null
+          },
+          {
+            "status": "Pending",
+            "at": "TBD",
+            "inspector": "Jeremy Lentz",
+            "updatedAt": "11/19/2025 2:16 PM",
+            "by": "Thomas Drummonds",
+            "comments": null
+          }
+        ]
       },
       {
         "number": "88825",
@@ -959,13 +1078,14 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-03-17",
-        "inspector": null,
+        "inspector": "Vincent Artese",
         "reinspection": false,
         "passed": false,
         "failed": false,
         "cancelled": true,
         "completed": true,
-        "raw": "Cancelled  108 FRAME (88825)  Cancelled by: Vincent Artese on 03/17/2026 at 12:52 PM"
+        "raw": "Cancelled  108 FRAME (88825)  Cancelled by: Vincent Artese on 03/17/2026 at 12:52 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=88825&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "190333",
@@ -975,13 +1095,14 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-03-20",
-        "inspector": null,
+        "inspector": "Jeremy Lentz",
         "reinspection": false,
         "passed": true,
         "failed": false,
         "cancelled": false,
         "completed": true,
-        "raw": "Approved  204 ELECTRICAL ROUGH IN (190333)  Result by: Jeremy Lentz on 03/20/2026 at 09:24 AM"
+        "raw": "Approved  204 ELECTRICAL ROUGH IN (190333)  Result by: Jeremy Lentz on 03/20/2026 at 09:24 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=190333&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "190452",
@@ -991,13 +1112,14 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-03-26",
-        "inspector": null,
+        "inspector": "Vincent Artese",
         "reinspection": false,
         "passed": true,
         "failed": false,
         "cancelled": false,
         "completed": true,
-        "raw": "Approved  108 FRAME (190452)  Result by: Vincent Artese on 03/26/2026 at 12:20 PM"
+        "raw": "Approved  108 FRAME (190452)  Result by: Vincent Artese on 03/26/2026 at 12:20 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=190452&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "88833",
@@ -1007,13 +1129,14 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-03-31",
-        "inspector": null,
+        "inspector": "David Crum",
         "reinspection": false,
         "passed": true,
         "failed": false,
         "cancelled": false,
         "completed": true,
-        "raw": "Approved  146 BUILDING LATH NAILING (88833)  Result by: David Crum on 03/31/2026 at 01:12 PM"
+        "raw": "Approved  146 BUILDING LATH NAILING (88833)  Result by: David Crum on 03/31/2026 at 01:12 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=88833&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "88826",
@@ -1023,13 +1146,14 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-04-01",
-        "inspector": null,
+        "inspector": "Peter Ovaska",
         "reinspection": false,
         "passed": true,
         "failed": false,
         "cancelled": false,
         "completed": true,
-        "raw": "Approved  110 INSULATION (88826)  Result by: Peter Ovaska on 04/01/2026 at 02:14 PM"
+        "raw": "Approved  110 INSULATION (88826)  Result by: Peter Ovaska on 04/01/2026 at 02:14 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=88826&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "88831",
@@ -1039,13 +1163,14 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-04-24",
-        "inspector": null,
+        "inspector": "Vincent Artese",
         "reinspection": false,
         "passed": true,
         "failed": false,
         "cancelled": false,
         "completed": true,
-        "raw": "Approved  133 SOFFIT IN PROGRESS (88831)  Result by: Vincent Artese on 04/24/2026 at 12:33 PM"
+        "raw": "Approved  133 SOFFIT IN PROGRESS (88831)  Result by: Vincent Artese on 04/24/2026 at 12:33 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=88831&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "87892",
@@ -1055,13 +1180,14 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-05-04",
-        "inspector": null,
+        "inspector": "Road Maintenance",
         "reinspection": false,
         "passed": true,
         "failed": false,
         "cancelled": false,
         "completed": true,
-        "raw": "Approved  150 RESIDENTIAL DRIVEWAY PRE-POUR (87892)  Result by: Road Maintenance on 05/04/2026 at 12:00 AM"
+        "raw": "Approved  150 RESIDENTIAL DRIVEWAY PRE-POUR (87892)  Result by: Road Maintenance on 05/04/2026 at 12:00 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=87892&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "88844",
@@ -1071,29 +1197,66 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-05-06",
-        "inspector": null,
+        "inspector": "Steven Chmura",
         "reinspection": false,
         "passed": true,
         "failed": false,
         "cancelled": false,
         "completed": true,
-        "raw": "Approved  403 SEWER (88844)  Result by: Steven Chmura on 05/06/2026 at 12:00 AM"
+        "raw": "Approved  403 SEWER (88844)  Result by: Steven Chmura on 05/06/2026 at 12:00 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=88844&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "88838",
         "code": "209",
         "type": "PRE POWER",
         "status": "Failed - First",
-        "requestedAt": null,
-        "scheduledAt": null,
+        "requestedAt": "2026-05-05",
+        "scheduledAt": "2026-05-07",
         "actualAt": "2026-05-07",
-        "inspector": null,
+        "inspector": "Peter Ovaska",
         "reinspection": false,
         "passed": false,
         "failed": true,
         "cancelled": false,
         "completed": true,
-        "raw": "Failed - First  209 PRE POWER (88838)  Result by: Peter Ovaska on 05/07/2026 at 10:58 AM"
+        "raw": "Failed - First  209 PRE POWER (88838)  Result by: Peter Ovaska on 05/07/2026 at 10:58 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=88838&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow",
+        "comments": "Peter Ovaska (5/7/2026 10:58 AM) Feeders not landed at meter main.",
+        "statusHistory": [
+          {
+            "status": "Failed - First",
+            "at": "5/7/2026 10:58 AM",
+            "inspector": "Peter Ovaska",
+            "updatedAt": "5/7/2026 10:58 AM",
+            "by": "Peter Ovaska",
+            "comments": "Feeders not landed at meter main."
+          },
+          {
+            "status": "Scheduled",
+            "at": "5/7/2026 12:00 AM",
+            "inspector": "Peter Ovaska",
+            "updatedAt": "5/6/2026 4:23 PM",
+            "by": "Scott Schnettler",
+            "comments": null
+          },
+          {
+            "status": "Scheduled",
+            "at": "5/7/2026 12:00 AM",
+            "inspector": "Peter Ovaska",
+            "updatedAt": "5/5/2026 1:32 PM",
+            "by": "Cristiano M Pedrosa",
+            "comments": null
+          },
+          {
+            "status": "Pending",
+            "at": "TBD",
+            "inspector": "Peter Ovaska",
+            "updatedAt": "11/19/2025 2:16 PM",
+            "by": "Thomas Drummonds",
+            "comments": null
+          }
+        ]
       },
       {
         "number": "88845",
@@ -1103,29 +1266,66 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-05-07",
-        "inspector": null,
+        "inspector": "Peter Ovaska",
         "reinspection": false,
         "passed": true,
         "failed": false,
         "cancelled": false,
         "completed": true,
-        "raw": "Approved  404 WATER SERVICE (88845)  Result by: Peter Ovaska on 05/07/2026 at 02:05 PM"
+        "raw": "Approved  404 WATER SERVICE (88845)  Result by: Peter Ovaska on 05/07/2026 at 02:05 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=88845&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "241133",
         "code": "209",
         "type": "PRE POWER",
         "status": "Failed - Second",
-        "requestedAt": null,
-        "scheduledAt": null,
+        "requestedAt": "2026-05-07",
+        "scheduledAt": "2026-05-08",
         "actualAt": "2026-05-08",
-        "inspector": null,
+        "inspector": "Jeremy Lentz",
         "reinspection": false,
         "passed": false,
         "failed": true,
         "cancelled": false,
         "completed": true,
-        "raw": "Failed - Second  209 PRE POWER (241133)  Result by: Jeremy Lentz on 05/08/2026 at 10:09 AM"
+        "raw": "Failed - Second  209 PRE POWER (241133)  Result by: Jeremy Lentz on 05/08/2026 at 10:09 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=241133&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow",
+        "comments": "Jeremy Lentz (5/8/2026 10:09 AM) Feeders not properly torqued. Easily pulled neutral from lug by hand. Please check all connections.",
+        "statusHistory": [
+          {
+            "status": "Failed - Second",
+            "at": "5/8/2026 10:09 AM",
+            "inspector": "Jeremy Lentz",
+            "updatedAt": "5/8/2026 10:09 AM",
+            "by": "Jeremy Lentz",
+            "comments": "Feeders not properly torqued. Easily pulled neutral from lug by hand. Please check all connections."
+          },
+          {
+            "status": "Scheduled",
+            "at": "5/8/2026 12:00 AM",
+            "inspector": "Jeremy Lentz",
+            "updatedAt": "5/7/2026 3:54 PM",
+            "by": "Scott Schnettler",
+            "comments": null
+          },
+          {
+            "status": "Scheduled",
+            "at": "5/8/2026 12:00 AM",
+            "inspector": "Jeremy Lentz",
+            "updatedAt": "5/7/2026 11:51 AM",
+            "by": "Cristiano M Pedrosa",
+            "comments": null
+          },
+          {
+            "status": "Pending",
+            "at": "TBD",
+            "inspector": "Jeremy Lentz",
+            "updatedAt": "5/7/2026 10:58 AM",
+            "by": "Peter Ovaska",
+            "comments": null
+          }
+        ]
       },
       {
         "number": "243211",
@@ -1135,45 +1335,118 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-05-12",
-        "inspector": null,
+        "inspector": "Jeremy Lentz",
         "reinspection": false,
         "passed": true,
         "failed": false,
         "cancelled": false,
         "completed": true,
-        "raw": "Approved  209 PRE POWER (243211)  Result by: Jeremy Lentz on 05/12/2026 at 12:42 PM"
+        "raw": "Approved  209 PRE POWER (243211)  Result by: Jeremy Lentz on 05/12/2026 at 12:42 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=243211&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "88846",
         "code": "405",
         "type": "PLUMBING FINAL",
         "status": "Failed - First",
-        "requestedAt": null,
-        "scheduledAt": null,
+        "requestedAt": "2026-06-15",
+        "scheduledAt": "2026-06-17",
         "actualAt": "2026-06-17",
-        "inspector": null,
+        "inspector": "Thomas Drummonds",
         "reinspection": false,
         "passed": false,
         "failed": true,
         "cancelled": false,
         "completed": true,
-        "raw": "Failed - First  405 PLUMBING FINAL (88846)  Result by: Thomas Drummonds on 06/17/2026 at 12:07 PM"
+        "raw": "Failed - First  405 PLUMBING FINAL (88846)  Result by: Thomas Drummonds on 06/17/2026 at 12:07 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=88846&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow",
+        "comments": "Thomas Drummonds (6/17/2026 12:08 PM) P3005.1.5 Provisions for future fixtures. garage closet Where drainage has been roughed-in for future fixtures, the drainage unit values of the future fixtures shall be considered in determining the required drain sizes. Such future installations shall be terminated with an accessible permanent plug or cap fitting. *[A]107.3.1 reviewed for code compliance plans not on site",
+        "statusHistory": [
+          {
+            "status": "Failed - First",
+            "at": "6/17/2026 12:07 PM",
+            "inspector": "Thomas Drummonds",
+            "updatedAt": "6/17/2026 12:08 PM",
+            "by": "Thomas Drummonds",
+            "comments": "P3005.1.5 Provisions for future fixtures. garage closet Where drainage has been roughed-in for future fixtures, the drainage unit values of the future fixtures shall be considered in determining the required drain sizes. Such future installations shall be terminated with an accessible permanent plug or cap fitting. *[A]107.3.1 reviewed for code compliance plans not on site"
+          },
+          {
+            "status": "Scheduled",
+            "at": "6/17/2026 12:00 AM",
+            "inspector": "Thomas Drummonds",
+            "updatedAt": "6/16/2026 5:12 PM",
+            "by": "Andrew Walker",
+            "comments": null
+          },
+          {
+            "status": "Scheduled",
+            "at": "6/17/2026 12:00 AM",
+            "inspector": "Thomas Drummonds",
+            "updatedAt": "6/15/2026 3:33 PM",
+            "by": "Cristiano M Pedrosa",
+            "comments": null
+          },
+          {
+            "status": "Pending",
+            "at": "TBD",
+            "inspector": "Thomas Drummonds",
+            "updatedAt": "11/19/2025 2:16 PM",
+            "by": "Thomas Drummonds",
+            "comments": null
+          }
+        ]
       },
       {
         "number": "88841",
         "code": "302",
         "type": "MECHANICAL FINAL",
         "status": "Failed - First",
-        "requestedAt": null,
-        "scheduledAt": null,
+        "requestedAt": "2026-06-15",
+        "scheduledAt": "2026-06-17",
         "actualAt": "2026-06-17",
-        "inspector": null,
+        "inspector": "Thomas Drummonds",
         "reinspection": false,
         "passed": false,
         "failed": true,
         "cancelled": false,
         "completed": true,
-        "raw": "Failed - First  302 MECHANICAL FINAL (88841)  Result by: Thomas Drummonds on 06/17/2026 at 12:09 PM"
+        "raw": "Failed - First  302 MECHANICAL FINAL (88841)  Result by: Thomas Drummonds on 06/17/2026 at 12:09 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=88841&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow",
+        "comments": "Thomas Drummonds (6/17/2026 12:09 PM) • Fbc106.3.1 fbcer403.7.1 energy calculations manual s and AHRI not on-site",
+        "statusHistory": [
+          {
+            "status": "Failed - First",
+            "at": "6/17/2026 12:09 PM",
+            "inspector": "Thomas Drummonds",
+            "updatedAt": "6/17/2026 12:09 PM",
+            "by": "Thomas Drummonds",
+            "comments": "• Fbc106.3.1 fbcer403.7.1 energy calculations manual s and AHRI not on-site"
+          },
+          {
+            "status": "Scheduled",
+            "at": "6/17/2026 12:00 AM",
+            "inspector": "Thomas Drummonds",
+            "updatedAt": "6/16/2026 5:12 PM",
+            "by": "Andrew Walker",
+            "comments": null
+          },
+          {
+            "status": "Scheduled",
+            "at": "6/17/2026 12:00 AM",
+            "inspector": "Thomas Drummonds",
+            "updatedAt": "6/15/2026 3:34 PM",
+            "by": "Cristiano M Pedrosa",
+            "comments": null
+          },
+          {
+            "status": "Pending",
+            "at": "TBD",
+            "inspector": "Thomas Drummonds",
+            "updatedAt": "11/19/2025 2:16 PM",
+            "by": "Thomas Drummonds",
+            "comments": null
+          }
+        ]
       },
       {
         "number": "88837",
@@ -1183,13 +1456,14 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-06-17",
-        "inspector": null,
+        "inspector": "Thomas Drummonds",
         "reinspection": false,
         "passed": false,
         "failed": false,
         "cancelled": true,
         "completed": true,
-        "raw": "Cancelled  205 ELECTRICAL FINAL (88837)  Cancelled by: Thomas Drummonds on 06/17/2026 at 12:10 PM"
+        "raw": "Cancelled  205 ELECTRICAL FINAL (88837)  Cancelled by: Thomas Drummonds on 06/17/2026 at 12:10 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=88837&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "87891",
@@ -1199,13 +1473,14 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-06-17",
-        "inspector": null,
+        "inspector": "Road Maintenance",
         "reinspection": false,
         "passed": true,
         "failed": false,
         "cancelled": false,
         "completed": true,
-        "raw": "Approved  148 RESIDENTIAL DRIVEWAY FINAL (87891)  Result by: Road Maintenance on 06/17/2026 at 12:00 AM"
+        "raw": "Approved  148 RESIDENTIAL DRIVEWAY FINAL (87891)  Result by: Road Maintenance on 06/17/2026 at 12:00 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=87891&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "105775",
@@ -1215,13 +1490,14 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-06-17",
-        "inspector": null,
+        "inspector": "Utilities Department",
         "reinspection": false,
         "passed": true,
         "failed": false,
         "cancelled": false,
         "completed": true,
-        "raw": "Approved  154 RESIDENTIAL UTILITY FINAL (105775)  Result by: Utilities Department on 06/17/2026 at 10:09 AM"
+        "raw": "Approved  154 RESIDENTIAL UTILITY FINAL (105775)  Result by: Utilities Department on 06/17/2026 at 10:09 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=105775&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "278617",
@@ -1231,13 +1507,14 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-08-17",
-        "inspector": null,
+        "inspector": "Peter Ovaska",
         "reinspection": false,
         "passed": true,
         "failed": false,
         "cancelled": false,
         "completed": true,
-        "raw": "Approved  205 ELECTRICAL FINAL (278617)  Result by: Peter Ovaska on 08/17/2026 at 02:38 PM"
+        "raw": "Approved  205 ELECTRICAL FINAL (278617)  Result by: Peter Ovaska on 08/17/2026 at 02:38 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=278617&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "279132",
@@ -1247,13 +1524,14 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-08-17",
-        "inspector": null,
+        "inspector": "Peter Ovaska",
         "reinspection": false,
         "passed": true,
         "failed": false,
         "cancelled": false,
         "completed": true,
-        "raw": "Approved  302 MECHANICAL FINAL (279132)  Result by: Peter Ovaska on 08/17/2026 at 02:38 PM"
+        "raw": "Approved  302 MECHANICAL FINAL (279132)  Result by: Peter Ovaska on 08/17/2026 at 02:38 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=279132&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "279697",
@@ -1263,13 +1541,14 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-08-17",
-        "inspector": null,
+        "inspector": "Peter Ovaska",
         "reinspection": false,
         "passed": true,
         "failed": false,
         "cancelled": false,
         "completed": true,
-        "raw": "Approved  405 PLUMBING FINAL (279697)  Result by: Peter Ovaska on 08/17/2026 at 02:38 PM"
+        "raw": "Approved  405 PLUMBING FINAL (279697)  Result by: Peter Ovaska on 08/17/2026 at 02:38 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=279697&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "88828",
@@ -1279,13 +1558,14 @@
         "requestedAt": null,
         "scheduledAt": null,
         "actualAt": "2026-08-17",
-        "inspector": null,
+        "inspector": "Peter Ovaska",
         "reinspection": false,
         "passed": true,
         "failed": false,
         "cancelled": false,
         "completed": true,
-        "raw": "Approved  117 BUILDING FINAL (88828)  Result by: Peter Ovaska on 08/17/2026 at 02:38 PM"
+        "raw": "Approved  117 BUILDING FINAL (88828)  Result by: Peter Ovaska on 08/17/2026 at 02:38 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2510-0482&RecordID1=REC25&RecordID2=00000&RecordID3=004CH&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=88828&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
       },
       {
         "number": "88834",
@@ -1301,7 +1581,8 @@
         "failed": false,
         "cancelled": false,
         "completed": false,
-        "raw": "TBD at TBD Pending  201 T-POLE (88834)  Inspector: unassigned"
+        "raw": "TBD at TBD Pending  201 T-POLE (88834)  Inspector: unassigned",
+        "details": null
       },
       {
         "number": "88835",
@@ -1317,7 +1598,8 @@
         "failed": false,
         "cancelled": false,
         "completed": false,
-        "raw": "TBD at TBD Pending  202 TUG (88835)  Inspector: unassigned"
+        "raw": "TBD at TBD Pending  202 TUG (88835)  Inspector: unassigned",
+        "details": null
       },
       {
         "number": "88827",
@@ -1333,7 +1615,8 @@
         "failed": false,
         "cancelled": false,
         "completed": false,
-        "raw": "TBD at TBD Pending  112 STEMWALL FOOTING (88827)  Inspector: unassigned"
+        "raw": "TBD at TBD Pending  112 STEMWALL FOOTING (88827)  Inspector: unassigned",
+        "details": null
       },
       {
         "number": "88829",
@@ -1349,15 +1632,16 @@
         "failed": false,
         "cancelled": false,
         "completed": false,
-        "raw": "TBD at TBD Pending  118 STEMWALL (88829)  Inspector: unassigned"
+        "raw": "TBD at TBD Pending  118 STEMWALL (88829)  Inspector: unassigned",
+        "details": null
       }
     ],
     "holds": [
       {
-        "name": "Building - 5 Applied, 3 Complied Building Permit Duct Leakage Test Report",
+        "name": "Duct Leakage Test Report",
         "type": "Notice",
         "reason": null,
-        "comments": "Building - 5 Applied, 3 Complied Building Permit Duct Leakage Test ReportPlease provide a Duck Leakage Test Report. Upload a copy of this document to your online account under document type ‘Duck Leakage Test Report’. If you do not see this document type, or have further questions regarding this condition or document, please contact planreview@citrusbocc.com Please do not upload this under any other incorrect document type.Applied",
+        "comments": "Duct Leakage Test ReportPlease provide a Duck Leakage Test Report. Upload a copy of this document to your online account under document type ‘Duck Leakage Test Report’. If you do not see this document type, or have further questions regarding this condition or document, please contact planreview@citrusbocc.com Please do not upload this under any other incorrect document type.Applied",
         "createdAt": "2025-11-19",
         "active": true,
         "status": "Applied"
@@ -1404,23 +1688,23 @@
     "subRecords": [
       {
         "number": "BLD2510-0482.RR01",
-        "type": "BLD2510-0482.RR01",
+        "type": "Permit Revision",
         "status": null,
         "date": "2026-01-22"
       },
       {
         "number": "CSR2609-0236",
-        "type": "CSR2609-0236",
+        "type": "Customer Service Request",
         "status": null,
         "date": "2026-09-03"
       },
       {
         "number": "CSR2609-0626",
-        "type": "CSR2609-0626",
+        "type": "Customer Service Request",
         "status": null,
         "date": "2026-09-11"
       }
     ],
-    "collectedAt": "2026-09-28T21:38:42.065Z"
+    "collectedAt": "2026-09-29T20:43:05.315Z"
   }
 }

@@ -103,6 +103,26 @@ jobs:
           node rules/inspection_failed.mjs
           node rules/photos_stale.mjs
 
+      # R1/R2: corrections e-mail to Sovereign (Guilherme in Cc) and follow-ups after
+      # 2 business days per failed item. Leaves PKB, so it runs only when the repository
+      # variable OPS_R1_ENABLED is 'true'.
+      - name: Rules — corrections to the designer (R1/R2)
+        if: vars.OPS_R1_ENABLED == 'true'
+        continue-on-error: true
+        env:
+          BOT_EMAIL: ${{ secrets.BOT_EMAIL || 'botpkbhomes@gmail.com' }}
+          BOT_EMAIL_PASSWORD: ${{ secrets.BOT_EMAIL_PASSWORD }}
+          OPS_SEND_ENABLED: ${{ vars.OPS_SEND_ENABLED || 'false' }}
+        run: node rules/corrections.mjs
+
+      # Queued Buildertrend Daily Logs (e.g. failed inspections). Writes to Buildertrend,
+      # so it runs only when the repository variable OPS_BT_POST is 'true'.
+      - name: Buildertrend Daily Logs
+        if: steps.bt.outputs.state == 'ok' && vars.OPS_BT_POST == 'true'
+        continue-on-error: true
+        env: { OPS_BT_POST: 'true' }
+        run: node rules/post_bt_logs.mjs
+
       - name: Keep the raw snapshots (7 days)
         if: always()
         uses: actions/upload-artifact@v4
