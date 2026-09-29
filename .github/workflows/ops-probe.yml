@@ -8,7 +8,7 @@ on:
       probe:
         description: 'Probe to run'
         type: choice
-        options: [fasttrack]
+        options: [fasttrack, lake]
         default: fasttrack
       arg:
         description: 'Optional argument (e.g. permit number)'
