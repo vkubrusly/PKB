@@ -113,7 +113,41 @@
         "bt_name": "Denis PKB",
         "email": "denis@pkbhomes.com"
       }
-    ]
+    ],
+    "partners": [
+      {
+        "name": "Victor Kubrusly",
+        "email": "victor@pkbhomes.com",
+        "role": "admin",
+        "note": "can request structural changes to PKB Ops"
+      },
+      {
+        "name": "Thiago",
+        "email": "thiago@wra-usa.com",
+        "role": "partner"
+      },
+      {
+        "name": "Guilherme Pinto",
+        "email": "guilherme@pkbhomes.com",
+        "role": "partner"
+      },
+      {
+        "name": "Cristiano Pedrosa",
+        "email": "cristiano@pkbhomes.com",
+        "role": "partner"
+      },
+      {
+        "name": "Daniela",
+        "email": "daniela@pkbhomes.com",
+        "role": "partner"
+      }
+    ],
+    "external_cc": {
+      "_note": "Copied on every e-mail that leaves PKB (R0 start licensing, R1 corrections, follow-ups).",
+      "emails": [
+        "guilherme@pkbhomes.com"
+      ]
+    }
   },
   "notifications": {
     "_note": "Who is notified on automated Buildertrend Daily Logs. 'job_supervisors' = the supervisors assigned to that job in Buildertrend.",

@@ -34,6 +34,7 @@ jobs:
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
       BT_COOKIES_FILE: ${{ github.workspace }}/bt_cookies.json
+      OPS_ALWAYS_CC: guilherme@pkbhomes.com   # copied on every e-mail that leaves PKB (internal alerts opt out)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -56,7 +57,17 @@ jobs:
           if [ -z "$BT_COOKIES_JSON" ]; then echo "::warning::BT_COOKIES_JSON not set — Buildertrend steps will be skipped"; exit 0; fi
           printf '%s' "$BT_COOKIES_JSON" > "$BT_COOKIES_FILE"
 
+      - name: Buildertrend session check
+        id: bt
+        continue-on-error: true
+        env:
+          BOT_EMAIL: ${{ secrets.BOT_EMAIL || 'botpkbhomes@gmail.com' }}
+          BOT_EMAIL_PASSWORD: ${{ secrets.BOT_EMAIL_PASSWORD }}
+          OPS_SEND_ENABLED: ${{ vars.OPS_SEND_ENABLED || 'false' }}
+        run: echo "state=$(node rules/bt_session.mjs | head -1)" >> "$GITHUB_OUTPUT"
+
       - name: Buildertrend jobs and custom fields
+        if: steps.bt.outputs.state == 'ok'
         continue-on-error: true   # an expired session must not block the portal run
         run: |
           [ -f "$BT_COOKIES_FILE" ] || exit 0
@@ -64,6 +75,7 @@ jobs:
           node collectors/buildertrend/job_fields.mjs
 
       - name: Buildertrend photos
+        if: steps.bt.outputs.state == 'ok'
         continue-on-error: true
         run: |
           [ -f "$BT_COOKIES_FILE" ] || exit 0
@@ -81,13 +93,15 @@ jobs:
       # R-INSP-FAIL: e-mail supervisor/PMs/Cristiano about new failed inspections (with the
       # inspector's comments) and queue a Buildertrend Daily Log. Sends only when the repo
       # variable OPS_SEND_ENABLED is 'true'; otherwise every message is stored as a draft.
-      - name: Rules — failed inspections
+      - name: Rules — failed inspections, photo gaps
         continue-on-error: true
         env:
           BOT_EMAIL: ${{ secrets.BOT_EMAIL || 'botpkbhomes@gmail.com' }}
           BOT_EMAIL_PASSWORD: ${{ secrets.BOT_EMAIL_PASSWORD }}
           OPS_SEND_ENABLED: ${{ vars.OPS_SEND_ENABLED || 'false' }}
-        run: node rules/inspection_failed.mjs
+        run: |
+          node rules/inspection_failed.mjs
+          node rules/photos_stale.mjs
 
       - name: Keep the raw snapshots (7 days)
         if: always()
