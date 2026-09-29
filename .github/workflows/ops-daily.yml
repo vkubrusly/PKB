@@ -1,6 +1,6 @@
 name: PKB Ops — daily collection
 
-# Every morning: read Buildertrend jobs, collect the county portals for every
+# Twice a day, 6:00 AM and 1:00 PM Florida time: read Buildertrend jobs, collect the county portals for every
 # permit still being monitored (ops.monitoring_queue: 'permit' until issued,
 # 'inspections' until the CO), then load everything into Supabase.
 #
@@ -13,8 +13,13 @@ name: PKB Ops — daily collection
 # Schedules only run from the repository's default branch.
 
 on:
+  # GitHub cron is UTC and Florida changes clocks, so each run has a summer (EDT) and a
+  # winter (EST) slot; the gate job below keeps only the one that matches today's offset.
   schedule:
-    - cron: '15 10 * * *'   # 06:15 in Florida (EDT)
+    - cron: '0 10 * * *'   # 06:00 EDT
+    - cron: '0 11 * * *'   # 06:00 EST
+    - cron: '0 17 * * *'   # 13:00 EDT
+    - cron: '0 18 * * *'   # 13:00 EST
   workflow_dispatch:
     inputs:
       limit:
@@ -27,7 +32,22 @@ on:
 concurrency: { group: ops-daily, cancel-in-progress: false }
 
 jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs: { run: '${{ steps.g.outputs.run }}' }
+    steps:
+      - id: g
+        env: { CRON: '${{ github.event.schedule }}' }
+        run: |
+          # Manual runs always go. Scheduled: EDT (-0400) keeps the 10/17 UTC slots, EST the 11/18 ones.
+          if [ -z "$CRON" ]; then echo run=true >> "$GITHUB_OUTPUT"; exit 0; fi
+          hour=$(echo "$CRON" | awk '{print $2}')
+          if [ "$(TZ=America/New_York date +%z)" = "-0400" ]; then ok="10 17"; else ok="11 18"; fi
+          case " $ok " in *" $hour "*) echo run=true ;; *) echo run=false ;; esac >> "$GITHUB_OUTPUT"
+
   collect:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 120
     defaults: { run: { working-directory: ops } }
