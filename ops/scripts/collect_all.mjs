@@ -16,6 +16,8 @@ const COLLECTORS = {
   'energov:marion': ['collectors/energov/collect.mjs', 'marion'],
   'energov:winterpark': ['collectors/energov/collect.mjs', 'winterpark'],
   'accela:citrus': ['collectors/accela/collect.mjs', 'citrus'],
+  'accela:charlotte': ['collectors/accela/collect.mjs', 'charlotte'],
+  'accela:northport': ['collectors/accela/collect.mjs', 'northport'],
 };
 
 const rows = await sql(`select portal, stage, number from ops.monitoring_queue where stage <> 'done' and number is not null order by portal, stage, number`);
