@@ -4,6 +4,9 @@
 // for STALE_DAYS days (default 10).
 //
 // Reads ops.jobs.photos_last_at (collectors/buildertrend/photos.mjs, daily).
+// A finished house gets no more photos, so a job is left out as soon as any of these
+// says construction is over: status completed (control sheet), CO recorded, Final
+// Building inspection passed on the portal, or the job closed in Buildertrend.
 // One e-mail per job to its supervisor(s) and project manager(s), Cristiano in Cc.
 // Repeats every STALE_DAYS days while the gap lasts (dedupe key per job, last photo
 // and period), so a job is never announced twice in the same period.
@@ -36,9 +39,20 @@ const jobs = await sql(`
          (select array_agg(distinct x.name) from ops.job_contacts x where x.job_id = j.id and x.role = 'supervisor') as supervisors,
          (select array_agg(distinct x.name) from ops.job_contacts x where x.job_id = j.id and x.role = 'pm') as pms
   from ops.jobs j
-  where j.org_id = ${q(orgId)} and j.status = 'construction' and j.photos_checked_at is not null
+  where j.org_id = ${q(orgId)} and j.status = 'construction' and j.photos_checked_at is not null and j.co_at is null
     and (j.photos_last_at is null or j.photos_last_at < now() - interval '${STALE_DAYS} days')
+    and not exists (select 1 from ops.inspections i join ops.permit_cases c on c.id = i.permit_case_id
+                    where c.job_id = j.id and c.kind = 'building' and i.passed
+                      and (i.type ~* 'final\\s*(building|structural)' or i.type ~* 'building\\s*final'))
   order by j.job_number`);
+// Buildertrend: a job whose status is no longer Open (1) is closed/finished.
+let btClosed = new Set();
+try {
+  const f = JSON.parse(readFileSync(new URL('../data/buildertrend/job_fields.json', import.meta.url), 'utf8'));
+  btClosed = new Set((f.jobs || f).filter((r) => r.status != null && r.status !== 1).map((r) => String(r.jobId)));
+} catch { /* no Buildertrend snapshot in this run */ }
+const btIds = btClosed.size ? Object.fromEntries((await sql(`select id, bt_job_id from ops.jobs where bt_job_id is not null`)).map((r) => [r.id, String(r.bt_job_id)])) : {};
+for (let i = jobs.length - 1; i >= 0; i--) if (btClosed.has(btIds[jobs[i].id])) jobs.splice(i, 1);
 
 let sent = 0;
 for (const j of jobs) {
