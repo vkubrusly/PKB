@@ -1,0 +1,1110 @@
+{
+  "permitNumber": "BLD2607-0748",
+  "found": true,
+  "url": "https://aca-prod.accela.com/CITRUS/Cap/CapDetail.aspx?Module=Building&TabName=Building&capID1=REC26&capID2=00000&capID3=00DHP&agencyCode=CITRUS&IsToShowInspection=",
+  "permit": {
+    "number": "BLD2607-0748",
+    "caseId": "REC26-00000-00DHP",
+    "county": "citrus",
+    "type": "Residential",
+    "workclass": null,
+    "status": "Fees Due",
+    "projectName": null,
+    "address": "7569 N DION PT DUNNELLON FL 34433 *",
+    "parcel": null,
+    "appliedAt": "2026-07-16",
+    "issuedAt": null,
+    "expiresAt": null,
+    "finalizedAt": null,
+    "squareFeet": null,
+    "valuation": null,
+    "description": null,
+    "submittals": [
+      {
+        "submittalId": "round-1",
+        "version": 1,
+        "type": "Plan Review",
+        "status": "Revisions Required",
+        "submittedAt": "2026-07-28",
+        "dueAt": "2026-08-04",
+        "completedAt": "2026-08-06"
+      },
+      {
+        "submittalId": "round-2",
+        "version": 2,
+        "type": "Plan Review",
+        "status": "Revisions Required",
+        "submittedAt": "2026-08-17",
+        "dueAt": "2026-08-24",
+        "completedAt": "2026-08-20"
+      },
+      {
+        "submittalId": "round-3",
+        "version": 3,
+        "type": "Plan Review",
+        "status": "Approved",
+        "submittedAt": "2026-08-25",
+        "dueAt": "2026-09-01",
+        "completedAt": "2026-08-25"
+      }
+    ],
+    "reviewItems": [
+      {
+        "itemReviewId": "Utilities Review|2026-08-04|1",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Utilities Review",
+        "status": "Revisions Required",
+        "assignedTo": "Utilities Department",
+        "assignedToEmail": null,
+        "dueAt": "2026-08-04",
+        "completedAt": "2026-08-06",
+        "comments": "See IssuesBrittany Cofield - (352) 527-7650 Opt# 4",
+        "by": "Utilities Department"
+      },
+      {
+        "itemReviewId": "Utilities Review|2026-08-24|1",
+        "submittalId": "round-2",
+        "round": 2,
+        "department": "Utilities Review",
+        "status": "Approved",
+        "assignedTo": "Utilities Department",
+        "assignedToEmail": null,
+        "dueAt": "2026-08-24",
+        "completedAt": "2026-08-20",
+        "comments": "See ConditionsBrittany Cofield - (352) 527-7650 Opt# 4",
+        "by": "Utilities Department"
+      },
+      {
+        "itemReviewId": "Zoning Review|2026-08-04|1",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Zoning Review",
+        "status": "Approved",
+        "assignedTo": "Tiffany Johnson",
+        "assignedToEmail": null,
+        "dueAt": "2026-08-04",
+        "completedAt": "2026-07-31",
+        "comments": "SITE APPROVED FOR SFD ONLY. 4 TREES TO BE RETAINED.",
+        "by": "Tiffany Johnson"
+      },
+      {
+        "itemReviewId": "Technical Services Review|2026-08-04|1",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Technical Services Review",
+        "status": "Approved",
+        "assignedTo": "Technical Services",
+        "assignedToEmail": null,
+        "dueAt": "2026-08-04",
+        "completedAt": "2026-08-04",
+        "comments": null,
+        "by": "Technical Services"
+      },
+      {
+        "itemReviewId": "Building Review|2026-08-04|1",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Building Review",
+        "status": "Revisions Required",
+        "assignedTo": "Luis Benitez",
+        "assignedToEmail": null,
+        "dueAt": "2026-08-04",
+        "completedAt": "2026-07-30",
+        "comments": null,
+        "by": "Luis Benitez"
+      },
+      {
+        "itemReviewId": "Building Review|2026-08-22|1",
+        "submittalId": "round-2",
+        "round": 2,
+        "department": "Building Review",
+        "status": "Approved",
+        "assignedTo": "Luis Benitez",
+        "assignedToEmail": null,
+        "dueAt": "2026-08-22",
+        "completedAt": "2026-08-18",
+        "comments": null,
+        "by": "Luis Benitez"
+      },
+      {
+        "itemReviewId": "Preliminary Inspection|2026-08-04|1",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Preliminary Inspection",
+        "status": "Passed",
+        "assignedTo": "Road Maintenance",
+        "assignedToEmail": null,
+        "dueAt": "2026-08-04",
+        "completedAt": "2026-07-29",
+        "comments": null,
+        "by": "Road Maintenance"
+      },
+      {
+        "itemReviewId": "Addressing Review|2026-08-04|1",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Addressing Review",
+        "status": "Approved",
+        "assignedTo": "Addressing Department",
+        "assignedToEmail": null,
+        "dueAt": "2026-08-04",
+        "completedAt": "2026-07-28",
+        "comments": "RH",
+        "by": "Addressing Department"
+      },
+      {
+        "itemReviewId": "SWPPP|2026-08-04|1",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "SWPPP",
+        "status": "Not Required",
+        "assignedTo": "Technical Services",
+        "assignedToEmail": null,
+        "dueAt": "2026-08-04",
+        "completedAt": "2026-07-28",
+        "comments": "Lots greater than 10,000 sq. ft. no longer require a drainage plan unless it is waterfront. Per the Citrus County LDC, all sites must have erosion control measures in place, where applicable, to prevent adverse impacts to adjacent properties.  Quincy.wylupek@citruscounty.gov   352-527-5247",
+        "by": "Technical Services"
+      },
+      {
+        "itemReviewId": "Health Review|2026-08-04|1",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Health Review",
+        "status": "Revisions Required",
+        "assignedTo": "Tiffany Johnson",
+        "assignedToEmail": null,
+        "dueAt": "2026-08-04",
+        "completedAt": "2026-07-28",
+        "comments": "PROVIDE PROOF THAT A SEPTIC SYSTEM APPLICATION HAS BEEN SUBMITTED TO ENVIRONMENTAL HEALTH. UPLOAD COPY OF RECEIPT THROUGH YOUR PERMIT PORTAL.",
+        "by": "Tiffany Johnson"
+      },
+      {
+        "itemReviewId": "Health Review|2026-08-24|1",
+        "submittalId": "round-2",
+        "round": 2,
+        "department": "Health Review",
+        "status": "Revisions Required",
+        "assignedTo": "Tiffany Johnson",
+        "assignedToEmail": null,
+        "dueAt": "2026-08-24",
+        "completedAt": "2026-08-17",
+        "comments": "THIS SCREEN SHOT OF AN ENVIRONMENTAL HEALTH SUBMITTAL DOES NOT INDICATE A SPECIFIC PROPERTY IDENTIFICATION. UPLOADE COPY OF RECEIPT OF APPLICATION THAT GIVES PERMIT NUMBER AND ADDRESS LOCATION.",
+        "by": "Tiffany Johnson"
+      },
+      {
+        "itemReviewId": "Health Review|2026-09-01|1",
+        "submittalId": "round-3",
+        "round": 3,
+        "department": "Health Review",
+        "status": "Approved",
+        "assignedTo": "Tiffany Johnson",
+        "assignedToEmail": null,
+        "dueAt": "2026-09-01",
+        "completedAt": "2026-08-25",
+        "comments": null,
+        "by": "Tiffany Johnson"
+      }
+    ],
+    "workflow": [
+      {
+        "task": "Document Acceptance",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": "2026-07-16",
+            "assignedTo": null,
+            "status": "Awaiting Required Documents",
+            "completedAt": "2026-07-16",
+            "by": "DPR USER",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-07-16",
+            "assignedTo": null,
+            "status": "File Validation Issues",
+            "completedAt": "2026-07-23",
+            "by": "DPR USER",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-07-16",
+            "assignedTo": null,
+            "status": "Required Documents Submitted",
+            "completedAt": "2026-07-24",
+            "by": "DPR USER",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Fee Review",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": "2026-07-28",
+            "assignedTo": "Tiffany Johnson",
+            "status": "Invoice Fee Paid",
+            "completedAt": "2026-07-28",
+            "by": "Tiffany Johnson",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Application Acceptance",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": "2026-07-29",
+            "assignedTo": "Tiffany Johnson",
+            "status": "Application Approved",
+            "completedAt": "2026-07-28",
+            "by": "Tiffany Johnson",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Reviewer Routing",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": "2026-07-30",
+            "assignedTo": "Tiffany Johnson",
+            "status": "Assign to Reviewers",
+            "completedAt": "2026-07-28",
+            "by": "Tiffany Johnson",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-08-19",
+            "assignedTo": "Tiffany Johnson",
+            "status": "Assign to Reviewers",
+            "completedAt": "2026-08-17",
+            "by": "Tiffany Johnson",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-08-25",
+            "assignedTo": "Tiffany Johnson",
+            "status": "Assign to Reviewers",
+            "completedAt": "2026-08-25",
+            "by": "Tiffany Johnson",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Flood Plain Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Utilities Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-08-04",
+            "assignedTo": "Utilities Department",
+            "status": "Revisions Required",
+            "completedAt": "2026-08-06",
+            "by": "Utilities Department",
+            "comments": "See IssuesBrittany Cofield - (352) 527-7650 Opt# 4"
+          },
+          {
+            "dueAt": "2026-08-24",
+            "assignedTo": "Utilities Department",
+            "status": "Approved",
+            "completedAt": "2026-08-20",
+            "by": "Utilities Department",
+            "comments": "See ConditionsBrittany Cofield - (352) 527-7650 Opt# 4"
+          }
+        ]
+      },
+      {
+        "task": "Zoning Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-08-04",
+            "assignedTo": "Tiffany Johnson",
+            "status": "Approved",
+            "completedAt": "2026-07-31",
+            "by": "Tiffany Johnson",
+            "comments": "SITE APPROVED FOR SFD ONLY. 4 TREES TO BE RETAINED."
+          }
+        ]
+      },
+      {
+        "task": "Fire Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Land Development Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Technical Services Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-08-04",
+            "assignedTo": "Technical Services",
+            "status": "Approved",
+            "completedAt": "2026-08-04",
+            "by": "Technical Services",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Building Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-08-04",
+            "assignedTo": "Luis Benitez",
+            "status": "Revisions Required",
+            "completedAt": "2026-07-30",
+            "by": "Luis Benitez",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-08-22",
+            "assignedTo": "Luis Benitez",
+            "status": "Approved",
+            "completedAt": "2026-08-18",
+            "by": "Luis Benitez",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Mechanical Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Plumbing Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Electrical Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Preliminary Inspection",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-08-04",
+            "assignedTo": "Road Maintenance",
+            "status": "Passed",
+            "completedAt": "2026-07-29",
+            "by": "Road Maintenance",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Affordable Housing",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Addressing Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-08-04",
+            "assignedTo": "Addressing Department",
+            "status": "Approved",
+            "completedAt": "2026-07-28",
+            "by": "Addressing Department",
+            "comments": "RH"
+          }
+        ]
+      },
+      {
+        "task": "SWPPP",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-08-04",
+            "assignedTo": "Technical Services",
+            "status": "Not Required",
+            "completedAt": "2026-07-28",
+            "by": "Technical Services",
+            "comments": "Lots greater than 10,000 sq. ft. no longer require a drainage plan unless it is waterfront. Per the Citrus County LDC, all sites must have erosion control measures in place, where applicable, to prevent adverse impacts to adjacent properties.  Quincy.wylupek@citruscounty.gov   352-527-5247"
+          }
+        ]
+      },
+      {
+        "task": "Private Provider Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "No Plan Review Required",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Health Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-08-04",
+            "assignedTo": "Tiffany Johnson",
+            "status": "Revisions Required",
+            "completedAt": "2026-07-28",
+            "by": "Tiffany Johnson",
+            "comments": "PROVIDE PROOF THAT A SEPTIC SYSTEM APPLICATION HAS BEEN SUBMITTED TO ENVIRONMENTAL HEALTH. UPLOAD COPY OF RECEIPT THROUGH YOUR PERMIT PORTAL."
+          },
+          {
+            "dueAt": "2026-08-24",
+            "assignedTo": "Tiffany Johnson",
+            "status": "Revisions Required",
+            "completedAt": "2026-08-17",
+            "by": "Tiffany Johnson",
+            "comments": "THIS SCREEN SHOT OF AN ENVIRONMENTAL HEALTH SUBMITTAL DOES NOT INDICATE A SPECIFIC PROPERTY IDENTIFICATION. UPLOADE COPY OF RECEIPT OF APPLICATION THAT GIVES PERMIT NUMBER AND ADDRESS LOCATION."
+          },
+          {
+            "dueAt": "2026-09-01",
+            "assignedTo": "Tiffany Johnson",
+            "status": "Approved",
+            "completedAt": "2026-08-25",
+            "by": "Tiffany Johnson",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Plan Review Verification",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": "2026-08-10",
+            "assignedTo": null,
+            "status": "Revisions Required",
+            "completedAt": "2026-08-06",
+            "by": "DPR USER",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-08-10",
+            "assignedTo": "Tiffany Johnson",
+            "status": "Revisions Received",
+            "completedAt": "2026-08-17",
+            "by": "DPR USER",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-08-10",
+            "assignedTo": "Tiffany Johnson",
+            "status": "Revision Routing",
+            "completedAt": "2026-08-17",
+            "by": "DPR USER",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-08-24",
+            "assignedTo": "Tiffany Johnson",
+            "status": "Revisions Required",
+            "completedAt": "2026-08-20",
+            "by": "DPR USER",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-08-24",
+            "assignedTo": "Tiffany Johnson",
+            "status": "Revisions Received",
+            "completedAt": "2026-08-21",
+            "by": "DPR USER",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-08-24",
+            "assignedTo": "Tiffany Johnson",
+            "status": "Revision Routing",
+            "completedAt": "2026-08-21",
+            "by": "DPR USER",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-08-27",
+            "assignedTo": "Tiffany Johnson",
+            "status": "Validation in Review",
+            "completedAt": "2026-08-25",
+            "by": "DPR USER",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-08-27",
+            "assignedTo": "Tiffany Johnson",
+            "status": "Ready to Issue",
+            "completedAt": "2026-08-27",
+            "by": "Tiffany Johnson",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Permit Issuance",
+        "state": "active",
+        "history": [
+          {
+            "dueAt": "2026-08-28",
+            "assignedTo": null,
+            "status": "Fees Due",
+            "completedAt": "2026-08-27",
+            "by": "Tiffany Johnson",
+            "comments": null
+          },
+          {
+            "dueAt": "2026-08-28",
+            "assignedTo": null,
+            "status": null,
+            "completedAt": null,
+            "by": null,
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Inspection",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Closure",
+        "state": null,
+        "history": []
+      }
+    ],
+    "inspections": [
+      {
+        "number": "324256",
+        "code": "149",
+        "type": "EROSION",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  149 EROSION (324256)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "324573",
+        "code": "148",
+        "type": "RESIDENTIAL DRIVEWAY FINAL",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  148 RESIDENTIAL DRIVEWAY FINAL (324573)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "324574",
+        "code": "150",
+        "type": "RESIDENTIAL DRIVEWAY PRE-POUR",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  150 RESIDENTIAL DRIVEWAY PRE-POUR (324574)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "327002",
+        "code": "102",
+        "type": "MONO",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  102 MONO (327002)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "327003",
+        "code": "105",
+        "type": "LINTEL",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  105 LINTEL (327003)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "327004",
+        "code": "106",
+        "type": "ROOF SHEATHING",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  106 ROOF SHEATHING (327004)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "327005",
+        "code": "107",
+        "type": "WALL SHEATHING",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  107 WALL SHEATHING (327005)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "327006",
+        "code": "108",
+        "type": "FRAME",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  108 FRAME (327006)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "327007",
+        "code": "110",
+        "type": "INSULATION",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  110 INSULATION (327007)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "327008",
+        "code": "117",
+        "type": "BUILDING FINAL",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  117 BUILDING FINAL (327008)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "327009",
+        "code": "119",
+        "type": "STRUCTURAL FRAME",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  119 STRUCTURAL FRAME (327009)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "327010",
+        "code": "133",
+        "type": "SOFFIT IN PROGRESS",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  133 SOFFIT IN PROGRESS (327010)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "327131",
+        "code": "140",
+        "type": "ROOF DRY IN & FLASHING",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  140 ROOF DRY IN & FLASHING (327131)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "327132",
+        "code": "201",
+        "type": "T-POLE",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  201 T-POLE (327132)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "327133",
+        "code": "202",
+        "type": "TUG",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  202 TUG (327133)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "327134",
+        "code": "204",
+        "type": "ELECTRICAL ROUGH IN",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  204 ELECTRICAL ROUGH IN (327134)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "327135",
+        "code": "205",
+        "type": "ELECTRICAL FINAL",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  205 ELECTRICAL FINAL (327135)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "327136",
+        "code": "209",
+        "type": "PRE POWER",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  209 PRE POWER (327136)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "327137",
+        "code": "219",
+        "type": "CONCRETE ENCASED GROUND",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  219 CONCRETE ENCASED GROUND (327137)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "327138",
+        "code": "301",
+        "type": "MECHANICAL ROUGH IN",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  301 MECHANICAL ROUGH IN (327138)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "327139",
+        "code": "302",
+        "type": "MECHANICAL FINAL",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  302 MECHANICAL FINAL (327139)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "327140",
+        "code": "401",
+        "type": "PLUMBING ROUGH I",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  401 PLUMBING ROUGH I (327140)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "327141",
+        "code": "402",
+        "type": "PLUMBING ROUGH II",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  402 PLUMBING ROUGH II (327141)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "327142",
+        "code": "403",
+        "type": "SEWER",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  403 SEWER (327142)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "327143",
+        "code": "404",
+        "type": "WATER SERVICE",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  404 WATER SERVICE (327143)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "327144",
+        "code": "405",
+        "type": "PLUMBING FINAL",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  405 PLUMBING FINAL (327144)  Inspector: unassigned",
+        "details": null
+      },
+      {
+        "number": "334973",
+        "code": "154",
+        "type": "RESIDENTIAL UTILITY FINAL",
+        "status": "Pending",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": null,
+        "inspector": null,
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": false,
+        "completed": false,
+        "raw": "TBD at TBD Pending  154 RESIDENTIAL UTILITY FINAL (334973)  Inspector: unassigned",
+        "details": null
+      }
+    ],
+    "holds": [
+      {
+        "name": "Health Department Final Approval",
+        "type": "Notice",
+        "reason": null,
+        "comments": "Health Department Final ApprovalPlease provide a Health Department Final Approval. Upload a copy of this document to your online account under the document type ‘Health Department Final Approval’. If you do not see this document type, or have further questions regarding this condition or document, please contact inspectionsupportstaff@citrusbocc.com Please do not upload this under any other incorrect document type.Applied",
+        "createdAt": "2026-07-28",
+        "active": true,
+        "status": "Applied"
+      },
+      {
+        "name": "Envelope Leakage Test",
+        "type": "Notice",
+        "reason": null,
+        "comments": "Envelope Leakage TestPlease provide an Envelope Leakage Test. Upload a copy of this document to your online account under document type ‘Envelope Leakage Test Report’. If you do not see this document type, or have further questions regarding this condition or document, please contact planreview@citrusbocc.com Please do not upload this under any other incorrect document type.Applied",
+        "createdAt": "2026-07-16",
+        "active": true,
+        "status": "Applied"
+      },
+      {
+        "name": "Land Section",
+        "type": "Notice",
+        "reason": null,
+        "comments": "Land Section“Per Section 86-46 of the Citrus County Code of Ordinances, the County has implemented procedures for collecting an assessment prior to the issuance of the Certificate of Occupancy for: • new single-family residences, • new mobile homes, • new non-residential buildings, and • may also include any modifications to the size/impervious area of a structure or property within the County. Please submit a request for Interim Assessment Fees to be applied on a permit when scheduling Final Inspections, prior to your Certificate of Occupancy being issued to Land-NoReply@citrusbocc.com. Be sure to include the complete permit number, site address and contact information so we may better assist you. Thank you.Applied",
+        "createdAt": "2026-07-16",
+        "active": true,
+        "status": "Applied"
+      },
+      {
+        "name": "Notice of Commencement",
+        "type": "Notice",
+        "reason": null,
+        "comments": "Notice of CommencementPlease provide a Notice of Commencement. Upload a copy of this document to your online account under the document type ‘Notice of Commencement’. If you do not see this document type, or have further questions regarding this condition or document, please contact permit@citrusbocc.com Please do not upload this under any other incorrect document type.Applied",
+        "createdAt": "2026-07-16",
+        "active": true,
+        "status": "Applied"
+      },
+      {
+        "name": "Termite Treatment Certificate",
+        "type": "Notice",
+        "reason": null,
+        "comments": "Termite Treatment CertificatePlease provide a Final Termite Treatment Certificate. Upload a copy of this document to your online account under the document type ‘Termite Certificate’. **Please note that if a termite bait system has been used for termite treatment compliance a copy of the contract/agreement for the installation, monitoring and maintenance is required. Both documents may be uploaded into ‘Termite Treatment Certificate’.** If you do not see this document type, or have further questions regarding this condition or document, please contact planreview@citrusbocc.com Please do not upload this under any other incorrect document type.Applied",
+        "createdAt": "2026-07-16",
+        "active": true,
+        "status": "Applied"
+      }
+    ],
+    "contacts": [],
+    "feeSummary": null,
+    "subRecords": [
+      {
+        "number": "REV2609-0164",
+        "type": "Permit Revision",
+        "status": null,
+        "date": "2026-09-28"
+      }
+    ],
+    "collectedAt": "2026-09-28T21:47:07.380Z"
+  }
+}
