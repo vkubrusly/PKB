@@ -98,7 +98,8 @@
       "name": "OCE Driveway Final",
       "match": "oce driveway final|^oce driveway$",
       "final": true,
-      "note": "Required by the portal on 28 of 30 PKB permits (not on older ones such as 0003)"
+      "note": "Listed by the portal on most permits but PKB practically never requests it (1 form-up in 30 permits, no finals); optional per Victor 2026-09-29",
+      "optional": true
     },
     {
       "key": "fplumb",
