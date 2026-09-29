@@ -1,11 +1,15 @@
 // Construction clock per job: when the build started, how long it has been going,
 // and how long the job waited between permit issued and start.
 //
-// Start date, first available of (rule set by Victor, 2026-09-26):
-//   1. Buildertrend "Actual Start" (when the supervisor fills it)
-//   2. 2nd draw (2nd payment) date; when it was paid before the permit was issued,
-//      the clock starts at issuance (no work before the permit)
-//   3. first field inspection on the county portal after issuance (not Pre-Work / Erosion)
+// Start date (rule set by Victor, 2026-09-29): the construction clock starts when the
+// 2nd invoice (2nd installment) is paid. Date of that payment, first available of:
+//   1. 2nd draw date on the control sheet (the payment date)
+//   2. Buildertrend "invoice paid" e-mail for the 2nd Installment (bot mailbox) — only when
+//      the sheet has no date: the e-mail arrives when someone updates the invoice, which
+//      can be long after the payment
+// When it was paid before the permit was issued, the clock starts at issuance (no work
+// before the permit). Only when there is no 2nd payment on record: Buildertrend
+// "Actual Start" (if on/after issuance), then the first field inspection on the portal.
 // A job with the permit issued and no start is "waiting to start". When it has an open
 // pause (owner deferred start, waiting 1st draw / impact fees / warranty deed) the wait
 // is not PKB's and is left out of the CEO numbers.
@@ -17,7 +21,7 @@ const iso = (x) => (x ? String(x).slice(0, 10) : null);
 const median = (a) => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); const m = s.length >> 1; return s.length % 2 ? s[m] : Math.round((s[m - 1] + s[m]) / 2); };
 export const NOT_OUR_FAULT = ['owner_deferred_start', 'awaiting_1st_draw', 'awaiting_impact_fees', 'awaiting_warranty_deed'];
 
-// job: {status, bt_closed, issued_at, co_at, bt_actual_start, bt_actual_completion, second_draw_at, pauses:[{reason, since, ended}],
+// job: {status, bt_closed, issued_at, co_at, bt_actual_start, bt_actual_completion, second_invoice_paid_at, second_draw_at, pauses:[{reason, since, ended}],
 //       inspections:[{type, at}]}
 export function clock(job, asOf) {
   const today = iso(asOf || new Date().toISOString());
@@ -27,11 +31,11 @@ export function clock(job, asOf) {
     .filter((i) => i.at && iso(i.at) >= issued && !/pre-?work|erosion/i.test(i.type || ''))
     .map((i) => iso(i.at)).sort()[0] || null;
   let start = null, source = null;
-  const draw2 = iso(job.second_draw_at);
-  // Buildertrend fills Actual Start from the schedule (often the contract date); it only
-  // counts as a real start when it falls on or after the permit issue date.
-  if (job.bt_actual_start && iso(job.bt_actual_start) >= issued) { start = iso(job.bt_actual_start); source = 'buildertrend'; }
-  else if (draw2) { start = draw2 >= issued ? draw2 : issued; source = draw2 >= issued ? 'second_draw' : 'second_draw_before_permit'; }
+  const paid2 = iso(job.second_draw_at) || iso(job.second_invoice_paid_at);
+  if (paid2) { start = paid2 >= issued ? paid2 : issued; source = paid2 >= issued ? 'second_draw' : 'second_draw_before_permit'; }
+  // Fallbacks when no 2nd payment is on record. Buildertrend fills Actual Start from the
+  // schedule (often the contract date): it only counts when on or after the permit issue date.
+  else if (job.bt_actual_start && iso(job.bt_actual_start) >= issued) { start = iso(job.bt_actual_start); source = 'buildertrend'; }
   else if (field) { start = field; source = 'first_inspection'; }
   const openPause = (job.pauses || []).find((p) => !p.ended && NOT_OUR_FAULT.includes(p.reason));
   // Construction is finished when Buildertrend (or the control sheet) marks the job completed;
