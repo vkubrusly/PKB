@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 // =============================================================================
-// photos.mjs — every photo and video uploaded to each Buildertrend job: when,
-// by whom, in which folder, and the Daily Log it is attached to.
+// photos.mjs — when each Buildertrend job last got a site photo, and from whom.
 //   BT_COOKIES_FILE=... node collectors/buildertrend/photos.mjs [jobId ...]
-// Reads data/buildertrend/jobs.json (list_jobs.mjs) and calls the same JSON
-// endpoints the Photos/Videos pages use (MediaFolders/MainDirectory and
-// GetDirectoryDetails), walking every folder including the special
-// "** Attached Photos **" tree (Daily Logs, To-Dos, …). Read-only.
-// Writes data/buildertrend/photos.json.
+// Light by design (about 3 small JSON calls per job, no images, no full listing):
+//   1. MainDirectory → top folders with photo count and last-modified date;
+//      the special "** Attached Photos **" folder is opened one level to see its
+//      sub-folders (Daily Logs, Bills, …).
+//   2. Only the most recently modified site folder is listed, to read the newest
+//      photo's upload time, uploader and Daily Log.
+// Pictures of paperwork (bills, receipts, POs) are not site photos and are ignored.
+// Writes data/buildertrend/photos.json. Read-only.
 // =============================================================================
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -16,9 +18,6 @@ import { openBuildertrend } from './session.mjs';
 
 const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'data', 'buildertrend');
 mkdirSync(OUT, { recursive: true });
-const MEDIA = { 2: 'photo' }; // videos are rare here and their folders use another endpoint
-const ASSOCIATED = { 27: 'daily_log' };
-// Pictures of paperwork (bills, receipts, POs) live in the same tree; they are not site photos.
 const PAPERWORK = /bills|proofs? of purchase|purchase orders?|invoices?|receipts?|change orders?|selections|bids/i;
 
 const only = process.argv.slice(2).map(String);
@@ -26,66 +25,53 @@ const jobs = JSON.parse(readFileSync(join(OUT, 'jobs.json'), 'utf8')).jobs.filte
 
 const { browser, page, loggedIn } = await openBuildertrend();
 if (!loggedIn) { console.error('session expired — re-export the bot cookies'); process.exit(1); }
-// Buildertrend rate-limits bursts: pace the calls and back off when told to.
+
+// Buildertrend rate-limits bursts (429): pace the calls and wait when told to.
+// A folder the bot's role cannot open answers 403 and is skipped.
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-const get = async (path) => {
+async function get(path) {
   let r;
-  for (let attempt = 0; attempt < 5; attempt++) {
-    await sleep(500);
+  for (let attempt = 0; attempt < 4; attempt++) {
+    await sleep(400);
     r = await page.request.get('https://buildertrend.net' + path);
-    // 429 answers a burst: wait and retry. 403 is retried once (it can also follow a burst),
-    // after that the folder is really off-limits for the bot's role and is skipped.
-    if (r.status() === 429) { await sleep(Math.min(Number(r.headers()['retry-after']) || 5 * 2 ** attempt, 30) * 1000); continue; }
-    if (r.status() === 403 && attempt === 0) { await sleep(5000); continue; }
-    break;
+    if (r.status() !== 429) break;
+    await sleep(Math.min(Number(r.headers()['retry-after']) || 5 * 2 ** attempt, 30) * 1000);
   }
-  if (r.status() === 403) { skipped++; return {}; }
+  if (r.status() === 403) return null;
   if (!r.ok()) throw new Error(`${r.status()} ${path}`);
   const b = await r.json();
   if (b.needsToRelogin) throw new Error('session expired');
   return b.data;
-};
-
-const files = [];
-let skipped = 0;
-async function walk(jobId, media, folder, path, depth = 0) {
-  if (depth > 6) return;
-  const assoc = folder.specialFolderExtraData?.folderAssociatedType ?? 0;
-  const d = folder.folderId === 0
-    ? await get(`/api/MediaFolders/MainDirectory?mediaType=${media}&folderId=0&associatedTypeId=0&directoryType=0&jobId=${jobId}`)
-    : await get(`/api/MediaFolders/GetDirectoryDetails?mediaType=${media}&folderId=${folder.folderId}&associatedTypeId=${assoc}&directoryType=${folder.directoryType ?? 0}&jobId=${jobId}&filters=%7B%7D`);
-  for (const f of d.files || []) {
-    if (f.dateDeleted) continue;
-    const a = (f.associatedEntities || [])[0];
-    files.push({
-      bt_job_id: jobId, bt_document_id: f.documentInstanceId, media: MEDIA[media], title: f.friendlyFileName || f.title,
-      folder: path.replace(/\*\*\s*/g, '').trim(), site: !PAPERWORK.test(path), added_by: f.addedBy || null,
-      attached_at: f.dateAttached || null, taken_at: f.dateTaken || null,
-      linked_type: a ? (ASSOCIATED[a.associatedType] || `type_${a.associatedType}`) : null,
-      linked_id: a?.associatedEntityId ?? null, linked_title: a?.associatedEntityTitle ?? null,
-    });
-  }
-  for (const sub of d.folders || []) {
-    if (!sub.totalDocumentCount) continue;
-    await walk(jobId, media, sub, path ? `${path} / ${sub.title}` : sub.title, depth + 1);
-  }
 }
+const dir = (jobId, f) => get(`/api/MediaFolders/GetDirectoryDetails?mediaType=2&folderId=${f.folderId}&associatedTypeId=${f.specialFolderExtraData?.folderAssociatedType ?? 0}&directoryType=${f.directoryType ?? 0}&jobId=${jobId}&filters=%7B%7D`);
 
-let ok = 0;
+const out = [];
 for (const j of jobs) {
   try {
-    for (const media of [2]) await walk(j.id, media, { folderId: 0 }, '');
-    ok++;
-    if (ok % 10 === 0) console.log(`… ${ok}/${jobs.length} jobs, ${files.length} photos`);
+    const main = await get(`/api/MediaFolders/MainDirectory?mediaType=2&folderId=0&associatedTypeId=0&directoryType=0&jobId=${j.id}`);
+    const folders = [];
+    for (const f of main?.folders || []) {
+      if (!f.totalDocumentCount) continue;
+      if (f.specialFolderExtraData?.isSpecialFolder && f.folderId < 0) {
+        const d = await dir(j.id, f);
+        for (const s of d?.folders || []) if (s.totalDocumentCount) folders.push({ ...s, path: `Attached Photos / ${s.title}` });
+      } else folders.push({ ...f, path: f.title });
+    }
+    const site = folders.filter(f => !PAPERWORK.test(f.path)).sort((a, b) => (b.dateModified || '').localeCompare(a.dateModified || ''));
+    const row = { bt_job_id: j.id, name: j.name, count: site.reduce((n, f) => n + f.totalDocumentCount, 0), last_at: null, last_by: null, last_folder: null, last_daily_log: null };
+    if (site[0]) {
+      const d = await dir(j.id, site[0]);
+      const newest = (d?.files || []).filter(f => !f.dateDeleted).sort((a, b) => (b.dateAttached || '').localeCompare(a.dateAttached || ''))[0];
+      const a = newest?.associatedEntities?.[0];
+      Object.assign(row, {
+        last_at: newest?.dateAttached || site[0].dateModified, last_by: newest?.addedBy || null, last_folder: site[0].path,
+        last_daily_log: a?.associatedType === 27 ? a.associatedEntityTitle : null,
+      });
+    }
+    out.push(row);
+    if (out.length % 10 === 0) console.log(`… ${out.length}/${jobs.length}`);
   } catch (e) { console.error(`${j.name}: ${e.message}`); if (/session expired/.test(e.message)) break; }
 }
 await browser.close();
-
-const byJob = {};
-for (const f of files) (byJob[f.bt_job_id] ||= []).push(f);
-const summary = jobs.map(j => {
-  const fs = (byJob[j.id] || []).filter(f => f.site).sort((a, b) => (b.attached_at || '').localeCompare(a.attached_at || ''));
-  return { bt_job_id: j.id, name: j.name, count: fs.length, last_30d: fs.filter(f => (f.attached_at || '') >= new Date(Date.now() - 30 * 864e5).toISOString()).length, last_at: fs[0]?.attached_at || null, last_by: fs[0]?.added_by || null };
-});
-writeFileSync(join(OUT, 'photos.json'), JSON.stringify({ collectedAt: new Date().toISOString(), jobs: summary, files }, null, 1));
-console.log(`photos: ${files.length} files across ${ok}/${jobs.length} jobs${skipped ? ` · ${skipped} folder(s) not visible to the bot` : ''}`);
+writeFileSync(join(OUT, 'photos.json'), JSON.stringify({ collectedAt: new Date().toISOString(), jobs: out }, null, 1));
+console.log(`photos: last upload read for ${out.length}/${jobs.length} jobs`);
