@@ -1,5 +1,5 @@
 {
-  "_note": "Required inspections per county portal, in field order. 'match' is a case-insensitive regex tested against the portal inspection type. The portal only lists an inspection after it is requested, so 'what is left' comes from this list, not from the portal. 'final: true' marks the close-out inspections that lead to the CO. Marion list built from 35 PKB jobs (2025-2026); In Marion 'Foundation Pre-Pour' is the monolithic slab and 'Flatwork Pre-Pour' is the late garage/driveway/sidewalk pour. Final names marked 'confirm' have not been seen on the portal yet. Citrus (Accela) list from the portal's own inspection codes (e.g. 102 MONO, 117 BUILDING FINAL); Accela lists every required inspection up front as 'Pending', which is not a request. Marion finals checked against the portal's own per-permit inspection list on 2026-09-29 (30 permits): Power Release and Final Structural on all, Final Plumbing 31, Final Mechanical 23, OCE Driveway Form-up/Final 28, Final Electrical only 8.",
+  "_note": "Required inspections per county portal, in field order. 'match' is a case-insensitive regex tested against the portal inspection type. The portal only lists an inspection after it is requested, so 'what is left' comes from this list, not from the portal. 'final: true' marks the close-out inspections that lead to the CO. Marion list built from 35 PKB jobs (2025-2026); In Marion 'Foundation Pre-Pour' is the monolithic slab and 'Flatwork Pre-Pour' is the late garage/driveway/sidewalk pour. Final names marked 'confirm' have not been seen on the portal yet. Citrus (Accela) list from the portal's own inspection codes (e.g. 102 MONO, 117 BUILDING FINAL); Accela lists every required inspection up front as 'Pending', which is not a request. Marion finals checked against the portal's own per-permit inspection list on 2026-09-29 (30 permits): Power Release and Final Structural on all, Final Plumbing 31, Final Mechanical 23, OCE Driveway Form-up/Final 28, Final Electrical only 8. Since 2026-09-29 each permit's own list from the portal (ops.permit_cases.inspection_plan) decides which steps apply; this file only gives names, order, finals and benchmarks. alwaysOptional: steps PKB treats as optional even when the portal lists them (OCE Driveway, per Victor).",
   "energov:marion": [
     {
       "key": "prework",
@@ -99,7 +99,8 @@
       "match": "oce driveway final|^oce driveway$",
       "final": true,
       "note": "Listed by the portal on most permits but PKB practically never requests it (1 form-up in 30 permits, no finals); optional per Victor 2026-09-29",
-      "optional": true
+      "optional": true,
+      "alwaysOptional": true
     },
     {
       "key": "fplumb",

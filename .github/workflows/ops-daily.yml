@@ -90,6 +90,12 @@ jobs:
           node scripts/build_seed.mjs --parts
           node scripts/apply_seed.mjs
 
+      # Each permit's own inspection list from the county portal (EnerGov); Citrus lists
+      # every required inspection on the permit already. Drives the progress/next steps.
+      - name: Inspection plans per permit
+        continue-on-error: true
+        run: node collectors/energov/inspection_plan.mjs
+
       # R-INSP-FAIL: e-mail supervisor/PMs/Cristiano about new failed inspections (with the
       # inspector's comments) and queue a Buildertrend Daily Log. Sends only when the repo
       # variable OPS_SEND_ENABLED is 'true'; otherwise every message is stored as a draft.
