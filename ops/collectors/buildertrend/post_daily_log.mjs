@@ -38,7 +38,7 @@ if (flag('list-notify')) {
   if (!loggedIn) { await browser.close(); out({ ok: false, error: 'Buildertrend session expired — re-export the bot cookies' }); process.exit(); }
   await selectJob(page, pickerText(resolveJobName('0001')));
   await page.goto('https://buildertrend.net/app/DailyLogs', { waitUntil: 'domcontentloaded' });
-  const newBtn = page.getByRole('button', { name: /Create new Daily Log|^Daily Log$/ }).first();
+  const newBtn = page.getByRole('button', { name: /Create new Daily Log/ }).or(page.locator('button', { hasText: /^\W*Daily Log\s*$/ })).first();
   await newBtn.waitFor({ timeout: 90000 }); await newBtn.click();
   await page.locator('textarea[name="logTitle"], textarea#logTitle').first().waitFor({ timeout: 60000 });
   await page.waitForTimeout(2000);

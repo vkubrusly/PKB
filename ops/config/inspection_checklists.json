@@ -1,5 +1,5 @@
 {
-  "_note": "Required inspections per county portal, in field order. 'match' is a case-insensitive regex tested against the portal inspection type. The portal only lists an inspection after it is requested, so 'what is left' comes from this list, not from the portal. 'final: true' marks the close-out inspections that lead to the CO. Marion list built from 35 PKB jobs (2025-2026); In Marion 'Foundation Pre-Pour' is the monolithic slab and 'Flatwork Pre-Pour' is the late garage/driveway/sidewalk pour. Final names marked 'confirm' have not been seen on the portal yet. Citrus (Accela) list from the portal's own inspection codes (e.g. 102 MONO, 117 BUILDING FINAL); Accela lists every required inspection up front as 'Pending', which is not a request.",
+  "_note": "Required inspections per county portal, in field order. 'match' is a case-insensitive regex tested against the portal inspection type. The portal only lists an inspection after it is requested, so 'what is left' comes from this list, not from the portal. 'final: true' marks the close-out inspections that lead to the CO. Marion list built from 35 PKB jobs (2025-2026); In Marion 'Foundation Pre-Pour' is the monolithic slab and 'Flatwork Pre-Pour' is the late garage/driveway/sidewalk pour. Final names marked 'confirm' have not been seen on the portal yet. Citrus (Accela) list from the portal's own inspection codes (e.g. 102 MONO, 117 BUILDING FINAL); Accela lists every required inspection up front as 'Pending', which is not a request. Marion finals checked against the portal's own per-permit inspection list on 2026-09-29 (30 permits): Power Release and Final Structural on all, Final Plumbing 31, Final Mechanical 23, OCE Driveway Form-up/Final 28, Final Electrical only 8.",
   "energov:marion": [
     {
       "key": "prework",
@@ -91,13 +91,14 @@
     {
       "key": "ppr",
       "name": "Preliminary Power Release",
-      "match": "preliminary power release|^power release"
+      "match": "preliminary power release"
     },
     {
       "key": "driveway",
-      "name": "OCE Driveway",
-      "match": "driveway",
-      "final": true
+      "name": "OCE Driveway Final",
+      "match": "oce driveway final|^oce driveway$",
+      "final": true,
+      "note": "Required by the portal on 28 of 30 PKB permits (not on older ones such as 0003)"
     },
     {
       "key": "fplumb",
@@ -116,14 +117,21 @@
       "name": "Final Electrical",
       "match": "final electric",
       "final": true,
-      "confirm": true
+      "optional": true,
+      "note": "Marion lists it as required on only 8 of 30 PKB permits"
     },
     {
       "key": "fbuilding",
-      "name": "Final Building",
-      "match": "final (building|structural)",
+      "name": "Final Structural (Final Building)",
+      "match": "final (structural|building)",
+      "final": true
+    },
+    {
+      "key": "powerrel",
+      "name": "Power Release (final)",
+      "match": "^power release",
       "final": true,
-      "confirm": true
+      "note": "Required on 30 of 30 PKB permits"
     }
   ],
   "accela:citrus": [

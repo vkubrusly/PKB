@@ -30,8 +30,13 @@ export async function createDailyLog(page, { jobId = null, jobName, title, notes
   // clicking the picker by name was unreliable. Falls back to the picker without an id.
   if (jobId) await page.goto(`https://buildertrend.net/app/DailyLogs?jobId=${jobId}`, { waitUntil: 'domcontentloaded' });
   else { await selectJob(page, jobName); await page.goto('https://buildertrend.net/app/DailyLogs', { waitUntil: 'domcontentloaded' }); }
-  const newBtn = page.getByRole('button', { name: /Create new Daily Log|^Daily Log$/ }).first();
-  await newBtn.waitFor({ timeout: 90000 });
+  const newBtn = page.getByRole('button', { name: /Create new Daily Log/ }).or(page.locator('button', { hasText: /^\W*Daily Log\s*$/ })).first();
+  // Buildertrend is sometimes slow to render the list: reload once before giving up.
+  if (!(await newBtn.waitFor({ timeout: 90000 }).then(() => true).catch(() => false))) {
+    // (the page rewrites its URL to /app/DailyLogs, so open it again by job id instead of reloading)
+    await page.goto(jobId ? `https://buildertrend.net/app/DailyLogs?jobId=${jobId}` : 'https://buildertrend.net/app/DailyLogs', { waitUntil: 'domcontentloaded' });
+    await newBtn.waitFor({ timeout: 120000 });
+  }
   await newBtn.click();
   const titleBox = page.locator('textarea[name="logTitle"], textarea#logTitle').first();
   await titleBox.waitFor({ timeout: 60000 });
@@ -47,27 +52,42 @@ export async function createDailyLog(page, { jobId = null, jobName, title, notes
   // everyone ticked by default. Untick "Check All", then tick the requested people by name.
   // People who are not Buildertrend users on the job are not in the tree: they are skipped.
   const notifySelect = page.locator('input#usersToNotify').locator('xpath=ancestor::div[contains(@class,"ant-select-multiple")][1]');
-  await notifySelect.locator('.ant-select-selector').click();
   const drop = page.locator('[data-testid="usersToNotify-popup"]');
-  await drop.locator('.ant-select-tree-title', { hasText: 'Check All' }).waitFor({ timeout: 15000 });
+  const container = page.locator('.ant-select-dropdown:has([data-testid="usersToNotify-popup"])');
+  // The dropdown often ignores the first click on a slow page: click until it is really open.
+  const ensureOpen = async () => {
+    for (let k = 0; k < 5; k++) {
+      const cls = (await container.getAttribute('class').catch(() => null)) || 'ant-select-dropdown-hidden';
+      if (!/dropdown-hidden/.test(cls) && (await drop.locator('.ant-select-tree-title').count())) return;
+      await notifySelect.locator('.ant-select-selector').click();
+      await page.waitForTimeout(1500);
+    }
+    throw new Error('notify list did not open; not publishing');
+  };
+  await ensureOpen();
+  await page.waitForTimeout(800); // let the dropdown animation settle
   const flat = (t) => String(t).replace(/\s+/g, ' ').trim().toLowerCase();
+  const rx = (name) => new RegExp(`${name.trim().split(/\s+/).map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+')}\\s*$`, 'i');
   const node = async (name) => {
-    const nodes = drop.locator('.ant-select-tree-treenode');
-    for (let i = 0; i < await nodes.count(); i++) {
-      const t = await nodes.nth(i).locator('.ant-select-tree-title').innerText().catch(() => '');
-      if (flat(t).endsWith(flat(name))) return nodes.nth(i);
+    const titles = drop.locator('.ant-select-tree-title');
+    for (let i = 0; i < await titles.count(); i++) {
+      if (rx(name).test((await titles.nth(i).innerText().catch(() => '')).trim()))
+        return titles.nth(i).locator('xpath=ancestor::div[contains(@class,"ant-select-tree-treenode")][1]');
     }
     return null;
   };
+  await ensureOpen();
   const checkAll = await node('Check All');
+  if (!checkAll) throw new Error('notify list: "Check All" not found; not publishing');
   if (/checkbox-checked|checkbox-indeterminate/.test(await checkAll.getAttribute('class') + await checkAll.locator('.ant-select-tree-checkbox').getAttribute('class'))) {
-    await checkAll.locator('.ant-select-tree-checkbox').click(); await page.waitForTimeout(400);
+    await checkAll.locator('.ant-select-tree-checkbox').click({ force: true }); await page.waitForTimeout(400);
   }
   const skipped = [], picked = [];
   for (const name of notify) {
+    await ensureOpen();
     const n = await node(name);
     if (!n) { skipped.push(name); continue; }
-    if (!/checkbox-checked/.test(await n.getAttribute('class'))) { await n.locator('.ant-select-tree-checkbox').click(); await page.waitForTimeout(250); }
+    if (!/checkbox-checked/.test(await n.getAttribute('class'))) { await n.locator('.ant-select-tree-checkbox').click({ force: true }); await page.waitForTimeout(250); }
     picked.push(name);
   }
   notify = picked;

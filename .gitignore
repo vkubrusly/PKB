@@ -37,3 +37,6 @@ Thumbs.db
 # Test / coverage
 coverage/
 __pycache__/
+
+# Personal Claude Code settings
+.claude/settings.local.json
