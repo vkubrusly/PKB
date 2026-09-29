@@ -1,0 +1,1513 @@
+{
+  "permitNumber": "BLD2511-0820",
+  "found": true,
+  "url": "https://aca-prod.accela.com/CITRUS/Cap/CapDetail.aspx?Module=Building&TabName=Building&capID1=REC25&capID2=00000&capID3=006PT&agencyCode=CITRUS&IsToShowInspection=",
+  "permit": {
+    "number": "BLD2511-0820",
+    "caseId": "REC25-00000-006PT",
+    "county": "citrus",
+    "type": "Residential",
+    "workclass": null,
+    "status": "More Info Required",
+    "projectName": null,
+    "address": "7605 N SANTOS DR DUNNELLON 34434 * View Additional Locations>>",
+    "parcel": null,
+    "appliedAt": "2025-11-19",
+    "issuedAt": "2025-12-26",
+    "expiresAt": null,
+    "finalizedAt": "2026-09-15",
+    "squareFeet": null,
+    "valuation": null,
+    "description": null,
+    "submittals": [
+      {
+        "submittalId": "round-1",
+        "version": 1,
+        "type": "Plan Review",
+        "status": "Revisions Required",
+        "submittedAt": "2025-11-24",
+        "dueAt": "2025-12-01",
+        "completedAt": "2025-12-05"
+      },
+      {
+        "submittalId": "round-2",
+        "version": 2,
+        "type": "Plan Review",
+        "status": "In Review",
+        "submittedAt": "2025-12-15",
+        "dueAt": null,
+        "completedAt": null
+      },
+      {
+        "submittalId": "round-3",
+        "version": 3,
+        "type": "Plan Review",
+        "status": "Revisions Required",
+        "submittedAt": "2025-12-18",
+        "dueAt": "2026-09-14",
+        "completedAt": "2026-09-14"
+      }
+    ],
+    "reviewItems": [
+      {
+        "itemReviewId": "Utilities Review|2025-12-01|1",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Utilities Review",
+        "status": "Approved",
+        "assignedTo": "Utilities Department",
+        "assignedToEmail": null,
+        "dueAt": "2025-12-01",
+        "completedAt": "2025-11-26",
+        "comments": "See ConditionsReviewed by Karen Poulin  (352) 527-7650 option 4",
+        "by": "Utilities Department"
+      },
+      {
+        "itemReviewId": "Zoning Review|2025-12-01|1",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Zoning Review",
+        "status": "Approved",
+        "assignedTo": "Shannon Lutton",
+        "assignedToEmail": null,
+        "dueAt": "2025-12-01",
+        "completedAt": "2025-12-05",
+        "comments": "**SITE APPROVED FOR NEW SFD ONLY - MUST MAINTAIN MIN OF 2 TREES ON SITE**",
+        "by": "Shannon Lutton"
+      },
+      {
+        "itemReviewId": "Technical Services Review|2025-12-01|1",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Technical Services Review",
+        "status": "Revisions Required",
+        "assignedTo": "Technical Services",
+        "assignedToEmail": null,
+        "dueAt": "2025-12-01",
+        "completedAt": "2025-12-02",
+        "comments": "Lorrie.Schwenneker@citrusbocc.com352-527-5374",
+        "by": "Technical Services"
+      },
+      {
+        "itemReviewId": "Technical Services Review|2025-12-22|1",
+        "submittalId": "round-3",
+        "round": 3,
+        "department": "Technical Services Review",
+        "status": "Approved",
+        "assignedTo": "Technical Services",
+        "assignedToEmail": null,
+        "dueAt": "2025-12-22",
+        "completedAt": "2025-12-18",
+        "comments": "FFE 96.5' indicated on site plans Laura.Ford@citrusbocc.com 352-527-5369",
+        "by": "Technical Services"
+      },
+      {
+        "itemReviewId": "Preliminary Inspection|2025-12-01|1",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Preliminary Inspection",
+        "status": "Passed",
+        "assignedTo": "Road Maintenance",
+        "assignedToEmail": null,
+        "dueAt": "2025-12-01",
+        "completedAt": "2025-11-25",
+        "comments": "Swale’ d apron to follow existing grade and allow for proper drainage from high to low side of entire property frontage within the Right of Way. Must maintain swale within the right of way. No roadway or edge of pavement damage present.",
+        "by": "Road Maintenance"
+      },
+      {
+        "itemReviewId": "Addressing Review|2025-12-01|1",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Addressing Review",
+        "status": "Approved",
+        "assignedTo": "Addressing Department",
+        "assignedToEmail": null,
+        "dueAt": "2025-12-01",
+        "completedAt": "2025-11-24",
+        "comments": "RH",
+        "by": "Addressing Department"
+      },
+      {
+        "itemReviewId": "SWPPP|2025-12-01|1",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "SWPPP",
+        "status": "Not Required",
+        "assignedTo": "Technical Services",
+        "assignedToEmail": null,
+        "dueAt": "2025-12-01",
+        "completedAt": "2025-11-24",
+        "comments": "Quincy.wylupek@citrusbocc.com   352-527-5247",
+        "by": "Technical Services"
+      },
+      {
+        "itemReviewId": "Building Review|2025-12-01|1",
+        "submittalId": "round-1",
+        "round": 1,
+        "department": "Building Review",
+        "status": "Revisions Required",
+        "assignedTo": "Luis Benitez",
+        "assignedToEmail": null,
+        "dueAt": "2025-12-01",
+        "completedAt": "2025-11-25",
+        "comments": null,
+        "by": "Luis Benitez"
+      },
+      {
+        "itemReviewId": "Building Review|2025-12-22|1",
+        "submittalId": "round-3",
+        "round": 3,
+        "department": "Building Review",
+        "status": "Revisions Required",
+        "assignedTo": "Luis Benitez",
+        "assignedToEmail": null,
+        "dueAt": "2025-12-22",
+        "completedAt": "2025-12-17",
+        "comments": null,
+        "by": "Luis Benitez"
+      },
+      {
+        "itemReviewId": "Building Review|2025-12-25|1",
+        "submittalId": "round-3",
+        "round": 3,
+        "department": "Building Review",
+        "status": "Approved",
+        "assignedTo": "Luis Benitez",
+        "assignedToEmail": null,
+        "dueAt": "2025-12-25",
+        "completedAt": "2025-12-19",
+        "comments": null,
+        "by": "Luis Benitez"
+      },
+      {
+        "itemReviewId": "Notice of Commencement Review|2025-12-30|1",
+        "submittalId": "round-3",
+        "round": 3,
+        "department": "Notice of Commencement Review",
+        "status": "Review Complete",
+        "assignedTo": null,
+        "assignedToEmail": null,
+        "dueAt": "2025-12-30",
+        "completedAt": "2025-12-31",
+        "comments": null,
+        "by": "Alicia Greenwood"
+      },
+      {
+        "itemReviewId": "Document Review-Envelope Leakage Test Report-1 - Envelope Leakage Test Report|2026-09-03|1",
+        "submittalId": "round-3",
+        "round": 3,
+        "department": "Document Review-Envelope Leakage Test Report-1 - Envelope Leakage Test Report",
+        "status": "Review Complete",
+        "assignedTo": null,
+        "assignedToEmail": null,
+        "dueAt": "2026-09-03",
+        "completedAt": "2026-09-03",
+        "comments": null,
+        "by": "James Anderson"
+      },
+      {
+        "itemReviewId": "Document Review-Termite Certificate-1 - Termite Certificate|2026-09-03|1",
+        "submittalId": "round-3",
+        "round": 3,
+        "department": "Document Review-Termite Certificate-1 - Termite Certificate",
+        "status": "Review Pending - Revision Required",
+        "assignedTo": null,
+        "assignedToEmail": null,
+        "dueAt": "2026-09-03",
+        "completedAt": "2026-09-03",
+        "comments": "The termite certificate must state the following per 2023 FBC R318 - The building has received complete treatment for the prevention of subterranean termites. Treatment is in accordance with rules and laws established by the Florida Department of Agriculture and Consumer Services.",
+        "by": "James Anderson"
+      },
+      {
+        "itemReviewId": "Document Review-Insulation Certificate-1 - Insulation Certificate|2026-09-03|1",
+        "submittalId": "round-3",
+        "round": 3,
+        "department": "Document Review-Insulation Certificate-1 - Insulation Certificate",
+        "status": "Review Complete",
+        "assignedTo": null,
+        "assignedToEmail": null,
+        "dueAt": "2026-09-03",
+        "completedAt": "2026-09-03",
+        "comments": null,
+        "by": "James Anderson"
+      },
+      {
+        "itemReviewId": "Notice of Commencement Review|2026-09-03|1",
+        "submittalId": "round-3",
+        "round": 3,
+        "department": "Notice of Commencement Review",
+        "status": "Review Complete",
+        "assignedTo": "Michael Scalzi",
+        "assignedToEmail": null,
+        "dueAt": "2026-09-03",
+        "completedAt": "2026-09-04",
+        "comments": "NOC FOR NEW SFD IN OR BK:3630 PG:1834",
+        "by": "Michael Scalzi"
+      },
+      {
+        "itemReviewId": "Document Review-Duct Leakage Test Report-1 - Duct Leakage Test Report|2026-09-14|1",
+        "submittalId": "round-3",
+        "round": 3,
+        "department": "Document Review-Duct Leakage Test Report-1 - Duct Leakage Test Report",
+        "status": "Review Complete",
+        "assignedTo": null,
+        "assignedToEmail": null,
+        "dueAt": "2026-09-14",
+        "completedAt": "2026-09-14",
+        "comments": null,
+        "by": "James Anderson"
+      }
+    ],
+    "workflow": [
+      {
+        "task": "Document Acceptance",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": "2025-11-19",
+            "assignedTo": null,
+            "status": "Awaiting Required Documents",
+            "completedAt": "2025-11-19",
+            "by": "DPR USER",
+            "comments": null
+          },
+          {
+            "dueAt": "2025-11-19",
+            "assignedTo": null,
+            "status": "Required Documents Submitted",
+            "completedAt": "2025-11-19",
+            "by": "DPR USER",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Fee Review",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": "2025-11-23",
+            "assignedTo": "Michael Scalzi",
+            "status": "Invoice Fee Paid",
+            "completedAt": "2025-11-24",
+            "by": "Michael Scalzi",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Application Acceptance",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": "2025-11-25",
+            "assignedTo": "Michael Scalzi",
+            "status": "Application Approved",
+            "completedAt": "2025-11-24",
+            "by": "Michael Scalzi",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Reviewer Routing",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": "2025-11-26",
+            "assignedTo": "Michael Scalzi",
+            "status": "Assign to Reviewers",
+            "completedAt": "2025-11-24",
+            "by": "Michael Scalzi",
+            "comments": null
+          },
+          {
+            "dueAt": "2025-12-15",
+            "assignedTo": "Michael Scalzi",
+            "status": "Assign to Reviewers",
+            "completedAt": "2025-12-15",
+            "by": "Michael Scalzi",
+            "comments": null
+          },
+          {
+            "dueAt": "2025-12-22",
+            "assignedTo": "Michael Scalzi",
+            "status": "Assign to Reviewers",
+            "completedAt": "2025-12-18",
+            "by": "Michael Scalzi",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Flood Plain Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Utilities Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2025-12-01",
+            "assignedTo": "Utilities Department",
+            "status": "Approved",
+            "completedAt": "2025-11-26",
+            "by": "Utilities Department",
+            "comments": "See ConditionsReviewed by Karen Poulin  (352) 527-7650 option 4"
+          }
+        ]
+      },
+      {
+        "task": "Zoning Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2025-12-01",
+            "assignedTo": "Shannon Lutton",
+            "status": "Approved",
+            "completedAt": "2025-12-05",
+            "by": "Shannon Lutton",
+            "comments": "**SITE APPROVED FOR NEW SFD ONLY - MUST MAINTAIN MIN OF 2 TREES ON SITE**"
+          }
+        ]
+      },
+      {
+        "task": "Fire Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Health Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Land Development Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Technical Services Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2025-12-01",
+            "assignedTo": "Technical Services",
+            "status": "Revisions Required",
+            "completedAt": "2025-12-02",
+            "by": "Technical Services",
+            "comments": "Lorrie.Schwenneker@citrusbocc.com352-527-5374"
+          },
+          {
+            "dueAt": "2025-12-22",
+            "assignedTo": "Technical Services",
+            "status": "Approved",
+            "completedAt": "2025-12-18",
+            "by": "Technical Services",
+            "comments": "FFE 96.5' indicated on site plans Laura.Ford@citrusbocc.com 352-527-5369"
+          }
+        ]
+      },
+      {
+        "task": "Mechanical Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Plumbing Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Electrical Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Preliminary Inspection",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2025-12-01",
+            "assignedTo": "Road Maintenance",
+            "status": "Passed",
+            "completedAt": "2025-11-25",
+            "by": "Road Maintenance",
+            "comments": "Swale’ d apron to follow existing grade and allow for proper drainage from high to low side of entire property frontage within the Right of Way. Must maintain swale within the right of way. No roadway or edge of pavement damage present."
+          }
+        ]
+      },
+      {
+        "task": "Affordable Housing",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Addressing Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2025-12-01",
+            "assignedTo": "Addressing Department",
+            "status": "Approved",
+            "completedAt": "2025-11-24",
+            "by": "Addressing Department",
+            "comments": "RH"
+          }
+        ]
+      },
+      {
+        "task": "SWPPP",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2025-12-01",
+            "assignedTo": "Technical Services",
+            "status": "Not Required",
+            "completedAt": "2025-11-24",
+            "by": "Technical Services",
+            "comments": "Quincy.wylupek@citrusbocc.com   352-527-5247"
+          }
+        ]
+      },
+      {
+        "task": "Private Provider Review",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "No Plan Review Required",
+        "state": null,
+        "history": []
+      },
+      {
+        "task": "Building Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2025-12-01",
+            "assignedTo": "Luis Benitez",
+            "status": "Revisions Required",
+            "completedAt": "2025-11-25",
+            "by": "Luis Benitez",
+            "comments": null
+          },
+          {
+            "dueAt": "2025-12-22",
+            "assignedTo": "Luis Benitez",
+            "status": "Revisions Required",
+            "completedAt": "2025-12-17",
+            "by": "Luis Benitez",
+            "comments": null
+          },
+          {
+            "dueAt": "2025-12-25",
+            "assignedTo": "Luis Benitez",
+            "status": "Approved",
+            "completedAt": "2025-12-19",
+            "by": "Luis Benitez",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Plan Review Verification",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": "2025-12-08",
+            "assignedTo": null,
+            "status": "Revisions Required",
+            "completedAt": "2025-12-05",
+            "by": "DPR USER",
+            "comments": null
+          },
+          {
+            "dueAt": "2025-12-08",
+            "assignedTo": "Michael Scalzi",
+            "status": "Revisions Received",
+            "completedAt": "2025-12-12",
+            "by": "DPR USER",
+            "comments": null
+          },
+          {
+            "dueAt": "2025-12-08",
+            "assignedTo": "Michael Scalzi",
+            "status": "Revision Routing",
+            "completedAt": "2025-12-12",
+            "by": "DPR USER",
+            "comments": null
+          },
+          {
+            "dueAt": "2025-12-22",
+            "assignedTo": "Michael Scalzi",
+            "status": "Revisions Required",
+            "completedAt": "2025-12-18",
+            "by": "DPR USER",
+            "comments": null
+          },
+          {
+            "dueAt": "2025-12-22",
+            "assignedTo": "Michael Scalzi",
+            "status": "Revisions Received",
+            "completedAt": "2025-12-18",
+            "by": "DPR USER",
+            "comments": null
+          },
+          {
+            "dueAt": "2025-12-22",
+            "assignedTo": "Michael Scalzi",
+            "status": "Revision Routing",
+            "completedAt": "2025-12-18",
+            "by": "DPR USER",
+            "comments": null
+          },
+          {
+            "dueAt": "2025-12-22",
+            "assignedTo": "Michael Scalzi",
+            "status": "Ready to Issue",
+            "completedAt": "2025-12-19",
+            "by": "Michael Scalzi",
+            "comments": null
+          },
+          {
+            "dueAt": "2025-12-22",
+            "assignedTo": "Michael Scalzi",
+            "status": "Validation in Review",
+            "completedAt": "2025-12-19",
+            "by": "DPR USER",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Permit Issuance",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": "2025-12-21",
+            "assignedTo": null,
+            "status": "Fees Due",
+            "completedAt": "2025-12-19",
+            "by": "Michael Scalzi",
+            "comments": null
+          },
+          {
+            "dueAt": "2025-12-21",
+            "assignedTo": null,
+            "status": "Issued",
+            "completedAt": "2025-12-26",
+            "by": "Accela Administrator",
+            "comments": "Updated by EMSE PRA Script 129"
+          }
+        ]
+      },
+      {
+        "task": "Inspection",
+        "state": "Previously Active",
+        "history": [
+          {
+            "dueAt": "2025-12-26",
+            "assignedTo": null,
+            "status": "Inspection Passed",
+            "completedAt": "2026-08-24",
+            "by": "Utilities Department",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Closure",
+        "state": "active",
+        "history": [
+          {
+            "dueAt": "2026-08-25",
+            "assignedTo": null,
+            "status": "More Info Required",
+            "completedAt": "2026-09-15",
+            "by": "Casey Walker",
+            "comments": "Land Section and Termite Certificate conditions must be met for CO to be issued."
+          },
+          {
+            "dueAt": "2026-08-25",
+            "assignedTo": null,
+            "status": null,
+            "completedAt": null,
+            "by": null,
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Notice of Commencement Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2025-12-30",
+            "assignedTo": null,
+            "status": "Review Complete",
+            "completedAt": "2025-12-31",
+            "by": "Alicia Greenwood",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Document Review-Envelope Leakage Test Report-1 - Envelope Leakage Test Report",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-09-03",
+            "assignedTo": null,
+            "status": "Review Complete",
+            "completedAt": "2026-09-03",
+            "by": "James Anderson",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Document Review-Termite Certificate-1 - Termite Certificate",
+        "state": "active",
+        "history": [
+          {
+            "dueAt": "2026-09-03",
+            "assignedTo": null,
+            "status": "Review Pending - Revision Required",
+            "completedAt": "2026-09-03",
+            "by": "James Anderson",
+            "comments": "The termite certificate must state the following per 2023 FBC R318 - The building has received complete treatment for the prevention of subterranean termites. Treatment is in accordance with rules and laws established by the Florida Department of Agriculture and Consumer Services."
+          }
+        ]
+      },
+      {
+        "task": "Document Review-Termite Certificate-2 - Termite Certificate",
+        "state": "complete",
+        "history": []
+      },
+      {
+        "task": "Document Review-Insulation Certificate-1 - Insulation Certificate",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-09-03",
+            "assignedTo": null,
+            "status": "Review Complete",
+            "completedAt": "2026-09-03",
+            "by": "James Anderson",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Notice of Commencement Review",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-09-03",
+            "assignedTo": "Michael Scalzi",
+            "status": "Review Complete",
+            "completedAt": "2026-09-04",
+            "by": "Michael Scalzi",
+            "comments": "NOC FOR NEW SFD IN OR BK:3630 PG:1834"
+          }
+        ]
+      },
+      {
+        "task": "Document Review-Duct Leakage Test Report-1 - Duct Leakage Test Report",
+        "state": "complete",
+        "history": [
+          {
+            "dueAt": "2026-09-14",
+            "assignedTo": null,
+            "status": "Review Complete",
+            "completedAt": "2026-09-14",
+            "by": "James Anderson",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "task": "Document Review - Termite Certificate",
+        "state": "active",
+        "history": []
+      }
+    ],
+    "inspections": [
+      {
+        "number": "135686",
+        "code": "401",
+        "type": "PLUMBING ROUGH I",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-01-21",
+        "inspector": "Steven Chmura",
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  401 PLUMBING ROUGH I (135686)  Result by: Steven Chmura on 01/21/2026 at 11:55 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=135686&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "94518",
+        "code": "219",
+        "type": "CONCRETE ENCASED GROUND",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-01-29",
+        "inspector": "Peter Ovaska",
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  219 CONCRETE ENCASED GROUND (94518)  Result by: Peter Ovaska on 01/29/2026 at 12:49 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=94518&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "94502",
+        "code": "102",
+        "type": "MONO",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-01-30",
+        "inspector": "Joe Moss",
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  102 MONO (94502)  Result by: Joe Moss on 01/30/2026 at 10:35 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=94502&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "94503",
+        "code": "105",
+        "type": "LINTEL",
+        "status": "Failed - First",
+        "requestedAt": "2026-02-05",
+        "scheduledAt": "2026-02-06",
+        "actualAt": "2026-02-06",
+        "inspector": "Andrew Mylrea",
+        "reinspection": false,
+        "passed": false,
+        "failed": true,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Failed - First  105 LINTEL (94503)  Result by: Andrew Mylrea on 02/06/2026 at 12:20 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=94503&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow",
+        "comments": "Andrew Mylrea (2/6/2026 12:21 PM) Not per plans A107.4 Missing dowel and cleanout at right side.",
+        "statusHistory": [
+          {
+            "status": "Failed - First",
+            "at": "2/6/2026 12:20 PM",
+            "inspector": "Andrew Mylrea",
+            "updatedAt": "2/6/2026 12:21 PM",
+            "by": "Andrew Mylrea",
+            "comments": "Not per plans A107.4 Missing dowel and cleanout at right side."
+          },
+          {
+            "status": "Scheduled",
+            "at": "2/6/2026 12:00 AM",
+            "inspector": "Andrew Mylrea",
+            "updatedAt": "2/5/2026 3:07 PM",
+            "by": "Scott Schnettler",
+            "comments": null
+          },
+          {
+            "status": "Scheduled",
+            "at": "2/6/2026 12:00 AM",
+            "inspector": "Andrew Mylrea",
+            "updatedAt": "2/5/2026 12:29 PM",
+            "by": "Cristiano M Pedrosa",
+            "comments": null
+          },
+          {
+            "status": "Pending",
+            "at": "TBD",
+            "inspector": "Andrew Mylrea",
+            "updatedAt": "11/25/2025 2:58 PM",
+            "by": "Luis Benitez",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "number": "154171",
+        "code": "105",
+        "type": "LINTEL",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-02-10",
+        "inspector": "David Crum",
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  105 LINTEL (154171)  Result by: David Crum on 02/10/2026 at 01:14 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=154171&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "94509",
+        "code": "119",
+        "type": "STRUCTURAL FRAME",
+        "status": "Failed - First",
+        "requestedAt": "2026-02-18",
+        "scheduledAt": "2026-02-19",
+        "actualAt": "2026-02-19",
+        "inspector": "Peter Ovaska",
+        "reinspection": false,
+        "passed": false,
+        "failed": true,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Failed - First  119 STRUCTURAL FRAME (94509)  Result by: Peter Ovaska on 02/19/2026 at 08:58 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=94509&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow",
+        "comments": "Peter Ovaska (2/19/2026 8:58 AM) Not a complete inspection. Need a COMPLETE ORGINATED of plans bound together with pages IN ORDER. Scattered pages, pages folded up. Need one set bound together. Sheathing needs to be called in before or with Structural. Your plans call for 19/32. 7/16 used. See page d1.0 Wrong t&b connectors used at garage to house bearing wall. Sp4 req, see s1.2-6",
+        "statusHistory": [
+          {
+            "status": "Failed - First",
+            "at": "2/19/2026 8:58 AM",
+            "inspector": "Peter Ovaska",
+            "updatedAt": "2/19/2026 8:58 AM",
+            "by": "Peter Ovaska",
+            "comments": "Not a complete inspection. Need a COMPLETE ORGINATED of plans bound together with pages IN ORDER. Scattered pages, pages folded up. Need one set bound together. Sheathing needs to be called in before or with Structural. Your plans call for 19/32. 7/16 used. See page d1.0 Wrong t&b connectors used at garage to house bearing wall. Sp4 req, see s1.2-6"
+          },
+          {
+            "status": "Scheduled",
+            "at": "2/19/2026 12:00 AM",
+            "inspector": "Peter Ovaska",
+            "updatedAt": "2/18/2026 3:45 PM",
+            "by": "Scott Schnettler",
+            "comments": null
+          },
+          {
+            "status": "Scheduled",
+            "at": "2/19/2026 12:00 AM",
+            "inspector": "Peter Ovaska",
+            "updatedAt": "2/18/2026 10:22 AM",
+            "by": "Cristiano M Pedrosa",
+            "comments": null
+          },
+          {
+            "status": "Pending",
+            "at": "TBD",
+            "inspector": "Peter Ovaska",
+            "updatedAt": "11/25/2025 2:58 PM",
+            "by": "Luis Benitez",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "number": "165493",
+        "code": "119",
+        "type": "STRUCTURAL FRAME",
+        "status": "Cancelled",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-02-24",
+        "inspector": "Thomas Drummonds",
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": true,
+        "completed": true,
+        "raw": "Cancelled  119 STRUCTURAL FRAME (165493)  Cancelled by: Thomas Drummonds on 02/24/2026 at 09:17 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=165493&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "94504",
+        "code": "106",
+        "type": "ROOF SHEATHING",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-02-25",
+        "inspector": "Vincent Artese",
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  106 ROOF SHEATHING (94504)  Result by: Vincent Artese on 02/25/2026 at 02:21 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=94504&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "169778",
+        "code": "119",
+        "type": "STRUCTURAL FRAME",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-02-25",
+        "inspector": "Vincent Artese",
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  119 STRUCTURAL FRAME (169778)  Result by: Vincent Artese on 02/25/2026 at 02:22 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=169778&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "94505",
+        "code": "107",
+        "type": "WALL SHEATHING",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-03-13",
+        "inspector": "Peter Giverc",
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  107 WALL SHEATHING (94505)  Result by: Peter Giverc on 03/13/2026 at 10:59 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=94505&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "94519",
+        "code": "301",
+        "type": "MECHANICAL ROUGH IN",
+        "status": "Failed - First",
+        "requestedAt": "2026-03-16",
+        "scheduledAt": "2026-03-17",
+        "actualAt": "2026-03-17",
+        "inspector": "Mark Hammer",
+        "reinspection": false,
+        "passed": false,
+        "failed": true,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Failed - First  301 MECHANICAL ROUGH IN (94519)  Result by: Mark Hammer on 03/17/2026 at 11:20 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=94519&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow",
+        "comments": "Mark Hammer (3/17/2026 11:24 AM) 1. Incomplete dryer venting system, vent pipe through the roof is not installed 2. Minimum clearance of 1.5\" for protection to refrigerant lines extending over masonry wall under roof decking not achieved ... FBCRM 1411.7",
+        "statusHistory": [
+          {
+            "status": "Failed - First",
+            "at": "3/17/2026 11:20 AM",
+            "inspector": "Mark Hammer",
+            "updatedAt": "3/17/2026 11:24 AM",
+            "by": "Mark Hammer",
+            "comments": "1. Incomplete dryer venting system, vent pipe through the roof is not installed 2. Minimum clearance of 1.5\" for protection to refrigerant lines extending over masonry wall under roof decking not achieved ... FBCRM 1411.7"
+          },
+          {
+            "status": "Scheduled",
+            "at": "3/17/2026 12:00 AM",
+            "inspector": "Mark Hammer",
+            "updatedAt": "3/16/2026 7:00 PM",
+            "by": "Scott Schnettler",
+            "comments": null
+          },
+          {
+            "status": "Scheduled",
+            "at": "3/17/2026 12:00 AM",
+            "inspector": "Mark Hammer",
+            "updatedAt": "3/16/2026 12:01 PM",
+            "by": "Cristiano M Pedrosa",
+            "comments": null
+          },
+          {
+            "status": "Pending",
+            "at": "TBD",
+            "inspector": "Mark Hammer",
+            "updatedAt": "11/25/2025 2:58 PM",
+            "by": "Luis Benitez",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "number": "94515",
+        "code": "204",
+        "type": "ELECTRICAL ROUGH IN",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-03-17",
+        "inspector": "Mark Hammer",
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  204 ELECTRICAL ROUGH IN (94515)  Result by: Mark Hammer on 03/17/2026 at 11:24 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=94515&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "94522",
+        "code": "402",
+        "type": "PLUMBING ROUGH II",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-03-17",
+        "inspector": "Mark Hammer",
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  402 PLUMBING ROUGH II (94522)  Result by: Mark Hammer on 03/17/2026 at 11:25 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=94522&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "94506",
+        "code": "108",
+        "type": "FRAME",
+        "status": "Cancelled",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-03-17",
+        "inspector": "Mark Hammer",
+        "reinspection": false,
+        "passed": false,
+        "failed": false,
+        "cancelled": true,
+        "completed": true,
+        "raw": "Cancelled  108 FRAME (94506)  Cancelled by: Mark Hammer on 03/17/2026 at 01:10 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=94506&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "94511",
+        "code": "140",
+        "type": "ROOF DRY IN & FLASHING",
+        "status": "Failed - First",
+        "requestedAt": "2026-03-17",
+        "scheduledAt": "2026-03-18",
+        "actualAt": "2026-03-18",
+        "inspector": "David Crum",
+        "reinspection": false,
+        "passed": false,
+        "failed": true,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Failed - First  140 ROOF DRY IN & FLASHING (94511)  Result by: David Crum on 03/18/2026 at 12:34 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=94511&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow",
+        "comments": "David Crum (3/18/2026 12:34 PM) Trash must be contained. Trash is all over job site. Ok to pass once trash is cleaned up fbc3301",
+        "statusHistory": [
+          {
+            "status": "Failed - First",
+            "at": "3/18/2026 12:34 PM",
+            "inspector": "David Crum",
+            "updatedAt": "3/18/2026 12:34 PM",
+            "by": "David Crum",
+            "comments": "Trash must be contained. Trash is all over job site. Ok to pass once trash is cleaned up fbc3301"
+          },
+          {
+            "status": "Scheduled",
+            "at": "3/18/2026 12:00 AM",
+            "inspector": "David Crum",
+            "updatedAt": "3/17/2026 5:18 PM",
+            "by": "Scott Schnettler",
+            "comments": null
+          },
+          {
+            "status": "Scheduled",
+            "at": "3/18/2026 12:00 AM",
+            "inspector": "David Crum",
+            "updatedAt": "3/17/2026 9:07 AM",
+            "by": "Cristiano M Pedrosa",
+            "comments": null
+          },
+          {
+            "status": "Pending",
+            "at": "TBD",
+            "inspector": "David Crum",
+            "updatedAt": "11/25/2025 2:58 PM",
+            "by": "Luis Benitez",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "number": "190094",
+        "code": "301",
+        "type": "MECHANICAL ROUGH IN",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-03-20",
+        "inspector": "Mark Hammer",
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  301 MECHANICAL ROUGH IN (190094)  Result by: Mark Hammer on 03/20/2026 at 08:51 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=190094&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "192411",
+        "code": "140",
+        "type": "ROOF DRY IN & FLASHING",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-03-25",
+        "inspector": "David Crum",
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  140 ROOF DRY IN & FLASHING (192411)  Result by: David Crum on 03/25/2026 at 11:41 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=192411&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "190096",
+        "code": "108",
+        "type": "FRAME",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-03-26",
+        "inspector": "Vincent Artese",
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  108 FRAME (190096)  Result by: Vincent Artese on 03/26/2026 at 02:26 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=190096&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "94512",
+        "code": "146",
+        "type": "BUILDING LATH NAILING",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-03-31",
+        "inspector": "David Crum",
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  146 BUILDING LATH NAILING (94512)  Result by: David Crum on 03/31/2026 at 10:08 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=94512&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "94507",
+        "code": "110",
+        "type": "INSULATION",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-04-01",
+        "inspector": "Peter Ovaska",
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  110 INSULATION (94507)  Result by: Peter Ovaska on 04/01/2026 at 02:14 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=94507&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "93378",
+        "code": "150",
+        "type": "RESIDENTIAL DRIVEWAY PRE-POUR",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-04-23",
+        "inspector": "Road Maintenance",
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  150 RESIDENTIAL DRIVEWAY PRE-POUR (93378)  Result by: Road Maintenance on 04/23/2026 at 12:00 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=93378&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "94510",
+        "code": "133",
+        "type": "SOFFIT IN PROGRESS",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-04-24",
+        "inspector": "David Crum",
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  133 SOFFIT IN PROGRESS (94510)  Result by: David Crum on 04/24/2026 at 12:46 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=94510&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "94517",
+        "code": "209",
+        "type": "PRE POWER",
+        "status": "Failed - First",
+        "requestedAt": "2026-05-05",
+        "scheduledAt": "2026-05-06",
+        "actualAt": "2026-05-06",
+        "inspector": "Peter Ovaska",
+        "reinspection": false,
+        "passed": false,
+        "failed": true,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Failed - First  209 PRE POWER (94517)  Result by: Peter Ovaska on 05/06/2026 at 11:10 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=94517&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow",
+        "comments": "Peter Ovaska (5/6/2026 11:10 AM) Feeders not landed at meter main.",
+        "statusHistory": [
+          {
+            "status": "Failed - First",
+            "at": "5/6/2026 11:10 AM",
+            "inspector": "Peter Ovaska",
+            "updatedAt": "5/6/2026 11:10 AM",
+            "by": "Peter Ovaska",
+            "comments": "Feeders not landed at meter main."
+          },
+          {
+            "status": "Scheduled",
+            "at": "5/6/2026 12:00 AM",
+            "inspector": "Peter Ovaska",
+            "updatedAt": "5/5/2026 3:37 PM",
+            "by": "Scott Schnettler",
+            "comments": null
+          },
+          {
+            "status": "Scheduled",
+            "at": "5/6/2026 12:00 AM",
+            "inspector": "Peter Ovaska",
+            "updatedAt": "5/5/2026 1:43 PM",
+            "by": "Cristiano M Pedrosa",
+            "comments": null
+          },
+          {
+            "status": "Pending",
+            "at": "TBD",
+            "inspector": "Peter Ovaska",
+            "updatedAt": "11/25/2025 2:58 PM",
+            "by": "Luis Benitez",
+            "comments": null
+          }
+        ]
+      },
+      {
+        "number": "94523",
+        "code": "403",
+        "type": "SEWER",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-05-07",
+        "inspector": "Steven Chmura",
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  403 SEWER (94523)  Result by: Steven Chmura on 05/07/2026 at 12:00 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=94523&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "94524",
+        "code": "404",
+        "type": "WATER SERVICE",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-05-07",
+        "inspector": "Steven Chmura",
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  404 WATER SERVICE (94524)  Result by: Steven Chmura on 05/07/2026 at 12:00 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=94524&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "240017",
+        "code": "209",
+        "type": "PRE POWER",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-05-08",
+        "inspector": "Jeremy Lentz",
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  209 PRE POWER (240017)  Result by: Jeremy Lentz on 05/08/2026 at 09:56 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=240017&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "259857",
+        "code": "202",
+        "type": "TUG",
+        "status": "Not Required",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-05-29",
+        "inspector": "Jeremy Lentz",
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Not Required  202 TUG (259857)  Result by: Jeremy Lentz on 05/29/2026 at 03:00 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=259857&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "94508",
+        "code": "117",
+        "type": "BUILDING FINAL",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-08-18",
+        "inspector": "Peter Ovaska",
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  117 BUILDING FINAL (94508)  Result by: Peter Ovaska on 08/18/2026 at 02:58 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=94508&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "94516",
+        "code": "205",
+        "type": "ELECTRICAL FINAL",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-08-18",
+        "inspector": "Peter Ovaska",
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  205 ELECTRICAL FINAL (94516)  Result by: Peter Ovaska on 08/18/2026 at 02:58 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=94516&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "94520",
+        "code": "302",
+        "type": "MECHANICAL FINAL",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-08-18",
+        "inspector": "Peter Ovaska",
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  302 MECHANICAL FINAL (94520)  Result by: Peter Ovaska on 08/18/2026 at 02:58 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=94520&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "94525",
+        "code": "405",
+        "type": "PLUMBING FINAL",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-08-18",
+        "inspector": "Peter Ovaska",
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  405 PLUMBING FINAL (94525)  Result by: Peter Ovaska on 08/18/2026 at 02:58 PM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=94525&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "93377",
+        "code": "148",
+        "type": "RESIDENTIAL DRIVEWAY FINAL",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-08-18",
+        "inspector": "Road Maintenance",
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  148 RESIDENTIAL DRIVEWAY FINAL (93377)  Result by: Road Maintenance on 08/18/2026 at 12:00 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=93377&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      },
+      {
+        "number": "95337",
+        "code": "154",
+        "type": "RESIDENTIAL UTILITY FINAL",
+        "status": "Approved",
+        "requestedAt": null,
+        "scheduledAt": null,
+        "actualAt": "2026-08-18",
+        "inspector": "Utilities Department",
+        "reinspection": false,
+        "passed": true,
+        "failed": false,
+        "cancelled": false,
+        "completed": true,
+        "raw": "Approved  154 RESIDENTIAL UTILITY FINAL (95337)  Result by: Utilities Department on 08/18/2026 at 12:00 AM",
+        "details": "/CITRUS/Inspection/InspectionDetails.aspx?agencyCode=CITRUS&RecordAltID=BLD2511-0820&RecordID1=REC25&RecordID2=00000&RecordID3=006PT&Module=Building&PublicUserID=PUBLICUSER0&ScheduledType=Unknown&Action=ViewDetails&ID=95337&IsFromWizardPage=False&RequestDayOption=0&ContactChangeOption=Unknown&isPopup=Y&Status=Unknown&NavigationBeginPage=ViewDetails&TimeOption=Unknow"
+      }
+    ],
+    "holds": [
+      {
+        "name": "Land Section",
+        "type": "Notice",
+        "reason": null,
+        "comments": "Land Section“Per Section 86-46 of the Citrus County Code of Ordinances, the County has implemented procedures for collecting an assessment prior to the issuance of the Certificate of Occupancy for: • new single-family residences, • new mobile homes, • new non-residential buildings, and • may also include any modifications to the size/impervious area of a structure or property within the County. Please submit a request for Interim Assessment Fees to be applied on a permit when scheduling Final Inspections, prior to your Certificate of Occupancy being issued to Land-NoReply@citrusbocc.com. Be sure to include the complete permit number, site address and contact information so we may better assist you. Thank you.Applied",
+        "createdAt": "2025-11-24",
+        "active": true,
+        "status": "Applied"
+      },
+      {
+        "name": "Termite Treatment Certificate",
+        "type": "Notice",
+        "reason": null,
+        "comments": "Termite Treatment CertificatePlease provide a Final Termite Treatment Certificate. Upload a copy of this document to your online account under the document type ‘Termite Certificate’. **Please note that if a termite bait system has been used for termite treatment compliance a copy of the contract/agreement for the installation, monitoring and maintenance is required. Both documents may be uploaded into ‘Termite Treatment Certificate’.** If you do not see this document type, or have further questions regarding this condition or document, please contact planreview@citrusbocc.com Please do not upload this under any other incorrect document type.Applied",
+        "createdAt": "2025-11-19",
+        "active": true,
+        "status": "Applied"
+      }
+    ],
+    "contacts": [],
+    "feeSummary": null,
+    "subRecords": [
+      {
+        "number": "CSR2609-0235",
+        "type": "Customer Service Request",
+        "status": null,
+        "date": "2026-09-03"
+      },
+      {
+        "number": "CSR2609-0629",
+        "type": "Customer Service Request",
+        "status": null,
+        "date": "2026-09-11"
+      }
+    ],
+    "collectedAt": "2026-09-29T20:44:33.235Z"
+  }
+}

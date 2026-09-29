@@ -22,11 +22,14 @@ export async function selectJob(page, jobName) {
   await page.waitForTimeout(2500);
 }
 
-export async function createDailyLog(page, { jobName, title, notes, privateLog = false, shareWithSubs = false, shareWithClient = false, notify = [] }) {
+export async function createDailyLog(page, { jobId = null, jobName, title, notes, privateLog = false, shareWithSubs = false, shareWithClient = false, notify = [], stopBeforePublish = false }) {
+  notify = [...notify];
   if (!title || title.length > 50) throw new Error('title is required and must be ≤ 50 characters');
   if ((notes || '').length > 4000) throw new Error('notes must be ≤ 4000 characters');
-  await selectJob(page, jobName);
-  await page.goto('https://buildertrend.net/app/DailyLogs', { waitUntil: 'domcontentloaded' });
+  // Open the job's Daily Logs directly by its Buildertrend id (?jobId= selects the job);
+  // clicking the picker by name was unreliable. Falls back to the picker without an id.
+  if (jobId) await page.goto(`https://buildertrend.net/app/DailyLogs?jobId=${jobId}`, { waitUntil: 'domcontentloaded' });
+  else { await selectJob(page, jobName); await page.goto('https://buildertrend.net/app/DailyLogs', { waitUntil: 'domcontentloaded' }); }
   const newBtn = page.getByRole('button', { name: /Create new Daily Log|^Daily Log$/ }).first();
   await newBtn.waitFor({ timeout: 90000 });
   await newBtn.click();
@@ -40,23 +43,48 @@ export async function createDailyLog(page, { jobName, title, notes, privateLog =
   await setBox('isPrivate', privateLog);
   if (!privateLog) { await setBox('canShareSubs', shareWithSubs); await setBox('canShareOwner', shareWithClient); }
 
-  // Clear the default notify list, then add the requested people (by display name).
+  // Notify list: a tree of checkboxes ("Check All" › "Internal Users" › one node per person),
+  // everyone ticked by default. Untick "Check All", then tick the requested people by name.
+  // People who are not Buildertrend users on the job are not in the tree: they are skipped.
   const notifySelect = page.locator('input#usersToNotify').locator('xpath=ancestor::div[contains(@class,"ant-select-multiple")][1]');
-  for (let i = 0; i < 20; i++) {
-    const close = notifySelect.locator('.ant-select-selection-item-remove, [aria-label="close"], .anticon-close').first();
-    if (!(await close.count())) break;
-    await close.click({ force: true }).catch(() => {}); await page.waitForTimeout(200);
+  await notifySelect.locator('.ant-select-selector').click();
+  const drop = page.locator('[data-testid="usersToNotify-popup"]');
+  await drop.locator('.ant-select-tree-title', { hasText: 'Check All' }).waitFor({ timeout: 15000 });
+  const flat = (t) => String(t).replace(/\s+/g, ' ').trim().toLowerCase();
+  const node = async (name) => {
+    const nodes = drop.locator('.ant-select-tree-treenode');
+    for (let i = 0; i < await nodes.count(); i++) {
+      const t = await nodes.nth(i).locator('.ant-select-tree-title').innerText().catch(() => '');
+      if (flat(t).endsWith(flat(name))) return nodes.nth(i);
+    }
+    return null;
+  };
+  const checkAll = await node('Check All');
+  if (/checkbox-checked|checkbox-indeterminate/.test(await checkAll.getAttribute('class') + await checkAll.locator('.ant-select-tree-checkbox').getAttribute('class'))) {
+    await checkAll.locator('.ant-select-tree-checkbox').click(); await page.waitForTimeout(400);
   }
+  const skipped = [], picked = [];
   for (const name of notify) {
-    await page.locator('input#usersToNotify').fill(name);
-    await page.waitForTimeout(800);
-    await page.keyboard.press('Enter');
+    const n = await node(name);
+    if (!n) { skipped.push(name); continue; }
+    if (!/checkbox-checked/.test(await n.getAttribute('class'))) { await n.locator('.ant-select-tree-checkbox').click(); await page.waitForTimeout(250); }
+    picked.push(name);
   }
-  const selected = await notifySelect.locator('.ant-select-selection-item').count();
-  if (selected !== notify.length) throw new Error(`notify list has ${selected} people, expected ${notify.length}; not publishing`);
+  notify = picked;
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
+  const chips = notifySelect.locator('.ant-select-selection-overflow-item:not(.ant-select-selection-overflow-item-suffix):not(.ant-select-selection-overflow-item-rest)');
+  const selectedNames = (await chips.allInnerTexts()).map((t) => t.replace(/\s+/g, ' ').trim().replace(/^[A-Z]{1,3} /, '')).filter(Boolean);
+  const wanted = notify.map((n) => n.replace(/\s+/g, ' ').toLowerCase());
+  if (selectedNames.length !== notify.length || !wanted.every((w) => selectedNames.some((x) => x.toLowerCase().endsWith(w))))
+    throw new Error(`notify list is [${selectedNames.join(', ')}], expected [${notify.join(', ')}]; not publishing`);
+  // The form must be on the intended job before anything is published.
+  const formJob = (await page.locator('body').innerText()).match(/\b\d{4} - [A-Z]{2} - [^\n]+/)?.[0] || '';
+  if (jobName && !formJob.startsWith(jobName.slice(0, 7))) throw new Error(`form is on "${formJob}", expected "${jobName}"; not publishing`);
+  if (stopBeforePublish) return { stopped: true, formJob, notify: selectedNames, skipped };
 
   await page.locator('button#publish, button[name="publish"]').first().click();
   await page.getByText(title, { exact: true }).first().waitFor({ timeout: 60000 });
   const m = page.url().match(/DailyLogView\/(\d+)\/(\d+)/);
-  return { logId: m ? Number(m[1]) : null, jobId: m ? Number(m[2]) : null, url: page.url() };
+  return { logId: m ? Number(m[1]) : null, jobId: m ? Number(m[2]) : null, url: page.url(), notified: selectedNames, skipped };
 }

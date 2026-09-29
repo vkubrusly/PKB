@@ -1,19 +1,31 @@
 {
   "county": "citrus",
   "stage": "permit",
-  "collectedAt": "2026-09-28T21:47:07.381Z",
+  "collectedAt": "2026-09-29T20:44:33.236Z",
   "permits": [
     {
-      "permit": "BLD2601-1080",
+      "permit": "BLD2510-0479",
       "found": true,
       "status": "Permit Issued",
-      "file": "/home/user/PKB/ops/data/portal/citrus/BLD2601-1080.json"
+      "file": "/home/user/PKB/ops/data/portal/citrus/BLD2510-0479.json"
     },
     {
-      "permit": "BLD2607-0748",
+      "permit": "BLD2510-0480",
       "found": true,
-      "status": "Fees Due",
-      "file": "/home/user/PKB/ops/data/portal/citrus/BLD2607-0748.json"
+      "status": "Permit Issued",
+      "file": "/home/user/PKB/ops/data/portal/citrus/BLD2510-0480.json"
+    },
+    {
+      "permit": "BLD2510-0482",
+      "found": true,
+      "status": "More Info Required",
+      "file": "/home/user/PKB/ops/data/portal/citrus/BLD2510-0482.json"
+    },
+    {
+      "permit": "BLD2511-0820",
+      "found": true,
+      "status": "More Info Required",
+      "file": "/home/user/PKB/ops/data/portal/citrus/BLD2511-0820.json"
     }
   ]
 }
