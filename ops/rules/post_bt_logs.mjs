@@ -8,13 +8,14 @@
 // names that are not Buildertrend users on the job are skipped and reported),
 // checks the form is on the right job, then publishes.
 // Enabled by OPS_BT_POST=true (repository variable); otherwise lists what it would post.
-//   BT_COOKIES_FILE=… node rules/post_bt_logs.mjs [--dry-run]
+//   BT_COOKIES_FILE=… node rules/post_bt_logs.mjs [--post | --dry-run]
 // =============================================================================
 import { sql } from '../scripts/sb.mjs';
 import { openBuildertrend } from '../collectors/buildertrend/session.mjs';
 import { createDailyLog } from '../collectors/buildertrend/daily_log.mjs';
 
-const DRY = process.argv.includes('--dry-run') || process.env.OPS_BT_POST !== 'true';
+// --post publishes (same as OPS_BT_POST=true); without it the script only lists the drafts.
+const DRY = process.argv.includes('--dry-run') || !(process.env.OPS_BT_POST === 'true' || process.argv.includes('--post'));
 const q = (v) => (v == null ? 'null' : `'${String(v).replace(/'/g, "''")}'`);
 
 const drafts = await sql(`select m.id, m.subject, m.body, m.to_addresses, j.job_number, j.bt_job_id, j.bt_job_name
@@ -35,6 +36,7 @@ for (const d of drafts) {
     console.log(`POSTED ${d.job_number} "${d.subject}" log ${r.logId} · notified ${r.notified.join(', ')}${r.skipped.length ? ` · skipped ${r.skipped.join(', ')}` : ''}`);
     ok++;
   } catch (e) {
+    await page.screenshot({ path: `data/buildertrend/probe/post_fail_${d.job_number}.png` }).catch(() => {});
     await sql(`update ops.outbound_messages set error = ${q(e.message.slice(0, 500))} where id = ${q(d.id)}`);
     console.error(`FAILED ${d.job_number}: ${e.message.split('\n')[0]}`);
   }
