@@ -63,6 +63,12 @@ jobs:
           node collectors/buildertrend/list_jobs.mjs > /dev/null
           node collectors/buildertrend/job_fields.mjs
 
+      - name: Buildertrend photos
+        continue-on-error: true
+        run: |
+          [ -f "$BT_COOKIES_FILE" ] || exit 0
+          node collectors/buildertrend/photos.mjs && node scripts/load_photos.mjs
+
       - name: County portals (queue-driven)
         continue-on-error: true
         run: node scripts/collect_all.mjs ${{ inputs.limit && format('--limit {0}', inputs.limit) || '' }}
