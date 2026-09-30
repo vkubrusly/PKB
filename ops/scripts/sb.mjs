@@ -11,12 +11,17 @@ function token() {
   return t;
 }
 
-export async function sql(query) {
+// Retries on 429 (the Management API throttles bursts) with a growing pause.
+export async function sql(query, attempt = 0) {
   const res = await fetch(`https://api.supabase.com/v1/projects/${REF}/database/query`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ query }),
   });
+  if (res.status === 429 && attempt < 6) {
+    await new Promise((r) => setTimeout(r, 2000 * 2 ** attempt));
+    return sql(query, attempt + 1);
+  }
   const text = await res.text();
   let body; try { body = JSON.parse(text); } catch { body = text; }
   if (!res.ok || (body && body.message)) throw new Error(`Supabase SQL ${res.status}: ${body?.message || text.slice(0, 500)}`);

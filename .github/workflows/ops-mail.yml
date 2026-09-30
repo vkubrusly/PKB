@@ -36,7 +36,7 @@ jobs:
         with: { node-version: 22, cache: npm, cache-dependency-path: ops/package-lock.json }
       - run: npm ci --omit=optional
         env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' }
-      - name: Rules — website work requests (R-LEAD), start licensing (R0)
+      - name: Rules — website work requests (R-LEAD), start licensing (R0), septic from e-mail
         continue-on-error: true
         env:
           BOT_EMAIL: ${{ secrets.BOT_EMAIL || 'botpkbhomes@gmail.com' }}
@@ -44,5 +44,6 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           OPS_SEND_ENABLED: ${{ vars.OPS_SEND_ENABLED || 'false' }}
         run: |
-          node rules/lead_followup.mjs
-          node rules/start_licensing.mjs
+          node rules/lead_followup.mjs || echo "::warning::rules/lead_followup.mjs failed"
+          node rules/start_licensing.mjs || echo "::warning::rules/start_licensing.mjs failed"
+          node rules/septic_mail.mjs || echo "::warning::rules/septic_mail.mjs failed"

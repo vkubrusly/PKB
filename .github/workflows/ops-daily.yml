@@ -129,12 +129,13 @@ jobs:
           BOT_EMAIL_PASSWORD: ${{ secrets.BOT_EMAIL_PASSWORD }}
           OPS_SEND_ENABLED: ${{ vars.OPS_SEND_ENABLED || 'false' }}
         run: |
-          node rules/inspection_failed.mjs
-          node rules/inspection_passed.mjs
-          node rules/permit_issued.mjs
-          node rules/holds.mjs
-          node rules/job_idle.mjs
-          node rules/weekly_digest.mjs
+          node rules/inspection_failed.mjs || echo "::warning::rules/inspection_failed.mjs failed"
+          node rules/inspection_passed.mjs || echo "::warning::rules/inspection_passed.mjs failed"
+          node rules/review_log.mjs || echo "::warning::rules/review_log.mjs failed"
+          node rules/permit_issued.mjs || echo "::warning::rules/permit_issued.mjs failed"
+          node rules/holds.mjs || echo "::warning::rules/holds.mjs failed"
+          node rules/job_idle.mjs || echo "::warning::rules/job_idle.mjs failed"
+          node rules/weekly_digest.mjs || echo "::warning::rules/weekly_digest.mjs failed"
 
       # R1/R2: corrections e-mail to Sovereign (Guilherme in Cc) and follow-ups after
       # 2 business days per failed item. Leaves PKB, so it runs only when the repository

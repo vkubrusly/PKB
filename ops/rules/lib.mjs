@@ -12,6 +12,7 @@ export const brDate = (d) => (d ? new Date(String(d).slice(0, 10) + 'T12:00:00Z'
 export const street = (a) => String(a || '').split(',')[0];
 export const daysAgo = (d) => (d ? (Date.now() - new Date(String(d).slice(0, 10) + 'T12:00:00Z').getTime()) / 864e5 : Infinity);
 export const RECENT_DAYS = Number(process.env.OPS_RECENT_DAYS || 3);
+export const REVIEW_FAILED = /revisions? required|disapprov|denied|fail|incomplete|re-?submit|corrections?|rejected/i;
 
 export const contacts = JSON.parse(readFileSync(new URL('../config/contacts.json', import.meta.url), 'utf8'));
 const people = [...(contacts.internal.supervisors || []), ...(contacts.internal.project_managers || []), contacts.internal.contractor_of_record, contacts.internal.permits_owner].filter(Boolean);
@@ -39,7 +40,16 @@ export async function team(jobId) {
   return { emails: [...emails], missing: [...new Set(missing)], names: [...new Set(names)], btNames: [...new Set(names.map((n) => person(n)?.bt_name || n))] };
 }
 
+// seenPrefix(p) loads every key starting with p in one query; seen() then answers from it.
+const seenCache = new Set(), seenPrefixes = [];
+export async function seenPrefix(prefix) {
+  const rows = await sql(`select dedupe_key from ops.events where org_id = ${q(await orgId())} and dedupe_key like ${q(prefix + '%')}`);
+  for (const r of rows) seenCache.add(r.dedupe_key);
+  seenPrefixes.push(prefix);
+}
 export async function seen(key) {
+  if (seenCache.has(key)) return true;
+  if (seenPrefixes.some((p) => key.startsWith(p))) return false;
   return (await sql(`select 1 from ops.events where org_id = ${q(await orgId())} and dedupe_key = ${q(key)}`)).length > 0;
 }
 
@@ -48,6 +58,7 @@ export async function recordEvent({ jobId = null, caseId = null, kind, source = 
   const r = await sql(`insert into ops.events (org_id, job_id, permit_case_id, kind, source, occurred_at, payload, dedupe_key, processed_at)
     values (${q(await orgId())}, ${q(jobId)}, ${q(caseId)}, ${q(kind)}, ${q(source)}, ${at ? `${q(at)}::timestamptz` : 'now()'}, ${q(JSON.stringify(payload))}::jsonb, ${q(key)}, now())
     on conflict (org_id, dedupe_key) do nothing returning id`);
+  seenCache.add(key);
   return r[0]?.id ?? null;
 }
 
