@@ -1,0 +1,974 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>PKB Ops</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Source+Sans+3:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#F6F5F1; --surface:#FFFFFF; --surface-2:#EFEDE6; --ink:#2E2E30; --ink-2:#5E5D58; --ink-3:#8C8A83;
+  --line:#E2DFD5; --gold:#E0BC52; --gold-ink:#94761F; --gold-soft:#F6ECCD;
+  --red:#B8402F; --red-soft:#F7E1DC; --amber:#A96B12; --amber-soft:#F8EACB; --green:#2F7A4B; --green-soft:#DDEFE2; --blue:#3A5F8A; --blue-soft:#E1E9F2;
+  --water:#DCE6EC; --land:#FBFAF7; --land-2:#F1EAD4; --county:#CFC9BA;
+  --bar:#2E2E30; --shadow:0 1px 2px rgba(46,46,48,.06),0 4px 16px rgba(46,46,48,.05); --scrim:rgba(30,30,32,.35);
+  --f-brand:"Montserrat",system-ui,sans-serif; --f-body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif; --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --bg:#19191B; --surface:#222224; --surface-2:#2B2B2E; --ink:#EDEBE5; --ink-2:#B5B2AA; --ink-3:#85827B;
+  --line:#34343A; --gold:#E0BC52; --gold-ink:#E6C665; --gold-soft:#3A3320;
+  --red:#E57866; --red-soft:#3C2420; --amber:#E0A546; --amber-soft:#3A2E1A; --green:#6CC08C; --green-soft:#1E3326; --blue:#8DB0DA; --blue-soft:#1F2A38;
+  --water:#15202A; --land:#232325; --land-2:#2F2B20; --county:#3E3E44;
+  --bar:#D9D6CE; --shadow:none; --scrim:rgba(0,0,0,.55);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#19191B; --surface:#222224; --surface-2:#2B2B2E; --ink:#EDEBE5; --ink-2:#B5B2AA; --ink-3:#85827B;
+  --line:#34343A; --gold:#E0BC52; --gold-ink:#E6C665; --gold-soft:#3A3320;
+  --red:#E57866; --red-soft:#3C2420; --amber:#E0A546; --amber-soft:#3A2E1A; --green:#6CC08C; --green-soft:#1E3326; --blue:#8DB0DA; --blue-soft:#1F2A38;
+  --water:#15202A; --land:#232325; --land-2:#2F2B20; --county:#3E3E44;
+  --bar:#D9D6CE; --shadow:none; --scrim:rgba(0,0,0,.55);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:0 48px}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.topin{max-width:1180px;margin:0 auto;padding:14px 20px 0;display:flex;flex-direction:column;gap:10px}
+.brandrow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:12px;color:var(--ink)}
+.logo svg{height:38px;width:auto}
+.prod{font-family:var(--f-brand);font-weight:600;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);border-left:1px solid var(--line);padding-left:12px}
+.meta{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--ink-3)}
+.meta b{color:var(--ink-2);font-weight:600}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{font:600 12.5px var(--f-body);background:var(--surface);color:var(--ink-2);border:0;padding:5px 10px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+nav.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+nav.tabs button{font:600 14px var(--f-brand);letter-spacing:.02em;color:var(--ink-2);background:none;border:0;padding:10px 14px 12px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--gold)}
+nav.tabs button:hover{color:var(--ink)}
+h1,h2,h3,h4{font-family:var(--f-brand);text-wrap:balance;margin:0}
+h2{font-size:20px;font-weight:700}
+h3{font-size:12.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2)}
+h4{font-size:15px;font-weight:700}
+.lead{color:var(--ink-2);max-width:72ch;margin:6px 0 0}
+section.view{display:flex;flex-direction:column;gap:22px;padding-top:24px}
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr))}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px;min-width:0}
+.panel .hd{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.note{font-size:13px;color:var(--ink-3)}
+/* pipeline */
+.pipe{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.stage{padding:16px 18px;border:0;border-right:1px solid var(--line);cursor:pointer;background:none;text-align:left;color:inherit;font:inherit;display:flex;flex-direction:column;gap:2px;position:relative}
+.stage:last-child{border-right:0}
+.stage:hover{background:var(--surface-2)}
+.stage .n{font:800 34px/1.1 var(--f-brand);font-variant-numeric:tabular-nums}
+.stage .l{font:700 12px var(--f-brand);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)}
+.stage .s{font-size:13px;color:var(--ink-3)}
+.stage::before{content:"";position:absolute;left:0;top:0;height:4px;width:100%;background:var(--line)}
+.stage.on::before{background:var(--gold)}
+.stage.new::before{background:var(--blue)}
+@media (max-width:760px){.pipe{grid-template-columns:1fr 1fr}.stage{border-bottom:1px solid var(--line)}.stage:nth-child(2n){border-right:0}.stage:last-child{grid-column:1/-1;border-bottom:0}}
+/* lists */
+.list{display:flex;flex-direction:column}
+.row{display:grid;grid-template-columns:52px 1fr auto;gap:12px;align-items:start;padding:10px 6px;margin:0 -6px;border-top:1px solid var(--line);cursor:pointer;border-radius:6px}
+.row:hover{background:var(--surface-2)}
+.row:first-child{border-top:0}
+.jn{font:500 13px var(--f-mono);color:var(--gold-ink);padding-top:1px}
+.row .t{font-weight:600}
+.row .m{font-size:13px;color:var(--ink-3)}
+.row .r{text-align:right;font-size:13px;color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums}
+.pill{display:inline-block;font:600 11.5px var(--f-body);letter-spacing:.03em;padding:2px 8px;border-radius:99px;white-space:nowrap;line-height:1.5}
+.p-red{background:var(--red-soft);color:var(--red)} .p-amb{background:var(--amber-soft);color:var(--amber)} .p-grn{background:var(--green-soft);color:var(--green)} .p-gry{background:var(--surface-2);color:var(--ink-2)} .p-gold{background:var(--gold-soft);color:var(--gold-ink)} .p-blue{background:var(--blue-soft);color:var(--blue)}
+.pills{display:flex;flex-wrap:wrap;gap:4px}
+/* table */
+.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.tools input,.tools select{font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0}
+.tools input[type=search]{flex:1 1 220px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{font:700 11.5px var(--f-brand);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);background:var(--surface-2);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top;font-variant-numeric:tabular-nums}
+tbody tr{cursor:pointer}
+tbody tr:hover td{background:var(--surface-2)}
+tr:last-child td{border-bottom:0}
+td.mono{font-family:var(--f-mono);font-size:12.5px;white-space:nowrap}
+td.num,th.num{text-align:right}
+td .sub{display:block;font-size:12.5px;color:var(--ink-3)}
+.count{font-size:13px;color:var(--ink-3)}
+.prog{display:flex;align-items:center;gap:8px;min-width:120px}
+.prog .trk{flex:1;height:8px;background:var(--surface-2);border-radius:4px;overflow:hidden}
+.prog .trk i{display:block;height:100%;background:var(--gold)}
+.prog span{font-size:12.5px;color:var(--ink-2);white-space:nowrap}
+/* bars */
+.bars{display:flex;flex-direction:column;gap:10px}
+.bar{display:grid;grid-template-columns:minmax(110px,40%) 1fr auto;gap:10px;align-items:center;font-size:14px}
+.bar .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar .trk{height:12px;background:var(--surface-2);border-radius:3px;position:relative;overflow:hidden}
+.bar .fill{position:absolute;inset:0 auto 0 0;background:var(--bar);border-radius:3px}
+.bar .fill.gold{background:var(--gold)} .bar .fill.red{background:var(--red)}
+.bar .val{font:600 13px var(--f-body);font-variant-numeric:tabular-nums;min-width:74px;text-align:right;color:var(--ink-2)}
+.split{display:flex;height:34px;border-radius:6px;overflow:hidden;font:700 13px var(--f-brand)}
+.split div{display:flex;align-items:center;padding:0 12px;white-space:nowrap}
+.legend{display:flex;gap:16px;font-size:13px;color:var(--ink-2);flex-wrap:wrap}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.cols{display:flex;align-items:flex-end;gap:8px;height:160px;padding-top:18px}
+.col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end;min-width:0}
+.col .c{width:100%;max-width:40px;background:var(--gold);border-radius:3px 3px 0 0;position:relative}
+.col .c.blue{background:var(--blue)}
+.col .c span{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font:600 12px var(--f-body);color:var(--ink-2)}
+.col .x{font-size:11.5px;color:var(--ink-3);white-space:nowrap}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:18px}
+.kpi .big{font:800 30px/1.1 var(--f-brand);font-variant-numeric:tabular-nums}
+.kpi .big small{font-size:14px;font-weight:600;color:var(--ink-3);margin-left:4px}
+.kpi .cap{font-size:13px;color:var(--ink-3)}
+.callout{font-size:13.5px;color:var(--ink-2);background:var(--gold-soft);border-radius:8px;padding:10px 12px}
+.empty{color:var(--ink-3);font-size:14px;padding:6px 0}
+/* drawer */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:20}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(760px,100%);background:var(--bg);z-index:21;display:flex;flex-direction:column;box-shadow:-8px 0 30px rgba(0,0,0,.18);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.dh{padding:18px 22px 14px;border-bottom:1px solid var(--line);display:flex;gap:14px;align-items:flex-start;justify-content:space-between;background:var(--surface)}
+.dh .jn{font-size:14px}
+.dh h2{font-size:21px;margin-top:2px}
+.dh .facts{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:8px;font-size:13.5px;color:var(--ink-2)}
+.dh .facts b{font-weight:600;color:var(--ink)}
+.x{font:600 22px var(--f-body);line-height:1;background:var(--surface-2);color:var(--ink);border:0;border-radius:8px;width:36px;height:36px;cursor:pointer;flex:none}
+.dtabs{display:flex;gap:2px;padding:0 16px;border-bottom:1px solid var(--line);background:var(--surface);overflow-x:auto}
+.dtabs button{font:600 13.5px var(--f-brand);background:none;border:0;border-bottom:3px solid transparent;color:var(--ink-2);padding:10px 12px;cursor:pointer;white-space:nowrap}
+.dtabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--gold)}
+.db{flex:1;overflow-y:auto;padding:18px 22px 40px;display:flex;flex-direction:column;gap:18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.card .hd{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px 18px;font-size:13.5px}
+.kv div span{display:block;font:700 10.5px var(--f-brand);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.round{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:8px}
+.round:first-of-type{border-top:0;padding-top:0}
+.rh{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline}
+.rh b{font-family:var(--f-brand);font-size:14px}
+.dept{display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:13.5px;padding:6px 10px;border-radius:8px;background:var(--surface-2)}
+.dept.fail{background:var(--red-soft)}
+.dept .who{font-size:12.5px;color:var(--ink-3);grid-column:1/-1}
+details.cm{grid-column:1/-1}
+details.cm summary{cursor:pointer;font-size:13px;color:var(--red);font-weight:600}
+details.cm pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12.5px/1.5 var(--f-mono);background:var(--surface);color:var(--ink);border-radius:6px;padding:10px 12px;margin:6px 0 0;max-height:420px;overflow-y:auto}
+.btn{font:700 13.5px var(--f-brand);border:0;border-radius:8px;padding:9px 14px;cursor:pointer;background:var(--gold);color:#2E2E30}
+.btn.ghost{background:var(--surface-2);color:var(--ink)}
+.btn:disabled{opacity:.5;cursor:default}
+.mail{display:flex;flex-direction:column;gap:8px}
+.mail .hdrs{font-size:13px;color:var(--ink-2);display:grid;grid-template-columns:auto 1fr;gap:2px 10px}
+.mail .hdrs b{color:var(--ink-3);font-weight:600}
+.mail textarea{font:12.5px/1.5 var(--f-mono);color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-height:260px;resize:vertical;width:100%}
+.tl{display:flex;flex-direction:column}
+.ev{display:grid;grid-template-columns:86px 14px 1fr;gap:10px;font-size:13.5px;padding:5px 0}
+.ev .dt{color:var(--ink-3);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ev .dot{width:10px;height:10px;border-radius:50%;margin-top:5px;background:var(--line)}
+.ev.ok .dot{background:var(--green)} .ev.fail .dot{background:var(--red)} .ev.permit .dot{background:var(--gold)} .ev.pause .dot{background:var(--amber)} .ev.info .dot{background:var(--ink-3)}
+.ev .s{color:var(--ink-3)}
+.steps{display:flex;flex-direction:column;gap:4px;font-size:13.5px}
+.step{display:grid;grid-template-columns:18px 1fr auto;gap:8px;align-items:center;padding:3px 0}
+.step .ic{width:14px;height:14px;border-radius:50%;border:2px solid var(--line)}
+.step.passed .ic{background:var(--green);border-color:var(--green)}
+.step.failed_open .ic{background:var(--red);border-color:var(--red)}
+.step.requested .ic{border-color:var(--amber)}
+.step.not_recorded .ic{border-style:dashed}
+.step.passed .nm{color:var(--ink-2)}
+.step .w{font-size:12.5px;color:var(--ink-3);white-space:nowrap}
+/* map */
+.mapwrap{position:relative;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--water)}
+#map{display:block;width:100%;height:min(68vh,620px);touch-action:none;cursor:grab}
+#map .county{fill:var(--land);stroke:var(--county);stroke-width:.8;vector-effect:non-scaling-stroke}
+#map .county.has{fill:var(--land-2)}
+#map .clabel{font:600 11px var(--f-brand);letter-spacing:.08em;text-transform:uppercase;fill:var(--ink-3);pointer-events:none;paint-order:stroke;stroke:var(--land);stroke-width:3px}
+#map .dot{cursor:pointer;stroke:var(--surface);vector-effect:non-scaling-stroke}
+#map .dot.alert{stroke:var(--red)}
+#map .dot:hover{stroke:var(--ink)}
+.tip{position:absolute;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;box-shadow:var(--shadow);max-width:260px;z-index:2}
+.tip b{font-family:var(--f-mono);color:var(--gold-ink);font-weight:500}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:600 12.5px var(--f-body);border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:99px;padding:5px 10px 5px 8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.chip i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.chip[aria-pressed="false"]{opacity:.45}
+a.gmaps{font-size:13px;color:var(--gold-ink);font-weight:600;text-decoration:none}
+a.gmaps:hover{text-decoration:underline}
+
+/* inspection comments */
+.why{display:block;margin-top:3px;color:var(--red);font-size:12.5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.reinsp{display:flex;flex-direction:column;gap:10px;background:var(--red-soft);border-radius:8px;padding:12px 14px}
+.reinsp .fi{display:flex;flex-direction:column;gap:4px}
+pre.icm{white-space:pre-wrap;overflow-wrap:anywhere;font:12.5px/1.5 var(--f-mono);background:var(--surface);color:var(--ink);border-left:3px solid var(--red);border-radius:4px;padding:8px 10px;margin:4px 0 0}
+pre.icm.ok{border-left-color:var(--line);color:var(--ink-2)}
+
+/* suggestions */
+.ideas{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:16px}
+.idea{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow)}
+.idea .top{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.idea h4{font-size:16px;line-height:1.3}
+.idea p{margin:0;color:var(--ink-2);font-size:14px}
+.idea .ev{display:flex;flex-wrap:wrap;gap:6px}
+.idea .ev span{font:500 12px var(--f-mono);background:var(--surface-2);color:var(--ink-2);border-radius:6px;padding:2px 7px}
+
+/* ask */
+.chat{display:flex;flex-direction:column;gap:14px;min-height:200px}
+.msg{max-width:80ch;padding:12px 14px;border-radius:10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.u{align-self:flex-end;background:var(--ink);color:var(--bg)}
+.msg.a{align-self:flex-start;background:var(--surface);border:1px solid var(--line)}
+.msg.a.err{border-color:var(--red);color:var(--red)}
+.msg.a.pending{color:var(--ink-3)}
+.msg .used{display:block;margin-top:8px;font-size:12px;color:var(--ink-3)}
+.sugs{display:flex;flex-wrap:wrap;gap:8px}
+.sugs button{font:inherit;font-size:13.5px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:99px;padding:6px 12px;cursor:pointer;text-align:left}
+.sugs button:hover{border-color:var(--gold)}
+form.composer{display:flex;gap:8px;align-items:flex-end}
+form.composer textarea{flex:1;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;resize:vertical;min-height:46px;max-height:200px;min-width:0}
+footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid var(--line);padding-top:14px}
+
+[hidden]{display:none!important}
+/* sign-in gate */
+.gate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.gcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:28px 26px;width:min(100%,380px);display:flex;flex-direction:column;gap:14px}
+.gcard h1{font:800 22px var(--f-brand);margin:0}
+.gcard p{margin:0;color:var(--ink-2)}
+.gcard p.err{color:var(--red)}
+.gcard form{display:flex;flex-direction:column;gap:10px}
+.gcard label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--ink-2);font-weight:600}
+.gcard input{font:inherit;font-size:15px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 11px}
+.gcard .small{font-size:13px;color:var(--ink-3)}
+.gcard a{color:var(--gold-ink)}
+.who{font-size:13px;color:var(--ink-3)}
+.who button{font:inherit;font-size:13px;background:none;border:0;color:var(--gold-ink);cursor:pointer;padding:0 0 0 6px}
+/* ask: proposals */
+.msg.a b{font-weight:700}
+.prop{align-self:flex-start;max-width:80ch;width:100%;border:1px solid var(--gold);background:var(--gold-soft);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.prop .k{font:700 11.5px var(--f-brand);letter-spacing:.08em;text-transform:uppercase;color:var(--gold-ink)}
+.prop pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.5 var(--f-body);color:var(--ink)}
+.pa{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pa .st{font-size:13px;color:var(--ink-2)}
+/* outbox */
+.ob-body{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;color:var(--ink-2);max-height:6.5em;overflow:hidden}
+.reqform{display:flex;flex-direction:column;gap:8px}
+.reqform textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:80px;resize:vertical}
+</style>
+</head>
+<body>
+
+<div class="gate" id="gate">
+  <div class="gcard">
+    <h1>PKB Ops</h1>
+    <p id="gmsg">Loading…</p>
+    <form id="glogin" hidden>
+      <label>E-mail<input type="email" id="gemail" autocomplete="email" required></label>
+      <label>Password<input type="password" id="gpass" autocomplete="current-password" required></label>
+      <button class="btn" type="submit" id="gbtn">Sign in</button>
+    </form>
+    <p class="small" id="gfirst" hidden>First time? <a href="/">Create your account</a> with your company e-mail and confirm it from the link you receive; then come back to this page.</p>
+  </div>
+</div>
+
+
+<header class="top"><div class="topin">
+  <div class="brandrow">
+    <div class="logo">
+      <svg viewBox="0 0 118 44" role="img" aria-label="PKB Homes">
+        <rect x="0" y="2" width="7" height="40" rx="1" fill="#E0BC52"/>
+        <rect x="11" y="2" width="7" height="40" rx="1" fill="#E0BC52"/>
+        <text x="26" y="29" font-family="Montserrat, sans-serif" font-weight="800" font-size="30" fill="currentColor" letter-spacing="1">PKB</text>
+        <text x="27" y="42" font-family="Montserrat, sans-serif" font-weight="600" font-size="9.5" fill="#E0BC52" letter-spacing="6.4">HOMES</text>
+      </svg>
+      <span class="prod">Ops</span>
+    </div>
+    <div class="meta">
+      <span>Updated <b id="asof"></b></span>
+      <span class="who"><span id="whoami"></span><button type="button" id="signout">Sign out</button></span>
+      <span class="seg" role="group" aria-label="Company"><button data-co="PKB" aria-pressed="true">PKB</button><button data-co="all" aria-pressed="false">+ Prime history</button></span>
+    </div>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-v="today" aria-selected="true">Today</button>
+    <button role="tab" data-v="permits" aria-selected="false">Permits</button>
+    <button role="tab" data-v="inspections" aria-selected="false">Inspections</button>
+    <button role="tab" data-v="map" aria-selected="false">Map</button>
+    <button role="tab" data-v="kpis" aria-selected="false">KPIs</button>
+    <button role="tab" data-v="ideas" aria-selected="false">Suggestions</button>
+    <button role="tab" data-v="ask" aria-selected="false">Ask</button>
+    <button role="tab" data-v="outbox" aria-selected="false">Outbox</button>
+  </nav>
+</div></header>
+
+<main class="wrap">
+  <!-- TODAY -->
+  <section class="view" id="v-today">
+    <div class="pipe" id="pipe"></div>
+    <div class="grid g2">
+      <div class="panel"><div class="hd"><h3>Corrections requested</h3><span class="note">last round failed · ball with the designer</span></div><div class="list" id="t-corr"></div></div>
+      <div class="panel"><div class="hd"><h3>Failed inspections · last 30 days</h3><span class="note">→ supervisor, PMs, Cristiano</span></div><div class="list" id="t-fails"></div></div>
+      <div class="panel"><div class="hd"><h3>Permits in county review</h3><span class="note">days since applied</span></div><div class="list" id="t-review"></div></div>
+      <div class="panel"><div class="hd"><h3>Paused &amp; blocked</h3><span class="note">excluded from KPI clocks</span></div><div class="list" id="t-paused"></div></div>
+    </div>
+  </section>
+
+  <!-- PERMITS -->
+  <section class="view" id="v-permits" hidden>
+    <div><h2>Permits</h2><p class="lead">Licensing only: from contract to permit issued. Click a row for the job file with every review round, department and comment.</p></div>
+    <div class="tools">
+      <input id="pq" type="search" placeholder="Search job, address, permit…">
+      <select id="pStage"><option value="open">Open (pre-permit + in review)</option><option value="pre">Pre-permit</option><option value="permit">In county review</option><option value="corr">Corrections requested</option><option value="issued">Issued (history)</option><option value="">All</option></select>
+      <select id="pCounty"><option value="">All counties</option></select>
+      <span class="count" id="pCnt"></span>
+    </div>
+    <div class="tbl"><table><thead><tr><th>Job</th><th>Address</th><th>County</th><th>Status</th><th>Permit</th><th class="num">Round</th><th>Last round</th><th class="num">Days</th></tr></thead><tbody id="pTb"></tbody></table></div>
+    <p class="note">Review detail (departments and comments) is collected for Marion, Winter Park and Citrus. Orange, Charlotte, Lake and Sarasota show dates and status only until their collectors are built.</p>
+  </section>
+
+  <!-- INSPECTIONS -->
+  <section class="view" id="v-inspections" hidden>
+    <div><h2>Inspections</h2><p class="lead">Construction only: from permit issued until the CO shows on the portal. Progress is measured against the county's required inspections.</p></div>
+    <div class="tools">
+      <input id="iq" type="search" placeholder="Search job, address, supervisor…">
+      <select id="iStage"><option value="inspections">Permit issued (all)</option><option value="building">Under construction</option><option value="awaiting_co">Done · awaiting CO</option><option value="failed">With an open failure</option><option value="done">CO issued</option></select>
+      <select id="iSup"><option value="">All supervisors</option></select>
+      <span class="count" id="iCnt"></span>
+    </div>
+    <div class="tbl"><table><thead><tr><th>Job</th><th>Address</th><th>Supervisor</th><th class="num">Days building</th><th>Progress</th><th>Next inspection</th><th>Open failure</th><th>Ready for finals</th></tr></thead><tbody id="iTb"></tbody></table></div>
+    <div class="grid g2">
+      <div class="panel"><div class="hd"><h3>Failure rate by inspection type</h3><span class="note">failed / total</span></div><div class="bars" id="c-insp"></div></div>
+      <div class="panel"><div class="hd"><h3>Most recent failures</h3></div><div class="list" id="t-fails2"></div></div>
+    </div>
+    <p class="note">Estimates use PKB's own history per county (median days from permit issued to each inspection); Marion and Citrus are collected every morning with the inspector's comments. The CO date will be estimated once at least three jobs have reached their finals on the portal.</p>
+  </section>
+
+  <!-- MAP -->
+  <section class="view" id="v-map" hidden>
+    <div><h2>Where the jobs are</h2><p class="lead">Locations from Buildertrend (job mapping), with the address geocoded for jobs not in Buildertrend. Scroll or pinch to zoom; click a dot to open the job file.</p></div>
+    <div class="tools" id="mapTools">
+      <span class="chips" id="mapChips"></span>
+      <select id="mSup"><option value="">All supervisors</option></select>
+      <button class="btn ghost" id="mapFit" type="button">Fit to jobs</button>
+      <span class="count" id="mCnt"></span>
+    </div>
+    <div class="mapwrap"><svg id="map" role="img" aria-label="Map of PKB jobs in Florida"></svg><div class="tip" id="tip" hidden></div></div>
+    <div class="grid g2">
+      <div class="panel"><div class="hd"><h3>Jobs by county</h3><span class="note">click to zoom</span></div><div class="bars" id="c-county"></div></div>
+      <div class="panel"><div class="hd"><h3>Not on the map</h3><span class="note">lots without a street number</span></div><div class="list" id="t-nomap"></div></div>
+    </div>
+  </section>
+
+  <!-- KPIS -->
+  <section class="view" id="v-kpis" hidden>
+    <div><h2>Indicators</h2><p class="lead">Paused time (turtle, owner-deferred start, waiting on draw or deed) is left out of the clocks.</p></div>
+    <div class="panel kpis" id="kpis"></div>
+    <div class="panel"><div class="hd"><h3>Construction clock</h3><span class="note">permit issued → start → construction done → CO · owner-caused waits excluded</span></div>
+      <div class="kpis" id="clockKpis"></div>
+      <div class="grid g2"><div><h3 style="margin-bottom:10px">Longest-running builds</h3><div class="bars" id="c-long"></div></div><div><h3 style="margin-bottom:10px">Permit issued, not started</h3><div class="list" id="t-wait"></div></div></div>
+      <p class="note" style="margin:0" id="clockNote"></p></div>
+    <div class="grid g2">
+      <div class="panel"><div class="hd"><h3>New jobs per month</h3><span class="note" id="newNote"></span></div><div class="cols" id="c-new"></div><div class="legend"><span><i style="background:var(--blue)"></i>Requests (form e-mails)</span><span><i style="background:var(--gold)"></i>Contracts signed</span></div><div class="list" id="t-requests"></div></div>
+      <div class="panel"><div class="hd"><h3>Permits issued per month</h3></div><div class="cols" id="c-month"></div></div>
+      <div class="panel"><div class="hd"><h3>Applied → issued, median days</h3><span class="note">by county</span></div><div class="bars" id="c-cycle"></div></div>
+      <div class="panel"><div class="hd"><h3>Where review time goes</h3><span class="note">sum over all rounds</span></div><div id="c-split"></div></div>
+      <div class="panel"><div class="hd"><h3>Department review failures</h3><span class="note">failed / reviews</span></div><div class="bars" id="c-dept"></div></div>
+    </div>
+  </section>
+
+  <!-- SUGGESTIONS -->
+  <section class="view" id="v-ideas" hidden>
+    <div><h2>Suggestions</h2><p class="lead">Improvements proposed from what the system reads every day: county portals, inspector and reviewer comments, Buildertrend and the bot mailbox. Each one shows the evidence behind it. Accept or dismiss in the chat and it becomes a rule, a report or a to-do.</p></div>
+    <div class="tools"><span class="chips" id="ideaChips"></span><span class="count" id="ideaCnt"></span></div>
+    <div class="ideas" id="ideas"></div>
+    <div class="panel"><div class="hd"><h3>What the bot mailbox has read</h3><span class="note">every message is stored, linked to its job and marked read</span></div><div class="bars" id="c-inbox"></div></div>
+  </section>
+
+  <!-- ASK -->
+  <section class="view" id="v-ask" hidden>
+    <div><h2>Ask PKB Ops</h2><p class="lead">Ask anything about the jobs, in English or Portuguese, or ask it to do something: write a Daily Log in Buildertrend, send an e-mail, pause a job, set a supervisor, add a note or request a change to the system. Actions only run after you click Confirm.</p></div>
+    <div class="sugs" id="sugs"></div>
+    <div class="chat" id="chat"></div>
+    <form class="composer" id="composer">
+      <textarea id="ask" rows="2" placeholder="e.g. Quais departamentos pediram correção na obra 0034 e o que falta resolver?"></textarea>
+      <button class="btn" id="send" type="submit">Ask</button>
+      <button class="btn ghost" id="stop" type="button" hidden>Stop</button>
+    </form>
+    <div class="callout" id="askoff" hidden>The assistant is not available right now.</div>
+  </section>
+
+  <!-- OUTBOX -->
+  <section class="view" id="v-outbox" hidden>
+    <div><h2>Outbox</h2><p class="lead">What PKB Ops sent or queued (e-mails, Buildertrend Daily Logs), actions waiting for confirmation, and change requests to Claude.</p></div>
+    <div class="panel"><div class="hd"><h3>Waiting for confirmation</h3><span class="note">proposed by the assistant</span></div><div class="list" id="o-pending"></div></div>
+    <div class="panel"><div class="hd"><h3>Change requests to Claude</h3><span class="note">new rules, reports, screens, data fixes</span></div>
+      <form class="reqform" id="reqform"><textarea id="reqtext" placeholder="Describe the change you want in the system (e.g. a new alert, a report, a correction)…"></textarea><div class="pa"><button class="btn" type="submit">Send request</button><span class="st" id="reqst"></span></div></form>
+      <div class="list" id="o-reqs"></div></div>
+    <div class="tools"><select id="oChan"><option value="">All channels</option><option value="email">E-mail</option><option value="bt_daily_log">Buildertrend Daily Log</option></select><select id="oStat"><option value="">All statuses</option><option value="sent">Sent</option><option value="draft">Draft / queued</option><option value="approved">Approved</option><option value="failed">Failed</option><option value="cancelled">Cancelled</option></select><button class="btn ghost" type="button" id="oRefresh">Refresh</button><span class="count" id="oCnt"></span></div>
+    <div class="tbl"><table><thead><tr><th>When</th><th>Channel</th><th>Rule</th><th>Job</th><th>To / subject</th><th>Status</th><th></th></tr></thead><tbody id="oTb"></tbody></table></div>
+  </section>
+
+  <footer>PKB Ops · data from the county portals, Buildertrend and the bot mailbox, refreshed at 6 AM and 1 PM (Florida). Access limited to the PKB partners.</footer>
+</main>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" hidden role="dialog" aria-modal="true" aria-labelledby="dTitle">
+  <div class="dh"><div><span class="jn" id="dJn"></span><h2 id="dTitle"></h2><div class="facts" id="dFacts"></div></div><button class="x" id="dClose" aria-label="Close">×</button></div>
+  <div class="dtabs" role="tablist" id="dTabs">
+    <button data-t="permit" aria-selected="true">Permit &amp; reviews</button>
+    <button data-t="insp" aria-selected="false">Inspections</button>
+    <button data-t="timeline" aria-selected="false">Timeline</button>
+  </div>
+  <div class="db" id="dBody"></div>
+</aside>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+function boot(D){
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const AS = new Date(D.asOf + 'T12:00:00');
+const days = (a, b) => Math.round(((b ? new Date(b + 'T12:00:00') : AS) - new Date(a + 'T12:00:00')) / 864e5);
+const fmt = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric'}) : '—';
+const fmtY = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : '—';
+const street = a => (a || '').split(',')[0];
+const PAUSE = {awaiting_1st_draw:'Waiting 1st draw', awaiting_impact_fees:'Waiting impact fees', awaiting_warranty_deed:'Waiting warranty deed', owner_deferred_start:'Owner deferred start'};
+const PORTAL = {'energov:marion':'Marion EnerGov','energov:winterpark':'Winter Park EnerGov','accela:citrus':'Citrus Accela','fasttrack:orange':'Orange Fast Track','fdep':'FDEP (septic)',charlotte:'Charlotte',lake:'Lake',sarasota:'Sarasota'};
+const REVIEW_PORTALS = ['energov:marion','energov:winterpark'];
+$('#asof').textContent = fmtY(D.asOf);
+
+let CO = 'PKB';
+try { CO = localStorage.getItem('pkbops.co') || 'PKB' } catch(e) {}
+const J = () => D.jobs.filter(j => CO === 'all' || j.company === 'PKB');
+const permitState = j => {
+  if (j.stage === 'pre') return 'pre';
+  if (j.stage === 'permit') return j.failed_depts_last_round.length ? 'corr' : (j.ops_status === 'requested' ? 'requested' : 'review');
+  return 'issued';
+};
+const PSTATE = {pre:['Pre-permit','p-gry'], requested:['Requested','p-gry'], review:['In county review','p-amb'], corr:['Corrections requested','p-red'], issued:['Issued','p-grn']};
+
+/* tabs */
+const VIEWS = ['today','permits','inspections','map','kpis','ideas','ask','outbox'];
+function show(v){
+  document.querySelectorAll('nav.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.v === v));
+  document.querySelectorAll('section.view').forEach(s => s.hidden = s.id !== 'v-' + v);
+  try { localStorage.setItem('pkbops.tab', v) } catch(e) {}
+  if (v === 'outbox') refreshOutbox();
+  if (v === 'map') { if (!mapState) initMap(); if (mapState && !mapState.ready) { mapState.ready = true; mapState.fit(); } }
+}
+document.querySelectorAll('nav.tabs button').forEach(b => b.onclick = () => show(b.dataset.v));
+document.querySelectorAll('.seg button').forEach(b => b.onclick = () => { CO = b.dataset.co; try { localStorage.setItem('pkbops.co', CO) } catch(e) {} renderAll(); });
+
+/* shared bits */
+const cleanCm = s => String(s || '').replace(/\r/g, '').replace(/^\s*\d{1,2}\/\d{1,2}\/\d{2,4}\s*\n/, '').replace(/[ \t]+/g, ' ').trim();
+const row = (jn, t, m, r) => `<div class="row" data-job="${esc(jn)}"><span class="jn">${esc(jn)}</span><div><div class="t">${t}</div><div class="m">${m}</div></div><div class="r">${r}</div></div>`;
+const jobOf = n => D.jobs.find(j => j.job_number === n) || {};
+function failsHtml(list){
+  return list.length ? list.map(f => { const j = jobOf(f.job_number); return row(f.job_number, esc(f.type), `${esc(street(f.address))} · ${esc(j.supervisor || 'no supervisor')} · ${esc(f.inspector || '')}${f.comments ? `<span class="why">${esc(cleanCm(f.comments))}</span>` : ''}`, `<span class="pill p-red">Failed</span><br>${fmt(f.at)}`) }).join('') : '<div class="empty">No failures.</div>';
+}
+const bars = (el, items, max, cls) => $(el).innerHTML = items.map(i => `<div class="bar"><span class="lbl" title="${esc(i.l)}">${esc(i.l)}</span><span class="trk"><span class="fill ${cls||''}" style="width:${(max ? i.v/max*100 : 0).toFixed(1)}%"></span></span><span class="val">${i.t}</span></div>`).join('');
+const SRC = {first_inspection:'start = first field inspection (no 2nd invoice payment on record)', second_draw:'start = 2nd invoice paid', second_draw_before_permit:'2nd invoice paid before the permit — start = permit issued', buildertrend:'start = Buildertrend Actual Start (no 2nd invoice payment on record)', unknown:'start date not known yet'};
+const FIN = {buildertrend:'Buildertrend Actual Completion', last_inspection:'last passed inspection', unknown:'finish date not recorded'};
+const buildCell = j => ['awaiting_co','co'].includes(j.clock_phase) ? `<b>${j.build_days ?? '—'}</b><span class="sub">${j.clock_phase==='co'?'CO issued':'done'+(j.finished_at?' '+fmt(j.finished_at):'')}${j.days_awaiting_co!=null?' · CO pending '+j.days_awaiting_co+' d':''}</span>`
+  : j.clock_phase === 'waiting_to_start' ? `<span class="pill ${j.wait_excuse?'p-gry':'p-amb'}" title="${esc(j.wait_excuse?PAUSE[j.wait_excuse]||j.wait_excuse:'Permit issued, no start yet')}">waiting ${j.waiting_days} d</span>`
+  : j.build_days != null ? `<b title="${esc(SRC[j.build_start_src]||'')} (${fmt(j.build_start)})">${j.build_days}</b><span class="sub">since ${fmt(j.build_start)}</span>`
+  : j.clock_phase === 'building' ? '<span class="note" title="Start date not known yet">—</span>' : '<span class="note">—</span>';
+const prog = j => j.insp_progress ? `<div class="prog"><span class="trk"><i style="width:${j.insp_pct}%"></i></span><span>${j.insp_progress}</span></div>` : '<span class="note">—</span>';
+
+function renderToday(){
+  const js = J();
+  const by = k => js.filter(j => k(j));
+  const pre = by(j => j.stage === 'pre'), per = by(j => j.stage === 'permit'), ins = by(j => j.stage === 'inspections'), done = by(j => j.stage === 'done');
+  const thisM = D.asOf.slice(0,7);
+  const signedM = js.filter(j => (j.signed_at||'').startsWith(thisM)).length;
+  const reqM = (D.requests.find(r => r.m === thisM) || {n:0}).n;
+  $('#pipe').innerHTML = [
+    ['new','New jobs', reqM, `${signedM} contracts signed in ${new Date(D.asOf).toLocaleDateString('en-US',{month:'long'})}`, 'kpis'],
+    ['pre','Pre-permit', pre.length, `${pre.filter(j=>j.pause||j.turtle).length} paused · no permit yet`, 'permits:pre'],
+    ['permit','Permit', per.length, `${per.filter(j=>permitState(j)==='corr').length} with corrections requested`, 'permits:permit'],
+    ['inspections','Inspections', ins.length, `${ins.filter(j=>j.insp_failed_open.length).length} with an open failure`, 'inspections:inspections'],
+    ['done','Done (CO)', done.length, 'monitoring ended', 'inspections:done'],
+  ].map(([k,l,n,s,go]) => `<button class="stage ${k==='new'?'new':k!=='done'?'on':''}" data-go="${go}"><span class="l">${l}</span><span class="n">${n}</span><span class="s">${s}</span></button>`).join('');
+  document.querySelectorAll('.stage').forEach(b => b.onclick = () => {
+    const [v, f] = b.dataset.go.split(':');
+    if (v === 'permits') { $('#pStage').value = f; renderPermits(); }
+    if (v === 'inspections') { $('#iStage').value = f; renderInsp(); }
+    show(v);
+  });
+  const corr = per.filter(j => permitState(j) === 'corr').sort((a,b) => (a.last_round_at||'').localeCompare(b.last_round_at||''));
+  $('#t-corr').innerHTML = corr.length ? corr.map(j => row(j.job_number, esc(street(j.address)), `${esc(j.permit)} · round ${j.rounds} · ${fmt(j.last_round_at)}`, `<div class="pills" style="justify-content:flex-end">${j.failed_depts_last_round.map(d=>`<span class="pill p-red">${esc(d)}</span>`).join('')}</div>${j.last_round_at?`<span class="note">${days(j.last_round_at)} days waiting</span>`:''}`)).join('') : '<div class="empty">No open correction requests in collected portals.</div>';
+  const cutoff = new Date(AS - 30*864e5).toISOString().slice(0,10);
+  $('#t-fails').innerHTML = failsHtml(D.fails.filter(f => f.at >= cutoff && js.some(j => j.job_number === f.job_number)).slice(0, 6));
+  const inRev = per.filter(j => permitState(j) !== 'corr').sort((a, b) => (a.applied_at||'9').localeCompare(b.applied_at||'9'));
+  $('#t-review').innerHTML = inRev.slice(0, 6).map(j => {
+    const d = j.applied_at ? days(j.applied_at) : null;
+    const cls = d == null ? 'p-gry' : d > 90 ? 'p-red' : d > 60 ? 'p-amb' : 'p-grn';
+    return row(j.job_number, esc(street(j.address)), `${esc(j.county)} · <span style="font-family:var(--f-mono)">${esc(j.permit||'—')}</span> · round ${j.rounds||'—'}`, `<span class="pill ${cls}">${d==null?'requested':d+' days'}</span>`);
+  }).join('') + (inRev.length > 6 ? `<div class="m note" style="padding-top:8px">+${inRev.length-6} more on Permits</div>` : '');
+  const paused = js.filter(j => j.pause || j.turtle || j.active_holds);
+  $('#t-paused').innerHTML = paused.map(j => {
+    const tags = [];
+    if (j.turtle) tags.push('<span class="pill p-red">Turtle · relocation pending</span>');
+    if (j.pause) tags.push(`<span class="pill p-amb">${esc(PAUSE[j.pause] || j.pause)}</span>`);
+    if (j.active_holds) tags.push(`<span class="pill p-red">${j.active_holds} county hold</span>`);
+    return row(j.job_number, esc(street(j.address)), `${esc(j.county)} · ${esc(PSTATE[permitState(j)][0])}`, tags.join('<br>'));
+  }).join('') || '<div class="empty">Nothing paused.</div>';
+}
+
+/* permits */
+function renderPermits(){
+  const q = $('#pq').value.trim().toLowerCase(), st = $('#pStage').value, co = $('#pCounty').value;
+  const rows = J().filter(j => {
+    const ps = permitState(j);
+    const okSt = !st || (st === 'open' ? ['pre','requested','review','corr'].includes(ps) : st === 'permit' ? ['requested','review','corr'].includes(ps) : ps === st);
+    return okSt && (!co || j.county === co) && (!q || [j.job_number, j.address, j.permit, j.model].join(' ').toLowerCase().includes(q));
+  });
+  $('#pCnt').textContent = `${rows.length} jobs`;
+  $('#pTb').innerHTML = rows.map(j => {
+    const ps = permitState(j), [lbl, cls] = PSTATE[ps];
+    const lastR = !j.permit ? '—' : !REVIEW_PORTALS.includes(j.portal) ? '<span class="note">not collected yet</span>' : j.failed_depts_last_round.length ? `<div class="pills">${j.failed_depts_last_round.map(d=>`<span class="pill p-red">${esc(d)}</span>`).join('')}</div>` : j.rounds ? '<span class="pill p-grn">No corrections</span>' : '—';
+    const dd = j.applied_at ? (j.issued_at ? `${days(j.applied_at, j.issued_at)}` : `<b>${days(j.applied_at)}</b><span class="sub">so far</span>`) : '—';
+    return `<tr data-job="${esc(j.job_number)}"><td class="mono">${esc(j.job_number)}</td><td>${esc(street(j.address))}<span class="sub">${esc(j.model||'')}${j.pause?' · '+esc(PAUSE[j.pause]||j.pause):''}${j.turtle?' · turtle':''}</span></td><td>${esc(j.county||'—')}</td><td><span class="pill ${cls}">${lbl}</span></td><td class="mono">${esc(j.permit||'—')}</td><td class="num">${j.rounds||'—'}</td><td>${lastR}</td><td class="num">${dd}</td></tr>`;
+  }).join('') || '<tr><td colspan="8" class="empty">No jobs match.</td></tr>';
+}
+['pq','pStage','pCounty'].forEach(id => $('#'+id).addEventListener('input', renderPermits));
+
+/* inspections */
+function renderInsp(){
+  const q = $('#iq').value.trim().toLowerCase(), st = $('#iStage').value, sp = $('#iSup').value;
+  const rows = J().filter(j => (st === 'failed' ? j.stage === 'inspections' && j.insp_failed_open.length : st === 'building' || st === 'awaiting_co' ? j.clock_phase === st : j.stage === st) && (!sp || j.supervisor === sp) && (!q || [j.job_number, j.address, j.supervisor, j.permit].join(' ').toLowerCase().includes(q)))
+    .sort((a,b) => (b.build_days ?? -1) - (a.build_days ?? -1));
+  $('#iCnt').textContent = `${rows.length} jobs`;
+  $('#iTb').innerHTML = rows.map(j => `<tr data-job="${esc(j.job_number)}"><td class="mono">${esc(j.job_number)}</td><td>${esc(street(j.address))}<span class="sub">${esc(j.county)} · ${esc(j.permit||'')}</span></td><td>${esc(j.supervisor||'—')}</td><td class="num">${buildCell(j)}</td><td>${prog(j)}${j.insp_progress?'':`<span class="sub">${j.inspections} inspections</span>`}</td><td>${esc(j.insp_next||'—')}</td><td>${j.insp_failed_open.length?`<div class="pills">${j.insp_failed_open.map(f=>`<span class="pill p-red">${esc(f)}</span>`).join('')}</div>`:'<span class="note">—</span>'}</td><td>${j.ready_for_finals_est==='now'?'<span class="pill p-grn">Now</span>':j.ready_for_finals_est?fmt(j.ready_for_finals_est):'<span class="note">—</span>'}</td></tr>`).join('') || '<tr><td colspan="8" class="empty">No jobs match.</td></tr>';
+  $('#t-fails2').innerHTML = failsHtml(D.fails.filter(f => J().some(j => j.job_number === f.job_number)));
+}
+['iq','iStage','iSup'].forEach(id => $('#'+id).addEventListener('input', renderInsp));
+
+/* kpis */
+function renderKpis(){
+  const js = J();
+  const issued = js.filter(j => j.applied_at && j.issued_at);
+  const med = a => { const s = a.slice().sort((x,y)=>x-y); return s.length ? s[Math.floor(s.length/2)] : 0; };
+  const withRounds = js.filter(j => j.rounds);
+  const allI = D.insp.reduce((a,i)=>a+i.total,0), allF = D.insp.reduce((a,i)=>a+i.failed,0);
+  $('#kpis').innerHTML = [
+    ['Median applied → issued', `${med(issued.map(j=>days(j.applied_at,j.issued_at)))}<small>days</small>`, `${issued.length} issued permits`],
+    ['Review rounds per permit', `${(withRounds.reduce((a,j)=>a+j.rounds,0)/Math.max(1,withRounds.length)).toFixed(1)}`, `${withRounds.filter(j=>j.rounds>2).length} permits needed 3+ rounds`],
+    ['Inspection failure rate', `${Math.round(allF/allI*100)}<small>%</small>`, `top 8 types · ${allF} of ${allI}`],
+    ['Jobs paused or blocked', `${js.filter(j => j.pause || j.turtle || j.active_holds).length}`, 'turtle, draw, deed, deferred start'],
+  ].map(k => `<div class="kpi"><h3>${k[0]}</h3><div class="big">${k[1]}</div><div class="cap">${k[2]}</div></div>`).join('');
+}
+function renderClock(){
+  const js = J().filter(j => j.clock_phase && j.clock_phase !== 'no_permit');
+  const med = a => { const s = a.filter(x => x != null).sort((x,y)=>x-y); return s.length ? s[s.length >> 1] : null; };
+  const building = js.filter(j => j.clock_phase === 'building'), waiting = js.filter(j => j.clock_phase === 'waiting_to_start'), done = js.filter(j => j.clock_phase === 'awaiting_co' || j.clock_phase === 'co');
+  const ourWait = js.filter(j => j.wait_to_start != null).map(j => j.wait_to_start);
+  const tile = (h, v, c) => `<div class="kpi"><h3>${h}</h3><div class="big">${v}</div><div class="cap">${c}</div></div>`;
+  const dd = v => v == null ? '—' : `${v}<small>days</small>`;
+  $('#clockKpis').innerHTML = [
+    tile('Issued → start (median)', dd(med(ourWait)), `${ourWait.length} started jobs with a known start`),
+    tile('Under construction', `${building.length}`, `median ${med(building.map(j=>j.build_days)) ?? '—'} days so far · ${building.filter(j=>j.build_days==null).length} start not known`),
+    tile('Start → finish (median)', dd(med(done.map(j=>j.build_days))), done.length ? `${done.filter(j=>j.build_days!=null).length} finished jobs with dates` : 'first value once a job is marked completed'),
+    tile('Finished, awaiting CO', `${done.filter(j=>j.clock_phase==='awaiting_co').length}`, (() => { const a = done.filter(j=>j.days_awaiting_co!=null); return a.length ? `median ${med(a.map(j=>j.days_awaiting_co))} days waiting` : 'issued → CO fills in as COs are recorded'; })()),
+  ].join('');
+  const long = building.filter(j => j.build_days != null).sort((a,b) => b.build_days - a.build_days).slice(0, 8);
+  bars('#c-long', long.map(j => ({l:`${j.job_number} · ${street(j.address)}`, v:j.build_days, t:`${j.build_days} d · ${j.insp_progress||''}`})), Math.max(1, ...long.map(j=>j.build_days)), 'gold');
+  document.querySelectorAll('#c-long .bar').forEach((el, i) => { el.style.cursor = 'pointer'; el.onclick = () => openJob(long[i].job_number); });
+  $('#t-wait').innerHTML = waiting.length ? waiting.sort((a,b)=>b.waiting_days-a.waiting_days).map(j => row(j.job_number, esc(street(j.address)), `issued ${fmt(j.issued_at)} · ${esc(j.county)}`, `<span class="pill ${j.wait_excuse?'p-gry':'p-amb'}">${j.waiting_days} d</span><br><span class="note">${j.wait_excuse?esc(PAUSE[j.wait_excuse]||j.wait_excuse)+' · excluded':'counts against us'}</span>`)).join('') : '<div class="empty">Every issued permit has started.</div>';
+  $('#clockNote').textContent = 'Start = Buildertrend "Actual Start" when it is on or after the permit issue date; otherwise the 2nd draw (2nd payment) date — or the permit issue date when the 2nd draw was paid before the permit; otherwise the first field inspection on the portal. Waits caused by the owner (deferred start, 1st draw, impact fees, warranty deed) are shown but left out of the medians. Construction is done when the job is marked completed in Buildertrend; the finish date is Buildertrend "Actual Completion" (or the last passed inspection). The CO comes after, from the portal, and closes the permit.';
+}
+function renderCharts(){
+  bars('#c-insp', D.insp.map(i => ({l:i.type, v:i.failed/i.total, t:`${Math.round(i.failed/i.total*100)}% · ${i.failed}/${i.total}`})).sort((a,b)=>b.v-a.v), 1, 'red');
+  bars('#c-dept', D.dept.map(d => ({l:d.department, v:d.failures/d.reviews, t:`${Math.round(d.failures/d.reviews*100)}% · ${d.failures}/${d.reviews}`})), 1, 'red');
+  bars('#c-cycle', D.cycle.map(c => ({l:`${c.county} (${c.n})`, v:c.median_days, t:`${c.median_days} days`})), Math.max(...D.cycle.map(c=>c.median_days)), 'gold');
+  const cd = D.rounds.county_days, rd = D.rounds.resubmit_days, pc = Math.round(cd/(cd+rd)*100);
+  $('#c-split').innerHTML = `<div class="split"><div style="width:${pc}%;background:var(--bar);color:var(--bg)">${pc}%</div><div style="width:${100-pc}%;background:var(--gold);color:#2E2E30">${100-pc}%</div></div>
+  <div class="legend"><span><i style="background:var(--bar)"></i>County reviewing · ${cd} days</span><span><i style="background:var(--gold)"></i>Waiting on our resubmission · ${rd} days</span></div>
+  <p class="note" style="margin:0">Half of the review clock is on our side. The itemized corrections e-mail and 48 h follow-up target this half.</p>`;
+  const colChart = (el, series) => {
+    const months = [...new Set(series.flatMap(s => s.data.map(x => x.m)))].sort();
+    const mx = Math.max(1, ...series.flatMap(s => s.data.map(x => x.n)));
+    $(el).innerHTML = months.map(m => `<div class="col"><div style="display:flex;gap:2px;align-items:flex-end;width:100%;height:100%;justify-content:center">${series.map(s => { const n = (s.data.find(x=>x.m===m)||{n:0}).n; return `<div class="c ${s.cls||''}" style="height:${(n/mx*100).toFixed(0)}%;${n?'':'min-height:1px'}"><span>${n||''}</span></div>`; }).join('')}</div><span class="x">${new Date(m+'-15').toLocaleDateString('en-US',{month:'short'})}</span></div>`).join('');
+  };
+  colChart('#c-month', [{data:D.monthly}]);
+  colChart('#c-new', [{data:D.requests, cls:'blue'}, {data:D.signed}]);
+  $('#t-requests').innerHTML = (D.workRequests||[]).map(r => `<div class="row" style="cursor:default"><span class="jn">new</span><div><div class="t">${esc(r.client||'—')}${r.company?' · '+esc(r.company):''}</div><div class="m">${esc([r.model, r.city, r.county, r.parcel && 'parcel '+r.parcel].filter(Boolean).join(' · '))}${r.agent?' · agent '+esc(r.agent):''}</div></div><div class="r">${r.price?'$'+esc(r.price):''}<br>${fmt(r.at)}</div></div>`).join('');
+  $('#newNote').textContent = D.requests.length ? 'from the bot mailbox' : 'requests start counting with the first form e-mail';
+}
+
+/* drawer */
+const F = n => D.files[n];
+let curJob = null;
+function openJob(n, tab){
+  const f = F(n), j = jobOf(n); if (!f) return;
+  curJob = n;
+  $('#dJn').textContent = n + (f.company === 'Prime' ? ' · Prime' : '');
+  $('#dTitle').textContent = f.address;
+  const ps = permitState(j), [lbl, cls] = PSTATE[ps];
+  $('#dFacts').innerHTML = [
+    `<span class="pill ${cls}">${lbl}</span>`,
+    j.stage === 'inspections' && j.insp_progress ? `<span class="pill p-gold">Inspections ${j.insp_progress}</span>` : '',
+    j.clock_phase === 'building' && j.build_days != null ? `<span class="pill p-blue" title="${esc(SRC[j.build_start_src]||'')}">Day ${j.build_days} of construction</span>` : '',
+    j.clock_phase === 'building' && j.build_days == null ? '<span class="pill p-gry">Building · start date not known</span>' : '',
+    j.clock_phase === 'awaiting_co' ? `<span class="pill p-grn" title="finish = ${esc(FIN[j.finish_src]||'')}">Construction done${j.finished_at?' '+fmt(j.finished_at):''}${j.build_days!=null?' · '+j.build_days+' days':''}</span><span class="pill p-amb">Awaiting CO${j.days_awaiting_co!=null?' · '+j.days_awaiting_co+' d':''}</span>` : '',
+    j.clock_phase === 'waiting_to_start' ? `<span class="pill ${j.wait_excuse?'p-gry':'p-amb'}">Permit issued ${j.waiting_days} d ago · not started${j.wait_excuse?' · '+esc(PAUSE[j.wait_excuse]||j.wait_excuse):''}</span>` : '',
+    j.stage === 'done' ? '<span class="pill p-grn">CO</span>' : '',
+    f.county && `<span>County <b>${esc(f.county)}</b></span>`, f.model && `<span>Model <b>${esc(f.model)}</b></span>`,
+    `<span>Supervisor <b>${esc(f.supervisor || '—')}</b></span>`, f.parcel && `<span>Parcel <b>${esc(f.parcel)}</b></span>`,
+    f.signed_at && `<span>Signed <b>${fmtY(f.signed_at)}</b></span>`,
+    j.last_daily_log ? `<span>Last Daily Log <b>${fmt(j.last_daily_log)}</b></span>` : '',
+    j.photos_last_at ? `<span>Last photo <b>${fmt(j.photos_last_at)}</b> · ${esc(j.photos_last_by || '')}</span>` : '',
+    `<a class="gmaps" target="_blank" rel="noopener" href="${gmaps(j)}">Open in Google Maps ↗</a>`,
+  ].filter(Boolean).join('');
+  $('#scrim').hidden = false; $('#drawer').hidden = false; document.body.style.overflow = 'hidden';
+  dTab(tab || (['inspections','done'].includes(j.stage) ? 'insp' : 'permit'));
+  $('#dClose').focus();
+}
+function closeJob(){ $('#scrim').hidden = true; $('#drawer').hidden = true; document.body.style.overflow = ''; curJob = null; }
+$('#dClose').onclick = closeJob; $('#scrim').onclick = closeJob;
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && curJob) closeJob(); });
+document.querySelectorAll('#dTabs button').forEach(b => b.onclick = () => dTab(b.dataset.t));
+document.addEventListener('click', e => { const r = e.target.closest('[data-job]'); if (r && !e.target.closest('.drawer')) openJob(r.dataset.job); });
+
+function dTab(t){
+  document.querySelectorAll('#dTabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.t === t));
+  const f = F(curJob), j = jobOf(curJob);
+  const body = $('#dBody');
+  if (t === 'permit') body.innerHTML = permitHtml(f, j);
+  if (t === 'insp') body.innerHTML = inspHtml(f, j);
+  if (t === 'timeline') body.innerHTML = timelineHtml(f);
+  body.scrollTop = 0;
+  body.querySelectorAll('[data-mail]').forEach(b => b.onclick = () => showMail(b));
+}
+
+function permitHtml(f, j){
+  const blocks = [];
+  if (f.mail && f.mail.length) blocks.push(`<div class="card"><h3>Invoices (Buildertrend notifications)</h3>${f.mail.map(m => `<div class="dept"><span><b>${esc(m.title||'Invoice')}</b> · $${Number(m.amount||0).toLocaleString('en-US')}</span><span class="pill ${m.paid?'p-grn':'p-gry'}">${esc(m.status||'')}</span><span class="who">${fmt(m.at)}</span></div>`).join('')}</div>`);
+  const pz = f.pauses.filter(p => !p.ended);
+  if (f.turtle_state && f.turtle_state !== 'none' || pz.length || f.note) blocks.push(`<div class="card"><h3>Blockers &amp; notes</h3><div class="pills">${f.turtle_state && f.turtle_state!=='none'?'<span class="pill p-red">Turtle · relocation pending</span>':''}${pz.map(p=>`<span class="pill p-amb">${esc(PAUSE[p.reason]||p.reason)} · since ${fmt(p.since)}</span>`).join('')}</div>${f.note?`<div class="note">${esc(f.note)}</div>`:''}</div>`);
+  if (!f.permits.length) blocks.push(`<div class="card"><div class="empty">No permit case yet. The permit clock starts when the start-licensing e-mail goes to the designer (R0).</div></div>`);
+  for (const [pi, p] of f.permits.entries()) {
+    const collected = p.rounds.some(r => r.reviews.length);
+    const lastFailed = [...p.rounds].reverse().find(r => r.reviews.some(x => x.failed));
+    const isLatest = !!lastFailed && !p.issued_at;
+    const holds = p.holds.filter(h => h.active);
+    blocks.push(`<div class="card">
+      <div class="hd"><div><h4>${p.kind === 'building' ? 'Building permit' : p.kind[0].toUpperCase()+p.kind.slice(1)} <span style="font-family:var(--f-mono);font-weight:500">${esc(p.number||'')}</span></h4><div class="note">${esc(PORTAL[p.portal]||p.portal||'')} · ${esc(p.portal_status||p.ops_status||'')}</div></div>
+      ${isLatest ? `<button class="btn" data-mail="${pi}">Corrections e-mail · round ${lastFailed.round}</button>` : ''}</div>
+      <div class="kv"><div><span>Requested</span>${fmtY(p.requested_at)}</div><div><span>Applied</span>${fmtY(p.applied_at)}</div><div><span>Issued</span>${fmtY(p.issued_at)}</div><div><span>${p.issued_at?'Applied → issued':'Days in process'}</span>${p.applied_at?days(p.applied_at,p.issued_at)+' days':'—'}</div></div>
+      <div class="mailbox"></div>
+      ${holds.length ? `<div class="pills">${holds.map(h=>`<span class="pill ${h.blocking?'p-red':'p-gry'}" title="${esc(h.comments||'')}">${esc(h.name)}</span>`).join('')}</div>` : ''}
+      ${p.rounds.length ? p.rounds.map(r => roundHtml(r)).join('') : `<div class="note">${p.portal && !REVIEW_PORTALS.includes(p.portal) ? 'Review rounds for this portal are not collected yet.' : 'No review rounds on the portal yet.'}</div>`}
+      ${p.rounds.length && !collected ? '<div class="note">Department detail not collected for this portal yet.</div>' : ''}
+    </div>`);
+  }
+  return blocks.join('');
+}
+function roundHtml(r){
+  const failed = r.reviews.filter(x => x.failed);
+  return `<div class="round"><div class="rh"><b>Round ${r.round ?? '—'}</b><span class="note">${r.submitted_at?'submitted '+fmt(r.submitted_at):''}${r.completed_at?' · reviewed '+fmt(r.completed_at)+(r.submitted_at?` (${days(r.submitted_at,r.completed_at)} days)`:''):''}${r.status?' · '+esc(r.status):''}</span></div>
+    ${r.reviews.map(x => `<div class="dept ${x.failed?'fail':''}"><span><b>${esc(x.department)}</b></span><span class="pill ${x.failed?'p-red':/approv|pass|complete/i.test(x.status||'')?'p-grn':'p-gry'}">${esc(x.status||'—')}</span>
+      <span class="who">${esc(x.reviewer||'')}${x.completed_at?' · '+fmt(x.completed_at):''}</span>
+      ${x.comments ? `<details class="cm" ${x.failed?'':''}><summary>${x.failed?'Corrections':'Comments'} (${x.comments.length > 900 ? 'long' : 'show'})</summary><pre>${esc(x.comments)}</pre></details>` : ''}</div>`).join('')}
+    ${failed.length ? '' : r.reviews.length ? '' : ''}</div>`;
+}
+function mailText(f, p){
+  const r = [...p.rounds].reverse().find(x => x.reviews.some(y => y.failed));
+  const items = r.reviews.filter(x => x.failed);
+  const custom = /custom/i.test(f.model||'');
+  const to = custom ? 'michele@fredianiputini.com' : 'sovereignpermit@gmail.com';
+  const cc = custom ? 'guilherme@pkbhomes.com' : 'fernanda.quiterio@sconsult.us, leonardo@sovereigninc.us, guilherme@pkbhomes.com';
+  const subj = `Correções – ${street(f.address)} – ${p.number} (rodada ${r.round})`;
+  const body = `Olá, ${custom ? 'Michele' : 'Sarah e Fernanda'},
+
+O condado (${PORTAL[p.portal]||p.portal}) devolveu a rodada ${r.round} do permit ${p.number} (${f.address}${f.parcel ? ', parcel ' + f.parcel : ''}) em ${new Date((r.completed_at || items[0].completed_at) + 'T12:00:00').toLocaleDateString('pt-BR')} pedindo correções de ${items.length === 1 ? 'um departamento' : items.length + ' departamentos'}:
+
+${items.map((x, i) => `${i+1}. ${x.department} — ${x.status}${x.reviewer ? ' (revisor: ' + x.reviewer + ')' : ''}
+${(x.comments || '(sem comentário no portal)').trim().split('\n').map(l => '   ' + l).join('\n')}`).join('\n\n')}
+
+Podem nos confirmar o recebimento e a previsão de reenvio? Vamos acompanhar pelo portal e retornamos em 48 h caso ainda não tenha sido reenviado.
+
+Obrigado,
+PKB Homes`;
+  return {to, cc, subj, body};
+}
+function showMail(btn){
+  const f = F(curJob), p = f.permits[+btn.dataset.mail];
+  const m = mailText(f, p);
+  const box = btn.closest('.card').querySelector('.mailbox');
+  if (box.innerHTML) { box.innerHTML = ''; return; }
+  box.innerHTML = `<div class="mail"><div class="hdrs"><b>To</b><span>${esc(m.to)}</span><b>Cc</b><span>${esc(m.cc)}</span><b>Subject</b><span>${esc(m.subj)}</span></div><textarea>${esc(m.body)}</textarea><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn" type="button">Copy e-mail</button><span class="note">In the live system this e-mail goes out automatically (rule R1) with Guilherme in Cc.</span></div></div>`;
+  const ta = box.querySelector('textarea');
+  box.querySelector('button').onclick = async e => {
+    const txt = `To: ${m.to}\nCc: ${m.cc}\nSubject: ${m.subj}\n\n${ta.value}`;
+    try { await navigator.clipboard.writeText(txt); e.target.textContent = 'Copied'; } catch(err) { ta.focus(); ta.select(); e.target.textContent = 'Select all + copy'; }
+  };
+}
+function inspHtml(f, j){
+  const b = f.permits.find(p => p.kind === 'building');
+  const pr = f.progress;
+  const out = [];
+  if (pr) {
+    const est = pr.remaining.reduce((m, r) => (m[r.name] = r.estimate, m), {});
+    out.push(`<div class="card"><div class="hd"><h3>Progress · ${pr.passed} of ${pr.required} required inspections</h3><span class="note">${pr.readyForFinalsEstimate==='now'?'Ready for finals now':pr.readyForFinalsEstimate?'Ready for finals ≈ '+fmtY(pr.readyForFinalsEstimate):''}</span></div>
+      <div class="prog"><span class="trk"><i style="width:${pr.percent}%"></i></span><span>${pr.percent}%</span></div>
+      ${pr.failedOpen.length?`<div class="reinsp"><h3 style="color:var(--red)">Re-inspection needed</h3>${pr.failedOpen.map(x=>`<div class="fi"><div class="rh"><b>${esc(x.name)}</b><span class="note">failed ${fmt(x.since)}${x.failures>1?` · ${x.failures} times`:''}</span></div>${x.comments?`<pre class="icm">${esc(cleanCm(x.comments))}</pre>`:'<span class="note">No inspector comment on the portal.</span>'}</div>`).join('')}</div>`:''}
+      <div class="steps">${stepsHtml(b, pr, est)}</div>
+      <div class="note">${pr.coEstimate ? 'CO ≈ ' + fmtY(pr.coEstimate) : 'CO date: estimated once three or more jobs have reached their finals on the portal.'}</div></div>`);
+  } else if (!b || !b.issued_at) out.push(`<div class="card"><div class="empty">Inspections start after the permit is issued.</div></div>`);
+  else out.push(`<div class="card"><div class="note">${REVIEW_PORTALS.includes(b.portal)?'':'Inspection checklist for '+esc(PORTAL[b.portal]||b.portal)+' not set up yet.'}</div></div>`);
+  if (b && b.inspections.length) out.push(`<div class="card"><h3>All inspections on the portal (${b.inspections.length})</h3><div class="tbl" style="border:0"><table><thead><tr><th>Date</th><th>Inspection</th><th>Result</th><th>Inspector</th></tr></thead><tbody>${[...b.inspections].reverse().map(i=>`<tr style="cursor:default"><td style="white-space:nowrap">${fmt(i.at)}</td><td>${esc(i.type)}${i.comments?`<pre class="icm${i.failed?'':' ok'}">${esc(cleanCm(i.comments))}</pre>`:''}</td><td><span class="pill ${i.failed?'p-red':i.passed?'p-grn':'p-gry'}">${esc(i.status)}</span></td><td>${esc(i.inspector||'')}</td></tr>`).join('')}</tbody></table></div></div>`);
+  return out.join('');
+}
+function stepsHtml(b, pr, est){
+  const WHEN = {passed: s => fmt(s.passedAt), failed_open: s => `failed ×${s.failures}` + (est[s.name] ? ' · ≈ ' + fmt(est[s.name]) : ''), requested: () => 'requested', not_recorded: () => 'not on portal', pending: s => est[s.name] ? '≈ ' + fmt(est[s.name]) : (s.final ? 'finals · no history yet' : '')};
+  return pr.steps.filter(s => !(s.optional && s.state !== 'passed')).map(s => `<div class="step ${s.state}"><span class="ic"></span><span class="nm">${esc(s.name)}${s.failures && s.state === 'passed' ? ` <span class="note">(failed ×${s.failures} first)</span>` : ''}</span><span class="w">${WHEN[s.state](s)}</span></div>`).join('');
+}
+function timelineHtml(f){
+  const ev = [];
+  if (f.signed_at) ev.push({at:f.signed_at, k:'permit', t:'Contract signed'});
+  for (const p of f.permits) {
+    const tag = p.kind === 'building' ? '' : ` (${p.kind})`;
+    if (p.requested_at) ev.push({at:p.requested_at, k:'permit', t:`Permit plan requested${tag}`});
+    if (p.applied_at) ev.push({at:p.applied_at, k:'permit', t:`Permit applied${tag}`, s:p.number});
+    for (const r of p.rounds) {
+      if (r.submitted_at) ev.push({at:r.submitted_at, k:'permit', t:`Round ${r.round} submitted`, s:r.type});
+      const failed = r.reviews.filter(x => x.failed);
+      const date = r.completed_at || failed.map(x=>x.completed_at).sort().at(-1);
+      if (failed.length) ev.push({at:date, k:'fail', t:`Round ${r.round}: corrections requested`, s:failed.map(x=>x.department).join(', ')});
+      else if (r.completed_at && r.reviews.length) ev.push({at:r.completed_at, k:'ok', t:`Round ${r.round}: reviews complete`});
+    }
+    for (const h of p.holds) ev.push({at:h.since, k:h.active&&h.blocking?'fail':'info', t:`Hold · ${h.name}`, s:h.active?'active':'released'});
+    if (p.issued_at) ev.push({at:p.issued_at, k:'ok', t:`Permit issued${tag}`, s:p.number});
+    for (const i of p.inspections) ev.push({at:i.at, k:i.failed?'fail':i.passed?'ok':'info', t:`Inspection · ${i.type}`, s:`${i.status}${i.inspector?' · '+i.inspector:''}`});
+    if (p.finaled_at) ev.push({at:p.finaled_at, k:'ok', t:`Permit finaled${tag}`});
+  }
+  for (const p of f.pauses) { ev.push({at:p.since, k:'pause', t:`Paused · ${PAUSE[p.reason]||p.reason}`, s:p.note}); if (p.ended) ev.push({at:p.ended, k:'info', t:'Pause ended'}); }
+  if (f.co_at) ev.push({at:f.co_at, k:'ok', t:'CO issued'});
+  ev.sort((a,b) => String(b.at||'').localeCompare(String(a.at||'')));
+  return `<div class="card"><h3>Life of the job · newest first</h3><div class="tl">${ev.map(e=>`<div class="ev ${e.k}"><span class="dt">${fmtY(e.at)}</span><span class="dot"></span><span>${esc(e.t)}${e.s?` <span class="s">· ${esc(e.s)}</span>`:''}</span></div>`).join('') || '<div class="empty">No events yet.</div>'}</div></div>`;
+}
+
+/* ask */
+const SUGS = ['Registre um Daily Log na obra 0037 dizendo que o drywall começa segunda, notificando o supervisor','Mande um e-mail para o Guilherme com as obras que estão com correções pendentes','Quais departamentos pediram correção na obra 0034 e o que ainda falta resolver?','Which jobs failed an inspection in the last 30 days, and who is the supervisor?','Quais obras do Raphael estão prontas para as finais?','Quais itens de correção se repetem mais nas revisões de Building Plans?','Quais obras estão paradas e por quê?'];
+$('#sugs').innerHTML = SUGS.map(s => `<button type="button">${esc(s)}</button>`).join('');
+const history = [];
+let busy = false;
+const md = t => esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+function addMsg(cls, text){ const d = document.createElement('div'); d.className = 'msg ' + cls; if (cls.startsWith('a') && !cls.includes('pending')) d.innerHTML = md(text); else d.textContent = text; $('#chat').appendChild(d); d.scrollIntoView({block:'nearest'}); return d; }
+const ACT = {daily_log:'Buildertrend Daily Log', email:'E-mail', pause_job:'Pause job', resume_job:'Resume job', set_contact:'Supervisor / PM', job_note:'Job note', change_request:'Change request'};
+function proposalCard(p, into){
+  const c = document.createElement('div'); c.className = 'prop';
+  c.innerHTML = `<span class="k">${esc(ACT[p.action] || p.action)} · waiting for confirmation</span><pre>${esc(p.summary)}</pre><div class="pa"><button class="btn" type="button">Confirm</button><button class="btn ghost" type="button">Cancel</button><span class="st"></span></div>`;
+  const [ok, no] = c.querySelectorAll('button'), st = c.querySelector('.st');
+  const decide = async confirm => {
+    ok.disabled = no.disabled = true; st.textContent = confirm ? 'Running…' : 'Cancelling…';
+    try { const r = await window.OPS.call(confirm ? {confirm: p.id} : {cancel: p.id}); st.textContent = r.status === 'done' ? '✓ ' + (r.result || 'Done') : r.status === 'cancelled' ? 'Cancelled' : (r.result || r.status); ok.hidden = no.hidden = true; refreshOutbox(); }
+    catch(e) { st.textContent = 'Error: ' + e.message; ok.disabled = no.disabled = false; }
+  };
+  ok.onclick = () => decide(true); no.onclick = () => decide(false);
+  (into || $('#chat')).appendChild(c); c.scrollIntoView({block:'nearest'}); return c;
+}
+async function ask(q){
+  if (busy) return;
+  q = q.trim(); if (!q) return;
+  addMsg('u', q); $('#ask').value = '';
+  const out = addMsg('a pending', 'Thinking…');
+  busy = true; $('#send').disabled = true;
+  try {
+    const r = await window.OPS.call({question: q, history: history.slice(-4)});
+    out.classList.remove('pending'); out.innerHTML = md(r.text || '');
+    if (r.used && r.used.length) { const s = document.createElement('span'); s.className = 'used'; s.textContent = 'Looked at: ' + r.used.join(', '); out.appendChild(s); }
+    for (const p of r.proposals || []) proposalCard(p);
+    history.push({q, a: r.text || ''});
+    if ((r.proposals || []).length) refreshOutbox();
+  } catch(e) {
+    out.classList.remove('pending'); out.classList.add('err'); out.textContent = 'Could not answer: ' + e.message;
+  } finally { busy = false; $('#send').disabled = false; }
+}
+$('#composer').addEventListener('submit', e => { e.preventDefault(); ask($('#ask').value); });
+$('#ask').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask($('#ask').value); } });
+$('#stop').hidden = true;
+$('#sugs').addEventListener('click', e => { const b = e.target.closest('button'); if (b) ask(b.textContent); });
+
+/* outbox */
+const OST = {sent:['Sent','p-grn'], draft:['Queued','p-amb'], approved:['Approved','p-blue'], failed:['Failed','p-red'], cancelled:['Cancelled','p-gry'], proposed:['Waiting','p-amb'], done:['Done','p-grn'], open:['Open','p-amb'], doing:['In progress','p-blue'], dismissed:['Dismissed','p-gry']};
+const pill = s => { const [t, c] = OST[s] || [s, 'p-gry']; return `<span class="pill ${c}">${esc(t)}</span>`; };
+const when = t => t ? new Date(t).toLocaleString('en-US', {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'}) : '—';
+function renderOutbox(){
+  const L = window.OPS.state || {};
+  const pend = (L.actions || []).filter(a => a.status === 'proposed');
+  const box = $('#o-pending'); box.innerHTML = pend.length ? '' : '<div class="empty">Nothing waiting.</div>';
+  for (const a of pend) proposalCard(a, box);
+  const done = (L.actions || []).filter(a => a.status !== 'proposed').slice(0, 8);
+  if (done.length) box.insertAdjacentHTML('beforeend', done.map(a => `<div class="row"><span class="jn">${esc((a.input && a.input.job_number) || '—')}</span><div><div class="t">${esc(ACT[a.action] || a.action)}</div><div class="m">${esc(a.proposed_by)} · ${when(a.created_at)}${a.result ? ' · ' + esc(a.result) : ''}</div></div><div class="r">${pill(a.status)}</div></div>`).join(''));
+  $('#o-reqs').innerHTML = (L.requests || []).length ? L.requests.map(r => `<div class="row"><span class="jn">#${r.id}</span><div><div class="t">${esc(r.text)}</div><div class="m">${esc(r.email)} · ${when(r.created_at)}${r.answer ? ' · ' + esc(r.answer) : ''}</div></div><div class="r">${pill(r.status)}</div></div>`).join('') : '<div class="empty">No requests yet.</div>';
+  const ch = $('#oChan').value, st = $('#oStat').value;
+  const rows = (L.outbox || []).filter(m => (!ch || m.channel === ch) && (!st || m.status === st));
+  $('#oCnt').textContent = `${rows.length} messages`;
+  $('#oTb').innerHTML = rows.map(m => `<tr style="cursor:default"><td class="mono">${when(m.created_at)}</td><td>${m.channel === 'bt_daily_log' ? 'Daily Log' : m.channel === 'email' ? 'E-mail' : esc(m.channel)}</td><td class="mono">${esc(m.rule || '')}</td><td class="mono">${esc(m.job_number || '')}</td><td><div><b>${esc(m.subject || '')}</b></div><div class="m" style="font-size:12.5px;color:var(--ink-3)">${esc((m.to_addresses || []).join(', '))}${(m.cc_addresses || []).length ? ' · cc ' + esc(m.cc_addresses.join(', ')) : ''}</div><div class="ob-body">${esc(m.body || '')}</div>${m.error ? `<div class="why">${esc(m.error)}</div>` : ''}</td><td>${pill(m.status)}${m.sent_at ? `<br><span class="note">${when(m.sent_at)}</span>` : ''}</td><td>${['draft','approved'].includes(m.status) ? `<button class="btn ghost" type="button" data-cancel="${m.id}">Cancel</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="7" class="empty">Nothing here.</td></tr>';
+  document.querySelectorAll('[data-cancel]').forEach(b => b.onclick = async () => { b.disabled = true; const { error } = await window.OPS.sb.rpc('ops_outbox_cancel', {p_id: b.dataset.cancel}); if (error) { b.disabled = false; b.textContent = 'Error'; } else refreshOutbox(); });
+}
+async function refreshOutbox(){ try { window.OPS.state = await window.OPS.live(); renderOutbox(); } catch(e) {} }
+$('#oChan').onchange = renderOutbox; $('#oStat').onchange = renderOutbox; $('#oRefresh').onclick = refreshOutbox;
+$('#reqform').addEventListener('submit', async e => {
+  e.preventDefault(); const t = $('#reqtext').value.trim(); if (!t) return;
+  $('#reqst').textContent = 'Sending…';
+  const { error } = await window.OPS.sb.rpc('ops_request_change', {p_text: t});
+  if (error) $('#reqst').textContent = 'Error: ' + error.message; else { $('#reqst').textContent = '✓ Sent to Claude'; $('#reqtext').value = ''; refreshOutbox(); }
+});
+renderOutbox();
+
+/* suggestions */
+const AREA = {permits:'Permits', inspections:'Inspections', construction:'Construction', process:'Process', data:'Data', finance:'Finance'};
+const IMPACT = {high:['High impact','p-red'], medium:['Medium','p-amb'], low:['Low','p-gry']};
+const STATUS = {new:['New','p-blue'], accepted:['Accepted','p-grn'], dismissed:['Dismissed','p-gry'], done:['Done','p-grn']};
+let ideaArea = '';
+function renderIdeas(){
+  const all = D.suggestions || [];
+  const areas = [...new Set(all.map(s => s.area))];
+  $('#ideaChips').innerHTML = ['', ...areas].map(a => `<button class="chip" data-a="${a}" aria-pressed="${ideaArea===a}">${a ? AREA[a]||a : 'All'}</button>`).join('');
+  document.querySelectorAll('#ideaChips button').forEach(b => b.onclick = () => { ideaArea = b.dataset.a; renderIdeas(); });
+  const list = all.filter(s => !ideaArea || s.area === ideaArea);
+  $('#ideaCnt').textContent = `${list.length} suggestions`;
+  const ev = e => Object.entries(e || {}).map(([k,v]) => `<span>${esc(k.replace(/_/g,' '))}: ${esc(Array.isArray(v) ? v.join(', ') : v)}</span>`).join('');
+  $('#ideas').innerHTML = list.map(s => `<article class="idea"><div class="top"><span class="pill ${IMPACT[s.impact]?.[1]||'p-gry'}">${IMPACT[s.impact]?.[0]||s.impact}</span><span class="pill p-gold">${esc(AREA[s.area]||s.area)}</span><span class="pill ${STATUS[s.status]?.[1]||'p-gry'}">${STATUS[s.status]?.[0]||s.status}</span></div><h4>${esc(s.title)}</h4><p>${esc(s.detail)}</p><div class="ev">${ev(s.evidence)}</div></article>`).join('') || '<div class="empty">No suggestions yet.</div>';
+  const CAT = {bt_daily_log:'Buildertrend · Daily Log', bt_invoice:'Buildertrend · invoice', bt_invoice_paid:'Buildertrend · invoice paid', bt_bill:'Buildertrend · bill', bt_other:'Buildertrend · other', work_request:'Website · work request', county:'County', designer:'Designer (Sovereign / Michele)', septic:'Septic (Shady)', surveyor:'Surveyor (Bailey)', google:'Google', other:'Other'};
+  const ib = D.inbox || [];
+  bars('#c-inbox', ib.map(c => ({l: CAT[c.category]||c.category, v:c.n, t:`${c.n}`})), Math.max(1, ...ib.map(c=>c.n)), 'gold');
+}
+
+/* map */
+const gmaps = j => j.ll ? `https://www.google.com/maps/search/?api=1&query=${j.ll[0]},${j.ll[1]}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(j.address||'')}`;
+const STAGE_C = {pre:['Pre-permit','var(--ink-3)'], permit:['Permit','var(--amber)'], inspections:['Under construction','var(--gold)'], done:['CO issued','var(--green)']};
+const mapOn = new Set(['pre','permit','inspections','done']);
+let mapState = null;
+function initMap(){
+  if (!window.d3) { $('#v-map .mapwrap').innerHTML = '<div class="empty" style="padding:20px">Map library could not load.</div>'; return; }
+  const svg = d3.select('#map'), g = svg.append('g');
+  const W = () => $('#map').clientWidth || 900, H = () => $('#map').clientHeight || 560;
+  const proj = d3.geoMercator();
+  const path = d3.geoPath(proj);
+  const withJobs = new Set(D.jobs.map(j => j.county));
+  const cg = g.append('g'), lg = g.append('g'), dg = g.append('g');
+  const ptsAll = () => J().filter(j => j.ll);
+  const fitTo = (fc, pad) => proj.fitExtent([[pad, pad], [W() - pad, H() - pad]], fc);
+  const jobsFC = () => ({type:'FeatureCollection', features: ptsAll().map(j => ({type:'Feature', geometry:{type:'Point', coordinates:[j.ll[1], j.ll[0]]}}))});
+  fitTo({type:'FeatureCollection', features: D.geo.features}, 12);
+  const baseScale = proj.scale(), baseT = proj.translate();
+  cg.selectAll('path').data(D.geo.features).join('path').attr('class', d => 'county' + (withJobs.has(d.properties.name) ? ' has' : '')).attr('d', path);
+  lg.selectAll('text').data(D.geo.features.filter(d => withJobs.has(d.properties.name))).join('text').attr('class','clabel').attr('text-anchor','middle')
+    .attr('x', d => path.centroid(d)[0]).attr('y', d => path.centroid(d)[1]).text(d => d.properties.name);
+  let k = 1;
+  const zoom = d3.zoom().scaleExtent([1, 400]).on('zoom', e => {
+    k = e.transform.k; g.attr('transform', e.transform);
+    dg.selectAll('circle').attr('r', 6 / k).attr("stroke-width", 1.5);
+    lg.selectAll('text').style('font-size', (11 / k) + 'px').style('stroke-width', (3 / k) + 'px');
+  });
+  svg.call(zoom);
+  const tip = $('#tip');
+  function draw(){
+    const sup = $('#mSup').value;
+    const pts = ptsAll().filter(j => mapOn.has(j.stage) && (!sup || j.supervisor === sup));
+    $('#mCnt').textContent = `${pts.length} jobs on the map`;
+    dg.selectAll('circle').data(pts, d => d.job_number).join('circle')
+      .attr('class', d => 'dot' + (d.insp_failed_open.length || permitState(d) === 'corr' || d.turtle || d.active_holds ? ' alert' : ''))
+      .attr('cx', d => proj([d.ll[1], d.ll[0]])[0]).attr('cy', d => proj([d.ll[1], d.ll[0]])[1])
+      .attr('r', 6 / k).attr("stroke-width", 1.5).attr('fill', d => STAGE_C[d.stage][1])
+      .on('mousemove', (e, d) => {
+        const r = $('#map').getBoundingClientRect();
+        tip.hidden = false;
+        tip.innerHTML = `<b>${esc(d.job_number)}</b> ${esc(street(d.address))}<br><span class="note">${esc(STAGE_C[d.stage][0])}${d.insp_progress ? ' · ' + d.insp_progress : ''}${d.supervisor ? ' · ' + esc(d.supervisor) : ''}</span>${d.insp_failed_open.length ? `<br><span style="color:var(--red)">Open failure: ${esc(d.insp_failed_open.join(', '))}</span>` : ''}${d.pause ? `<br><span style="color:var(--amber)">${esc(PAUSE[d.pause]||d.pause)}</span>` : ''}`;
+        const x = e.clientX - r.left + 14, y = e.clientY - r.top + 14;
+        tip.style.left = Math.min(x, r.width - 270) + 'px'; tip.style.top = Math.min(y, r.height - 90) + 'px';
+      })
+      .on('mouseleave', () => tip.hidden = true)
+      .on('click', (e, d) => { tip.hidden = true; openJob(d.job_number); });
+    // county bars
+    const byC = d3.rollups(pts, v => v.length, d => d.county).sort((a, b) => b[1] - a[1]);
+    bars('#c-county', byC.map(([c, n]) => ({l:c || '—', v:n, t:`${n} jobs`})), d3.max(byC, d => d[1]) || 1, 'gold');
+    document.querySelectorAll('#c-county .bar').forEach((el, i) => { el.style.cursor = 'pointer'; el.onclick = () => zoomTo(byC[i][0]); });
+    const nomap = J().filter(j => !j.ll);
+    $('#t-nomap').innerHTML = nomap.length ? nomap.map(j => row(j.job_number, esc(street(j.address)), esc(j.county || ''), `<a class="gmaps" target="_blank" rel="noopener" href="${gmaps(j)}">Google Maps ↗</a>`)).join('') : '<div class="empty">Every job is on the map.</div>';
+  }
+  function zoomToPoints(pts){
+    if (!pts.length) return;
+    const xy = pts.map(j => proj([j.ll[1], j.ll[0]]));
+    const [x0, x1] = d3.extent(xy, p => p[0]), [y0, y1] = d3.extent(xy, p => p[1]);
+    const s = Math.min(400, 0.85 / Math.max((x1 - x0 + 30) / W(), (y1 - y0 + 30) / H()));
+    svg.transition().duration(600).call(zoom.transform, d3.zoomIdentity.translate(W() / 2, H() / 2).scale(s).translate(-(x0 + x1) / 2, -(y0 + y1) / 2));
+  }
+  function zoomTo(county){ zoomToPoints(ptsAll().filter(j => j.county === county && mapOn.has(j.stage))); }
+  $('#mapFit').onclick = () => zoomToPoints(ptsAll().filter(j => mapOn.has(j.stage)));
+  $('#mapChips').innerHTML = Object.entries(STAGE_C).map(([s, [l, c]]) => `<button class="chip" data-s="${s}" aria-pressed="true"><i style="background:${c}"></i>${l}</button>`).join('') + '<span class="chip" style="cursor:default"><i style="background:transparent;border:2px solid var(--red)"></i>Needs attention</span>';
+  document.querySelectorAll('#mapChips button').forEach(b => b.onclick = () => { const s = b.dataset.s; mapOn.has(s) ? mapOn.delete(s) : mapOn.add(s); b.setAttribute('aria-pressed', mapOn.has(s)); draw(); });
+  $('#mSup').oninput = draw;
+  mapState = {draw, fit: () => zoomToPoints(ptsAll().filter(j => mapOn.has(j.stage))), ready: false};
+  draw();
+}
+[...new Set(D.jobs.map(j => j.supervisor).filter(Boolean))].sort().forEach(c => $('#mSup').insertAdjacentHTML('beforeend', `<option>${esc(c)}</option>`));
+
+/* init */
+[...new Set(D.jobs.map(j => j.county).filter(Boolean))].sort().forEach(c => $('#pCounty').insertAdjacentHTML('beforeend', `<option>${esc(c)}</option>`));
+[...new Set(D.jobs.map(j => j.supervisor).filter(Boolean))].sort().forEach(c => $('#iSup').insertAdjacentHTML('beforeend', `<option>${esc(c)}</option>`));
+function renderAll(){
+  document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.co === CO));
+  renderToday(); renderPermits(); renderInsp(); renderKpis(); renderClock();
+  if (mapState) mapState.draw();
+}
+renderCharts(); renderAll(); renderIdeas();
+const h0 = location.hash.slice(1);
+let t0 = null; try { t0 = localStorage.getItem('pkbops.tab') } catch(e) {}
+if (/^job-/.test(h0) && D.files[h0.slice(4)]) { show('permits'); openJob(h0.slice(4)); }
+else show(VIEWS.includes(h0) ? h0 : VIEWS.includes(t0) ? t0 : 'today');
+}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+(function(){
+  // Same Supabase project and session as the rest of budget.pkbhomes.com (public URL + publishable key).
+  const SB_URL = 'https://fvjknahpmihueyeasgbx.supabase.co', SB_KEY = 'sb_publishable_wr3657pmQAxZy2FEmLQ-RQ_pAPxEm7J';
+  const sb = window.supabase.createClient(SB_URL, SB_KEY);
+  const g = id => document.getElementById(id);
+  const msg = (t, err) => { g('gmsg').textContent = t; g('gmsg').className = err ? 'err' : ''; };
+  window.OPS = {
+    sb,
+    async call(body){
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) throw new Error('signed out');
+      const r = await fetch(SB_URL + '/functions/v1/ops-ask', { method: 'POST', headers: { 'content-type': 'application/json', apikey: SB_KEY, Authorization: 'Bearer ' + session.access_token }, body: JSON.stringify(body) });
+      const j = await r.json().catch(() => ({ error: 'HTTP ' + r.status }));
+      if (!r.ok || j.error) throw new Error(j.error || ('HTTP ' + r.status));
+      return j;
+    },
+    async live(){ const { data, error } = await sb.rpc('ops_board', { p_with_board: false }); if (error) throw error; return data; },
+  };
+  function login(){ msg('Sign in with your PKB account.'); g('glogin').hidden = false; g('gfirst').hidden = false; g('gemail').focus(); }
+  g('glogin').addEventListener('submit', async e => {
+    e.preventDefault(); g('gbtn').disabled = true; msg('Signing in…');
+    const { error } = await sb.auth.signInWithPassword({ email: g('gemail').value.trim(), password: g('gpass').value });
+    g('gbtn').disabled = false;
+    if (error) msg(error.message, true); else { g('glogin').hidden = true; g('gfirst').hidden = true; start(); }
+  });
+  g('signout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+  async function start(){
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return login();
+    msg('Loading…');
+    const [res, geo] = await Promise.all([sb.rpc('ops_board', { p_with_board: true }), fetch('fl_counties.json').then(r => r.json()).catch(() => ({ type: 'FeatureCollection', features: [] }))]);
+    if (res.error) {
+      msg(res.error.code === '42501' ? `PKB Ops is limited to the PKB partners (signed in as ${session.user.email}).` : 'Could not load: ' + res.error.message, true);
+      g('gfirst').hidden = true; g('glogin').hidden = true;
+      const b = document.createElement('button'); b.className = 'btn ghost'; b.textContent = 'Sign out'; b.onclick = async () => { await sb.auth.signOut(); location.reload(); }; g('gmsg').after(b);
+      return;
+    }
+    if (!res.data.board) return msg('No data yet — the first snapshot is built on the next round (6 AM / 1 PM).', true);
+    window.OPS.state = res.data;
+    g('whoami').textContent = res.data.me.name || res.data.me.email;
+    g('gate').hidden = true;
+    boot(Object.assign({}, res.data.board, { geo }));
+  }
+  start().catch(e => msg('Could not load: ' + e.message, true));
+})();
+</script>
+</body>
+</html>

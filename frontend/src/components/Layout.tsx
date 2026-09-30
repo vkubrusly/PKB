@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 import { useAuth } from '../auth/AuthProvider';
 import { Logo } from './Logo';
 
@@ -14,6 +16,12 @@ const NAV = [
 
 export function Layout() {
   const { session, orgs, activeOrg, setActiveOrg, signOut } = useAuth();
+  // PKB Ops (budget.pkbhomes.com/ops/) — shown only to the partners (ops.portal_users).
+  const [opsAccess, setOpsAccess] = useState(false);
+  useEffect(() => {
+    if (!session) { setOpsAccess(false); return; }
+    supabase.rpc('ops_me').then(({ data }) => setOpsAccess(!!data));
+  }, [session]);
 
   return (
     <div className="app">
@@ -42,6 +50,7 @@ export function Layout() {
               {n.label}
             </NavLink>
           ))}
+          {opsAccess && <a href="/ops/">PKB Ops ↗</a>}
         </nav>
 
         <div className="sidebar-foot">
