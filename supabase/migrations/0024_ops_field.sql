@@ -134,7 +134,7 @@ begin
 
   select coalesce(jsonb_agg(m), '[]') into photos
   from ops.field_reports x, jsonb_array_elements(x.messages) msg, jsonb_array_elements(coalesce(msg->'media', '[]')) m
-  where x.id = r.id and m->>'kind' = 'photo';
+  where x.id = r.id and (m->>'kind' = 'video' or (m->>'kind' = 'photo' and not coalesce((m->>'from_video')::boolean, false)));
   -- notify: the job's supervisors and PMs + Cristiano (Buildertrend names)
   select array_agg(distinct t.nm) into notify from (
     select coalesce(p.bt_name, c.name) nm from ops.job_contacts c left join ops.portal_users p on lower(p.name) = lower(c.name) or lower(p.bt_name) = lower(c.name)
@@ -190,7 +190,7 @@ revoke all on function ops.require_member() from public, anon, authenticated;
 
 -- Private bucket for field photos and audio: members upload under their own uid folder and read all.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('field-media', 'field-media', false, 26214400, array['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'audio/webm', 'audio/ogg', 'audio/mp4', 'audio/mpeg', 'audio/aac', 'audio/wav', 'audio/x-m4a'])
+values ('field-media', 'field-media', false, 52428800, array['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'audio/webm', 'audio/ogg', 'audio/mp4', 'audio/mpeg', 'audio/aac', 'audio/wav', 'audio/x-m4a', 'video/mp4', 'video/quicktime', 'video/webm'])
 on conflict (id) do update set public = false, file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;
 
 drop policy if exists field_media_insert on storage.objects;
