@@ -1,8 +1,9 @@
 // PKB Field — keeps the page usable without signal: the page, the field manual and the
 // Supabase library are cached; the reports themselves wait in the phone's outbox (IndexedDB).
-const CACHE = 'pkb-field-v1';
-const SHELL = ['/ops/field/', '/ops/field/manual.json', 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js'];
-self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting())); });
+const CACHE = 'pkb-field-v3';
+const SHELL = ['/ops/field/', '/ops/field/manual.json', '/ops/field/supabase.js'];
+// each file on its own: one failed download (e.g. the CDN) must not block the install
+self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => Promise.all(SHELL.map((u) => c.add(u).catch(() => {})))).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
   const u = new URL(e.request.url);

@@ -22,7 +22,7 @@ import manual from '../_shared/field_manual.json' with { type: 'json' };
 type Any = any;
 
 const MODELS = [Deno.env.get('OPS_FIELD_MODEL') || 'claude-opus-5-5', 'claude-opus-5', 'claude-sonnet-5-5'].filter((v, i, a) => a.indexOf(v) === i);
-const MAX_PHOTOS = 24;
+const MAX_PHOTOS = 8, MAX_FRAMES = 4;   // what the assistant sees; Buildertrend still gets every photo
 
 const STEPS = (manual as Any).phases.flatMap((ph: Any) => ph.steps.map((s: Any) => ({ ...s, phase: `${ph.n}. ${ph.name}` })));
 const MANUAL_TEXT = STEPS.map((s: Any) => `${s.n} | ${s.phase} | ${s.name} (${s.en})${s.type === 'inspection' ? ' [inspection]' : ''}`).join('\n');
@@ -131,30 +131,48 @@ Deno.serve(async (req) => {
       messages.push({ from: 'user', text, transcript, media, at: new Date().toISOString(), ...(clientId ? { client_id: clientId } : {}) });
     }
     if (!messages.length || messages[messages.length - 1].from !== 'user') return json({ error: 'nothing to process' }, 400);
+    // House first, without the AI: "casa 1" / "0001" / "8188 Hale" are matched here. When the
+    // report doesn't say the house (or says more than one) the question costs nothing.
+    const said = messages.filter((m: Any) => m.from === 'user').map((m: Any) => `${m.text || ''} ${m.transcript || ''}`).join(' ');
+    const cands = houseCandidates(said, jobs || []);
+    const lastUser = [...messages].reverse().find((m: Any) => m.from === 'user');
+    const latest = houseCandidates(`${lastUser?.text || ''} ${lastUser?.transcript || ''}`, jobs || []);
+    // the latest message wins (answer to "which house?" or a correction), then the draft's house, then the whole report
+    const known = latest.length === 1 ? latest : report?.draft?.job_number && !latest.length ? [{ job: report.draft.job_number, why: 'report' }] : latest.length ? latest : cands;
+    if (known.length !== 1) {
+      const q = known.length
+        ? `Este relatório fala de mais de uma casa (${known.map((c: Any) => c.job).join(', ')}). Qual é a casa deste relatório? Mande um relatório por casa.`
+        : 'Qual é a casa deste relatório? Diga o número da casa (ex.: "casa 37" ou "0037") ou o endereço (ex.: "8188 Hale").';
+      messages.push({ from: 'assistant', text: q, at: new Date().toISOString() });
+      const saved = await sb.rpc('ops_field_save', { p_id: report?.id ?? null, p_messages: messages, p_status: 'needs_job', p_draft: null, p_job: null, p_channel: body.channel || 'portal' });
+      if (saved.error) return json({ error: saved.error.message }, 400);
+      return json({ report_id: saved.data, status: 'needs_job', reply: q, question: q, draft: null, candidates: known });
+    }
+    const house = (jobs || []).find((j: Any) => j.job_number === known[0].job);
     // Save first: the photos, audio and text are kept even if the assistant fails; the report can be resent.
     const pre = await sb.rpc('ops_field_save', { p_id: report?.id ?? null, p_messages: messages, p_status: report?.status && report.status !== 'pending' ? report.status : 'pending', p_draft: null, p_job: null, p_channel: body.channel || 'portal' });
     if (pre.error) return json({ error: pre.error.message }, 400);
     const reportId = pre.data; savedId = reportId;
 
     // Photos of the whole report (latest first, capped) as signed URLs Claude can fetch.
-    const photos = messages.flatMap((m: Any) => (m.media || []).filter((x: Any) => x.kind === 'photo')).slice(-MAX_PHOTOS);
+    const allPhotos = messages.flatMap((m: Any) => (m.media || []).filter((x: Any) => x.kind === 'photo'));
+    const photos = [...allPhotos.filter((x: Any) => !x.from_video).slice(-MAX_PHOTOS), ...allPhotos.filter((x: Any) => x.from_video).slice(-MAX_FRAMES)];
     let urls: string[] = [];
     if (photos.length) {
-      const { data, error } = await sb.storage.from('field-media').createSignedUrls(photos.map((p: Any) => p.path), 900);
+      const { data, error } = await sb.storage.from('field-media').createSignedUrls(photos.map((p: Any) => p.ai_path || p.path), 900);
       if (error) return json({ error: 'photos: ' + error.message }, 400);
       urls = (data || []).map((d: Any) => d.signedUrl).filter(Boolean);
     }
 
-    const allText = messages.filter((m: Any) => m.from === 'user').map((m: Any) => `${m.text || ''} ${m.transcript || ''}`).join(' ');
-    const cands = houseCandidates(allText, jobs || []);
-    const jobsText = (jobs || []).map((j: Any) => `${j.job_number} | ${j.bt_job_name || ''} | ${j.address} | ${j.status} | supervisor ${j.supervisor || '—'} | PM ${j.pms || '—'} | done steps: ${Object.entries(j.checklist || {}).filter(([, s]) => s === 'done').map(([n]) => n).join(',') || '—'}`).join('\n');
+    const j = house;
+    const jobsText = `${j.job_number} | ${j.bt_job_name || ''} | ${j.address} | ${j.status} | supervisor ${j.supervisor || '—'} | PM ${j.pms || '—'} | done steps: ${Object.entries(j.checklist || {}).filter(([, st]) => st === 'done').map(([n]) => n).join(',') || '—'}`;
     const convo = messages.map((m: Any) => m.from === 'assistant'
       ? `PKB Ops: ${m.text}`
       : `${me.name || me.email}: ${[m.text, m.transcript ? `[audio transcript] ${m.transcript}` : '', (m.media || []).some((x: Any) => x.kind === 'audio') && !m.transcript ? '[audio sent without transcript]' : '', (m.media || []).filter((x: Any) => x.kind === 'photo' && !x.from_video).length ? `[${(m.media || []).filter((x: Any) => x.kind === 'photo' && !x.from_video).length} photo(s)]` : '', (m.media || []).filter((x: Any) => x.from_video).length ? `[video: ${(m.media || []).filter((x: Any) => x.from_video).length} frames${(m.media || []).some((x: Any) => x.kind === 'video') ? '' : ', video file too large to keep'}; the sound of the video is not available]` : ''].filter(Boolean).join(' ')}`).join('\n');
 
     const content: Any[] = [
       ...urls.flatMap((u, i) => [{ type: 'text', text: photos[i]?.from_video ? `Video frame (${photos[i].name || ''})` : `Photo ${i + 1}` }, { type: 'image', source: { type: 'url', url: u } }]),
-      { type: 'text', text: `JOBS (job | Buildertrend name | address | status | team | manual steps already done):\n${jobsText}\n\nDETECTED HOUSE CANDIDATES: ${cands.length ? cands.map((c) => `${c.job} (from "${c.why}")`).join('; ') : 'none'}\n\nAUTHOR: ${me.name || me.email} (${me.role})\nNOW: ${new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })} Florida time\n\nREPORT CONVERSATION:\n${convo}` },
+      { type: 'text', text: `THE HOUSE (identified by the system from "${known[0].why}"; use this job_number): job | Buildertrend name | address | status | team | manual steps already done\n${jobsText}\n\nAUTHOR: ${me.name || me.email} (${me.role})\nNOW: ${new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })} Florida time\n\nREPORT CONVERSATION:\n${convo}` },
     ];
 
     const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
@@ -164,14 +182,16 @@ Deno.serve(async (req) => {
       max_tokens: 16000,
       system: [{ type: 'text', text: INSTRUCTIONS, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content }],
-      output_config: { effort: 'medium', format: { type: 'json_schema', schema: SCHEMA } },
+      output_config: { effort: Deno.env.get('OPS_FIELD_EFFORT') || 'low', format: { type: 'json_schema', schema: SCHEMA } },
     };
     let resp: Any = null, lastErr: unknown = null;
-    for (const model of MODELS) {
-      try { resp = await anthropic.messages.create({ ...params, model, fallbacks: 'default' } as Any, { headers: { 'anthropic-beta': 'server-side-fallback-2026-07-01' } }); break; }
+    const models = body.model_test && me.role === 'admin' ? [String(body.model_test)] : MODELS;
+    for (const model of models) {
+      const p2 = /haiku/.test(model) ? { ...params, output_config: { format: params.output_config.format } } : params;   // Haiku has no effort setting
+      try { resp = await anthropic.messages.create({ ...p2, model, fallbacks: 'default' } as Any, { headers: { 'anthropic-beta': 'server-side-fallback-2026-07-01' } }); break; }
       catch (e) {
         const s = (e as Any)?.status, msg = String((e as Any)?.message || '');
-        if (s === 400 && /fallback/i.test(msg)) { resp = await anthropic.messages.create({ ...params, model } as Any); break; }
+        if (s === 400 && /fallback/i.test(msg)) { resp = await anthropic.messages.create({ ...p2, model } as Any); break; }
         if (s === 404 || s === 403) { lastErr = e; continue; }
         throw e;
       }
@@ -191,7 +211,7 @@ Deno.serve(async (req) => {
 
     const saved = await sb.rpc('ops_field_save', { p_id: reportId, p_messages: messages, p_status: status, p_draft: draft, p_job: job, p_channel: body.channel || 'portal' });
     if (saved.error) return json({ report_id: reportId, status: 'pending', error: saved.error.message }, 400);
-    return json({ report_id: saved.data, status, reply: say, question: out.question, draft, photos_seen: urls.length, candidates: cands });
+    return json({ report_id: saved.data, status, reply: say, question: out.question, draft, photos_seen: urls.length, usage: resp.usage, model: resp.model });
   } catch (e) {
     const status = (e as Any)?.status;
     return json({ report_id: savedId, status: savedId ? 'pending' : undefined, error: (status === 429 ? 'Muitos envios agora — tente em um minuto.' : String((e as Error).message || e)) + (savedId ? ' (report saved — it can be sent again)' : '') }, status === 429 ? 429 : 500);

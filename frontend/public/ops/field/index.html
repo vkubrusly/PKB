@@ -128,7 +128,7 @@ main{max-width:720px;margin:0 auto;padding:14px 16px calc(210px + env(safe-area-
   <input type="file" id="files" accept="image/*,video/*,audio/*" multiple hidden>
 </div></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="/ops/field/supabase.js"></script>
 <script>
 (function(){
 const SB_URL = 'https://fvjknahpmihueyeasgbx.supabase.co', SB_KEY = 'sb_publishable_wr3657pmQAxZy2FEmLQ-RQ_pAPxEm7J';
@@ -176,13 +176,13 @@ async function call(body){
 }
 
 /* ---------- photos: shrink before upload (max 2000 px, JPEG) ---------- */
-async function shrink(file){
+async function shrink(file, max = 2000, qual = 0.85){
   try {
     const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
-    const k = Math.min(1, 2000 / Math.max(bmp.width, bmp.height));
+    const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
     const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
     c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
-    const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.85));
+    const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', qual));
     return blob || file;
   } catch(e) { return file; }
 }
@@ -198,10 +198,10 @@ async function videoFrames(file, vi){
   for (let i = 0; i < n; i++) {
     const t = dur ? Math.min(dur - 0.1, (i + 0.5) * dur / n) : 0;
     await new Promise(res => { v.onseeked = res; v.currentTime = t; setTimeout(res, 4000); });
-    const k = Math.min(1, 1600 / Math.max(v.videoWidth || 1, v.videoHeight || 1));
+    const k = Math.min(1, 1024 / Math.max(v.videoWidth || 1, v.videoHeight || 1));   // frames are only for the AI
     const c = document.createElement('canvas'); c.width = Math.round((v.videoWidth || 640) * k); c.height = Math.round((v.videoHeight || 360) * k);
     c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
-    const b = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.8));
+    const b = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.72));
     if (b) frames.push({ kind: 'photo', from_video: true, blob: b, mime: 'image/jpeg', name: `video${vi}_frame${i + 1}_${Math.round(t)}s.jpg`, url: URL.createObjectURL(b) });
   }
   return { frames, secs: Math.round(dur), url };
@@ -209,7 +209,8 @@ async function videoFrames(file, vi){
 $('photoBtn').onclick = () => $('files').click();
 $('files').onchange = async e => {
   for (const f of [...e.target.files]) {
-    if (f.type.startsWith('image/')) { const b = await shrink(f); pending.push({ kind: 'photo', blob: b, mime: 'image/jpeg', name: f.name.replace(/\.\w+$/, '') + '.jpg', url: URL.createObjectURL(b) }); }
+    // full photo for Buildertrend + a small copy (1024 px) that is all the AI needs — cheaper
+    if (f.type.startsWith('image/')) { const b = await shrink(f); const ai = await shrink(f, 1024, 0.72); pending.push({ kind: 'photo', blob: b, aiBlob: ai, mime: 'image/jpeg', name: f.name.replace(/\.\w+$/, '') + '.jpg', url: URL.createObjectURL(b) }); }
     else if (f.type.startsWith('audio/')) pending.push({ kind: 'audio', blob: f, mime: f.type, name: f.name, url: URL.createObjectURL(f) });
     else if (f.type.startsWith('video/')) {
       const vi = pending.filter(p => p.kind === 'video' || p.videoOnly).length + 1;
@@ -330,7 +331,7 @@ async function send(){
     id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2)),
     uid, created: new Date().toISOString(), report_id: reportId,
     text: transcript && text.includes(transcript) ? text.replace(transcript, '').trim() : text, transcript,
-    files: items.flatMap(it => it.frames ? [...(it.blob ? [it] : []), ...it.frames] : [it]).map(f => ({ kind: f.kind, blob: f.blob, mime: f.mime, name: f.name, from_video: !!f.from_video, path: null })),
+    files: items.flatMap(it => it.frames ? [...(it.blob ? [it] : []), ...it.frames] : [it]).map(f => ({ kind: f.kind, blob: f.blob, aiBlob: f.aiBlob || null, mime: f.mime, name: f.name, from_video: !!f.from_video, path: null, ai_path: null })),
     tries: 0, error: null,
   };
   await obPut(entry);                       // saved on the phone before anything goes over the network
@@ -357,12 +358,18 @@ async function deliver(entry){
     for (const [i, f] of entry.files.entries()) {
       if (f.path) continue;
       const path = `${folder}/${entry.id}_${i}_${f.name.replace(/[^\w.-]+/g, '_')}`;
+      if (f.aiBlob && !f.ai_path) {
+        const aiPath = path.replace(/(\.\w+)?$/, '_ai.jpg');
+        const r1 = await sb.storage.from('field-media').upload(aiPath, f.aiBlob, { contentType: 'image/jpeg', upsert: true });
+        if (r1.error) throw new Error('upload: ' + r1.error.message);
+        f.ai_path = aiPath;
+      }
       const { error } = await sb.storage.from('field-media').upload(path, f.blob, { contentType: f.mime, upsert: true });
       if (error) throw new Error('upload: ' + error.message);
       f.path = path; await obPut(entry);   // progress survives a reload
       say(`Uploading ${entry.files.filter(x => x.path).length}/${entry.files.length}…`, 'pending');
     }
-    const media = entry.files.map(f => ({ path: f.path, kind: f.kind, mime: f.mime, name: f.name, ...(f.from_video ? { from_video: true } : {}) }));
+    const media = entry.files.map(f => ({ path: f.path, kind: f.kind, mime: f.mime, name: f.name, ...(f.ai_path ? { ai_path: f.ai_path } : {}), ...(f.from_video ? { from_video: true } : {}) }));
     say('PKB Ops is reading the report' + (media.some(m => m.from_video) ? ', the photos and the video' : media.some(m => m.kind === 'photo') ? ' and the photos' : '') + '…', 'pending');
     const r = await call({ report_id: entry.report_id, client_id: entry.id, text: entry.text, transcript: entry.transcript, media, retry: entry.saved_on_server || undefined });
     await obDel(entry.id); delete live[entry.id];
