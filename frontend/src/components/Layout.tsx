@@ -16,11 +16,11 @@ const NAV = [
 
 export function Layout() {
   const { session, orgs, activeOrg, setActiveOrg, signOut } = useAuth();
-  // PKB Ops (budget.pkbhomes.com/ops/) — shown only to the partners (ops.portal_users).
+  // PKB Ops (budget.pkbhomes.com/ops/) — shown to partners and project managers (ops.portal_users).
   const [opsAccess, setOpsAccess] = useState(false);
   useEffect(() => {
     if (!session) { setOpsAccess(false); return; }
-    supabase.rpc('ops_me').then(({ data }) => setOpsAccess(!!data));
+    supabase.rpc('ops_me').then(({ data }) => setOpsAccess(['admin', 'partner', 'pm'].includes((data as { role?: string } | null)?.role ?? '')));
   }, [session]);
 
   return (

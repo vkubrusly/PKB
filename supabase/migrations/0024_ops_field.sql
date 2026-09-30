@@ -12,7 +12,7 @@
 -- =============================================================================
 
 alter table ops.portal_users drop constraint if exists portal_users_role_check;
-alter table ops.portal_users add constraint portal_users_role_check check (role in ('admin', 'partner', 'field'));
+alter table ops.portal_users add constraint portal_users_role_check check (role in ('admin', 'partner', 'pm', 'field'));
 alter table ops.portal_users add column if not exists bt_name text;
 insert into ops.portal_users (email, name, role, bt_name) values
   ('superintendent@pkbhomes.com', 'Raphael Martins', 'field', 'Raphael Martins'),
@@ -36,7 +36,7 @@ create or replace function ops.require_partner() returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
 declare me jsonb := public.ops_me();
 begin
-  if me is null or me->>'role' not in ('admin', 'partner') then raise exception 'PKB Ops: access is limited to the partners' using errcode = '42501'; end if;
+  if me is null or me->>'role' not in ('admin', 'partner', 'pm') then raise exception 'PKB Ops: access is limited to the partners and project managers' using errcode = '42501'; end if;
   return me;
 end $$;
 
@@ -86,7 +86,7 @@ declare me jsonb := ops.require_member(); rep jsonb;
 begin
   if p_report_id is not null then
     select to_jsonb(r) - 'org_id' into rep from ops.field_reports r
-    where r.id = p_report_id and (r.author_email = me->>'email' or me->>'role' in ('admin', 'partner'));
+    where r.id = p_report_id and (r.author_email = me->>'email' or me->>'role' in ('admin', 'partner', 'pm'));
   end if;
   return jsonb_build_object(
     'me', me,
@@ -112,7 +112,7 @@ begin
   else
     update ops.field_reports set messages = coalesce(p_messages, messages), status = coalesce(p_status, status), draft = coalesce(p_draft, draft),
       job_id = coalesce(job, job_id), updated_at = now()
-    where id = rid and status not in ('confirmed', 'cancelled') and (author_email = me->>'email' or me->>'role' in ('admin', 'partner'));
+    where id = rid and status not in ('confirmed', 'cancelled') and (author_email = me->>'email' or me->>'role' in ('admin', 'partner', 'pm'));
     if not found then raise exception 'report % not found or closed', rid; end if;
   end if;
   return rid;
@@ -126,7 +126,7 @@ declare
   r ops.field_reports; d jsonb; job uuid; photos jsonb; notify text[]; mid uuid; s jsonb; n int := 0;
 begin
   select * into r from ops.field_reports where id = p_id for update;
-  if r.id is null or (r.author_email <> me->>'email' and me->>'role' not in ('admin', 'partner')) then raise exception 'report % not found', p_id; end if;
+  if r.id is null or (r.author_email <> me->>'email' and me->>'role' not in ('admin', 'partner', 'pm')) then raise exception 'report % not found', p_id; end if;
   if r.status <> 'draft' then return jsonb_build_object('status', r.status); end if;
   d := r.draft;
   job := coalesce(r.job_id, ops.job_by_number(d->>'job_number'));
@@ -167,7 +167,7 @@ language plpgsql security definer set search_path = '' as $$
 declare me jsonb := ops.require_member();
 begin
   update ops.field_reports set status = 'cancelled', updated_at = now()
-  where id = p_id and status not in ('confirmed', 'cancelled') and (author_email = me->>'email' or me->>'role' in ('admin', 'partner'));
+  where id = p_id and status not in ('confirmed', 'cancelled') and (author_email = me->>'email' or me->>'role' in ('admin', 'partner', 'pm'));
   return jsonb_build_object('status', 'cancelled');
 end $$;
 
