@@ -74,7 +74,7 @@ create or replace function ops.require_partner() returns jsonb
 language plpgsql stable security definer set search_path = '' as $$
 declare me jsonb := public.ops_me();
 begin
-  if me is null then raise exception 'PKB Ops: access is limited to the partners' using errcode = '42501'; end if;
+  if me is null or me->>'role' not in ('admin', 'partner', 'pm') then raise exception 'PKB Ops: access is limited to the partners and project managers' using errcode = '42501'; end if;
   return me;
 end $$;
 

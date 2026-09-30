@@ -152,7 +152,7 @@ async function start(){
   uid = session.user.id;
   const { data, error } = await sb.rpc('ops_me');
   if (error || !data) { gmsg(`PKB Field is for the PKB team (signed in as ${session.user.email}). Ask Victor for access.`, true); $('glogin').hidden = true; return; }
-  me = data; $('whoami').textContent = me.name || me.email; $('portal').hidden = !['admin','partner'].includes(me.role);
+  me = data; $('whoami').textContent = me.name || me.email; $('portal').hidden = !['admin','partner','pm'].includes(me.role);
   $('gate').hidden = true;
   fetch('/ops/field/manual.json').then(r => r.ok ? r.json() : null).then(m => { manual = m; }).catch(() => {});
   loadRecent();
