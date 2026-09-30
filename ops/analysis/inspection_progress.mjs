@@ -168,7 +168,8 @@ export function jobProgress(job, checklists, bench, asOf = new Date()) {
   };
 }
 
-async function main() {
+// Progress for every issued building permit, from the database (used by the CLI and the rules).
+export async function progressAll() {
   const { sql } = await import('../scripts/sb.mjs');
   const rows = await sql(`
     select j.job_number, c.portal, c.issued_at, c.inspection_plan, i.type, i.status, i.passed, i.failed, i.requested_at, i.scheduled_at, i.actual_at, i.comments
@@ -188,6 +189,11 @@ async function main() {
   const bench = benchmarks(Object.values(jobs), cls);
   const out = { benchmarks: bench, jobs: {} };
   for (const j of Object.values(jobs)) out.jobs[j.job_number] = jobProgress(j, cls, bench);
+  return out;
+}
+
+async function main() {
+  const out = await progressAll();
   const i = process.argv.indexOf('--json');
   if (i > 0) writeFileSync(process.argv[i + 1], JSON.stringify(out, null, 1));
   else console.log(JSON.stringify(out, null, 1));
