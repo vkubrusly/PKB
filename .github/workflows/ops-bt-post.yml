@@ -1,0 +1,45 @@
+name: PKB Ops — post Buildertrend Daily Logs (hourly)
+
+# Field reports confirmed in budget.pkbhomes.com/ops/field/ (and any other queued Daily Log)
+# go to Buildertrend within the hour instead of waiting for the 6 AM / 1 PM round.
+# Opens the browser only when something is queued. Gated by the repository variable OPS_BT_POST.
+
+on:
+  schedule:
+    - cron: '25 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ops-bt-post
+  cancel-in-progress: false
+
+jobs:
+  post:
+    if: vars.OPS_BT_POST == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults: { run: { working-directory: ops } }
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      BT_COOKIES_FILE: ${{ github.workspace }}/bt_cookies.json
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: ops/package-lock.json }
+      - run: npm ci
+        env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' }
+      - name: Anything queued?
+        id: q
+        run: echo "n=$(node -e "import('./scripts/sb.mjs').then(async ({sql}) => console.log((await sql(\"select count(*)::int n from ops.outbound_messages where channel = 'bt_daily_log' and status = 'draft'\"))[0].n))")" >> "$GITHUB_OUTPUT"
+      - name: Buildertrend session
+        if: steps.q.outputs.n != '0'
+        env: { BT_COOKIES_JSON: '${{ secrets.BT_COOKIES_JSON }}' }
+        run: |
+          if [ -z "$BT_COOKIES_JSON" ]; then echo "::warning::BT_COOKIES_JSON not set"; exit 1; fi
+          printf '%s' "$BT_COOKIES_JSON" > "$BT_COOKIES_FILE"
+      - if: steps.q.outputs.n != '0'
+        run: npx playwright install --with-deps chromium
+      - name: Post
+        if: steps.q.outputs.n != '0'
+        env: { OPS_BT_POST: 'true' }
+        run: node rules/post_bt_logs.mjs

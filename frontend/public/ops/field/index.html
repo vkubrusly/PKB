@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#2E2E30">
+<title>PKB Field</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+:root{
+  --bg:#F6F5F1; --surface:#FFFFFF; --surface-2:#EFEDE6; --ink:#2E2E30; --ink-2:#5E5D58; --ink-3:#8C8A83; --line:#E2DFD5;
+  --gold:#E0BC52; --gold-ink:#94761F; --gold-soft:#F6ECCD; --red:#B8402F; --red-soft:#F7E1DC; --green:#2F7A4B; --green-soft:#DDEFE2; --amber:#A96B12; --amber-soft:#F8EACB;
+  --bar:#2E2E30; --shadow:0 1px 2px rgba(46,46,48,.06),0 4px 16px rgba(46,46,48,.05);
+  --f-brand:"Montserrat",system-ui,sans-serif; --f-body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{--bg:#1C1C1E;--surface:#262628;--surface-2:#303033;--ink:#EDEBE4;--ink-2:#BDBAB1;--ink-3:#8E8B83;--line:#3A3A3D;--gold-soft:#3A3322;--gold-ink:#E9C968;--red-soft:#43241F;--green-soft:#1F3627;--amber-soft:#3B2E17;color-scheme:dark}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--f-body);-webkit-text-size-adjust:100%}
+header{position:sticky;top:0;z-index:5;background:var(--bar);color:#F6F5F1;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;display:flex;align-items:center;gap:12px}
+header .brand{font:800 17px var(--f-brand);letter-spacing:.02em;display:flex;align-items:center;gap:8px}
+header .brand i{display:inline-block;width:5px;height:18px;background:var(--gold);border-radius:1px;box-shadow:8px 0 0 var(--gold);margin-right:8px}
+header .brand span{font-weight:600;font-size:12px;letter-spacing:.2em;color:var(--gold)}
+header .who{margin-left:auto;font-size:13px;color:#C9C6BC;text-align:right}
+header .who button{background:none;border:0;color:var(--gold);font:inherit;padding:0 0 0 8px;cursor:pointer}
+main{max-width:720px;margin:0 auto;padding:14px 16px calc(210px + env(safe-area-inset-bottom,0px))}
+.bar{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+.bar h1{font:700 18px var(--f-brand);margin:0;flex:1}
+.btn{font:700 15px var(--f-brand);border:0;border-radius:10px;padding:11px 16px;cursor:pointer;background:var(--gold);color:#2E2E30;min-height:44px}
+.btn.ghost{background:var(--surface-2);color:var(--ink)}
+.btn.small{font-size:13px;padding:7px 12px;min-height:36px}
+.btn:disabled{opacity:.5;cursor:default}
+.hint{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;color:var(--ink-2);font-size:14.5px}
+.hint b{color:var(--ink)}
+.thread{display:flex;flex-direction:column;gap:12px;margin-top:12px}
+.msg{max-width:92%;padding:10px 13px;border-radius:14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.u{align-self:flex-end;background:var(--ink);color:var(--bg);border-bottom-right-radius:4px}
+.msg.a{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px}
+.msg.a.pending{color:var(--ink-3)}
+.msg.a.err{border-color:var(--red);color:var(--red)}
+.msg .tr{display:block;margin-top:6px;font-size:13.5px;opacity:.85;font-style:italic}
+.thumbs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.thumbs img{width:64px;height:64px;object-fit:cover;border-radius:8px;display:block}
+.msg audio{display:block;margin-top:8px;max-width:100%}
+.draft{align-self:stretch;background:var(--surface);border:2px solid var(--gold);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--shadow)}
+.draft .k{font:700 11.5px var(--f-brand);letter-spacing:.1em;text-transform:uppercase;color:var(--gold-ink)}
+.draft .job{font:700 16px var(--f-brand)}
+.draft label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:var(--ink-2)}
+.draft input,.draft textarea{font:inherit;font-size:15px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%}
+.draft textarea{min-height:150px;resize:vertical}
+.steps{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.steps li{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:baseline;font-size:14px;background:var(--bg);border-radius:8px;padding:7px 10px}
+.steps .n{font:700 13px var(--f-brand);color:var(--gold-ink)}
+.steps .ev{grid-column:2;color:var(--ink-3);font-size:13px}
+.pill{display:inline-block;font:600 11.5px var(--f-body);padding:1px 8px;border-radius:99px;margin-left:6px}
+.p-done{background:var(--green-soft);color:var(--green)} .p-prog{background:var(--amber-soft);color:var(--amber)} .p-red{background:var(--red-soft);color:var(--red)}
+.issues{margin:0;padding-left:18px;color:var(--red);font-size:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.st{font-size:14px;color:var(--ink-2)}
+.recent{margin-top:26px}
+.recent h2{font:700 13px var(--f-brand);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin:0 0 8px}
+.recent button.it{display:flex;width:100%;text-align:left;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:6px;font:inherit;color:var(--ink);cursor:pointer}
+.recent .it .jn{font:700 14px var(--f-brand);color:var(--gold-ink);min-width:3.2em}
+.recent .it .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+.composer{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));z-index:6}
+.composer .in{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
+.tray{display:flex;gap:6px;overflow-x:auto}
+.tray .t{position:relative;flex:none}
+.tray img{width:56px;height:56px;object-fit:cover;border-radius:8px;display:block}
+.tray .aud{width:56px;height:56px;border-radius:8px;background:var(--gold-soft);color:var(--gold-ink);display:flex;align-items:center;justify-content:center;font:700 12px var(--f-brand)}
+.tray .x{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:0;background:var(--ink);color:var(--bg);font-size:13px;line-height:22px;padding:0;cursor:pointer}
+.live{font-size:14px;color:var(--ink-2);background:var(--gold-soft);border-radius:8px;padding:8px 10px;max-height:6em;overflow:auto}
+.live b{color:var(--red)}
+.crow{display:flex;gap:8px;align-items:flex-end}
+.crow textarea{flex:1;min-width:0;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-height:46px;max-height:140px;resize:none}
+.ico{width:46px;height:46px;flex:none;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.ico.rec{background:var(--red);color:#fff;border-color:var(--red)}
+.gate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.gcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:24px;width:min(100%,380px);display:flex;flex-direction:column;gap:12px}
+.gcard h1{font:800 22px var(--f-brand);margin:0}
+.gcard p{margin:0;color:var(--ink-2)} .gcard p.err{color:var(--red)}
+.gcard form{display:flex;flex-direction:column;gap:10px}
+.gcard label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--ink-2);font-weight:600}
+.gcard input{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 11px}
+.gcard .small{font-size:13px;color:var(--ink-3)} .gcard a{color:var(--gold-ink)}
+</style>
+</head>
+<body>
+<div class="gate" id="gate"><div class="gcard">
+  <h1>PKB Field</h1>
+  <p id="gmsg">Loading…</p>
+  <form id="glogin" hidden>
+    <label>E-mail<input type="email" id="gemail" autocomplete="email" required></label>
+    <label>Password<input type="password" id="gpass" autocomplete="current-password" required></label>
+    <button class="btn" type="submit" id="gbtn">Sign in</button>
+  </form>
+  <p class="small" id="gfirst" hidden>First time? <a href="/">Create your account</a> with your company e-mail, confirm it from the link you receive, then come back here.</p>
+</div></div>
+
+<header>
+  <div class="brand"><i></i>PKB <span>FIELD</span></div>
+  <div class="who"><span id="whoami"></span><button type="button" id="signout">Sign out</button><br><a id="portal" href="/ops/" style="color:var(--gold)" hidden>Portal</a></div>
+</header>
+
+<main>
+  <div class="bar"><h1 id="title">New report</h1><button class="btn ghost small" type="button" id="newRep" hidden>New report</button></div>
+  <div class="hint" id="hint">Send photos, a voice note or text about a house. <b>Always say the house number or the address</b> (e.g. “0037” or “8188 N Hale Rd”). PKB Ops writes the Buildertrend Daily Log and updates the house checklist — you review and confirm.</div>
+  <div class="thread" id="thread"></div>
+  <div class="recent" id="recentBox" hidden><h2>Recent reports</h2><div id="recent"></div></div>
+</main>
+
+<div class="composer"><div class="in">
+  <div class="tray" id="tray" hidden></div>
+  <div class="live" id="live" hidden></div>
+  <div class="crow">
+    <button class="ico" type="button" id="photoBtn" aria-label="Add photos">📷</button>
+    <button class="ico" type="button" id="micBtn" aria-label="Record audio">🎤</button>
+    <textarea id="text" rows="1" placeholder="House + what was done today…"></textarea>
+    <button class="btn" type="button" id="send">Send</button>
+  </div>
+  <input type="file" id="files" accept="image/*,audio/*" multiple hidden>
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+(function(){
+const SB_URL = 'https://fvjknahpmihueyeasgbx.supabase.co', SB_KEY = 'sb_publishable_wr3657pmQAxZy2FEmLQ-RQ_pAPxEm7J';
+const sb = window.supabase.createClient(SB_URL, SB_KEY);
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let me = null, uid = null, reportId = null, busy = false;
+let pending = [];   // [{kind:'photo'|'audio', blob, name, mime, url, transcript?}]
+let manual = null;
+
+/* ---------- auth ---------- */
+const gmsg = (t, err) => { $('gmsg').textContent = t; $('gmsg').className = err ? 'err' : ''; };
+function login(){ gmsg('Sign in with your PKB account.'); $('glogin').hidden = false; $('gfirst').hidden = false; }
+$('glogin').addEventListener('submit', async e => {
+  e.preventDefault(); $('gbtn').disabled = true; gmsg('Signing in…');
+  const { error } = await sb.auth.signInWithPassword({ email: $('gemail').value.trim(), password: $('gpass').value });
+  $('gbtn').disabled = false;
+  if (error) gmsg(error.message, true); else { $('glogin').hidden = true; $('gfirst').hidden = true; start(); }
+});
+$('signout').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+async function start(){
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return login();
+  uid = session.user.id;
+  const { data, error } = await sb.rpc('ops_me');
+  if (error || !data) { gmsg(`PKB Field is for the PKB team (signed in as ${session.user.email}). Ask Victor for access.`, true); $('glogin').hidden = true; return; }
+  me = data; $('whoami').textContent = me.name || me.email; $('portal').hidden = !['admin','partner'].includes(me.role);
+  $('gate').hidden = true;
+  fetch('/ops/field/manual.json').then(r => r.ok ? r.json() : null).then(m => { manual = m; }).catch(() => {});
+  loadRecent();
+}
+
+/* ---------- api ---------- */
+async function call(body){
+  const { data: { session } } = await sb.auth.getSession();
+  const r = await fetch(SB_URL + '/functions/v1/ops-field', { method: 'POST', headers: { 'content-type': 'application/json', apikey: SB_KEY, Authorization: 'Bearer ' + session.access_token }, body: JSON.stringify(body) });
+  const j = await r.json().catch(() => ({ error: 'HTTP ' + r.status }));
+  if (!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status);
+  return j;
+}
+
+/* ---------- photos: shrink before upload (max 2000 px, JPEG) ---------- */
+async function shrink(file){
+  try {
+    const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
+    const k = Math.min(1, 2000 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.85));
+    return blob || file;
+  } catch(e) { return file; }
+}
+$('photoBtn').onclick = () => $('files').click();
+$('files').onchange = async e => {
+  for (const f of [...e.target.files]) {
+    if (f.type.startsWith('image/')) { const b = await shrink(f); pending.push({ kind: 'photo', blob: b, mime: 'image/jpeg', name: f.name.replace(/\.\w+$/, '') + '.jpg', url: URL.createObjectURL(b) }); }
+    else if (f.type.startsWith('audio/')) pending.push({ kind: 'audio', blob: f, mime: f.type, name: f.name, url: URL.createObjectURL(f) });
+  }
+  e.target.value = ''; renderTray();
+};
+function renderTray(){
+  $('tray').hidden = !pending.length;
+  $('tray').innerHTML = pending.map((p, i) => `<div class="t">${p.kind === 'photo' ? `<img src="${p.url}" alt="">` : `<div class="aud">🎤 ${p.secs ? p.secs + 's' : 'audio'}</div>`}<button class="x" type="button" data-i="${i}" aria-label="Remove">×</button></div>`).join('');
+  $('tray').querySelectorAll('.x').forEach(b => b.onclick = () => { pending.splice(+b.dataset.i, 1); renderTray(); });
+}
+
+/* ---------- voice: record + live transcription (browser speech recognition) ---------- */
+let rec = null, recog = null, chunks = [], finalText = '', t0 = 0;
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+$('micBtn').onclick = async () => {
+  if (rec) { stopRec(); return; }
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+  catch(e) { alert('Microphone not available: ' + e.message); return; }
+  chunks = []; finalText = ''; t0 = Date.now();
+  rec = new MediaRecorder(stream);
+  rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+  rec.onstop = () => {
+    stream.getTracks().forEach(t => t.stop());
+    const mime = rec.mimeType || 'audio/webm';
+    const blob = new Blob(chunks, { type: mime });
+    const ext = /mp4|aac/.test(mime) ? 'm4a' : /ogg/.test(mime) ? 'ogg' : 'webm';
+    pending.push({ kind: 'audio', blob, mime: mime.split(';')[0], name: `audio_${Date.now()}.${ext}`, url: URL.createObjectURL(blob), transcript: finalText.trim(), secs: Math.round((Date.now() - t0) / 1000) });
+    rec = null; $('micBtn').classList.remove('rec'); $('micBtn').textContent = '🎤';
+    if (finalText.trim()) $('text').value = ($('text').value ? $('text').value + '\n' : '') + finalText.trim();
+    $('live').hidden = true; renderTray();
+  };
+  rec.start();
+  $('micBtn').classList.add('rec'); $('micBtn').textContent = '■';
+  $('live').hidden = false; $('live').innerHTML = '<b>● Recording</b> — speak; tap ■ to stop.';
+  if (SR) {
+    recog = new SR(); recog.lang = 'pt-BR'; recog.continuous = true; recog.interimResults = true;
+    recog.onresult = e => { let interim = ''; for (let i = e.resultIndex; i < e.results.length; i++) { const t = e.results[i][0].transcript; if (e.results[i].isFinal) finalText += t + ' '; else interim += t; } $('live').innerHTML = '<b>● Recording</b> ' + esc(finalText + interim); };
+    recog.onend = () => { if (rec && rec.state === 'recording') try { recog.start(); } catch(e) {} };
+    try { recog.start(); } catch(e) {}
+  }
+};
+function stopRec(){ try { recog && recog.stop(); } catch(e) {} recog = null; if (rec && rec.state !== 'inactive') rec.stop(); }
+
+/* ---------- thread ---------- */
+function bubbleUser(text, media, transcript){
+  const d = document.createElement('div'); d.className = 'msg u';
+  d.innerHTML = `${esc(text)}${media.filter(m => m.kind === 'photo').length ? `<div class="thumbs">${media.filter(m => m.kind === 'photo').map(m => `<img src="${m.url}" alt="">`).join('')}</div>` : ''}${media.filter(m => m.kind === 'audio').map(m => `<audio controls src="${m.url}"></audio>`).join('')}`;
+  $('thread').appendChild(d); d.scrollIntoView({ block: 'end' });
+}
+function bubbleAI(text, cls){ const d = document.createElement('div'); d.className = 'msg a ' + (cls || ''); d.textContent = text; $('thread').appendChild(d); d.scrollIntoView({ block: 'end' }); return d; }
+const stepName = n => { if (!manual) return ''; for (const ph of manual.phases) for (const s of ph.steps) if (String(s.n) === String(n)) return s.name; return ''; };
+function draftCard(id, dr){
+  const c = document.createElement('div'); c.className = 'draft';
+  c.innerHTML = `<span class="k">Daily Log draft · review and confirm</span>
+    <div class="job">${esc(dr.job_number)} · ${esc(String(dr.address || '').split(',')[0])}</div>
+    <label>Title<input maxlength="50" value="${esc(dr.daily_log.title)}"></label>
+    <label>Notes<textarea>${esc(dr.daily_log.notes)}</textarea></label>
+    ${(dr.steps || []).length ? `<div><span class="k">Checklist (field manual)</span><ul class="steps">${dr.steps.map(s => `<li><span class="n">${esc(s.n)}</span><span>${esc(stepName(s.n) || 'Step ' + s.n)}<span class="pill ${s.status === 'done' ? 'p-done' : 'p-prog'}">${s.status === 'done' ? 'done' : 'in progress'}</span></span><span class="ev">${esc(s.evidence)}</span></li>`).join('')}</ul></div>` : ''}
+    ${(dr.issues || []).length ? `<div><span class="k">Issues</span><ul class="issues">${dr.issues.map(i => `<li>${esc(i)}</li>`).join('')}</ul></div>` : ''}
+    <div class="row"><button class="btn" type="button">Confirm &amp; post</button><button class="btn ghost" type="button">Discard</button><span class="st"></span></div>`;
+  const [ok, no] = c.querySelectorAll('button'), st = c.querySelector('.st');
+  ok.onclick = async () => {
+    ok.disabled = no.disabled = true; st.textContent = 'Saving…';
+    try {
+      const r = await call({ confirm: id, title: c.querySelector('input').value, notes: c.querySelector('textarea').value });
+      st.textContent = `✓ Queued for Buildertrend${r.photos ? ` with ${r.photos} photo(s)` : ''}${r.steps ? ` · ${r.steps} checklist step(s) updated` : ''}.`;
+      ok.hidden = no.hidden = true; c.querySelectorAll('input,textarea').forEach(x => x.disabled = true); closeReport(); loadRecent();
+    } catch(e) { st.textContent = 'Error: ' + e.message; ok.disabled = no.disabled = false; }
+  };
+  no.onclick = async () => { ok.disabled = no.disabled = true; try { await call({ cancel: id }); st.textContent = 'Discarded.'; ok.hidden = no.hidden = true; closeReport(); loadRecent(); } catch(e) { st.textContent = 'Error: ' + e.message; ok.disabled = no.disabled = false; } };
+  $('thread').appendChild(c); c.scrollIntoView({ block: 'start' });
+}
+function closeReport(){ reportId = null; $('newRep').hidden = true; $('title').textContent = 'New report'; }
+$('newRep').onclick = () => { closeReport(); $('thread').innerHTML = ''; $('hint').hidden = false; };
+
+/* ---------- send ---------- */
+$('send').onclick = send;
+$('text').addEventListener('input', e => { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 140) + 'px'; });
+async function send(){
+  if (busy) return;
+  if (rec) stopRec();
+  const text = $('text').value.trim();
+  if (!text && !pending.length) return;
+  busy = true; $('send').disabled = true; $('hint').hidden = true;
+  const items = pending; pending = []; renderTray(); $('text').value = ''; $('text').style.height = '';
+  bubbleUser(text, items);
+  const wait = bubbleAI(items.length ? `Uploading ${items.length} file(s)…` : 'Reading…', 'pending');
+  try {
+    const media = [];
+    const folder = `${uid}/${new Date().toISOString().slice(0, 10)}`;
+    for (const [i, it] of items.entries()) {
+      const path = `${folder}/${Date.now()}_${i}_${it.name.replace(/[^\w.-]+/g, '_')}`;
+      const { error } = await sb.storage.from('field-media').upload(path, it.blob, { contentType: it.mime, upsert: false });
+      if (error) throw new Error('upload: ' + error.message);
+      media.push({ path, kind: it.kind, mime: it.mime, name: it.name });
+      wait.textContent = `Uploading ${i + 1}/${items.length}…`;
+    }
+    const transcript = items.filter(i => i.kind === 'audio' && i.transcript).map(i => i.transcript).join(' ');
+    wait.textContent = 'PKB Ops is reading the report' + (media.some(m => m.kind === 'photo') ? ' and the photos' : '') + '…';
+    const r = await call({ report_id: reportId, text: transcript && text.includes(transcript) ? text.replace(transcript, '').trim() : text, transcript, media });
+    reportId = r.report_id; $('newRep').hidden = false; $('title').textContent = 'Report #' + reportId;
+    wait.classList.remove('pending'); wait.textContent = r.reply || '';
+    if (r.status === 'draft' && r.draft) draftCard(r.report_id, r.draft);
+  } catch(e) {
+    wait.classList.remove('pending'); wait.classList.add('err'); wait.textContent = 'Could not send: ' + e.message;
+    pending = items.concat(pending); renderTray();
+  } finally { busy = false; $('send').disabled = false; }
+}
+
+/* ---------- recent ---------- */
+const ST = { needs_job: ['Which house?', 'p-red'], open: ['Open', 'p-prog'], draft: ['To confirm', 'p-prog'], confirmed: ['Confirmed', 'p-done'], cancelled: ['Discarded', ''] };
+async function loadRecent(){
+  const { data, error } = await sb.rpc('ops_field_reports', { p_limit: 15 });
+  if (error || !data) return;
+  $('recentBox').hidden = !data.length;
+  $('recent').innerHTML = data.map(r => { const [t, c] = ST[r.status] || [r.status, '']; const last = (r.messages || []).filter(m => m.from === 'user').pop(); return `<button type="button" class="it" data-id="${r.id}"><span class="jn">${esc(r.job_number || '—')}</span><span class="t">${esc((r.draft && r.draft.daily_log && r.draft.daily_log.title) || (last && (last.text || last.transcript)) || 'Photos')}</span><span class="pill ${c}">${t}${r.status === 'confirmed' && r.daily_log_status === 'sent' ? ' · posted' : ''}</span></button>`; }).join('');
+  $('recent').querySelectorAll('.it').forEach(b => b.onclick = () => openReport(data.find(r => String(r.id) === b.dataset.id)));
+}
+async function openReport(r){
+  $('thread').innerHTML = ''; $('hint').hidden = true;
+  const open = !['confirmed', 'cancelled'].includes(r.status);
+  reportId = open ? r.id : null; $('newRep').hidden = false; $('title').textContent = 'Report #' + r.id;
+  const paths = (r.messages || []).flatMap(m => (m.media || []).map(x => x.path));
+  const signed = {};
+  if (paths.length) { const { data } = await sb.storage.from('field-media').createSignedUrls(paths, 3600); (data || []).forEach(d => { signed[d.path] = d.signedUrl; }); }
+  for (const m of r.messages || []) {
+    if (m.from === 'assistant') bubbleAI(m.text);
+    else bubbleUser([m.text, m.transcript && !String(m.text || '').includes(m.transcript) ? m.transcript : ''].filter(Boolean).join('\n'), (m.media || []).map(x => ({ ...x, url: signed[x.path] || '' })));
+  }
+  if (r.status === 'draft' && r.draft) draftCard(r.id, r.draft);
+  if (!open) bubbleAI(r.status === 'confirmed' ? `Confirmed${r.daily_log_status === 'sent' ? ' and posted to Buildertrend' : ' — waiting to be posted to Buildertrend'}.` : 'Discarded.');
+}
+
+start().catch(e => gmsg('Could not load: ' + e.message, true));
+})();
+</script>
+</body>
+</html>

@@ -47,3 +47,4 @@ jobs:
           $SB functions deploy market-research --project-ref "$PROJECT_REF"
           $SB functions deploy team --project-ref "$PROJECT_REF"
           $SB functions deploy ops-ask --project-ref "$PROJECT_REF"
+          $SB functions deploy ops-field --project-ref "$PROJECT_REF"
