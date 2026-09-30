@@ -1,0 +1,22 @@
+{
+  "name": "kb-listings",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Kubrusly Basso — listing monitoring: showings, feedback, weekly seller report, market and product suggestions",
+  "scripts": {
+    "migrate": "node scripts/migrate.mjs",
+    "listings": "node scripts/load_listings.mjs",
+    "mail": "python3 collectors/mail/collect_mail.py",
+    "feedback": "node rules/showing_feedback.mjs",
+    "mls": "node collectors/mls/import_csv.mjs",
+    "insights": "node analysis/market_insights.mjs",
+    "report": "node reports/weekly_report.mjs",
+    "test": "python3 collectors/mail/test_showings.py && node --test tests/*.test.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.129.0",
+    "nodemailer": "^6.10.1",
+    "zod": "^4.6.5"
+  }
+}

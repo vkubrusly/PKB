@@ -1,0 +1,28 @@
+{
+  "_note": "Copy to config/listings.json (not committed: seller e-mails/phones). One entry per listing; `node scripts/load_listings.mjs` upserts by MLS number (or address) and records price/status changes. market_filter is optional (default: the listing's own zip).",
+  "listings": [
+    {
+      "mls_number": "OM000000",
+      "address": "1234 SW 1st Ave, Ocala, FL 34471",
+      "city": "Ocala",
+      "county": "Marion",
+      "zip": "34471",
+      "subdivision": "Example Heights",
+      "property_type": "Single Family",
+      "beds": 3,
+      "baths": 2,
+      "sqft": 1650,
+      "lot_sf": 10000,
+      "year_built": 2026,
+      "list_price": 329900,
+      "status": "active",
+      "listed_at": "2026-09-01",
+      "seller_name": "Nome do Cliente",
+      "seller_emails": ["cliente@example.com"],
+      "seller_whatsapp": "+15555550100",
+      "report_channels": ["email"],
+      "report_lang": "pt",
+      "market_filter": { "zips": ["34471", "34473"] }
+    }
+  ]
+}

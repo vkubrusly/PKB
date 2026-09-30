@@ -1,0 +1,141 @@
+name: Kubrusly Basso — listings
+
+# Independent from PKB Ops: its own database (Supabase project of Kubrusly Basso Team), its own
+# mailboxes and secrets (KB_*, LISTING_*, REPLIERS_*). Code in kb-listings/.
+#
+# One hourly schedule; what runs depends on the Florida clock:
+#   every hour        read the listing mailboxes (showings) → feedback requests / follow-ups
+#   07:xx daily       Repliers sync (our listings + market) → MLS CSVs from the mailbox → product suggestions
+#   Monday 08:xx      weekly report per listing (drafts + internal preview; sellers only if KB_REPORT_AUTOSEND)
+#
+# Secrets: KB_SUPABASE_ACCESS_TOKEN, KB_SUPABASE_PROJECT_REF, LISTING_MAIL1_USER, LISTING_MAIL1_PASS,
+#          LISTING_MAIL2_USER, LISTING_MAIL2_PASS, REPLIERS_API_KEY, KB_ANTHROPIC_API_KEY,
+#          KB_LISTINGS_JSON (content of config/listings.json: sellers, e-mails, WhatsApp)
+# Variables: KB_SEND_ENABLED ('true' to send), KB_REPORT_AUTOSEND ('true' = reports go to sellers),
+#          KB_REPORT_PREVIEW_TO, KB_ALERT_TO, KB_AGENT_NAME, KB_AGENT_PHONE, KB_LOGO_URL,
+#          REPLIERS_AGENTS, REPLIERS_OFFICE_ID, KB_MARKET_ZIPS, LISTING_MAIL1_HOST, LISTING_MAIL2_HOST
+# Schedules only run from the repository's default branch.
+
+on:
+  schedule:
+    - cron: '23 * * * *'
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'What to run'
+        type: choice
+        options: [auto, mail, market, report, migrate, backfill]
+        default: auto
+      week_start:
+        description: 'report: Monday of the week (YYYY-MM-DD, blank = last week)'
+        required: false
+      send:
+        description: 'report: e-mail the sellers (needs KB_SEND_ENABLED=true)'
+        type: boolean
+        default: false
+
+concurrency: { group: kb-listings, cancel-in-progress: false }
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults: { run: { working-directory: kb-listings } }
+    env:
+      KB_SUPABASE_ACCESS_TOKEN: ${{ secrets.KB_SUPABASE_ACCESS_TOKEN }}
+      KB_SUPABASE_PROJECT_REF: ${{ secrets.KB_SUPABASE_PROJECT_REF }}
+      LISTING_MAIL1_USER: ${{ secrets.LISTING_MAIL1_USER }}
+      LISTING_MAIL1_PASS: ${{ secrets.LISTING_MAIL1_PASS }}
+      LISTING_MAIL1_HOST: ${{ vars.LISTING_MAIL1_HOST }}
+      LISTING_MAIL2_USER: ${{ secrets.LISTING_MAIL2_USER }}
+      LISTING_MAIL2_PASS: ${{ secrets.LISTING_MAIL2_PASS }}
+      LISTING_MAIL2_HOST: ${{ vars.LISTING_MAIL2_HOST }}
+      REPLIERS_API_KEY: ${{ secrets.REPLIERS_API_KEY }}
+      REPLIERS_AGENTS: ${{ vars.REPLIERS_AGENTS }}
+      REPLIERS_OFFICE_ID: ${{ vars.REPLIERS_OFFICE_ID }}
+      KB_MARKET_ZIPS: ${{ vars.KB_MARKET_ZIPS }}
+      ANTHROPIC_API_KEY: ${{ secrets.KB_ANTHROPIC_API_KEY }}
+      KB_SEND_ENABLED: ${{ vars.KB_SEND_ENABLED || 'false' }}
+      KB_ALERT_TO: ${{ vars.KB_ALERT_TO }}
+      KB_REPORT_PREVIEW_TO: ${{ vars.KB_REPORT_PREVIEW_TO }}
+      KB_AGENT_NAME: ${{ vars.KB_AGENT_NAME }}
+      KB_AGENT_PHONE: ${{ vars.KB_AGENT_PHONE }}
+      KB_LOGO_URL: ${{ vars.KB_LOGO_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Plan
+        id: plan
+        env:
+          TASK: ${{ inputs.task || 'auto' }}
+        run: |
+          h=$(TZ=America/New_York date +%H); dow=$(TZ=America/New_York date +%u)
+          mail=false; market=false; report=false; migrate=false; days=3
+          case "$TASK" in
+            mail) mail=true ;;
+            market) market=true ;;
+            report) report=true ;;
+            migrate) migrate=true ;;
+            backfill) mail=true; market=true; days=120 ;;
+            auto) mail=true; [ "$h" = "07" ] && market=true; [ "$dow" = "1" ] && [ "$h" = "08" ] && report=true ;;
+          esac
+          if [ -z "$KB_SUPABASE_PROJECT_REF" ]; then echo "::warning::KB_SUPABASE_PROJECT_REF not set — nothing to do"; mail=false; market=false; report=false; migrate=false; fi
+          echo "mail=$mail market=$market report=$report migrate=$migrate days=$days" | tee -a "$GITHUB_STEP_SUMMARY"
+          { echo "mail=$mail"; echo "market=$market"; echo "report=$report"; echo "migrate=$migrate"; echo "days=$days"; } >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: kb-listings/package-lock.json }
+      - run: npm ci
+
+      - name: Database schema
+        if: steps.plan.outputs.migrate == 'true'
+        run: node scripts/migrate.mjs
+
+      - name: Listings and sellers (KB_LISTINGS_JSON)
+        if: steps.plan.outputs.mail == 'true' || steps.plan.outputs.market == 'true' || steps.plan.outputs.report == 'true'
+        env: { KB_LISTINGS_JSON: '${{ secrets.KB_LISTINGS_JSON }}' }
+        run: |
+          [ -n "$KB_LISTINGS_JSON" ] || { echo "KB_LISTINGS_JSON not set — skipping"; exit 0; }
+          printf '%s' "$KB_LISTINGS_JSON" > config/listings.json
+          node scripts/load_listings.mjs
+
+      - name: Repliers — our listings and the market
+        if: steps.plan.outputs.market == 'true' && env.REPLIERS_API_KEY != ''
+        continue-on-error: true
+        run: node collectors/repliers/sync.mjs
+
+      - name: Listing mailboxes (showings, feedback, MLS CSVs)
+        if: steps.plan.outputs.mail == 'true'
+        continue-on-error: true
+        run: python3 collectors/mail/collect_mail.py --days ${{ steps.plan.outputs.days }}
+
+      - name: MLS CSVs received by e-mail
+        if: steps.plan.outputs.mail == 'true'
+        continue-on-error: true
+        run: node collectors/mls/import_csv.mjs --inbox
+
+      - name: Feedback requests and follow-ups
+        if: steps.plan.outputs.mail == 'true'
+        continue-on-error: true
+        run: node rules/showing_feedback.mjs
+
+      - name: Product suggestions
+        if: steps.plan.outputs.market == 'true'
+        continue-on-error: true
+        run: node analysis/market_insights.mjs --md data/reports/market_insights.md
+
+      - name: Weekly report
+        if: steps.plan.outputs.report == 'true'
+        run: |
+          send=""
+          if [ "${{ inputs.send }}" = "true" ] || { [ -z "${{ inputs.task }}" ] && [ "${{ vars.KB_REPORT_AUTOSEND }}" = "true" ]; }; then send="--send"; fi
+          node reports/weekly_report.mjs ${{ inputs.week_start && format('--week-start {0}', inputs.week_start) || '' }} $send
+
+      - name: Keep the reports (30 days)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kb-listings-reports
+          path: kb-listings/data/reports
+          if-no-files-found: ignore
+          retention-days: 30
