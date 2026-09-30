@@ -157,6 +157,11 @@ jobs:
         env: { OPS_BT_POST: 'true' }
         run: node rules/post_bt_logs.mjs
 
+      # Portal data for budget.pkbhomes.com/ops/ (ops.snapshots, read by the page and the Ask).
+      - name: Portal snapshot
+        continue-on-error: true
+        run: node scripts/board_snapshot.mjs
+
       - name: Keep the raw snapshots (7 days)
         if: always()
         uses: actions/upload-artifact@v4
