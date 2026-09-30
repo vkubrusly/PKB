@@ -21,7 +21,8 @@ import manual from '../_shared/field_manual.json' with { type: 'json' };
 // deno-lint-ignore no-explicit-any
 type Any = any;
 
-const MODELS = [Deno.env.get('OPS_FIELD_MODEL') || 'claude-opus-5-5', 'claude-opus-5', 'claude-sonnet-5-5'].filter((v, i, a) => a.indexOf(v) === i);
+// Sonnet 5.5: Victor's choice for cost (2026-09-30); Opus stays as the fallback.
+const MODELS = [Deno.env.get('OPS_FIELD_MODEL') || 'claude-sonnet-5-5', 'claude-sonnet-5', 'claude-opus-5-5'].filter((v, i, a) => a.indexOf(v) === i);
 const MAX_PHOTOS = 8, MAX_FRAMES = 4;   // what the assistant sees; Buildertrend still gets every photo
 
 const STEPS = (manual as Any).phases.flatMap((ph: Any) => ph.steps.map((s: Any) => ({ ...s, phase: `${ph.n}. ${ph.name}` })));
@@ -186,16 +187,19 @@ Deno.serve(async (req) => {
     };
     let resp: Any = null, lastErr: unknown = null;
     const models = body.model_test && me.role === 'admin' ? [String(body.model_test)] : MODELS;
+    const tried: string[] = [];
     for (const model of models) {
       const p2 = /haiku/.test(model) ? { ...params, output_config: { format: params.output_config.format } } : params;   // Haiku has no effort setting
       try { resp = await anthropic.messages.create({ ...p2, model, fallbacks: 'default' } as Any, { headers: { 'anthropic-beta': 'server-side-fallback-2026-07-01' } }); break; }
       catch (e) {
         const s = (e as Any)?.status, msg = String((e as Any)?.message || '');
         if (s === 400 && /fallback/i.test(msg)) { resp = await anthropic.messages.create({ ...p2, model } as Any); break; }
+        tried.push(`${model}: ${s} ${msg.slice(0, 120)}`);
         if (s === 404 || s === 403) { lastErr = e; continue; }
         throw e;
       }
     }
+    if (tried.length) console.log('ops-field model fallbacks:', tried.join(' | '));
     if (!resp) throw lastErr;
     const u = resp.usage || {};
     await sb.rpc('ops_log_usage', { p_feature: 'field', p_model: resp.model || '', p_in: u.input_tokens || 0, p_out: u.output_tokens || 0, p_cache_read: u.cache_read_input_tokens || 0, p_cache_write: u.cache_creation_input_tokens || 0, p_report_id: reportId });
@@ -211,7 +215,7 @@ Deno.serve(async (req) => {
 
     const saved = await sb.rpc('ops_field_save', { p_id: reportId, p_messages: messages, p_status: status, p_draft: draft, p_job: job, p_channel: body.channel || 'portal' });
     if (saved.error) return json({ report_id: reportId, status: 'pending', error: saved.error.message }, 400);
-    return json({ report_id: saved.data, status, reply: say, question: out.question, draft, photos_seen: urls.length, usage: resp.usage, model: resp.model });
+    return json({ report_id: saved.data, status, reply: say, question: out.question, draft, photos_seen: urls.length, usage: resp.usage, model: resp.model, ...(me.role === 'admin' && tried.length ? { tried } : {}) });
   } catch (e) {
     const status = (e as Any)?.status;
     return json({ report_id: savedId, status: savedId ? 'pending' : undefined, error: (status === 429 ? 'Muitos envios agora — tente em um minuto.' : String((e as Error).message || e)) + (savedId ? ' (report saved — it can be sent again)' : '') }, status === 429 ? 429 : 500);
