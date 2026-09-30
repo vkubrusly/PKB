@@ -20,7 +20,8 @@ import { cors, json } from '../_shared/cors.ts';
 // deno-lint-ignore no-explicit-any
 type Any = any;
 
-const MODELS = [Deno.env.get('OPS_ASK_MODEL') || 'claude-opus-5-5', 'claude-opus-5', 'claude-sonnet-5-5'].filter((v, i, a) => a.indexOf(v) === i);
+// Sonnet 5.5: Victor's choice for cost (2026-09-30); Opus stays as the fallback.
+const MODELS = [Deno.env.get('OPS_ASK_MODEL') || 'claude-sonnet-5-5', 'claude-sonnet-5', 'claude-opus-5-5'].filter((v, i, a) => a.indexOf(v) === i);
 const FALLBACK_BETA = 'server-side-fallback-2026-07-01';
 
 // The board snapshot is ~1 MB; keep it in the worker between calls, keyed by its timestamp.
