@@ -195,6 +195,8 @@ Deno.serve(async (req) => {
         }
       } else resp = await create(anthropic, model, params);
 
+      const u = resp.usage || {};
+      sb.rpc('ops_log_usage', { p_feature: 'ask', p_model: resp.model || model, p_in: u.input_tokens || 0, p_out: u.output_tokens || 0, p_cache_read: u.cache_read_input_tokens || 0, p_cache_write: u.cache_creation_input_tokens || 0 }).then(() => {}, () => {});
       if (resp.stop_reason === 'refusal') return json({ text: 'Não consigo responder a essa pergunta.', used: [...used], proposals });
       if (resp.stop_reason !== 'tool_use') break;
       messages.push({ role: 'assistant', content: resp.content });

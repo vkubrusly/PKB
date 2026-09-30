@@ -42,6 +42,13 @@ const [wk] = await sql(`select
   (select count(*) from ops.inspections i join ops.permit_cases c on c.id = i.permit_case_id join ops.jobs j on j.id = c.job_id where j.org_id = ${org} and i.failed and coalesce(i.actual_at, i.scheduled_at) > now() - interval '7 days')::int failed,
   (select count(*) from ops.jobs where org_id = ${org} and signed_at > now() - interval '7 days')::int signed`);
 
+// AI usage this month (field channel + Ask), at list prices per million tokens.
+const PRICE = { 'claude-opus-5-5': [4, 20], 'claude-opus-5': [5, 25], 'claude-sonnet-5-5': [2, 10], 'claude-sonnet-5': [2, 10] };
+const usage = await sql(`select feature, model, count(*)::int calls, sum(input_tokens)::bigint i, sum(output_tokens)::bigint o, sum(cache_read)::bigint cr, sum(cache_write)::bigint cw
+  from ops.ai_usage where org_id = ${org} and at >= date_trunc('month', now()) group by 1, 2`);
+const cost = (r) => { const [pi, po] = PRICE[String(r.model).replace(/-\d{8}$/, '')] || [4, 20]; return (Number(r.i) * pi + Number(r.o) * po + Number(r.cr) * pi * 0.1 + Number(r.cw) * pi * 1.25) / 1e6; };
+const aiLine = usage.length ? usage.reduce((m, r) => { m[r.feature] = (m[r.feature] || 0) + cost(r); m.calls[r.feature] = (m.calls[r.feature] || 0) + r.calls; return m; }, { calls: {} }) : null;
+
 const STATUS = { in_review: 'em análise no condado', corrections: 'correções pedidas', fees_due: 'taxas a pagar', requested: 'pedido, sem protocolo' };
 const sec = (title, rows, fmt) => `\n${title} (${rows.length})\n${rows.length ? rows.map(fmt).join('\n') : '  — nenhum'}`;
 const text = `Resumo semanal do PKB Ops — semana ${week}
@@ -52,7 +59,7 @@ ${sec('PERMIT EMITIDO E OBRA SEM INÍCIO (14+ dias)', notStarted, (s) => `  ${s.
 ${sec('INSPEÇÕES REPROVADAS SEM REINSPEÇÃO (5+ dias)', openFails, (s) => `  ${s.job_number} · ${street(s.address)} — ${String(s.type).replace(/ - 1 ?& ?2.*$/, '')} em ${brDate(s.at)}`)}
 ${sec('OBRAS PARADAS (sem foto nem Daily Log)', idle, (s) => `  ${s.job_number} · ${street(s.address)}${s.days != null ? ` — ${s.days} dias` : ''}`)}
 ${sec('PEDIDOS DO SITE SEM RESPOSTA', leads, (l) => `  ${l.client || '—'} · ${l.model || ''} — desde ${brDate(l.received_at)} (${l.followups} cobrança(s))`)}
-
+${aiLine ? `\nIA NO MÊS: campo US$ ${(aiLine.field || 0).toFixed(2)} (${aiLine.calls.field || 0} chamadas) · Ask US$ ${(aiLine.ask || 0).toFixed(2)} (${aiLine.calls.ask || 0} perguntas)\n` : ''}
 — PKB Ops (resumo automático, toda segunda-feira)`;
 
 const partners = (contacts.internal.partners || []).map((p) => p.email);

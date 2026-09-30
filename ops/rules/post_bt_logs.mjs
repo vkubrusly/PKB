@@ -19,9 +19,13 @@ import { createDailyLog } from '../collectors/buildertrend/daily_log.mjs';
 
 // --post publishes (same as OPS_BT_POST=true); without it the script only lists the drafts.
 const DRY = process.argv.includes('--dry-run') || !(process.env.OPS_BT_POST === 'true' || process.argv.includes('--post'));
+// Every Daily Log says who asked for it (Victor, 2026-09-30).
+const signature = (d) => d.rule === 'FIELD' ? `— Enviado por ${d.requested_by || 'equipe'} via PKB Ops (canal de campo)`
+  : d.rule === 'ASK' ? `— Pedido por ${d.requested_by || 'sócio'} via PKB Ops (Ask)`
+  : `— Registro automático do PKB Ops (regra ${d.rule})`;
 const q = (v) => (v == null ? 'null' : `'${String(v).replace(/'/g, "''")}'`);
 
-const drafts = await sql(`select m.id, m.subject, m.body, m.to_addresses, m.media, j.job_number, j.bt_job_id, j.bt_job_name
+const drafts = await sql(`select m.id, m.rule, m.requested_by, m.subject, m.body, m.to_addresses, m.media, j.job_number, j.bt_job_id, j.bt_job_name
   from ops.outbound_messages m join ops.jobs j on j.id = m.job_id
   where m.channel = 'bt_daily_log' and m.status = 'draft' order by m.created_at limit 20`);
 if (!drafts.length) { console.log('no Daily Logs to post'); process.exit(0); }
@@ -47,7 +51,7 @@ for (const d of drafts) {
       writeFileSync(f, await downloadObject('field-media', m.path));
       attachments.push(f);
     }
-    const r = await createDailyLog(page, { jobId: d.bt_job_id, jobName: d.bt_job_name, title: d.subject.slice(0, 50), notes: d.body.slice(0, 4000), notify: d.to_addresses, attachments });
+    const r = await createDailyLog(page, { jobId: d.bt_job_id, jobName: d.bt_job_name, title: d.subject.slice(0, 50), notes: `${d.body.trim().slice(0, 3850)}\n\n${signature(d)}`.slice(0, 4000), notify: d.to_addresses, attachments });
     await sql(`update ops.outbound_messages set status = 'sent', sent_at = now(), external_id = ${q(r.logId ? String(r.logId) : r.url)},
       error = ${q(r.skipped?.length ? `not notified (not Buildertrend users on the job): ${r.skipped.join(', ')}` : null)} where id = ${q(d.id)}`);
     console.log(`POSTED ${d.job_number} "${d.subject}" log ${r.logId} · notified ${r.notified.join(', ')}${r.attached ? ` · ${r.attached} photo(s)` : ''}${r.skipped.length ? ` · skipped ${r.skipped.join(', ')}` : ''}`);

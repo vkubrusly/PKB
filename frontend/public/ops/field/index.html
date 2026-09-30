@@ -61,6 +61,8 @@ main{max-width:720px;margin:0 auto;padding:14px 16px calc(210px + env(safe-area-
 .issues{margin:0;padding-left:18px;color:var(--red);font-size:14px}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .st{font-size:14px;color:var(--ink-2)}
+.queue{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--amber-soft);color:var(--amber);border-radius:12px;padding:10px 12px;font-size:14px;font-weight:600;margin-bottom:10px}
+.queue .btn{margin-left:auto}
 .recent{margin-top:26px}
 .recent h2{font:700 13px var(--f-brand);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin:0 0 8px}
 .recent button.it{display:flex;width:100%;text-align:left;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:6px;font:inherit;color:var(--ink);cursor:pointer}
@@ -108,6 +110,7 @@ main{max-width:720px;margin:0 auto;padding:14px 16px calc(210px + env(safe-area-
 
 <main>
   <div class="bar"><h1 id="title">New report</h1><button class="btn ghost small" type="button" id="newRep" hidden>New report</button></div>
+  <div class="queue" id="queue" hidden><span id="queueText"></span><button class="btn small" type="button" id="queueSend">Send now</button></div>
   <div class="hint" id="hint">Send photos, videos, a voice note or text about a house. <b>Always say the house number or the address</b> (e.g. “0037” or “8188 N Hale Rd”). PKB Ops writes the Buildertrend Daily Log and updates the house checklist — you review and confirm.</div>
   <div class="thread" id="thread"></div>
   <div class="recent" id="recentBox" hidden><h2>Recent reports</h2><div id="recent"></div></div>
@@ -150,12 +153,17 @@ async function start(){
   const { data: { session } } = await sb.auth.getSession();
   if (!session) return login();
   uid = session.user.id;
-  const { data, error } = await sb.rpc('ops_me');
+  let data = null, error = null;
+  try { ({ data, error } = await sb.rpc('ops_me')); } catch(e) { error = e; }
+  if ((error || !data) && !navigator.onLine) { try { data = JSON.parse(localStorage.getItem('pkbfield.me') || 'null'); error = null; } catch(e) {} }
   if (error || !data) { gmsg(`PKB Field is for the PKB team (signed in as ${session.user.email}). Ask Victor for access.`, true); $('glogin').hidden = true; return; }
+  try { localStorage.setItem('pkbfield.me', JSON.stringify(data)); } catch(e) {}
+  try { navigator.storage && navigator.storage.persist && navigator.storage.persist(); } catch(e) {}
   me = data; $('whoami').textContent = me.name || me.email; $('portal').hidden = !['admin','partner','pm'].includes(me.role);
   $('gate').hidden = true;
   fetch('/ops/field/manual.json').then(r => r.ok ? r.json() : null).then(m => { manual = m; }).catch(() => {});
   loadRecent();
+  refreshQueue(); flushOutbox();
 }
 
 /* ---------- api ---------- */
@@ -163,7 +171,7 @@ async function call(body){
   const { data: { session } } = await sb.auth.getSession();
   const r = await fetch(SB_URL + '/functions/v1/ops-field', { method: 'POST', headers: { 'content-type': 'application/json', apikey: SB_KEY, Authorization: 'Bearer ' + session.access_token }, body: JSON.stringify(body) });
   const j = await r.json().catch(() => ({ error: 'HTTP ' + r.status }));
-  if (!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status);
+  if (!r.ok || j.error) throw Object.assign(new Error(j.error || 'HTTP ' + r.status), { data: j });
   return j;
 }
 
@@ -290,48 +298,92 @@ function draftCard(id, dr){
 function closeReport(){ reportId = null; $('newRep').hidden = true; $('title').textContent = 'New report'; }
 $('newRep').onclick = () => { closeReport(); $('thread').innerHTML = ''; $('hint').hidden = false; };
 
-/* ---------- send ---------- */
+/* ---------- phone outbox: every report is kept on the phone (IndexedDB) until the server has it ---------- */
+let idbP = null;
+function idb(){ return idbP || (idbP = new Promise((res, rej) => { const r = indexedDB.open('pkb-field', 1); r.onupgradeneeded = () => r.result.createObjectStore('outbox', { keyPath: 'id' }); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); })); }
+async function ob(mode, fn){ const db = await idb(); return new Promise((res, rej) => { const tx = db.transaction('outbox', mode); const req = fn(tx.objectStore('outbox')); tx.oncomplete = () => res(req && req.result); tx.onerror = () => rej(tx.error); }); }
+const obPut = e => ob('readwrite', st => st.put(e)).catch(() => {});
+const obDel = id => ob('readwrite', st => st.delete(id)).catch(() => {});
+const obAll = () => ob('readonly', st => st.getAll()).then(a => (a || []).filter(e => e.uid === uid).sort((x, y) => x.created.localeCompare(y.created))).catch(() => []);
+const live = {};   // outbox id → bubble currently on screen
+const inflight = new Set();   // outbox ids being delivered right now
+async function refreshQueue(){
+  const all = await obAll();
+  $('queue').hidden = !all.length;
+  if (all.length) $('queueText').textContent = `${all.length} report(s) saved on this phone, not sent yet${navigator.onLine ? '' : ' — no internet; they go out automatically when the connection is back'}.`;
+}
+$('queueSend').onclick = () => flushOutbox(true);
+window.addEventListener('online', () => flushOutbox());
+window.addEventListener('offline', refreshQueue);
+setInterval(() => flushOutbox(), 30000);
+
 $('send').onclick = send;
 $('text').addEventListener('input', e => { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 140) + 'px'; });
 async function send(){
-  if (busy) return;
   if (rec) stopRec();
   const text = $('text').value.trim();
   if (!text && !pending.length) return;
-  busy = true; $('send').disabled = true; $('hint').hidden = true;
+  $('hint').hidden = true;
   const items = pending; pending = []; renderTray(); $('text').value = ''; $('text').style.height = '';
+  const transcript = items.filter(i => i.kind === 'audio' && i.transcript).map(i => i.transcript).join(' ');
+  const entry = {
+    id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2)),
+    uid, created: new Date().toISOString(), report_id: reportId,
+    text: transcript && text.includes(transcript) ? text.replace(transcript, '').trim() : text, transcript,
+    files: items.flatMap(it => it.frames ? [...(it.blob ? [it] : []), ...it.frames] : [it]).map(f => ({ kind: f.kind, blob: f.blob, mime: f.mime, name: f.name, from_video: !!f.from_video, path: null })),
+    tries: 0, error: null,
+  };
+  await obPut(entry);                       // saved on the phone before anything goes over the network
   bubbleUser(text, items);
-  const wait = bubbleAI(items.length ? 'Uploading…' : 'Reading…', 'pending');
+  live[entry.id] = bubbleAI(navigator.onLine ? 'Sending…' : 'No internet — saved on this phone. It goes out automatically when the connection is back.', 'pending');
+  refreshQueue();
+  if (navigator.onLine) deliver(entry);
+}
+let flushing = false;
+async function flushOutbox(force){
+  if (flushing || (!navigator.onLine && !force) || !uid) return refreshQueue();
+  flushing = true;
+  try { for (const e of await obAll()) { if (!force && e.next && Date.now() < e.next) continue; await deliver(e); } }
+  finally { flushing = false; refreshQueue(); }
+}
+async function deliver(entry){
+  if (inflight.has(entry.id)) return;
+  inflight.add(entry.id);
+  const bubble = live[entry.id];
+  const say = (t, cls) => { if (bubble) { bubble.className = 'msg a ' + (cls || ''); bubble.textContent = t; } };
   try {
-    const media = [];
-    const folder = `${uid}/${new Date().toISOString().slice(0, 10)}`;
-    const files = items.flatMap(it => it.frames ? [...(it.blob ? [it] : []), ...it.frames] : [it]);
-    for (const [i, it] of files.entries()) {
-      const path = `${folder}/${Date.now()}_${i}_${it.name.replace(/[^\w.-]+/g, '_')}`;
-      const { error } = await sb.storage.from('field-media').upload(path, it.blob, { contentType: it.mime, upsert: false });
+    const folder = `${uid}/${entry.created.slice(0, 10)}`;
+    const todo = entry.files.filter(f => !f.path);
+    for (const [i, f] of entry.files.entries()) {
+      if (f.path) continue;
+      const path = `${folder}/${entry.id}_${i}_${f.name.replace(/[^\w.-]+/g, '_')}`;
+      const { error } = await sb.storage.from('field-media').upload(path, f.blob, { contentType: f.mime, upsert: true });
       if (error) throw new Error('upload: ' + error.message);
-      media.push({ path, kind: it.kind, mime: it.mime, name: it.name, ...(it.from_video ? { from_video: true } : {}) });
-      wait.textContent = `Uploading ${i + 1}/${files.length}…`;
+      f.path = path; await obPut(entry);   // progress survives a reload
+      say(`Uploading ${entry.files.filter(x => x.path).length}/${entry.files.length}…`, 'pending');
     }
-    const transcript = items.filter(i => i.kind === 'audio' && i.transcript).map(i => i.transcript).join(' ');
-    wait.textContent = 'PKB Ops is reading the report' + (media.some(m => m.from_video) ? ', the photos and the video' : media.some(m => m.kind === 'photo') ? ' and the photos' : '') + '…';
-    const r = await call({ report_id: reportId, text: transcript && text.includes(transcript) ? text.replace(transcript, '').trim() : text, transcript, media });
-    reportId = r.report_id; $('newRep').hidden = false; $('title').textContent = 'Report #' + reportId;
-    wait.classList.remove('pending'); wait.textContent = r.reply || '';
-    if (r.status === 'draft' && r.draft) draftCard(r.report_id, r.draft);
+    const media = entry.files.map(f => ({ path: f.path, kind: f.kind, mime: f.mime, name: f.name, ...(f.from_video ? { from_video: true } : {}) }));
+    say('PKB Ops is reading the report' + (media.some(m => m.from_video) ? ', the photos and the video' : media.some(m => m.kind === 'photo') ? ' and the photos' : '') + '…', 'pending');
+    const r = await call({ report_id: entry.report_id, client_id: entry.id, text: entry.text, transcript: entry.transcript, media, retry: entry.saved_on_server || undefined });
+    await obDel(entry.id); delete live[entry.id];
+    if (bubble) { reportId = r.report_id; $('newRep').hidden = false; $('title').textContent = 'Report #' + reportId; say(r.reply || ''); if (r.status === 'draft' && r.draft) draftCard(r.report_id, r.draft); }
+    loadRecent();
   } catch(e) {
-    wait.classList.remove('pending'); wait.classList.add('err'); wait.textContent = 'Could not send: ' + e.message;
-    pending = items.concat(pending); renderTray();
-  } finally { busy = false; $('send').disabled = false; }
+    const d = e.data || {};
+    if (d.report_id) { entry.report_id = d.report_id; entry.saved_on_server = true; }   // server has it: only the processing is left
+    entry.tries = (entry.tries || 0) + 1; entry.error = e.message; entry.next = Date.now() + Math.min(10 * 60000, 30000 * 2 ** Math.min(entry.tries, 5));
+    await obPut(entry);
+    say(`${navigator.onLine ? 'Not sent yet' : 'No internet'} — saved ${entry.saved_on_server ? 'in PKB Ops' : 'on this phone'}; it will be sent again automatically. (${e.message})`, 'err');
+  } finally { inflight.delete(entry.id); refreshQueue(); }
 }
 
 /* ---------- recent ---------- */
-const ST = { needs_job: ['Which house?', 'p-red'], open: ['Open', 'p-prog'], draft: ['To confirm', 'p-prog'], confirmed: ['Confirmed', 'p-done'], cancelled: ['Discarded', ''] };
+const ST = { pending: ['Saved — processing', 'p-prog'], needs_job: ['Which house?', 'p-red'], open: ['Open', 'p-prog'], draft: ['To confirm', 'p-prog'], confirmed: ['Confirmed', 'p-done'], cancelled: ['Discarded', ''] };
 async function loadRecent(){
   const { data, error } = await sb.rpc('ops_field_reports', { p_limit: 15 });
   if (error || !data) return;
   $('recentBox').hidden = !data.length;
-  $('recent').innerHTML = data.map(r => { const [t, c] = ST[r.status] || [r.status, '']; const last = (r.messages || []).filter(m => m.from === 'user').pop(); return `<button type="button" class="it" data-id="${r.id}"><span class="jn">${esc(r.job_number || '—')}</span><span class="t">${esc((r.draft && r.draft.daily_log && r.draft.daily_log.title) || (last && (last.text || last.transcript)) || 'Photos')}</span><span class="pill ${c}">${t}${r.status === 'confirmed' && r.daily_log_status === 'sent' ? ' · posted' : ''}</span></button>`; }).join('');
+  $('recent').innerHTML = data.map(r => { const [t, c] = ST[r.status] || [r.status, '']; const last = (r.messages || []).filter(m => m.from === 'user').pop(); return `<button type="button" class="it" data-id="${r.id}"><span class="jn">${esc(r.job_number || '—')}</span><span class="t">${esc((r.draft && r.draft.daily_log && r.draft.daily_log.title) || (last && (last.text || last.transcript)) || 'Photos')}</span><span class="pill ${c}">${t}${r.status === 'confirmed' ? (r.daily_log_status === 'sent' ? ' · posted' : r.daily_log_error && !/^posting:/.test(r.daily_log_error) ? ' · Buildertrend: retrying' : ' · to Buildertrend') : ''}</span></button>`; }).join('');
   $('recent').querySelectorAll('.it').forEach(b => b.onclick = () => openReport(data.find(r => String(r.id) === b.dataset.id)));
 }
 async function openReport(r){
@@ -346,9 +398,16 @@ async function openReport(r){
     else bubbleUser([m.text, m.transcript && !String(m.text || '').includes(m.transcript) ? m.transcript : ''].filter(Boolean).join('\n'), (m.media || []).map(x => ({ ...x, url: signed[x.path] || '' })));
   }
   if (r.status === 'draft' && r.draft) draftCard(r.id, r.draft);
+  if (r.status === 'pending') {
+    const b = bubbleAI('This report is saved but was not processed yet.');
+    const btn = document.createElement('button'); btn.className = 'btn small'; btn.style.marginTop = '8px'; btn.textContent = 'Process again'; b.appendChild(document.createElement('br')); b.appendChild(btn);
+    btn.onclick = async () => { btn.disabled = true; btn.textContent = 'Processing…'; try { const x = await call({ report_id: r.id, retry: true }); b.textContent = x.reply || ''; if (x.status === 'draft' && x.draft) draftCard(x.report_id, x.draft); loadRecent(); } catch(e) { btn.disabled = false; btn.textContent = 'Process again'; b.firstChild.textContent = 'Could not process: ' + e.message + ' '; } };
+  }
+  if (r.status === 'confirmed' && r.daily_log_error && !/^posting:/.test(r.daily_log_error) && r.daily_log_status !== 'sent') bubbleAI('Buildertrend post failed last time — it is retried automatically every hour. (' + r.daily_log_error + ')', 'err');
   if (!open) bubbleAI(r.status === 'confirmed' ? `Confirmed${r.daily_log_status === 'sent' ? ' and posted to Buildertrend' : ' — waiting to be posted to Buildertrend'}.` : 'Discarded.');
 }
 
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/ops/field/sw.js', { scope: '/ops/field/' }).catch(() => {});
 start().catch(e => gmsg('Could not load: ' + e.message, true));
 })();
 </script>
