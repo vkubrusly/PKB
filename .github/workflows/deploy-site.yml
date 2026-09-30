@@ -37,6 +37,8 @@ jobs:
       - run: npm ci
       # the field page reads the PKB field manual (single source: supabase/functions/_shared)
       - run: cp ../supabase/functions/_shared/field_manual.json public/ops/field/manual.json
+      # the field page works offline: serve the Supabase library from our own domain (cached by its service worker)
+      - run: cp node_modules/@supabase/supabase-js/dist/umd/supabase.js public/ops/field/supabase.js
       - run: npm run build   # lê frontend/.env.production (URL + publishable key)
 
       # SPA fallback: GitHub Pages serve 404.html em rotas desconhecidas → app carrega e roteia.
