@@ -143,6 +143,12 @@ const geo = JSON.parse(readFileSync(new URL('../config/job_geo.json', import.met
 const LL = new Map(keep.filter((j) => j.latitude != null).map((j) => [j.job_number, [j.latitude, j.longitude]]));
 for (const r of rows) r.ll = LL.get(r.job_number) || geo[r.job_number]?.ll || null;
 agg.clock = summarize(rows.filter((r) => r.company === 'PKB' && r.clock_phase !== 'no_permit').map((r) => files[r.job_number].clock));
+// Field checklist (PKB field manual steps confirmed from field reports).
+const FC = await sql(`select j.job_number, f.step_n, f.status, f.note, f.updated_by, f.updated_at::date at from ops.field_checklist f join ops.jobs j on j.id = f.job_id order by f.updated_at`);
+for (const f of FC) if (files[f.job_number]) (files[f.job_number].field_checklist ||= []).push({ step: f.step_n, status: f.status, note: f.note, by: f.updated_by, at: d(f.at) });
+const FR = await sql(`select j.job_number, count(*)::int n, max(r.confirmed_at)::date last from ops.field_reports r join ops.jobs j on j.id = r.job_id where r.status = 'confirmed' group by 1`);
+for (const r of rows) { const x = FR.find((f) => f.job_number === r.job_number); r.field_reports = x?.n || 0; r.last_field_report = x ? d(x.last) : null; r.field_steps_done = (files[r.job_number]?.field_checklist || []).filter((f) => f.status === 'done').length; }
+
 // People the Ask assistant may address (e-mail, Buildertrend name, role).
 const CT = JSON.parse(readFileSync(new URL('../config/contacts.json', import.meta.url), 'utf8'));
 const I = CT.internal, dirMap = new Map();

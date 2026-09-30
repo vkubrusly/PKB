@@ -26,7 +26,7 @@ const FALLBACK_BETA = 'server-side-fallback-2026-07-01';
 // The board snapshot is ~1 MB; keep it in the worker between calls, keyed by its timestamp.
 let cache: { at: string; board: Any; context: string } | null = null;
 
-const COLS = ['job_number', 'company', 'address', 'county', 'model', 'supervisor', 'stage', 'ops_status', 'permit', 'applied_at', 'issued_at', 'rounds', 'failed_depts_last_round', 'pause', 'turtle', 'inspections', 'failed_inspections', 'insp_progress', 'insp_next', 'insp_failed_open', 'ready_for_finals_est', 'signed_at', 'build_start', 'build_days', 'photos_last_at', 'photos_last_by', 'photos_total', 'last_daily_log'];
+const COLS = ['job_number', 'company', 'address', 'county', 'model', 'supervisor', 'stage', 'ops_status', 'permit', 'applied_at', 'issued_at', 'rounds', 'failed_depts_last_round', 'pause', 'turtle', 'inspections', 'failed_inspections', 'insp_progress', 'insp_next', 'insp_failed_open', 'ready_for_finals_est', 'signed_at', 'build_start', 'build_days', 'photos_last_at', 'photos_last_by', 'photos_total', 'last_daily_log', 'field_steps_done', 'last_field_report'];
 const cell = (v: Any) => (v == null || (Array.isArray(v) && !v.length) ? '' : Array.isArray(v) ? v.join('+') : String(v));
 
 function buildContext(D: Any): string {
@@ -46,7 +46,7 @@ CONSTRUCTION CLOCK: ${JSON.stringify(D.clock)}`;
 
 const INSTRUCTIONS = `You are PKB Ops, the operations assistant of PKB Homes, a Florida home builder. You talk to the company's partners.
 Answer using ONLY the data in the snapshot and the tools. Reply in the language of the question (Portuguese or English). Be concrete: job numbers, streets, permit numbers, dates, departments, people. Plain text and short lists, no markdown tables.
-Reading the data: stage pre = no permit yet; permit = in county review; inspections = issued, under construction; done = CO. failed_depts_last_round non-empty means the ball is with the designer (Sovereign). insp_progress = passed/required inspections from the permit's own list on the county portal. build_start / build_days = construction clock (starts at the later of permit issuance and the 2nd invoice payment). photos_* = last site photo upload in Buildertrend. ready_for_finals_est is an estimate from PKB's own medians. Prime = legacy company being phased out.
+Reading the data: stage pre = no permit yet; permit = in county review; inspections = issued, under construction; done = CO. failed_depts_last_round non-empty means the ball is with the designer (Sovereign). insp_progress = passed/required inspections from the permit's own list on the county portal. build_start / build_days = construction clock (starts at the later of permit issuance and the 2nd invoice payment). photos_* = last site photo upload in Buildertrend. field_steps_done = steps of the PKB field manual (39) confirmed from supervisors' field reports; get_job_file has field_checklist with the details. ready_for_finals_est is an estimate from PKB's own medians. Prime = legacy company being phased out.
 For one job's reviews, corrections, inspections, holds, invoices or history, CALL get_job_file and quote the county's comments faithfully (itemize long ones). For review comments across many jobs, use search_reviews. For what the system sent or queued, use get_outbox.
 ACTIONS: when the partner asks you to DO something, draft it completely and call the matching propose_* tool:
 - propose_daily_log: a Buildertrend Daily Log on a job (write it in English; notify people by their Buildertrend names).

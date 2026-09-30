@@ -41,7 +41,8 @@ if (!orgId) throw new Error(`org "${ORG}" not found`);
 const jobs = await sql(`
   select j.id, j.job_number, j.address, j.photos_last_at, j.photos_last_by, j.photos_checked_at,
          greatest(j.photos_last_daily_log, (select max(e.received_at) from ops.inbound_emails e
-           where e.category = 'bt_daily_log' and (e.job_id = j.id or e.job_number = j.job_number))) as log_last_at,
+           where e.category = 'bt_daily_log' and (e.job_id = j.id or e.job_number = j.job_number)),
+           (select max(r.confirmed_at) from ops.field_reports r where r.job_id = j.id and r.status = 'confirmed')) as log_last_at,
          (select array_agg(distinct x.name) from ops.job_contacts x where x.job_id = j.id and x.role = 'supervisor') as supervisors,
          (select array_agg(distinct x.name) from ops.job_contacts x where x.job_id = j.id and x.role = 'pm') as pms
   from ops.jobs j
@@ -50,6 +51,7 @@ const jobs = await sql(`
     and not exists (select 1 from ops.inbound_emails e where e.category = 'bt_daily_log' and (e.job_id = j.id or e.job_number = j.job_number)
                     and e.received_at > now() - interval '${STALE_DAYS} days')
     and (j.photos_last_daily_log is null or j.photos_last_daily_log < now() - interval '${STALE_DAYS} days')
+    and not exists (select 1 from ops.field_reports r where r.job_id = j.id and r.status = 'confirmed' and r.confirmed_at > now() - interval '${STALE_DAYS} days')
     and not exists (select 1 from ops.inspections i join ops.permit_cases c on c.id = i.permit_case_id
                     where c.job_id = j.id and c.kind = 'building' and i.passed
                       and (i.type ~* 'final\\s*(building|structural)' or i.type ~* 'building\\s*final'

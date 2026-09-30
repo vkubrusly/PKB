@@ -27,3 +27,22 @@ export async function sql(query, attempt = 0) {
   if (!res.ok || (body && body.message)) throw new Error(`Supabase SQL ${res.status}: ${body?.message || text.slice(0, 500)}`);
   return body;
 }
+
+// Service-role key of the project, read through the Management API (same access token), for
+// server-side jobs that need Storage (e.g. downloading field photos to attach in Buildertrend).
+let svcKey = null;
+export async function serviceKey() {
+  if (svcKey) return svcKey;
+  const r = await fetch(`https://api.supabase.com/v1/projects/${REF}/api-keys?reveal=true`, { headers: { Authorization: `Bearer ${token()}` } });
+  const keys = await r.json();
+  svcKey = (Array.isArray(keys) ? keys : []).find((k) => k.name === 'service_role' || k.type === 'secret')?.api_key;
+  if (!svcKey) throw new Error('service key not available to this access token');
+  return svcKey;
+}
+
+export async function downloadObject(bucket, path) {
+  const key = await serviceKey();
+  const r = await fetch(`https://${REF}.supabase.co/storage/v1/object/${bucket}/${path.split('/').map(encodeURIComponent).join('/')}`, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+  if (!r.ok) throw new Error(`storage ${r.status} ${path}`);
+  return Buffer.from(await r.arrayBuffer());
+}

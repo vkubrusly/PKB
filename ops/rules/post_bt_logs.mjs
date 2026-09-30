@@ -10,7 +10,10 @@
 // Enabled by OPS_BT_POST=true (repository variable); otherwise lists what it would post.
 //   BT_COOKIES_FILE=… node rules/post_bt_logs.mjs [--post | --dry-run]
 // =============================================================================
-import { sql } from '../scripts/sb.mjs';
+import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { sql, downloadObject } from '../scripts/sb.mjs';
 import { openBuildertrend } from '../collectors/buildertrend/session.mjs';
 import { createDailyLog } from '../collectors/buildertrend/daily_log.mjs';
 
@@ -18,7 +21,7 @@ import { createDailyLog } from '../collectors/buildertrend/daily_log.mjs';
 const DRY = process.argv.includes('--dry-run') || !(process.env.OPS_BT_POST === 'true' || process.argv.includes('--post'));
 const q = (v) => (v == null ? 'null' : `'${String(v).replace(/'/g, "''")}'`);
 
-const drafts = await sql(`select m.id, m.subject, m.body, m.to_addresses, j.job_number, j.bt_job_id, j.bt_job_name
+const drafts = await sql(`select m.id, m.subject, m.body, m.to_addresses, m.media, j.job_number, j.bt_job_id, j.bt_job_name
   from ops.outbound_messages m join ops.jobs j on j.id = m.job_id
   where m.channel = 'bt_daily_log' and m.status = 'draft' order by m.created_at limit 20`);
 if (!drafts.length) { console.log('no Daily Logs to post'); process.exit(0); }
@@ -29,16 +32,32 @@ if (!loggedIn) { console.error('Buildertrend session expired — nothing posted'
 let ok = 0;
 for (const d of drafts) {
   if (!d.bt_job_id) { console.log(`skip ${d.job_number}: not in Buildertrend`); continue; }
+  // claim the draft so a parallel run (hourly poster / daily round) never posts it twice
+  const claim = await sql(`update ops.outbound_messages set error = 'posting:' || now()::text where id = ${q(d.id)} and status = 'draft'
+    and (error is null or error not like 'posting:%' or substring(error from 9)::timestamptz < now() - interval '30 minutes') returning id`);
+  if (!claim.length) { console.log(`skip ${d.job_number}: being posted by another run`); continue; }
+  const dir = join(tmpdir(), `btlog_${d.id}`);
   try {
-    const r = await createDailyLog(page, { jobId: d.bt_job_id, jobName: d.bt_job_name, title: d.subject.slice(0, 50), notes: d.body.slice(0, 4000), notify: d.to_addresses });
+    // photos sent from the field channel (Supabase Storage 'field-media') → local files to attach
+    const attachments = [];
+    for (const [i, m] of (d.media || []).filter((x) => x.kind === 'photo').entries()) {
+      mkdirSync(dir, { recursive: true });
+      const ext = (m.path.match(/\.(\w+)$/)?.[1] || 'jpg').toLowerCase();
+      const f = join(dir, `${d.job_number}_${String(i + 1).padStart(2, '0')}.${ext}`);
+      writeFileSync(f, await downloadObject('field-media', m.path));
+      attachments.push(f);
+    }
+    const r = await createDailyLog(page, { jobId: d.bt_job_id, jobName: d.bt_job_name, title: d.subject.slice(0, 50), notes: d.body.slice(0, 4000), notify: d.to_addresses, attachments });
     await sql(`update ops.outbound_messages set status = 'sent', sent_at = now(), external_id = ${q(r.logId ? String(r.logId) : r.url)},
       error = ${q(r.skipped?.length ? `not notified (not Buildertrend users on the job): ${r.skipped.join(', ')}` : null)} where id = ${q(d.id)}`);
-    console.log(`POSTED ${d.job_number} "${d.subject}" log ${r.logId} · notified ${r.notified.join(', ')}${r.skipped.length ? ` · skipped ${r.skipped.join(', ')}` : ''}`);
+    console.log(`POSTED ${d.job_number} "${d.subject}" log ${r.logId} · notified ${r.notified.join(', ')}${r.attached ? ` · ${r.attached} photo(s)` : ''}${r.skipped.length ? ` · skipped ${r.skipped.join(', ')}` : ''}`);
     ok++;
   } catch (e) {
     await page.screenshot({ path: new URL(`../data/buildertrend/probe/post_fail_${d.job_number}.png`, import.meta.url).pathname }).catch(() => {}); // gitignored
-    await sql(`update ops.outbound_messages set error = ${q(e.message.slice(0, 500))} where id = ${q(d.id)}`);
+    await sql(`update ops.outbound_messages set error = ${q(e.message.slice(0, 500))} where id = ${q(d.id)}`); // releases the claim
     console.error(`FAILED ${d.job_number}: ${e.message.split('\n')[0]}`);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
   }
 }
 await browser.close();

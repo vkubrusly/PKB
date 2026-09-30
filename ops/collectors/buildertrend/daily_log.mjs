@@ -22,7 +22,7 @@ export async function selectJob(page, jobName) {
   await page.waitForTimeout(2500);
 }
 
-export async function createDailyLog(page, { jobId = null, jobName, title, notes, privateLog = false, shareWithSubs = false, shareWithClient = false, notify = [], stopBeforePublish = false }) {
+export async function createDailyLog(page, { jobId = null, jobName, title, notes, privateLog = false, shareWithSubs = false, shareWithClient = false, notify = [], attachments = [], stopBeforePublish = false }) {
   notify = [...notify];
   if (!title || title.length > 50) throw new Error('title is required and must be ≤ 50 characters');
   if ((notes || '').length > 4000) throw new Error('notes must be ≤ 4000 characters');
@@ -47,6 +47,25 @@ export async function createDailyLog(page, { jobId = null, jobName, title, notes
   const setBox = async (id, on) => { const c = page.locator(`input#${id}, input[name="${id}"]`).first(); if ((await c.isChecked()) !== on) await (on ? c.check({ force: true }) : c.uncheck({ force: true })); };
   await setBox('isPrivate', privateLog);
   if (!privateLog) { await setBox('canShareSubs', shareWithSubs); await setBox('canShareOwner', shareWithClient); }
+
+  // Photos (local file paths): Attachments → Add → Browse device (multi-file input) → Upload.
+  if (attachments.length) {
+    await page.locator('button', { hasText: /^\s*Add\s*$/ }).first().click();
+    const input = page.locator('.ant-modal-content input[type=file], input[type=file]').first();
+    await input.waitFor({ state: 'attached', timeout: 30000 });
+    await input.setInputFiles(attachments);
+    await page.waitForTimeout(1500);
+    await page.locator('.ant-modal-content button', { hasText: /^\s*Upload\s*$/ }).first().click();
+    const names = attachments.map((f) => f.split('/').pop());
+    const deadline = Date.now() + 180000;
+    for (;;) {
+      const body = await page.locator('body').innerText();
+      const shown = names.filter((n) => body.includes(n.slice(0, 12))).length;
+      if (shown === names.length && !(await page.locator('.ant-modal-content button', { hasText: /^\s*Upload\s*$/ }).isVisible().catch(() => false))) break;
+      if (Date.now() > deadline) throw new Error(`attachments: ${shown}/${names.length} shown in the form; not publishing`);
+      await page.waitForTimeout(2000);
+    }
+  }
 
   // Notify list: a tree of checkboxes ("Check All" › "Internal Users" › one node per person),
   // everyone ticked by default. Untick "Check All", then tick the requested people by name.
@@ -106,5 +125,5 @@ export async function createDailyLog(page, { jobId = null, jobName, title, notes
   await page.locator('button#publish, button[name="publish"]').first().click();
   await page.getByText(title, { exact: true }).first().waitFor({ timeout: 60000 });
   const m = page.url().match(/DailyLogView\/(\d+)\/(\d+)/);
-  return { logId: m ? Number(m[1]) : null, jobId: m ? Number(m[2]) : null, url: page.url(), notified: selectedNames, skipped };
+  return { logId: m ? Number(m[1]) : null, jobId: m ? Number(m[2]) : null, url: page.url(), notified: selectedNames, skipped, attached: attachments.length };
 }
