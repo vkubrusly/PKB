@@ -48,7 +48,7 @@ export async function createDailyLog(page, { jobId = null, jobName, title, notes
   await setBox('isPrivate', privateLog);
   if (!privateLog) { await setBox('canShareSubs', shareWithSubs); await setBox('canShareOwner', shareWithClient); }
 
-  // Photos (local file paths): Attachments → Add → Browse device (multi-file input) → Upload.
+  // Photos / videos (local file paths): Attachments → Add → Browse device (multi-file input) → Upload.
   if (attachments.length) {
     await page.locator('button', { hasText: /^\s*Add\s*$/ }).first().click();
     const input = page.locator('.ant-modal-content input[type=file], input[type=file]').first();
@@ -57,7 +57,7 @@ export async function createDailyLog(page, { jobId = null, jobName, title, notes
     await page.waitForTimeout(1500);
     await page.locator('.ant-modal-content button', { hasText: /^\s*Upload\s*$/ }).first().click();
     const names = attachments.map((f) => f.split('/').pop());
-    const deadline = Date.now() + 180000;
+    const deadline = Date.now() + 420000; // videos take a while to upload
     for (;;) {
       const body = await page.locator('body').innerText();
       const shown = names.filter((n) => body.includes(n.slice(0, 12))).length;

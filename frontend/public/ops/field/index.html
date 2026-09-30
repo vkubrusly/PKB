@@ -108,7 +108,7 @@ main{max-width:720px;margin:0 auto;padding:14px 16px calc(210px + env(safe-area-
 
 <main>
   <div class="bar"><h1 id="title">New report</h1><button class="btn ghost small" type="button" id="newRep" hidden>New report</button></div>
-  <div class="hint" id="hint">Send photos, a voice note or text about a house. <b>Always say the house number or the address</b> (e.g. “0037” or “8188 N Hale Rd”). PKB Ops writes the Buildertrend Daily Log and updates the house checklist — you review and confirm.</div>
+  <div class="hint" id="hint">Send photos, videos, a voice note or text about a house. <b>Always say the house number or the address</b> (e.g. “0037” or “8188 N Hale Rd”). PKB Ops writes the Buildertrend Daily Log and updates the house checklist — you review and confirm.</div>
   <div class="thread" id="thread"></div>
   <div class="recent" id="recentBox" hidden><h2>Recent reports</h2><div id="recent"></div></div>
 </main>
@@ -117,12 +117,12 @@ main{max-width:720px;margin:0 auto;padding:14px 16px calc(210px + env(safe-area-
   <div class="tray" id="tray" hidden></div>
   <div class="live" id="live" hidden></div>
   <div class="crow">
-    <button class="ico" type="button" id="photoBtn" aria-label="Add photos">📷</button>
+    <button class="ico" type="button" id="photoBtn" aria-label="Add photos or videos">📷</button>
     <button class="ico" type="button" id="micBtn" aria-label="Record audio">🎤</button>
     <textarea id="text" rows="1" placeholder="House + what was done today…"></textarea>
     <button class="btn" type="button" id="send">Send</button>
   </div>
-  <input type="file" id="files" accept="image/*,audio/*" multiple hidden>
+  <input type="file" id="files" accept="image/*,video/*,audio/*" multiple hidden>
 </div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
@@ -178,17 +178,48 @@ async function shrink(file){
     return blob || file;
   } catch(e) { return file; }
 }
+/* ---------- videos: frames for the assistant (+ the file itself, up to 50 MB, for Buildertrend) ---------- */
+const MAX_VIDEO = 50 * 1024 * 1024;
+async function videoFrames(file, vi){
+  const url = URL.createObjectURL(file);
+  const v = document.createElement('video'); v.muted = true; v.playsInline = true; v.preload = 'auto'; v.src = url;
+  await new Promise((res, rej) => { v.onloadedmetadata = res; v.onerror = () => rej(new Error('video not readable')); });
+  const dur = isFinite(v.duration) ? v.duration : 0;
+  const n = Math.max(1, Math.min(8, Math.round(dur / 4) || 1));
+  const frames = [];
+  for (let i = 0; i < n; i++) {
+    const t = dur ? Math.min(dur - 0.1, (i + 0.5) * dur / n) : 0;
+    await new Promise(res => { v.onseeked = res; v.currentTime = t; setTimeout(res, 4000); });
+    const k = Math.min(1, 1600 / Math.max(v.videoWidth || 1, v.videoHeight || 1));
+    const c = document.createElement('canvas'); c.width = Math.round((v.videoWidth || 640) * k); c.height = Math.round((v.videoHeight || 360) * k);
+    c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+    const b = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.8));
+    if (b) frames.push({ kind: 'photo', from_video: true, blob: b, mime: 'image/jpeg', name: `video${vi}_frame${i + 1}_${Math.round(t)}s.jpg`, url: URL.createObjectURL(b) });
+  }
+  return { frames, secs: Math.round(dur), url };
+}
 $('photoBtn').onclick = () => $('files').click();
 $('files').onchange = async e => {
   for (const f of [...e.target.files]) {
     if (f.type.startsWith('image/')) { const b = await shrink(f); pending.push({ kind: 'photo', blob: b, mime: 'image/jpeg', name: f.name.replace(/\.\w+$/, '') + '.jpg', url: URL.createObjectURL(b) }); }
     else if (f.type.startsWith('audio/')) pending.push({ kind: 'audio', blob: f, mime: f.type, name: f.name, url: URL.createObjectURL(f) });
+    else if (f.type.startsWith('video/')) {
+      const vi = pending.filter(p => p.kind === 'video' || p.videoOnly).length + 1;
+      $('live').hidden = false; $('live').textContent = 'Reading the video…';
+      try {
+        const { frames, secs, url } = await videoFrames(f, vi);
+        const big = f.size > MAX_VIDEO;
+        pending.push({ kind: big ? 'frames' : 'video', videoOnly: big, blob: big ? null : f, mime: f.type || 'video/mp4', name: `video${vi}.${(f.name.split('.').pop() || 'mp4').toLowerCase()}`, url, secs, frames, big });
+        $('live').textContent = big ? `Video ${vi} is over 50 MB: PKB Ops will read ${frames.length} frames, but the file itself won't be attached in Buildertrend (record shorter clips, up to ~30 s).` : '';
+        $('live').hidden = !big;
+      } catch(err) { $('live').hidden = false; $('live').textContent = 'Could not read this video: ' + err.message; }
+    }
   }
   e.target.value = ''; renderTray();
 };
 function renderTray(){
   $('tray').hidden = !pending.length;
-  $('tray').innerHTML = pending.map((p, i) => `<div class="t">${p.kind === 'photo' ? `<img src="${p.url}" alt="">` : `<div class="aud">🎤 ${p.secs ? p.secs + 's' : 'audio'}</div>`}<button class="x" type="button" data-i="${i}" aria-label="Remove">×</button></div>`).join('');
+  $('tray').innerHTML = pending.map((p, i) => `<div class="t">${p.kind === 'photo' ? `<img src="${p.url}" alt="">` : p.frames ? `<div class="aud" style="background-image:url(${p.frames[0] ? p.frames[0].url : ''});background-size:cover;color:#fff;text-shadow:0 1px 2px #000">🎬 ${p.secs}s</div>` : `<div class="aud">🎤 ${p.secs ? p.secs + 's' : 'audio'}</div>`}<button class="x" type="button" data-i="${i}" aria-label="Remove">×</button></div>`).join('');
   $('tray').querySelectorAll('.x').forEach(b => b.onclick = () => { pending.splice(+b.dataset.i, 1); renderTray(); });
 }
 
@@ -228,7 +259,9 @@ function stopRec(){ try { recog && recog.stop(); } catch(e) {} recog = null; if 
 /* ---------- thread ---------- */
 function bubbleUser(text, media, transcript){
   const d = document.createElement('div'); d.className = 'msg u';
-  d.innerHTML = `${esc(text)}${media.filter(m => m.kind === 'photo').length ? `<div class="thumbs">${media.filter(m => m.kind === 'photo').map(m => `<img src="${m.url}" alt="">`).join('')}</div>` : ''}${media.filter(m => m.kind === 'audio').map(m => `<audio controls src="${m.url}"></audio>`).join('')}`;
+  const flat = media.flatMap(m => m.frames ? (m.big ? m.frames.slice(0, 1) : [m]) : [m]);
+  const pics = flat.filter(m => m.kind === 'photo' && !m.from_video), vids = flat.filter(m => m.kind === 'video'), big = flat.filter(m => m.from_video && !vids.length);
+  d.innerHTML = `${esc(text)}${pics.length || big.length ? `<div class="thumbs">${[...pics, ...big].map(m => `<img src="${m.url}" alt="">`).join('')}</div>` : ''}${vids.map(m => `<video controls playsinline src="${m.url}" style="display:block;margin-top:8px;max-width:100%;border-radius:8px"></video>`).join('')}${flat.filter(m => m.kind === 'audio').map(m => `<audio controls src="${m.url}"></audio>`).join('')}`;
   $('thread').appendChild(d); d.scrollIntoView({ block: 'end' });
 }
 function bubbleAI(text, cls){ const d = document.createElement('div'); d.className = 'msg a ' + (cls || ''); d.textContent = text; $('thread').appendChild(d); d.scrollIntoView({ block: 'end' }); return d; }
@@ -247,7 +280,7 @@ function draftCard(id, dr){
     ok.disabled = no.disabled = true; st.textContent = 'Saving…';
     try {
       const r = await call({ confirm: id, title: c.querySelector('input').value, notes: c.querySelector('textarea').value });
-      st.textContent = `✓ Queued for Buildertrend${r.photos ? ` with ${r.photos} photo(s)` : ''}${r.steps ? ` · ${r.steps} checklist step(s) updated` : ''}.`;
+      st.textContent = `✓ Queued for Buildertrend${r.photos ? ` with ${r.photos} attachment(s)` : ''}${r.steps ? ` · ${r.steps} checklist step(s) updated` : ''}.`;
       ok.hidden = no.hidden = true; c.querySelectorAll('input,textarea').forEach(x => x.disabled = true); closeReport(); loadRecent();
     } catch(e) { st.textContent = 'Error: ' + e.message; ok.disabled = no.disabled = false; }
   };
@@ -268,19 +301,20 @@ async function send(){
   busy = true; $('send').disabled = true; $('hint').hidden = true;
   const items = pending; pending = []; renderTray(); $('text').value = ''; $('text').style.height = '';
   bubbleUser(text, items);
-  const wait = bubbleAI(items.length ? `Uploading ${items.length} file(s)…` : 'Reading…', 'pending');
+  const wait = bubbleAI(items.length ? 'Uploading…' : 'Reading…', 'pending');
   try {
     const media = [];
     const folder = `${uid}/${new Date().toISOString().slice(0, 10)}`;
-    for (const [i, it] of items.entries()) {
+    const files = items.flatMap(it => it.frames ? [...(it.blob ? [it] : []), ...it.frames] : [it]);
+    for (const [i, it] of files.entries()) {
       const path = `${folder}/${Date.now()}_${i}_${it.name.replace(/[^\w.-]+/g, '_')}`;
       const { error } = await sb.storage.from('field-media').upload(path, it.blob, { contentType: it.mime, upsert: false });
       if (error) throw new Error('upload: ' + error.message);
-      media.push({ path, kind: it.kind, mime: it.mime, name: it.name });
-      wait.textContent = `Uploading ${i + 1}/${items.length}…`;
+      media.push({ path, kind: it.kind, mime: it.mime, name: it.name, ...(it.from_video ? { from_video: true } : {}) });
+      wait.textContent = `Uploading ${i + 1}/${files.length}…`;
     }
     const transcript = items.filter(i => i.kind === 'audio' && i.transcript).map(i => i.transcript).join(' ');
-    wait.textContent = 'PKB Ops is reading the report' + (media.some(m => m.kind === 'photo') ? ' and the photos' : '') + '…';
+    wait.textContent = 'PKB Ops is reading the report' + (media.some(m => m.from_video) ? ', the photos and the video' : media.some(m => m.kind === 'photo') ? ' and the photos' : '') + '…';
     const r = await call({ report_id: reportId, text: transcript && text.includes(transcript) ? text.replace(transcript, '').trim() : text, transcript, media });
     reportId = r.report_id; $('newRep').hidden = false; $('title').textContent = 'Report #' + reportId;
     wait.classList.remove('pending'); wait.textContent = r.reply || '';

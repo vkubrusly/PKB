@@ -38,9 +38,9 @@ for (const d of drafts) {
   if (!claim.length) { console.log(`skip ${d.job_number}: being posted by another run`); continue; }
   const dir = join(tmpdir(), `btlog_${d.id}`);
   try {
-    // photos sent from the field channel (Supabase Storage 'field-media') → local files to attach
+    // photos and videos sent from the field channel (Supabase Storage 'field-media') → local files to attach
     const attachments = [];
-    for (const [i, m] of (d.media || []).filter((x) => x.kind === 'photo').entries()) {
+    for (const [i, m] of (d.media || []).filter((x) => x.kind === 'video' || (x.kind === 'photo' && !x.from_video)).entries()) {
       mkdirSync(dir, { recursive: true });
       const ext = (m.path.match(/\.(\w+)$/)?.[1] || 'jpg').toLowerCase();
       const f = join(dir, `${d.job_number}_${String(i + 1).padStart(2, '0')}.${ext}`);

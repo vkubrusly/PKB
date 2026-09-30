@@ -22,7 +22,7 @@ import manual from '../_shared/field_manual.json' with { type: 'json' };
 type Any = any;
 
 const MODELS = [Deno.env.get('OPS_FIELD_MODEL') || 'claude-opus-5-5', 'claude-opus-5', 'claude-sonnet-5-5'].filter((v, i, a) => a.indexOf(v) === i);
-const MAX_PHOTOS = 16;
+const MAX_PHOTOS = 24;
 
 const STEPS = (manual as Any).phases.flatMap((ph: Any) => ph.steps.map((s: Any) => ({ ...s, phase: `${ph.n}. ${ph.name}` })));
 const MANUAL_TEXT = STEPS.map((s: Any) => `${s.n} | ${s.phase} | ${s.name} (${s.en})${s.type === 'inspection' ? ' [inspection]' : ''}`).join('\n');
@@ -53,8 +53,13 @@ const SCHEMA = {
 const INSTRUCTIONS = `You are PKB Ops, the field assistant of PKB Homes (Florida home builder). Supervisors and project managers send you site reports: text, audio transcripts and photos.
 Your job for each report:
 1. Identify the house. The author must say the house number (job number like 0037, or the lot/house number) or the street address. Match it against JOBS. If the report does not identify the house, or it matches more than one job, set job_number null and ask in "question" which house it is (list the likely options if you have them). Never guess the house from the photos alone.
-2. Read the text, the transcripts and the photos. Describe only what is actually said or visible.
-3. Draft the Buildertrend Daily Log: a title (max 50 characters) and notes with what was done today, what was seen in the photos, what is next and any problem. Write it in the language the author used. No markdown.
+2. Understand the report: the text, the audio transcripts and the photos (frames marked as video frames come from a video the author filmed). The author's statements about the work are the primary source: include what they report even if the photos don't show it — a photo shows only part of the site, so something missing from a photo is not evidence against the report. Use the photos to add detail and to spot problems; flag a contradiction only when a photo clearly shows the opposite of what was said.
+3. Write the Buildertrend Daily Log as a SUMMARY a manager can read in 20 seconds — never paste or paraphrase the transcript line by line, never narrate the photos. Title: max 50 characters, the main work of the day. Notes, in the author's language, plain text, short lines, with these labels translated to that language (Portuguese: "Feito hoje:", "Em andamento:", "Próximo:", "Problemas:"):
+   Done today: …
+   In progress: …
+   Next: …
+   Issues: … (only if any)
+   Mention only construction facts (work done, materials delivered, crews on site, inspections, problems). Leave out vehicles, signs, weather and other scenery unless they matter to the work. Keep it under ~8 lines.
 4. Map the work to the PKB field manual (MANUAL, 39 steps): list only the steps the report or photos clearly show as done or in progress, with a short evidence note. Do not mark inspections as passed unless the author says they passed.
 5. List issues (safety, quality, missing material, delays) if any.
 If something essential is missing besides the house (e.g. the photos are unclear and the author asks for something specific), ask in "question" but still fill what you can.
@@ -87,7 +92,7 @@ Deno.serve(async (req) => {
     if (body.report_id && !report) return json({ error: 'report not found' }, 404);
     if (report && ['confirmed', 'cancelled'].includes(report.status)) return json({ error: 'this report is closed — start a new one' }, 400);
 
-    const media = (Array.isArray(body.media) ? body.media : []).filter((m: Any) => m?.path && ['photo', 'audio'].includes(m.kind)).slice(0, 40);
+    const media = (Array.isArray(body.media) ? body.media : []).filter((m: Any) => m?.path && ['photo', 'audio', 'video'].includes(m.kind)).slice(0, 60);
     const text = String(body.text || '').trim(), transcript = String(body.transcript || '').trim();
     if (!text && !transcript && !media.length) return json({ error: 'empty report' }, 400);
     const messages: Any[] = [...(report?.messages || []), { from: 'user', text, transcript, media, at: new Date().toISOString() }];
@@ -104,10 +109,10 @@ Deno.serve(async (req) => {
     const jobsText = (jobs || []).map((j: Any) => `${j.job_number} | ${j.address} | ${j.status} | supervisor ${j.supervisor || '—'} | PM ${j.pms || '—'} | done steps: ${Object.entries(j.checklist || {}).filter(([, s]) => s === 'done').map(([n]) => n).join(',') || '—'}`).join('\n');
     const convo = messages.map((m: Any) => m.from === 'assistant'
       ? `PKB Ops: ${m.text}`
-      : `${me.name || me.email}: ${[m.text, m.transcript ? `[audio transcript] ${m.transcript}` : '', (m.media || []).some((x: Any) => x.kind === 'audio') && !m.transcript ? '[audio sent without transcript]' : '', (m.media || []).filter((x: Any) => x.kind === 'photo').length ? `[${(m.media || []).filter((x: Any) => x.kind === 'photo').length} photo(s)]` : ''].filter(Boolean).join(' ')}`).join('\n');
+      : `${me.name || me.email}: ${[m.text, m.transcript ? `[audio transcript] ${m.transcript}` : '', (m.media || []).some((x: Any) => x.kind === 'audio') && !m.transcript ? '[audio sent without transcript]' : '', (m.media || []).filter((x: Any) => x.kind === 'photo' && !x.from_video).length ? `[${(m.media || []).filter((x: Any) => x.kind === 'photo' && !x.from_video).length} photo(s)]` : '', (m.media || []).filter((x: Any) => x.from_video).length ? `[video: ${(m.media || []).filter((x: Any) => x.from_video).length} frames${(m.media || []).some((x: Any) => x.kind === 'video') ? '' : ', video file too large to keep'}; the sound of the video is not available]` : ''].filter(Boolean).join(' ')}`).join('\n');
 
     const content: Any[] = [
-      ...urls.map((u) => ({ type: 'image', source: { type: 'url', url: u } })),
+      ...urls.flatMap((u, i) => [{ type: 'text', text: photos[i]?.from_video ? `Video frame (${photos[i].name || ''})` : `Photo ${i + 1}` }, { type: 'image', source: { type: 'url', url: u } }]),
       { type: 'text', text: `JOBS (job | address | status | team | manual steps already done):\n${jobsText}\n\nAUTHOR: ${me.name || me.email} (${me.role})\nNOW: ${new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })} Florida time\n\nREPORT CONVERSATION:\n${convo}` },
     ];
 
