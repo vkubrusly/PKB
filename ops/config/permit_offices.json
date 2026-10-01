@@ -1,0 +1,11 @@
+{
+  "_note": "Who coordinates the permit of each house (Victor, 2026-10-01). Order: a Buildertrend job custom field 'Permit Office' (if created) > per-job choice made in the portal > 'jobs' below > 'by_county' > 'default'. Change 'by_county' when the deal with an office changes.",
+  "offices": {
+    "sovereign": { "name": "Sovereign", "contacts": "designers.sovereign", "external": true },
+    "pkb": { "name": "PKB — Guilherme", "to": ["guilherme@pkbhomes.com"], "external": false }
+  },
+  "by_county": { "Marion": "sovereign", "Citrus": "sovereign" },
+  "default": "pkb",
+  "jobs": {},
+  "pending": "Bay Rd house → sovereign: add its job number to 'jobs' once it exists in Buildertrend / the sheet"
+}

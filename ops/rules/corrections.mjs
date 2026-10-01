@@ -31,11 +31,17 @@ const clean = (c) => String(c || '').replace(/\r/g, '').replace(/[ \t]+/g, ' ').
 
 const contacts = JSON.parse(readFileSync(new URL('../config/contacts.json', import.meta.url), 'utf8'));
 const sov = contacts.designers.sovereign;
+// Who coordinates each house's permit (config/permit_offices.json → ops.jobs.permit_office).
+const offices = JSON.parse(readFileSync(new URL('../config/permit_offices.json', import.meta.url), 'utf8')).offices;
+const target = (office) => office === 'sovereign'
+  ? { key: 'sovereign', to: sov.to, cc: [...(sov.cc || [])], hello: 'Prezados da Sovereign,', external: true }
+  : { key: office || 'pkb', to: offices[office]?.to || [contacts.internal.permits_owner.email], cc: [], hello: `${contacts.internal.permits_owner.name.split(' ')[0]},`, external: false,
+      note: `\nEsta obra é coordenada pela PKB (escritório: ${offices[office]?.name || 'PKB'}), não pela Sovereign.\n` };
 const director = contacts.internal.director.email;
 const orgId = (await sql(`select id from public.orgs where name = ${q(ORG)} limit 1`))[0]?.id;
 if (!orgId) throw new Error(`org "${ORG}" not found`);
 
-const cases = await sql(`select c.id, c.number, c.portal, c.tracked_by, j.id as job_id, j.job_number, j.address,
+const cases = await sql(`select c.id, c.number, c.portal, c.tracked_by, j.id as job_id, j.job_number, j.address, j.permit_office,
     (select max(round) from ops.review_items r where r.permit_case_id = c.id) as round
   from ops.permit_cases c join ops.jobs j on j.id = c.job_id
   where j.org_id = ${q(orgId)} and c.kind = 'building' and c.ops_status = 'corrections'`);
@@ -45,7 +51,7 @@ for (const c of cases) {
   const items = await sql(`select department, status, reviewer, completed_at, comments from ops.review_items
     where permit_case_id = ${q(c.id)} and round = ${c.round} and failed order by department`);
   if (!items.length) continue;
-  if (c.tracked_by !== 'designer') { console.log(`${c.job_number} ${c.number}: PKB-tracked (custom) — not e-mailed`); continue; }
+  const t = target(c.permit_office);
   const backAt = items.map((i) => i.completed_at).filter(Boolean).sort().pop();
   const deadline = addBusinessDays(backAt, PER_ITEM * items.length);
   const street = String(c.address).split(',')[0];
@@ -56,7 +62,7 @@ for (const c of cases) {
   const list = items.map((i, n) => `${n + 1}. ${i.department}${i.reviewer ? ` (${i.reviewer})` : ''} — ${i.status} em ${brDate(i.completed_at)}
 ${clean(i.comments) ? clean(i.comments).split('\n').map((l) => '   ' + l).join('\n') : '   (sem comentário no portal: ver os documentos de revisão do condado)'}`).join('\n\n');
 
-  let kind, subject, text, cc = [...(sov.cc || [])];
+  let kind, subject, text, cc = [...t.cc];
   if (!sentReq) {
     const recent = (today - new Date(backAt + 'T12:00:00Z')) / 864e5 <= RECENT_DAYS;
     if (!recent) {
@@ -67,8 +73,8 @@ ${clean(i.comments) ? clean(i.comments).split('\n').map((l) => '   ' + l).join('
     }
     kind = 'R1';
     subject = `Correções do condado — ${c.job_number} · ${street} · Permit ${c.number} (rodada ${c.round})`;
-    text = `Prezados da Sovereign,
-
+    text = `${t.hello}
+${t.note || ''}
 O condado devolveu o permit ${c.number} (obra ${c.job_number} — ${c.address}) pedindo correções em ${items.length} ${items.length === 1 ? 'item' : 'itens'}:
 
 ${list}
@@ -87,8 +93,8 @@ PKB Homes — ${contacts.internal.permits_owner.name}
     kind = 'R2';
     if (n >= 3) cc.push(director);
     subject = `${n > 1 ? `(${n}º lembrete) ` : ''}Reenvio pendente — ${c.job_number} · ${street} · Permit ${c.number}`;
-    text = `Prezados da Sovereign,
-
+    text = `${t.hello}
+${t.note || ''}
 O prazo de reenvio das correções do permit ${c.number} (obra ${c.job_number} — ${c.address}) venceu em ${brDate(deadline)} e ainda não vemos o reenvio no portal do condado.
 
 Itens pendentes:
@@ -101,17 +107,17 @@ PKB Homes — ${contacts.internal.permits_owner.name}
 (e-mail automático do PKB Ops)`;
   }
   let res = { dryRun: true };
-  if (!DRY) { try { res = await sendEmail({ to: sov.to, cc, subject, text }); } catch (e) { res = { error: e.message }; } }
+  if (!DRY) { try { res = await sendEmail({ to: t.to, cc, subject, text, alwaysCc: t.external }); } catch (e) { res = { error: e.message }; } }
   const status = res.error ? 'failed' : res.dryRun ? 'draft' : 'sent';
-  console.log(`${status.toUpperCase()} ${kind} ${c.job_number} ${c.number} → ${sov.to.join(', ')} cc ${[...cc, process.env.OPS_ALWAYS_CC].filter(Boolean).join(', ')}`);
+  console.log(`${status.toUpperCase()} ${kind} ${c.job_number} ${c.number} [${t.key}] → ${t.to.join(', ')} cc ${[...cc, t.external ? process.env.OPS_ALWAYS_CC : null].filter(Boolean).join(', ')}`);
   if (DRY) { console.log(`--- ${subject}\n${text}\n`); continue; }
   if (status === 'failed') continue;
   const key = kind === 'R1' ? keyReq : `r2.followup:${c.id}:${c.round}:${followups.length + 1}`;
   const ev = await sql(`insert into ops.events (org_id, job_id, permit_case_id, kind, source, occurred_at, payload, dedupe_key, processed_at)
     values (${q(orgId)}, ${q(c.job_id)}, ${q(c.id)}, ${q(kind === 'R1' ? 'corrections.requested' : 'corrections.followup')}, 'rule', now(), ${q(JSON.stringify({ round: c.round, items: items.length, deadline }))}::jsonb, ${q(key)}, now())
     on conflict (org_id, dedupe_key) do nothing returning id`);
-  await sql(`update ops.permit_cases set ball_with = 'sovereign' where id = ${q(c.id)};
+  await sql(`update ops.permit_cases set ball_with = ${q(t.key === 'sovereign' ? 'sovereign' : 'pkb')} where id = ${q(c.id)};
     insert into ops.outbound_messages (org_id, job_id, channel, rule, to_addresses, cc_addresses, subject, body, status, external_id, in_reply_to_event, sent_at)
-    values (${q(orgId)}, ${q(c.job_id)}, 'email', ${q(kind)}, ${qa(sov.to)}, ${qa([...cc, process.env.OPS_ALWAYS_CC].filter(Boolean))}, ${q(subject)}, ${q(text)}, ${q(status)}, ${q(res.id || null)}, ${ev[0]?.id ?? 'null'}, now())`);
+    values (${q(orgId)}, ${q(c.job_id)}, 'email', ${q(kind)}, ${qa(t.to)}, ${qa([...cc, t.external ? process.env.OPS_ALWAYS_CC : null].filter(Boolean))}, ${q(subject)}, ${q(text)}, ${q(status)}, ${q(res.id || null)}, ${ev[0]?.id ?? 'null'}, now())`);
 }
 console.log(`corrections: ${cases.length} permit(s) waiting for resubmission${DRY ? ' · DRY RUN' : ''}`);

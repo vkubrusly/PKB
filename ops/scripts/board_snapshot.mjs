@@ -19,7 +19,7 @@ const norm = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
 const mail = await sql(`select job_number, category, received_at, subject, parsed from ops.inbound_emails where job_number is not null order by received_at desc`);
 const [jobs, contacts, pauses, cases, subs, revs, insps, holds] = await Promise.all([
-  sql(`select id, org_id, latitude, longitude, job_number, company, status, address, parcel, county, model, owner_name, signed_at, second_draw_at, turtle_state, note, co_at, bt_job_id, photos_last_at, photos_last_by, photos_last_folder, photos_last_daily_log, photos_count from ops.jobs`),
+  sql(`select id, org_id, latitude, longitude, permit_office, job_number, company, status, address, parcel, county, model, owner_name, signed_at, second_draw_at, turtle_state, note, co_at, bt_job_id, photos_last_at, photos_last_by, photos_last_folder, photos_last_daily_log, photos_count from ops.jobs`),
   sql(`select job_id, role, name from ops.job_contacts`),
   sql(`select job_id, reason, started_at, ended_at, note from ops.job_pauses`),
   sql(`select c.id, c.job_id, c.kind, c.portal, c.number, c.portal_status, c.ops_status, c.ball_with, c.tracked_by, c.requested_at, c.applied_at, c.issued_at, c.finaled_at, mq.stage from ops.permit_cases c left join ops.monitoring_queue mq on mq.permit_case_id=c.id`),
@@ -98,6 +98,7 @@ for (const [xid, x] of J) {
     clock_phase: ck.phase, build_start: ck.start || null, build_start_src: ck.startSource || null, build_days: ck.buildDays ?? null,
     finished_at: ck.finishedAt || null, finish_src: ck.finishSource || null, days_awaiting_co: ck.daysAwaitingCO ?? null,
     wait_to_start: ck.waitToStart ?? null, waiting_days: ck.waitingDays ?? null, wait_excuse: ck.excuse || null,
+    permit_office: jobs.find((o) => o.job_number === x.job_number)?.permit_office || null,
     job_number: x.job_number, company: x.company, address: x.address, county: x.county, model: x.model, status: x.status, supervisor: x.supervisor, signed_at: x.signed_at,
     turtle: x.turtle_state !== 'none' ? x.turtle_state : null, pause: x.pauses.find((q) => !q.ended)?.reason || null,
     permit: b?.number || null, portal: b?.portal || null, stage: b?.stage || 'pre', ops_status: b?.ops_status || null,

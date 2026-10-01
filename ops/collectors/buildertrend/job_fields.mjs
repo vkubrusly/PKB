@@ -59,7 +59,7 @@ const cf = (row, label) => {
 const parseList = (v) => { try { const a = JSON.parse(v); return Array.isArray(a) ? a : v; } catch { return v; } };
 const jobs = rows.map(r => {
   let name = r.jobNameLink; if (typeof name === 'string') { try { name = JSON.parse(name); } catch {} } if (name && typeof name === 'object') name = name.title;
-  return { jobId: r.jobId, name, street: r.street, city: r.city, zip: r.zip, parcel: cf(r, 'Parcial ID'), county: cf(r, 'County'), model: cf(r, 'Model'), supervisor: cf(r, 'Supervisor'), projectManagers: parseList(r.projectManager), permit: r.permit || null, lot: r.lot || null, owner: r.ownerDisplayName || null, status: r.status,
+  return { jobId: r.jobId, name, street: r.street, city: r.city, zip: r.zip, parcel: cf(r, 'Parcial ID'), county: cf(r, 'County'), model: cf(r, 'Model'), supervisor: cf(r, 'Supervisor'), permitOffice: cf(r, 'Permit Office'), projectManagers: parseList(r.projectManager), permit: r.permit || null, lot: r.lot || null, owner: r.ownerDisplayName || null, status: r.status,
     actualStart: r.actualStart || null, actualCompletion: r.actualCompletion || null, projectedStart: r.projectedStart || null, projectedCompletion: r.projectedCompletion || null,
     statusUpdatedAt: r.statusLastUpdatedDate || null, createdAt: r.createdDate || null,
     latitude: r.mappingData?.coordinates?.latitude ?? null, longitude: r.mappingData?.coordinates?.longitude ?? null };
