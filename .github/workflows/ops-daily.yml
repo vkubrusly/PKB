@@ -158,7 +158,9 @@ jobs:
         if: steps.bt.outputs.state == 'ok' && vars.OPS_BT_POST == 'true'
         continue-on-error: true
         env: { OPS_BT_POST: 'true' }
-        run: node rules/post_bt_logs.mjs
+        run: |
+          node rules/post_bt_logs.mjs || echo "::warning::post_bt_logs failed"
+          node rules/post_bt_leads.mjs || echo "::warning::post_bt_leads failed"
 
       # Portal data for budget.pkbhomes.com/ops/ (ops.snapshots, read by the page and the Ask).
       - name: Portal snapshot

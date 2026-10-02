@@ -30,7 +30,7 @@ jobs:
         env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' }
       - name: Anything queued?
         id: q
-        run: echo "n=$(node -e "import('./scripts/sb.mjs').then(async ({sql}) => console.log((await sql(\"select count(*)::int n from ops.outbound_messages where channel = 'bt_daily_log' and status = 'draft'\"))[0].n))")" >> "$GITHUB_OUTPUT"
+        run: echo "n=$(node -e "import('./scripts/sb.mjs').then(async ({sql}) => console.log((await sql(\"select count(*)::int n from ops.outbound_messages where channel in ('bt_daily_log', 'bt_lead') and status = 'draft'\"))[0].n))")" >> "$GITHUB_OUTPUT"
       - name: Buildertrend session
         if: steps.q.outputs.n != '0'
         env: { BT_COOKIES_JSON: '${{ secrets.BT_COOKIES_JSON }}' }
@@ -42,4 +42,6 @@ jobs:
       - name: Post
         if: steps.q.outputs.n != '0'
         env: { OPS_BT_POST: 'true' }
-        run: node rules/post_bt_logs.mjs
+        run: |
+          node rules/post_bt_logs.mjs || echo "::warning::post_bt_logs failed"
+          node rules/post_bt_leads.mjs || echo "::warning::post_bt_leads failed"

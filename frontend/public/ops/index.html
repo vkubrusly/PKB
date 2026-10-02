@@ -754,7 +754,7 @@ const history = [];
 let busy = false;
 const md = t => esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
 function addMsg(cls, text){ const d = document.createElement('div'); d.className = 'msg ' + cls; if (cls.startsWith('a') && !cls.includes('pending')) d.innerHTML = md(text); else d.textContent = text; $('#chat').appendChild(d); d.scrollIntoView({block:'nearest'}); return d; }
-const ACT = {daily_log:'Buildertrend Daily Log', email:'E-mail', pause_job:'Pause job', resume_job:'Resume job', set_contact:'Supervisor / PM', job_note:'Job note', change_request:'Change request', set_office:'Permit office'};
+const ACT = {daily_log:'Buildertrend Daily Log', email:'E-mail', pause_job:'Pause job', resume_job:'Resume job', set_contact:'Supervisor / PM', job_note:'Job note', change_request:'Change request', set_office:'Permit office', bt_lead:'Buildertrend Lead Opportunity'};
 function proposalCard(p, into){
   const c = document.createElement('div'); c.className = 'prop';
   c.innerHTML = `<span class="k">${esc(ACT[p.action] || p.action)} · waiting for confirmation</span><pre>${esc(p.summary)}</pre><div class="pa"><button class="btn" type="button">Confirm</button><button class="btn ghost" type="button">Cancel</button><span class="st"></span></div>`;
