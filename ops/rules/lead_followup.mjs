@@ -10,6 +10,11 @@
 //      (the reply reaches the bot mailbox; matched by the [Lead …] tag);
 //   4. otherwise: follow-up e-mail to the permits owner 24 h after the request,
 //      then every 48 h, asking whether the contract was issued.
+// Buildertrend (Victor, 2026-10-02):
+//   A. request for a job that already exists → Daily Log on that job with the buyer's and
+//      agent's details (notify Guilherme), once;
+//   B. new request with no job → a Lead Opportunity proposal in the portal (Outbox →
+//      Waiting for confirmation); once a partner confirms, rules/post_bt_leads.mjs creates it.
 //
 //   node rules/lead_followup.mjs [--dry-run]
 // =============================================================================
@@ -46,6 +51,30 @@ for (const e of fresh) {
   console.log(`new lead ${ref} ${p.client}`);
 }
 
+// Buildertrend users the agent may match (salespeople) — from config/contacts.json + known BT names
+const BT_USERS = ['Gabriel Basso', 'Guilherme Pinto', 'Cristiano Pedrosa', 'Daniela Pedrosa', 'Camila Haase', 'Carlos Basilio'];
+const btUser = (name) => { const w = String(name || '').toLowerCase().split(/\s+/).filter(Boolean); return BT_USERS.find((u) => { const [f, l] = u.toLowerCase().split(' '); return w[0] === f && w.includes(l); }) || null; };
+const leadNotes = (l) => [
+  `Pedido pelo site em ${brDate(l.received_at)} (ref. ${l.ref}).`,
+  `Cliente: ${l.client || '—'}${l.company ? ` — ${l.company}` : ''}`,
+  `Telefone: ${l.phone || '—'} · E-mail: ${l.email || '—'}`,
+  `Lote: ${[l.address, l.city].filter(Boolean).join(', ') || '—'}${l.parcel ? ` · Parcel ${l.parcel}` : ''}${l.county ? ` · ${l.county}` : ''}`,
+  `Modelo: ${l.model || '—'} · Valor: ${l.price || '—'}`,
+  `Corretor: ${l.agent || '—'}`,
+].join('\n');
+const money = (p) => { const s = String(p || '').trim(); if (!s) return null; const n = Number(/,\d{2}$/.test(s) ? s.replace(/\./g, '').replace(',', '.') : s.replace(/[$,\s]/g, '')); return Number.isFinite(n) && n > 0 ? Math.round(n) : null; };
+const place = (l) => { const m = String(l.city || '').match(/^(.*?),\s*([A-Z]{2})\s*(\d{5})?/); return { street: l.address || null, city: m ? m[1] : l.city || null, state: m ? m[2] : 'FL', zip: m ? m[3] || null : null }; };
+
+// A. matched leads (old or new) → one Daily Log on the job with the buyer/agent details
+for (const l of await sql(`select l.*, j.job_number from ops.leads l join ops.jobs j on j.id = l.matched_job_id where l.org_id = ${q(orgId)} and l.status = 'matched' and l.job_logged_at is null`)) {
+  const notify = [...new Set(['Guilherme Pinto', btUser(l.agent)].filter(Boolean))];
+  console.log(`${l.ref} ${l.client}: Daily Log on job ${l.job_number} → ${notify.join(', ')}`);
+  if (DRY) continue;
+  await sql(`insert into ops.outbound_messages (org_id, job_id, channel, rule, to_addresses, subject, body, status)
+    values (${q(orgId)}, ${q(l.matched_job_id)}, 'bt_daily_log', 'R-LEAD', array[${notify.map(q).join(',')}]::text[], ${q(`Pedido de contrato — ${l.client || 'cliente'}`.slice(0, 50))}, ${q(`Novo pedido de contrato pelo site para esta obra.\n\n${leadNotes(l)}`)}, 'draft');
+    update ops.leads set job_logged_at = now() where id = ${q(l.id)};`);
+}
+
 const leads = await sql(`select * from ops.leads where org_id = ${q(orgId)} and status = 'open' order by received_at`);
 const jobs = await sql(`select id, job_number, parcel, address, bt_job_name from ops.jobs where org_id = ${q(orgId)}`);
 let sent = 0;
@@ -68,6 +97,23 @@ for (const l of leads) {
     if (!DRY) await sql(`update ops.leads set status = 'answered', answered_at = ${q(reply.received_at)}, answer = ${q(answer)} where id = ${q(l.id)}`);
     continue;
   }
+  // B. no job yet → Lead Opportunity proposal (once), confirmed in the portal
+  if (!l.bt_lead_status) {
+    const pl = place(l);
+    const [first, ...rest] = String(l.client || '').trim().split(/\s+/);
+    const input = {
+      lead_ref: l.ref,
+      title: `${l.client || 'Novo cliente'} — ${l.model || 'modelo?'}${pl.city ? ` · ${pl.city}` : ''}${l.parcel ? ` (${l.parcel})` : ''}`.slice(0, 100),
+      dedupe_key: l.parcel || l.client,
+      contact: { first: first || null, last: rest.join(' ') || null, display: l.client || l.company, phone: l.phone, email: l.email },
+      address: pl, salespeople: [...new Set([btUser(l.agent), 'Guilherme Pinto'].filter(Boolean))],
+      revenue: money(l.price), source: 'Contact Form', notes: leadNotes(l),
+    };
+    console.log(`${l.ref} ${l.client}: Buildertrend Lead Opportunity proposed (waiting for confirmation in the portal)`);
+    if (!DRY) await sql(`insert into ops.ask_actions (org_id, proposed_by, action, input, summary)
+        values (${q(orgId)}, 'pkb-ops', 'bt_lead', ${q(JSON.stringify(input))}::jsonb, ${q(`Criar Lead Opportunity no Buildertrend: ${input.title}\n\n${input.notes}\n\nVendedores: ${input.salespeople.join(', ')}${input.revenue ? ` · Receita estimada: US$ ${input.revenue.toLocaleString('en-US')}` : ''}`)});
+      update ops.leads set bt_lead_status = 'proposed' where id = ${q(l.id)};`);
+  }
   // 4. follow-up due?
   const due = l.last_followup_at ? new Date(l.last_followup_at).getTime() + EVERY_H * 36e5 : new Date(l.received_at).getTime() + FIRST_H * 36e5;
   if (Date.now() < due) continue;
@@ -85,6 +131,7 @@ Modelo: ${l.model || '—'} · Valor: ${l.price || '—'}
 Corretor: ${l.agent || '—'}
 
 O contrato já foi emitido? Responda este e-mail (basta "sim", "não, porque…" ou a previsão).
+A Lead Opportunity com estes dados está pronta no portal (budget.pkbhomes.com/ops/ → Outbox → Waiting for confirmation): é só confirmar para criá-la no Buildertrend.
 Paro de cobrar quando você responder ou quando a obra aparecer na planilha/Buildertrend.
 
 — PKB Ops (${n}ª cobrança; próxima em ${EVERY_H} h se não houver resposta)`;
