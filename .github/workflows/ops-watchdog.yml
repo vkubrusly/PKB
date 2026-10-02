@@ -1,0 +1,32 @@
+name: PKB Ops — watchdog (daily round)
+
+# Every 15 minutes: is the 6 AM / 1 PM Florida round done (portal snapshot newer than the slot)?
+# If GitHub started it late, skipped it, or it failed, start ops-daily again — every 15 min until
+# it works. From the 3rd attempt on a slot, one e-mail to Victor. See ops/scripts/watchdog_daily.mjs.
+
+on:
+  schedule:
+    - cron: '3,18,33,48 * * * *'
+  workflow_dispatch:
+
+concurrency: { group: ops-watchdog, cancel-in-progress: false }
+permissions: { contents: read, actions: write }
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults: { run: { working-directory: ops } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: ops/package-lock.json }
+      - run: npm ci --omit=optional
+        env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' }
+      - name: Round done? Otherwise start it
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          BOT_EMAIL: ${{ secrets.BOT_EMAIL || 'botpkbhomes@gmail.com' }}
+          BOT_EMAIL_PASSWORD: ${{ secrets.BOT_EMAIL_PASSWORD }}
+        run: node scripts/watchdog_daily.mjs
