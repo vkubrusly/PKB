@@ -16,10 +16,12 @@ on:
   # GitHub cron is UTC and Florida changes clocks, so each run has a summer (EDT) and a
   # winter (EST) slot; the gate job below keeps only the one that matches today's offset.
   schedule:
-    - cron: '0 10 * * *'   # 06:00 EDT
-    - cron: '0 11 * * *'   # 06:00 EST
-    - cron: '0 17 * * *'   # 13:00 EDT
-    - cron: '0 18 * * *'   # 13:00 EST
+  # Off the hour on purpose (GitHub delays :00 schedules the most) and a bit early, so the data
+  # is ready around 6 AM / 1 PM. If GitHub is still late, ops-mail's watchdog starts the round.
+    - cron: '47 9 * * *'    # 05:47 EDT
+    - cron: '47 10 * * *'   # 05:47 EST
+    - cron: '47 16 * * *'   # 12:47 EDT
+    - cron: '47 17 * * *'   # 12:47 EST
   workflow_dispatch:
     inputs:
       limit:
@@ -39,10 +41,10 @@ jobs:
       - id: g
         env: { CRON: '${{ github.event.schedule }}' }
         run: |
-          # Manual runs always go. Scheduled: EDT (-0400) keeps the 10/17 UTC slots, EST the 11/18 ones.
+          # Manual runs always go. Scheduled: EDT (-0400) keeps the 9/16 UTC slots, EST the 10/17 ones.
           if [ -z "$CRON" ]; then echo run=true >> "$GITHUB_OUTPUT"; exit 0; fi
           hour=$(echo "$CRON" | awk '{print $2}')
-          if [ "$(TZ=America/New_York date +%z)" = "-0400" ]; then ok="10 17"; else ok="11 18"; fi
+          if [ "$(TZ=America/New_York date +%z)" = "-0400" ]; then ok="9 16"; else ok="10 17"; fi
           case " $ok " in *" $hour "*) echo run=true ;; *) echo run=false ;; esac >> "$GITHUB_OUTPUT"
 
   collect:
