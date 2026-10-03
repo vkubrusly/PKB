@@ -24,7 +24,21 @@ const slotUtc = new Date(slot.getTime() + offsetMs);
 const minutesLate = (Date.now() - slotUtc.getTime()) / 60000;
 const windowStart = new Date(slotUtc.getTime() - 30 * 60000);   // the :47 scheduled run starts before the slot
 
-const [snap] = await sql(`select max(created_at) at from ops.snapshots where kind = 'board'`);
+// The Supabase access token expires (1 year, created 2026-10-03). When it stops working, every job
+// fails — tell Victor right away (once a day, 8 AM Florida) with the links to replace it.
+let snap;
+try { [snap] = await sql(`select max(created_at) at from ops.snapshots where kind = 'board'`); }
+catch (e) {
+  if (!/\b(401|403)\b/.test(e.message)) throw e;
+  console.log('::error::Supabase access token refused (' + e.message.slice(0, 80) + ')');
+  if (ny.getHours() === 8 && ny.getMinutes() < 15 && process.env.BOT_EMAIL_PASSWORD) {
+    const { sendEmail } = await import('../notify/email.mjs');
+    await sendEmail({ to: ['victor@pkbhomes.com'], subject: 'PKB Ops PARADO — a chave do Supabase expirou', alwaysCc: false, force: true,
+      text: `A chave de acesso do Supabase (SUPABASE_ACCESS_TOKEN) parou de funcionar, então as rodadas, o e-mail do bot e os posts no Buildertrend estão parados.\n\n1. Gere uma nova: https://supabase.com/dashboard/account/tokens (validade máxima)\n2. Troque no GitHub: https://github.com/${process.env.GITHUB_REPOSITORY || 'vkubrusly/PKB'}/settings/secrets/actions/SUPABASE_ACCESS_TOKEN\n\nDepois disso o sistema se recupera sozinho em até 15 minutos.\n\n— PKB Ops (aviso automático, 1x por dia até resolver)` });
+    console.log('alert e-mail sent to Victor');
+  }
+  process.exit(1);
+}
 const last = snap?.at ? new Date(snap.at) : null;
 const fresh = last && last >= windowStart;
 console.log(`slot ${slot.toLocaleString('en-US')} (FL) · ${Math.round(minutesLate)} min ago · last snapshot ${last ? last.toISOString() : 'none'} · ${fresh ? 'done' : 'not done'}`);
