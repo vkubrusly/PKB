@@ -140,6 +140,11 @@
         "name": "Daniela",
         "email": "daniela@pkbhomes.com",
         "role": "partner"
+      },
+      {
+        "name": "Gabriel Basso",
+        "email": "gabriel@pkbhomes.com",
+        "role": "partner"
       }
     ],
     "external_cc": {
