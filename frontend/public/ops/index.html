@@ -433,7 +433,7 @@ const street = a => (a || '').split(',')[0];
 const PAUSE = {awaiting_1st_draw:'Waiting 1st draw', awaiting_impact_fees:'Waiting impact fees', awaiting_warranty_deed:'Waiting warranty deed', owner_deferred_start:'Owner deferred start'};
 const PORTAL = {'energov:marion':'Marion EnerGov','energov:winterpark':'Winter Park EnerGov','accela:citrus':'Citrus Accela','fasttrack:orange':'Orange Fast Track','fdep':'FDEP (septic)',charlotte:'Charlotte',lake:'Lake',sarasota:'Sarasota'};
 const REVIEW_PORTALS = ['energov:marion','energov:winterpark'];
-$('#asof').textContent = fmtY(D.asOf);
+$('#asof').textContent = D.builtAt ? new Date(D.builtAt).toLocaleString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit', timeZone:'America/New_York'}) : fmtY(D.asOf);
 
 let CO = 'PKB';
 try { CO = localStorage.getItem('pkbops.co') || 'PKB' } catch(e) {}
