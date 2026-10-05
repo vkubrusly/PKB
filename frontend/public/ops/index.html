@@ -250,6 +250,14 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
 .pa .st{font-size:13px;color:var(--ink-2)}
 /* outbox */
 .ob-body{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;color:var(--ink-2);max-height:6.5em;overflow:hidden}
+.ob-x{cursor:pointer}
+.ob-x .more{font-size:12px;color:var(--ink-3)}
+.ob-x .more::before{content:'▸ Show all'}
+.ob-x.open .more::before{content:'▾ Show less'}
+.ob-x.open .ob-body{max-height:none}
+.ob-x .ob-full{display:none;margin-top:6px}
+.ob-x.open .ob-full{display:block}
+.ob-full pre{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.5 var(--f-body);color:var(--ink-2)}
 .reqform{display:flex;flex-direction:column;gap:8px}
 .reqform textarea{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:80px;resize:vertical}
 </style>
@@ -799,12 +807,13 @@ function renderOutbox(){
   const box = $('#o-pending'); box.innerHTML = pend.length ? '' : '<div class="empty">Nothing waiting.</div>';
   for (const a of pend) proposalCard(a, box);
   const done = (L.actions || []).filter(a => a.status !== 'proposed').slice(0, 8);
-  if (done.length) box.insertAdjacentHTML('beforeend', done.map(a => `<div class="row"><span class="jn">${esc((a.input && a.input.job_number) || '—')}</span><div><div class="t">${esc(ACT[a.action] || a.action)}</div><div class="m">${esc(a.proposed_by)} · ${when(a.created_at)}${a.result ? ' · ' + esc(a.result) : ''}</div></div><div class="r">${pill(a.status)}</div></div>`).join(''));
+  if (done.length) box.insertAdjacentHTML('beforeend', done.map(a => `<div class="row ob-x"><span class="jn">${esc((a.input && a.input.job_number) || '—')}</span><div><div class="t">${esc(ACT[a.action] || a.action)}</div><div class="m">${esc(a.proposed_by)} · ${when(a.created_at)}${a.result ? ' · ' + esc(a.result) : ''}</div><div class="ob-full"><pre>${esc(a.summary || '')}</pre>${a.decided_by ? `<div class="m">${a.status === 'cancelled' ? 'Cancelled' : 'Confirmed'} by ${esc(a.decided_by)} · ${when(a.decided_at)}</div>` : ''}</div><span class="more"></span></div><div class="r">${pill(a.status)}</div></div>`).join(''));
   $('#o-reqs').innerHTML = (L.requests || []).length ? L.requests.map(r => `<div class="row"><span class="jn">#${r.id}</span><div><div class="t">${esc(r.text)}</div><div class="m">${esc(r.email)} · ${when(r.created_at)}${r.answer ? ' · ' + esc(r.answer) : ''}</div></div><div class="r">${pill(r.status)}</div></div>`).join('') : '<div class="empty">No requests yet.</div>';
   const ch = $('#oChan').value, st = $('#oStat').value;
   const rows = (L.outbox || []).filter(m => (!ch || m.channel === ch) && (!st || m.status === st));
   $('#oCnt').textContent = `${rows.length} messages`;
-  $('#oTb').innerHTML = rows.map(m => `<tr style="cursor:default"><td class="mono">${when(m.created_at)}</td><td>${m.channel === 'bt_daily_log' ? 'Daily Log' : m.channel === 'email' ? 'E-mail' : esc(m.channel)}</td><td class="mono">${esc(m.rule || '')}</td><td class="mono">${esc(m.job_number || '')}</td><td><div><b>${esc(m.subject || '')}</b></div><div class="m" style="font-size:12.5px;color:var(--ink-3)">${esc((m.to_addresses || []).join(', '))}${(m.cc_addresses || []).length ? ' · cc ' + esc(m.cc_addresses.join(', ')) : ''}</div><div class="ob-body">${esc(m.body || '')}</div>${m.error ? `<div class="why">${esc(m.error)}</div>` : ''}</td><td>${pill(m.status)}${m.sent_at ? `<br><span class="note">${when(m.sent_at)}</span>` : ''}</td><td>${['draft','approved'].includes(m.status) ? `<button class="btn ghost" type="button" data-cancel="${m.id}">Cancel</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="7" class="empty">Nothing here.</td></tr>';
+  $('#oTb').innerHTML = rows.map(m => `<tr class="ob-x"><td class="mono">${when(m.created_at)}</td><td>${m.channel === 'bt_daily_log' ? 'Daily Log' : m.channel === 'email' ? 'E-mail' : esc(m.channel)}</td><td class="mono">${esc(m.rule || '')}</td><td class="mono">${esc(m.job_number || '')}</td><td><div><b>${esc(m.subject || '')}</b></div><div class="m" style="font-size:12.5px;color:var(--ink-3)">${esc((m.to_addresses || []).join(', '))}${(m.cc_addresses || []).length ? ' · cc ' + esc(m.cc_addresses.join(', ')) : ''}</div><div class="ob-body">${esc(m.body || '')}${(m.body || '').length >= 1500 ? '\n… (text continues — open it in Buildertrend / the mailbox)' : ''}</div>${m.body ? '<span class="more"></span>' : ''}${m.error ? `<div class="why">${esc(m.error)}</div>` : ''}</td><td>${pill(m.status)}${m.sent_at ? `<br><span class="note">${when(m.sent_at)}</span>` : ''}</td><td>${['draft','approved'].includes(m.status) ? `<button class="btn ghost" type="button" data-cancel="${m.id}">Cancel</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="7" class="empty">Nothing here.</td></tr>';
+  document.querySelectorAll('#v-outbox .ob-x').forEach(el => el.onclick = e => { if (e.target.closest('button, a') || getSelection().toString()) return; el.classList.toggle('open'); });
   document.querySelectorAll('[data-cancel]').forEach(b => b.onclick = async () => { b.disabled = true; const { error } = await window.OPS.sb.rpc('ops_outbox_cancel', {p_id: b.dataset.cancel}); if (error) { b.disabled = false; b.textContent = 'Error'; } else refreshOutbox(); });
 }
 async function refreshOutbox(){ try { window.OPS.state = await window.OPS.live(); renderOutbox(); } catch(e) {} }
