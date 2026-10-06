@@ -13,12 +13,19 @@ function token() {
 
 // Retries on 429 (the Management API throttles bursts) with a growing pause.
 export async function sql(query, attempt = 0) {
-  const res = await fetch(`https://api.supabase.com/v1/projects/${REF}/database/query`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query }),
-  });
-  if (res.status === 429 && attempt < 6) {
+  let res;
+  try {
+    res = await fetch(`https://api.supabase.com/v1/projects/${REF}/database/query`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query }),
+    });
+  } catch (e) {   // could not reach Supabase at all (the query never ran): retry
+    if (attempt >= 3 || !['ENOTFOUND', 'EAI_AGAIN', 'ECONNREFUSED', 'UND_ERR_CONNECT_TIMEOUT'].includes(e.cause?.code)) throw e;
+    await new Promise((r) => setTimeout(r, 5000 * (attempt + 1)));
+    return sql(query, attempt + 1);
+  }
+  if ((res.status === 429 && attempt < 6) || (res.status === 503 && attempt < 3)) {
     await new Promise((r) => setTimeout(r, 2000 * 2 ** attempt));
     return sql(query, attempt + 1);
   }
