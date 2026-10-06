@@ -29,7 +29,8 @@ const windowStart = new Date(slotUtc.getTime() - 30 * 60000);   // the :47 sched
 let snap;
 try { [snap] = await sql(`select max(created_at) at from ops.snapshots where kind = 'board'`); }
 catch (e) {
-  if (!/\b(401|403)\b/.test(e.message)) throw e;
+  // anything but a refused token is a momentary hiccup: the next check is 15 min away
+  if (!/\b(401|403)\b/.test(e.message)) { console.log('::warning::Supabase unavailable (' + e.message.slice(0, 120) + ') — trying again at the next check'); process.exit(0); }
   console.log('::error::Supabase access token refused (' + e.message.slice(0, 80) + ')');
   if (ny.getHours() === 8 && ny.getMinutes() < 15 && process.env.BOT_EMAIL_PASSWORD) {
     const { sendEmail } = await import('../notify/email.mjs');
