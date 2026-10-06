@@ -18,6 +18,8 @@ import json
 import os
 import re
 import sys
+import time
+import urllib.error
 import urllib.request
 from email.header import decode_header, make_header
 from email.utils import getaddresses, parseaddr, parsedate_to_datetime
@@ -41,8 +43,18 @@ def sql(query):
         data=json.dumps({'query': query}).encode(),
         headers={'Authorization': f'Bearer {token}', 'Content-Type': 'application/json', 'User-Agent': 'pkb-ops-mail'},
         method='POST')
-    with urllib.request.urlopen(req, timeout=120) as r:
-        return json.loads(r.read() or b'[]')
+    # a momentary Supabase hiccup (429 / 5xx / network) is retried; a bad token (401) is not
+    for k in range(4):
+        try:
+            with urllib.request.urlopen(req, timeout=120) as r:
+                return json.loads(r.read() or b'[]')
+        except urllib.error.HTTPError as e:
+            if k == 3 or not (e.code == 429 or e.code >= 500):
+                raise
+        except (urllib.error.URLError, TimeoutError, ConnectionError):
+            if k == 3:
+                raise
+        time.sleep(5 * (k + 1))
 
 
 def q(v):
@@ -168,8 +180,16 @@ def main():
     if not DRY and not org_id:
         sys.exit(f'org {ORG} not found')
 
-    m = imaplib.IMAP4_SSL(HOST, 993)
-    m.login(user, pwd)
+    for k in range(4):   # Gmail sometimes drops the first connection
+        try:
+            m = imaplib.IMAP4_SSL(HOST, 993)
+            m.login(user, pwd)
+            break
+        except (imaplib.IMAP4.abort, OSError) as e:
+            if k == 3:
+                raise
+            print(f'IMAP connect failed ({e}), retrying')
+            time.sleep(10 * (k + 1))
     m.select('INBOX', readonly=DRY)
     typ, data = m.search(None, 'ALL' if ALL else 'UNSEEN')
     ids = data[0].split() if data and data[0] else []
