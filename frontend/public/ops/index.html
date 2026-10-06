@@ -299,6 +299,7 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
     <button role="tab" data-v="today" aria-selected="true">Today</button>
     <button role="tab" data-v="permits" aria-selected="false">Permits</button>
     <button role="tab" data-v="inspections" aria-selected="false">Inspections</button>
+    <button role="tab" data-v="dlogs" aria-selected="false">Daily logs</button>
     <button role="tab" data-v="map" aria-selected="false">Map</button>
     <button role="tab" data-v="kpis" aria-selected="false">KPIs</button>
     <button role="tab" data-v="ideas" aria-selected="false">Suggestions</button>
@@ -347,6 +348,19 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
       <div class="panel"><div class="hd"><h3>Most recent failures</h3></div><div class="list" id="t-fails2"></div></div>
     </div>
     <p class="note">Estimates use PKB's own history per county (median days from permit issued to each inspection); Marion and Citrus are collected every morning with the inspector's comments. The CO date will be estimated once at least three jobs have reached their finals on the portal.</p>
+  </section>
+
+  <!-- DAILY LOGS -->
+  <section class="view" id="v-dlogs" hidden>
+    <div><h2>Daily logs by supervisor</h2><p class="lead">Every Buildertrend Daily Log with who wrote it and when (Florida time), grouped by the job's supervisor. Jobs under construction (permit issued) with no log in the period are flagged.</p></div>
+    <div class="tools">
+      <select id="dPer"><option value="7">Last 7 days</option><option value="14">Last 14 days</option><option value="30">Last 30 days</option><option value="60">Last 60 days</option></select>
+      <select id="dSup"><option value="">All supervisors</option></select>
+      <span class="count" id="dCnt"></span>
+    </div>
+    <div class="panel"><div class="hd"><h3>Logs written by each person</h3><span class="note">supervisor, PM or other · in the period</span></div><div class="bars" id="c-dlby"></div></div>
+    <div id="dGroups"></div>
+    <p class="note">Collected from Buildertrend every morning and afternoon. Buildertrend's list does not say who was notified on each log.</p>
   </section>
 
   <!-- MAP -->
@@ -454,7 +468,7 @@ const permitState = j => {
 const PSTATE = {pre:['Pre-permit','p-gry'], requested:['Requested','p-gry'], review:['In county review','p-amb'], corr:['Corrections requested','p-red'], issued:['Issued','p-grn']};
 
 /* tabs */
-const VIEWS = ['today','permits','inspections','map','kpis','ideas','ask','outbox'];
+const VIEWS = ['today','permits','inspections','dlogs','map','kpis','ideas','ask','outbox'];
 function show(v){
   document.querySelectorAll('nav.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.v === v));
   document.querySelectorAll('section.view').forEach(s => s.hidden = s.id !== 'v-' + v);
@@ -550,6 +564,32 @@ function renderInsp(){
 }
 ['iq','iStage','iSup'].forEach(id => $('#'+id).addEventListener('input', renderInsp));
 
+/* daily logs */
+const roleOf = n => { const p = (D.directory || []).find(p => [p.name, p.bt_name].some(x => x && x.replace(/\s+/g,' ').toLowerCase() === String(n||'').replace(/\s+/g,' ').toLowerCase())); return p ? p.role : 'other'; };
+function renderDlogs(){
+  const days = +$('#dPer').value, sp = $('#dSup').value;
+  const since = new Date(Date.now() - (days - 1) * 864e5).toLocaleDateString('en-CA', {timeZone:'America/New_York'});
+  const logs = (D.daily_logs || []).filter(l => l.date >= since && J().some(j => j.job_number === l.job_number));
+  const by = {}; logs.forEach(l => by[l.by || '?'] = (by[l.by || '?'] || 0) + 1);
+  const people = Object.entries(by).sort((a,b) => b[1]-a[1]);
+  bars('#c-dlby', people.map(([n,v]) => ({l: `${n} · ${roleOf(n)}`, v, t: v})), people[0]?.[1] || 0);
+  if (!people.length) $('#c-dlby').innerHTML = '<div class="empty">No Daily Logs in the period.</div>';
+  const jobs = J().filter(j => (j.stage === 'inspections' && j.clock_phase !== 'co') || logs.some(l => l.job_number === j.job_number));
+  const groups = {};
+  jobs.forEach(j => (groups[j.supervisor || ''] ||= []).push(j));
+  const keys = Object.keys(groups).filter(k => !sp || k === sp).sort((a,b) => (a ? 0 : 1) - (b ? 0 : 1) || a.localeCompare(b));
+  let missing = 0;
+  $('#dGroups').innerHTML = keys.map(k => {
+    const rows = groups[k].map(j => { const L = logs.filter(l => l.job_number === j.job_number); const building = j.stage === 'inspections' && j.clock_phase !== 'co'; if (building && !L.length) missing++; return {j, L, building}; })
+      .sort((a,b) => (a.L.length - b.L.length) || a.j.job_number.localeCompare(b.j.job_number));
+    const authors = L => Object.entries(L.reduce((m,l) => (m[l.by||'?'] = (m[l.by||'?']||0)+1, m), {})).map(([n,c]) => `${esc(n)}${c>1?' ×'+c:''}`).join(', ');
+    return `<div class="panel"><div class="hd"><h3>${esc(k || 'No supervisor')}</h3><span class="note">${rows.length} jobs · ${rows.reduce((n,r)=>n+r.L.length,0)} logs</span></div>
+      <div class="tbl"><table><thead><tr><th>Job</th><th>Address</th><th class="num">Logs</th><th>Last log</th><th>Written by</th></tr></thead><tbody>${rows.map(({j,L,building}) => `<tr data-job="${esc(j.job_number)}"><td class="mono">${esc(j.job_number)}</td><td>${esc(street(j.address))}<span class="sub">${building ? 'under construction' : esc(j.stage)}</span></td><td class="num">${L.length || (building ? '<span class="pill p-red">0</span>' : '0')}</td><td>${L[0] ? `${esc(L[0].at || L[0].date)}<span class="sub">${esc(L[0].by || '')} · ${esc(L[0].title || '')}</span>` : j.last_daily_log_at ? `<span class="note">${esc(j.last_daily_log_at)} · ${esc(j.last_daily_log_by || '')}</span>` : '<span class="note">—</span>'}</td><td>${L.length ? authors(L) : '<span class="note">—</span>'}</td></tr>`).join('')}</tbody></table></div></div>`;
+  }).join('') || '<div class="empty">No jobs match.</div>';
+  $('#dCnt').textContent = `${logs.length} logs · ${missing} job${missing === 1 ? '' : 's'} under construction without a log`;
+}
+['dPer','dSup'].forEach(id => $('#'+id).addEventListener('input', renderDlogs));
+
 /* kpis */
 function renderKpis(){
   const js = J();
@@ -622,7 +662,7 @@ function openJob(n, tab){
     f.county && `<span>County <b>${esc(f.county)}</b></span>`, f.model && `<span>Model <b>${esc(f.model)}</b></span>`,
     `<span>Supervisor <b>${esc(f.supervisor || '—')}</b></span>`, f.parcel && `<span>Parcel <b>${esc(f.parcel)}</b></span>`,
     f.signed_at && `<span>Signed <b>${fmtY(f.signed_at)}</b></span>`,
-    j.last_daily_log ? `<span>Last Daily Log <b>${fmt(j.last_daily_log)}</b></span>` : '',
+    j.last_daily_log ? `<span>Last Daily Log <b>${j.last_daily_log_at ? esc(j.last_daily_log_at) : fmt(j.last_daily_log)}</b>${j.last_daily_log_by ? ' · ' + esc(j.last_daily_log_by) : ''}</span>` : '',
     j.photos_last_at ? `<span>Last photo <b>${fmt(j.photos_last_at)}</b> · ${esc(j.photos_last_by || '')}</span>` : '',
     `<a class="gmaps" target="_blank" rel="noopener" href="${gmaps(j)}">Open in Google Maps ↗</a>`,
   ].filter(Boolean).join('');
@@ -917,10 +957,10 @@ function initMap(){
 
 /* init */
 [...new Set(D.jobs.map(j => j.county).filter(Boolean))].sort().forEach(c => $('#pCounty').insertAdjacentHTML('beforeend', `<option>${esc(c)}</option>`));
-[...new Set(D.jobs.map(j => j.supervisor).filter(Boolean))].sort().forEach(c => $('#iSup').insertAdjacentHTML('beforeend', `<option>${esc(c)}</option>`));
+[...new Set(D.jobs.map(j => j.supervisor).filter(Boolean))].sort().forEach(c => { $('#iSup').insertAdjacentHTML('beforeend', `<option>${esc(c)}</option>`); $('#dSup').insertAdjacentHTML('beforeend', `<option value="${esc(c)}">${esc(c)}</option>`); });
 function renderAll(){
   document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.co === CO));
-  renderToday(); renderPermits(); renderInsp(); renderKpis(); renderClock();
+  renderToday(); renderPermits(); renderInsp(); renderDlogs(); renderKpis(); renderClock();
   if (mapState) mapState.draw();
 }
 renderCharts(); renderAll(); renderIdeas();

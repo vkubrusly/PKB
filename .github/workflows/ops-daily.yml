@@ -103,6 +103,15 @@ jobs:
           [ -f "$BT_COOKIES_FILE" ] || exit 0
           node collectors/buildertrend/photos.mjs && node scripts/load_photos.mjs
 
+      # Every Daily Log with its author and time (ops.daily_logs). The first run, with the table
+      # empty, imports the whole history; afterwards the last 30 days are re-read. Read-only.
+      - name: Buildertrend Daily Logs (who wrote each one)
+        if: steps.bt.outputs.state == 'ok'
+        continue-on-error: true
+        run: |
+          [ -f "$BT_COOKIES_FILE" ] || exit 0
+          node collectors/buildertrend/daily_logs.mjs $(node scripts/load_daily_logs.mjs --span) && node scripts/load_daily_logs.mjs
+
       - name: County portals (queue-driven)
         continue-on-error: true
         run: node scripts/collect_all.mjs ${{ inputs.limit && format('--limit {0}', inputs.limit) || '' }}
