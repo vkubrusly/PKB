@@ -11,8 +11,10 @@ if (!loggedIn) { console.error('session expired'); process.exit(1); }
 const cut = (v) => (v && typeof v === 'object' ? (Array.isArray(v) ? `[${v.length}] ${JSON.stringify(v[0] ?? null).slice(0, 300)}` : `{${Object.keys(v).join(',')}}`) : String(v).slice(0, 40));
 const firstArray = (o, d = 0) => { if (Array.isArray(o) && o.length && typeof o[0] === 'object') return o; if (o && typeof o === 'object' && d < 5) for (const v of Object.values(o)) { const f = firstArray(v, d + 1); if (f) return f; } return null; };
 page.on('response', async (r) => {
-  if (!/dailylog/i.test(r.url()) || !/json/.test(r.headers()['content-type'] || '')) return;
   const req = r.request();
+  if (!['xhr', 'fetch'].includes(req.resourceType())) return;
+  console.log(`-- ${req.method()} ${r.url().slice(0, 160)} → ${r.status()} ${r.headers()['content-type'] || ''}`);
+  if (!/dailylog/i.test(r.url())) return;
   console.log(`\n== ${req.method()} ${r.url()} → ${r.status()}`);
   if (req.postData()) console.log('body:', req.postData().slice(0, 1500));
   try {
@@ -25,4 +27,5 @@ page.on('response', async (r) => {
 await page.goto(`https://buildertrend.net/app/DailyLogs${jobId ? `?jobId=${jobId}` : ''}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await page.waitForTimeout(25000);
 console.log('\nurl:', page.url());
+console.log((await page.locator('body').innerText()).slice(0, 1500));
 await browser.close();
