@@ -127,6 +127,12 @@ jobs:
           [ -f "$BT_COOKIES_FILE" ] || exit 0
           node collectors/buildertrend/daily_logs.mjs $(node scripts/load_daily_logs.mjs --span) && node scripts/load_daily_logs.mjs
 
+      # Houses with no permit number yet (spreadsheet / Buildertrend "Permit #" empty): search the
+      # EnerGov portal by parcel; a permit found there is collected in the step below.
+      - name: Discover new permits by parcel
+        continue-on-error: true
+        run: node collectors/energov/discover.mjs
+
       - name: County portals (queue-driven)
         continue-on-error: true
         run: node scripts/collect_all.mjs ${{ inputs.limit && format('--limit {0}', inputs.limit) || '' }}
