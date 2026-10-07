@@ -414,7 +414,7 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
     <div class="tbl"><table><thead><tr><th>When</th><th>Channel</th><th>Rule</th><th>Job</th><th>To / subject</th><th>Status</th><th></th></tr></thead><tbody id="oTb"></tbody></table></div>
   </section>
 
-  <footer>PKB Ops · data from the county portals, Buildertrend and the bot mailbox, refreshed at 6 AM and 1 PM (Florida). Access limited to the PKB partners.</footer>
+  <footer>PKB Ops · data from the county portals, Buildertrend and the bot mailbox, refreshed at 4 AM and 1 PM (Florida). Access limited to the PKB partners.</footer>
 </main>
 
 <div class="scrim" id="scrim" hidden></div>
@@ -970,7 +970,7 @@ else show(VIEWS.includes(h0) ? h0 : VIEWS.includes(t0) ? t0 : 'today');
       const b = document.createElement('button'); b.className = 'btn ghost'; b.textContent = 'Sign out'; b.onclick = async () => { await sb.auth.signOut(); location.reload(); }; g('gmsg').after(b);
       return;
     }
-    if (!res.data.board) return msg('No data yet — the first snapshot is built on the next round (6 AM / 1 PM).', true);
+    if (!res.data.board) return msg('No data yet — the first snapshot is built on the next round (4 AM / 1 PM).', true);
     window.OPS.state = res.data;
     g('whoami').textContent = res.data.me.name || res.data.me.email;
     g('gate').hidden = true;

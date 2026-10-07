@@ -1,7 +1,7 @@
 name: PKB Ops — post Buildertrend Daily Logs (hourly)
 
 # Field reports confirmed in budget.pkbhomes.com/ops/field/ (and any other queued Daily Log)
-# go to Buildertrend within the hour instead of waiting for the 6 AM / 1 PM round.
+# go to Buildertrend within the hour instead of waiting for the 4 AM / 1 PM round.
 # Opens the browser only when something is queued. Gated by the repository variable OPS_BT_POST.
 
 on:

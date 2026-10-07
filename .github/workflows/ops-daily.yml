@@ -1,6 +1,7 @@
 name: PKB Ops — daily collection
 
-# Twice a day, 6:00 AM and 1:00 PM Florida time: read Buildertrend jobs, collect the county portals for every
+# Twice a day, 4:00 AM and 1:00 PM Florida time (4 AM so the data is ready well before the
+# 8 AM start of the day even when GitHub starts the run late): read Buildertrend jobs, collect the county portals for every
 # permit still being monitored (ops.monitoring_queue: 'permit' until issued,
 # 'inspections' until the CO), then load everything into Supabase.
 #
@@ -17,9 +18,9 @@ on:
   # winter (EST) slot; the gate job below keeps only the one that matches today's offset.
   schedule:
   # Off the hour on purpose (GitHub delays :00 schedules the most) and a bit early, so the data
-  # is ready around 6 AM / 1 PM. If GitHub is still late, ops-mail's watchdog starts the round.
-    - cron: '47 9 * * *'    # 05:47 EDT
-    - cron: '47 10 * * *'   # 05:47 EST
+  # is ready around 4 AM / 1 PM. If GitHub is late, the watchdog (and the Claude backup routine) start it.
+    - cron: '47 7 * * *'    # 03:47 EDT
+    - cron: '47 8 * * *'    # 03:47 EST
     - cron: '47 16 * * *'   # 12:47 EDT
     - cron: '47 17 * * *'   # 12:47 EST
   workflow_dispatch:
@@ -41,10 +42,10 @@ jobs:
       - id: g
         env: { CRON: '${{ github.event.schedule }}' }
         run: |
-          # Manual runs always go. Scheduled: EDT (-0400) keeps the 9/16 UTC slots, EST the 10/17 ones.
+          # Manual runs always go. Scheduled: EDT (-0400) keeps the 7/16 UTC slots, EST the 8/17 ones.
           if [ -z "$CRON" ]; then echo run=true >> "$GITHUB_OUTPUT"; exit 0; fi
           hour=$(echo "$CRON" | awk '{print $2}')
-          if [ "$(TZ=America/New_York date +%z)" = "-0400" ]; then ok="9 16"; else ok="10 17"; fi
+          if [ "$(TZ=America/New_York date +%z)" = "-0400" ]; then ok="7 16"; else ok="8 17"; fi
           case " $ok " in *" $hour "*) echo run=true ;; *) echo run=false ;; esac >> "$GITHUB_OUTPUT"
 
   collect:

@@ -1,6 +1,6 @@
 name: PKB Ops — watchdog (daily round)
 
-# Every 15 minutes: is the 6 AM / 1 PM Florida round done (portal snapshot newer than the slot)?
+# Every 15 minutes: is the 4 AM / 1 PM Florida round done (portal snapshot newer than the slot)?
 # If GitHub started it late, skipped it, or it failed, start ops-daily again — every 15 min until
 # it works. From the 3rd attempt on a slot, one e-mail to Victor. See ops/scripts/watchdog_daily.mjs.
 
