@@ -37,6 +37,9 @@ on:
       limit:
         description: 'Max permits per portal/stage (blank = all)'
         required: false
+      photos:
+        description: "Buildertrend photo dates (~20 min): true / false (blank = only in the 4 AM and 1 PM rounds)"
+        required: false
       test_email:
         description: 'Send one test e-mail to this address first (checks the Gmail app password)'
         required: false
@@ -46,19 +49,30 @@ concurrency: { group: ops-daily, cancel-in-progress: false }
 jobs:
   gate:
     runs-on: ubuntu-24.04   # pinned: ubuntu-latest moves to Ubuntu 26 on 2026-10-19 (Playwright deps)
+    permissions: { actions: read }
     outputs: { run: '${{ steps.g.outputs.run }}', photos: '${{ steps.g.outputs.photos }}' }
     steps:
       - id: g
-        env: { CRON: '${{ github.event.schedule }}' }
+        env: { CRON: '${{ github.event.schedule }}', PHOTOS: '${{ inputs.photos }}', GH_TOKEN: '${{ github.token }}', REPO: '${{ github.repository }}' }
         run: |
-          # Manual runs always go (photos included). Scheduled: the cron line's UTC hour + 1 (it fires
+          # Manual and Supabase-dispatched runs always go. Scheduled: the cron line's UTC hour + 1 (it fires
           # at :47) minus today's offset (EDT 4 / EST 5) is the Florida slot; keep only real slots.
           # Buildertrend photo dates (~20 min) only in the 4 AM and 1 PM rounds.
-          if [ -z "$CRON" ]; then printf 'run=true\nphotos=true\n' >> "$GITHUB_OUTPUT"; exit 0; fi
+          if [ -z "$CRON" ]; then
+            # Started by Supabase (on the slot) or by hand: photos as asked, else by the Florida slot.
+            h=$(TZ=America/New_York date +%-H); m=$(TZ=America/New_York date +%-M); [ "$m" -ge 30 ] && h=$(( h + 1 ))
+            case "$PHOTOS:$h" in true:*|:4|:13) p=true ;; *) p=false ;; esac
+            printf 'run=true\nphotos=%s\n' "$p" >> "$GITHUB_OUTPUT"; exit 0
+          fi
           hour=$(echo "$CRON" | awk '{print $2}')
           if [ "$(TZ=America/New_York date +%z)" = "-0400" ]; then off=4; else off=5; fi
           slot=$(( hour + 1 - off ))
           echo "Florida slot: $slot"
+          # Supabase (pg_cron, migration 0031) already starts each round on time; GitHub's own cron is
+          # the fallback and often arrives late. Skip it when a dispatched round started in the last 70 min.
+          since=$(date -u -d '-70 min' +%Y-%m-%dT%H:%M:%SZ)
+          n=$(curl -fsS -H "Authorization: Bearer $GH_TOKEN" "https://api.github.com/repos/$REPO/actions/workflows/ops-daily.yml/runs?event=workflow_dispatch&created=>=$since" | jq .total_count || echo 0)
+          if [ "${n:-0}" -gt 0 ]; then echo "a dispatched round already started — skipping"; printf 'run=false\nphotos=false\n' >> "$GITHUB_OUTPUT"; exit 0; fi
           case " 4 9 11 13 15 17 " in *" $slot "*) echo run=true ;; *) echo run=false ;; esac >> "$GITHUB_OUTPUT"
           case " 4 13 " in *" $slot "*) echo photos=true ;; *) echo photos=false ;; esac >> "$GITHUB_OUTPUT"
 
@@ -127,11 +141,12 @@ jobs:
           [ -f "$BT_COOKIES_FILE" ] || exit 0
           node collectors/buildertrend/daily_logs.mjs $(node scripts/load_daily_logs.mjs --span) && node scripts/load_daily_logs.mjs
 
-      # Houses with no permit number yet (spreadsheet / Buildertrend "Permit #" empty): search the
-      # EnerGov portal by parcel; a permit found there is collected in the step below.
-      - name: Discover new permits by parcel
+      # Houses with no permit number yet (spreadsheet / Buildertrend "Permit #" empty): look them up on
+      # the county portal (parcel / address, every county with a portal); accepted only when the
+      # applicant is Prime Kubrusly Basso or Cristiano Pedrosa. Collected in the step below.
+      - name: Discover new permits on the county portals
         continue-on-error: true
-        run: node collectors/energov/discover.mjs
+        run: node scripts/discover_permits.mjs
 
       - name: County portals (queue-driven)
         continue-on-error: true
@@ -142,6 +157,13 @@ jobs:
           node scripts/build_seed.mjs --parts
           node scripts/apply_seed.mjs
           node scripts/permit_office.mjs
+
+      # Buildertrend "Permit number" for jobs whose permit PKB Ops knows but Buildertrend does not
+      # (never overwrites a typed number). Writes to Buildertrend: only when OPS_BT_POST is 'true'.
+      - name: Buildertrend permit numbers
+        if: steps.bt.outputs.state == 'ok' && vars.OPS_BT_POST == 'true'
+        continue-on-error: true
+        run: node collectors/buildertrend/job_permit.mjs
 
       # Each permit's own inspection list from the county portal (EnerGov); Citrus lists
       # every required inspection on the permit already. Drives the progress/next steps.
