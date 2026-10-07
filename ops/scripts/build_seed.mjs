@@ -179,6 +179,15 @@ and not exists (select 1 from ops.job_pauses p where p.job_id = j.id and p.reaso
   }
 }
 
+// Permits found on the county portal by parcel (collectors/energov/discover.mjs) live only in
+// the database: map them to their job too, so their portal data is loaded below.
+if (process.env.SUPABASE_ACCESS_TOKEN) {
+  try {
+    const { sql } = await import('./sb.mjs');
+    for (const c of await sql(`select c.number, j.job_number from ops.permit_cases c join ops.jobs j on j.id = c.job_id where c.kind = 'building' and c.number is not null`)) permitToJob[c.number] ||= c.job_number;
+  } catch (e) { console.error('could not read permit cases:', e.message); }
+}
+
 // ---- Portal data (EnerGov, Accela) ----
 const portalDir = join(ROOT, 'data', 'portal');
 const PORTAL_OF_DIR = { citrus: 'accela:citrus', charlotte: 'accela:charlotte', northport: 'accela:northport' }; // default: energov:<dir>
