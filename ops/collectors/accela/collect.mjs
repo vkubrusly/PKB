@@ -26,11 +26,8 @@ import { fileURLToPath } from 'node:url';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OPS_ROOT = join(HERE, '..', '..');
 
-export const PORTALS = {
-  citrus: { base: 'https://aca-prod.accela.com/CITRUS', module: 'Building' },
-  charlotte: { base: 'https://aca-prod.accela.com/BOCC', module: 'Building' },
-  northport: { base: 'https://aca-prod.accela.com/NORTHPORT', module: 'Building', modules: ['Building', 'Planning'] },
-};
+import { PORTALS } from './portals.mjs';
+export { PORTALS };
 
 const args = process.argv.slice(2);
 const flag = (n) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : null; };

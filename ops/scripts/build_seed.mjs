@@ -179,7 +179,7 @@ and not exists (select 1 from ops.job_pauses p where p.job_id = j.id and p.reaso
   }
 }
 
-// Permits found on the county portal by parcel (collectors/energov/discover.mjs) live only in
+// Permits found on the county portals (scripts/discover_permits.mjs) live only in
 // the database: map them to their job too, so their portal data is loaded below.
 if (process.env.SUPABASE_ACCESS_TOKEN) {
   try {
