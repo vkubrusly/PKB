@@ -1,6 +1,6 @@
 name: PKB Ops — watchdog (daily round)
 
-# Every 15 minutes: is the 4 AM / 1 PM Florida round done (portal snapshot newer than the slot)?
+# Every 15 minutes: is the latest Florida round (4 AM, 9, 11 AM, 1, 3, 5 PM) done (portal snapshot newer than the slot)?
 # If GitHub started it late, skipped it, or it failed, start ops-daily again — every 15 min until
 # it works. From the 3rd attempt on a slot, one e-mail to Victor. See ops/scripts/watchdog_daily.mjs.
 
@@ -14,7 +14,7 @@ permissions: { contents: read, actions: write }
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04   # pinned: ubuntu-latest moves to Ubuntu 26 on 2026-10-19 (Playwright deps)
     timeout-minutes: 5
     defaults: { run: { working-directory: ops } }
     steps:

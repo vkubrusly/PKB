@@ -1,7 +1,7 @@
 name: PKB Ops — daily collection
 
-# Twice a day, 4:00 AM and 1:00 PM Florida time (4 AM so the data is ready well before the
-# 8 AM start of the day even when GitHub starts the run late): read Buildertrend jobs, collect the county portals for every
+# 4 AM, then every 2 hours in business hours (9, 11 AM, 1, 3, 5 PM) Florida time — 4 AM so the
+# data is ready well before the 8 AM start even when GitHub starts the run late: read Buildertrend jobs, collect the county portals for every
 # permit still being monitored (ops.monitoring_queue: 'permit' until issued,
 # 'inspections' until the CO), then load everything into Supabase.
 #
@@ -14,15 +14,24 @@ name: PKB Ops — daily collection
 # Schedules only run from the repository's default branch.
 
 on:
-  # GitHub cron is UTC and Florida changes clocks, so each run has a summer (EDT) and a
-  # winter (EST) slot; the gate job below keeps only the one that matches today's offset.
+  # GitHub cron is UTC and Florida changes clocks, so each slot has a summer (EDT) and a
+  # winter (EST) line; the gate job below keeps only the one that matches today's offset.
+  # Slots (Florida): 4 AM, then every 2 hours in business hours — 9, 11 AM, 1, 3, 5 PM.
   schedule:
-  # Off the hour on purpose (GitHub delays :00 schedules the most) and a bit early, so the data
-  # is ready around 4 AM / 1 PM. If GitHub is late, the watchdog (and the Claude backup routine) start it.
-    - cron: '47 7 * * *'    # 03:47 EDT
-    - cron: '47 8 * * *'    # 03:47 EST
-    - cron: '47 16 * * *'   # 12:47 EDT
-    - cron: '47 17 * * *'   # 12:47 EST
+  # 13 min before each slot, off the hour on purpose (GitHub delays :00 schedules the most).
+  # If GitHub is late or skips it, the watchdog (and the Claude backup routine) start the round.
+    - cron: '47 7 * * *'
+    - cron: '47 8 * * *'
+    - cron: '47 12 * * *'
+    - cron: '47 13 * * *'
+    - cron: '47 14 * * *'
+    - cron: '47 15 * * *'
+    - cron: '47 16 * * *'
+    - cron: '47 17 * * *'
+    - cron: '47 18 * * *'
+    - cron: '47 19 * * *'
+    - cron: '47 20 * * *'
+    - cron: '47 21 * * *'
   workflow_dispatch:
     inputs:
       limit:
@@ -36,22 +45,27 @@ concurrency: { group: ops-daily, cancel-in-progress: false }
 
 jobs:
   gate:
-    runs-on: ubuntu-latest
-    outputs: { run: '${{ steps.g.outputs.run }}' }
+    runs-on: ubuntu-24.04   # pinned: ubuntu-latest moves to Ubuntu 26 on 2026-10-19 (Playwright deps)
+    outputs: { run: '${{ steps.g.outputs.run }}', photos: '${{ steps.g.outputs.photos }}' }
     steps:
       - id: g
         env: { CRON: '${{ github.event.schedule }}' }
         run: |
-          # Manual runs always go. Scheduled: EDT (-0400) keeps the 7/16 UTC slots, EST the 8/17 ones.
-          if [ -z "$CRON" ]; then echo run=true >> "$GITHUB_OUTPUT"; exit 0; fi
+          # Manual runs always go (photos included). Scheduled: the cron line's UTC hour + 1 (it fires
+          # at :47) minus today's offset (EDT 4 / EST 5) is the Florida slot; keep only real slots.
+          # Buildertrend photo dates (~20 min) only in the 4 AM and 1 PM rounds.
+          if [ -z "$CRON" ]; then printf 'run=true\nphotos=true\n' >> "$GITHUB_OUTPUT"; exit 0; fi
           hour=$(echo "$CRON" | awk '{print $2}')
-          if [ "$(TZ=America/New_York date +%z)" = "-0400" ]; then ok="7 16"; else ok="8 17"; fi
-          case " $ok " in *" $hour "*) echo run=true ;; *) echo run=false ;; esac >> "$GITHUB_OUTPUT"
+          if [ "$(TZ=America/New_York date +%z)" = "-0400" ]; then off=4; else off=5; fi
+          slot=$(( hour + 1 - off ))
+          echo "Florida slot: $slot"
+          case " 4 9 11 13 15 17 " in *" $slot "*) echo run=true ;; *) echo run=false ;; esac >> "$GITHUB_OUTPUT"
+          case " 4 13 " in *" $slot "*) echo photos=true ;; *) echo photos=false ;; esac >> "$GITHUB_OUTPUT"
 
   collect:
     needs: gate
     if: needs.gate.outputs.run == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04   # pinned: ubuntu-latest moves to Ubuntu 26 on 2026-10-19 (Playwright deps)
     timeout-minutes: 120
     defaults: { run: { working-directory: ops } }
     env:
@@ -98,7 +112,7 @@ jobs:
           node collectors/buildertrend/job_fields.mjs
 
       - name: Buildertrend photos
-        if: steps.bt.outputs.state == 'ok'
+        if: steps.bt.outputs.state == 'ok' && needs.gate.outputs.photos == 'true'
         continue-on-error: true
         run: |
           [ -f "$BT_COOKIES_FILE" ] || exit 0
@@ -162,6 +176,12 @@ jobs:
           OPS_SEND_ENABLED: ${{ vars.OPS_SEND_ENABLED || 'false' }}
         run: node rules/corrections.mjs
 
+      # Portal data for budget.pkbhomes.com/ops/ (ops.snapshots, read by the page and the Ask).
+      # Before the Buildertrend posting, so the portal is up to date as early as possible.
+      - name: Portal snapshot
+        continue-on-error: true
+        run: node scripts/board_snapshot.mjs
+
       # Queued Buildertrend Daily Logs (e.g. failed inspections). Writes to Buildertrend,
       # so it runs only when the repository variable OPS_BT_POST is 'true'.
       - name: Buildertrend Daily Logs
@@ -171,11 +191,6 @@ jobs:
         run: |
           node rules/post_bt_logs.mjs || echo "::warning::post_bt_logs failed"
           node rules/post_bt_leads.mjs || echo "::warning::post_bt_leads failed"
-
-      # Portal data for budget.pkbhomes.com/ops/ (ops.snapshots, read by the page and the Ask).
-      - name: Portal snapshot
-        continue-on-error: true
-        run: node scripts/board_snapshot.mjs
 
       - name: Keep the raw snapshots (7 days)
         if: always()

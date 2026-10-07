@@ -20,7 +20,7 @@ concurrency: { group: ops-mail, cancel-in-progress: false }
 
 jobs:
   read:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04   # pinned: ubuntu-latest moves to Ubuntu 26 on 2026-10-19 (Playwright deps)
     timeout-minutes: 15
     defaults: { run: { working-directory: ops } }
     steps:

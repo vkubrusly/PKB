@@ -4,7 +4,7 @@
 //   node scripts/collect_all.mjs [--limit N]
 // Stages: 'permit' → full collection; 'inspections' → inspections/holds only;
 // 'done' → skipped. Portals without a collector yet are listed and skipped.
-import { spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { sql } from './sb.mjs';
@@ -23,14 +23,35 @@ const COLLECTORS = {
 const rows = await sql(`select portal, stage, number from ops.monitoring_queue where stage <> 'done' and number is not null order by portal, stage, number`);
 const groups = {};
 for (const r of rows) (groups[`${r.portal}|${r.stage}`] ||= []).push(r.number);
-let failed = 0;
+
+// Each county is its own website, so the portals run at the same time (the round takes as long
+// as the slowest portal, not the sum). Within one portal the stages still run one after another,
+// so a county never sees more than one bot at a time. Output lines are prefixed with the county.
+const run = (script, args, tag) => new Promise((resolve) => {
+  const p = spawn('node', [script, ...args], { cwd: ROOT });
+  const pipe = (src, dst) => { let buf = ''; src.on('data', (d) => { buf += d; const lines = buf.split('\n'); buf = lines.pop(); for (const l of lines) dst.write(`[${tag}] ${l}\n`); }); src.on('end', () => { if (buf) dst.write(`[${tag}] ${buf}\n`); }); };
+  pipe(p.stdout, process.stdout); pipe(p.stderr, process.stderr);
+  p.on('close', (code) => resolve(code));
+});
+const byPortal = {};
 for (const [key, numbers] of Object.entries(groups)) {
   const [portal, stage] = key.split('|');
   const [script, county] = COLLECTORS[portal] || [];
   const list = limit ? numbers.slice(0, limit) : numbers;
   if (!county) { console.log(`skip ${portal} (${stage}): no collector yet — ${numbers.length} permit(s)`); continue; }
-  console.log(`\n== ${portal} · ${stage} · ${list.length} permit(s)`);
-  const r = spawnSync('node', [script, '--county', county, '--stage', stage, ...list], { cwd: ROOT, stdio: 'inherit' });
-  if (r.status !== 0) failed++;
+  (byPortal[portal] ||= []).push({ script, county, stage, list });
 }
-process.exit(failed ? 1 : 0);
+const t0 = Date.now();
+const results = await Promise.all(Object.entries(byPortal).map(async ([portal, jobs]) => {
+  let failed = 0;
+  for (const { script, county, stage, list } of jobs) {
+    const t = Date.now();
+    console.log(`== ${portal} · ${stage} · ${list.length} permit(s) — start`);
+    const code = await run(script, ['--county', county, '--stage', stage, ...list], county);
+    console.log(`== ${portal} · ${stage} — ${code === 0 ? 'done' : 'FAILED (exit ' + code + ')'} in ${Math.round((Date.now() - t) / 60000)} min`);
+    if (code !== 0) failed++;
+  }
+  return failed;
+}));
+console.log(`all portals done in ${Math.round((Date.now() - t0) / 60000)} min`);
+process.exit(results.some(Boolean) ? 1 : 0);
