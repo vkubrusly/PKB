@@ -17,6 +17,8 @@ const d = (x) => (x ? String(x).slice(0, 10) : null);
 const short = (s) => (s || '').replace(/ - 1 ?& ?2 Res(idential)? Fam(ily)?/i, '').replace(/1&2 Res Fam/i, '').replace(/ \((Permits|Building Permits|Permit & Plan|Permits & 911 Plans)\)/, '').replace(/ Department Review$/, '').trim();
 const norm = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
+// Buildertrend Daily Logs (ops.daily_logs): who wrote each one and when, Florida time.
+const DL = await sql(`select job_number, log_date, to_char(logged_at, 'YYYY-MM-DD HH24:MI') at, author, title, left(notes, 1500) notes from ops.daily_logs where job_number is not null order by logged_at desc nulls last`);
 const mail = await sql(`select job_number, category, received_at, subject, parsed from ops.inbound_emails where job_number is not null order by received_at desc`);
 const [jobs, contacts, pauses, cases, subs, revs, insps, holds] = await Promise.all([
   sql(`select id, org_id, latitude, longitude, permit_office, job_number, company, status, address, parcel, county, model, owner_name, signed_at, second_draw_at, turtle_state, note, co_at, bt_job_id, photos_last_at, photos_last_by, photos_last_folder, photos_last_daily_log, photos_count from ops.jobs`),
@@ -73,6 +75,7 @@ for (const h of holds) { const pc = C.get(h.permit_case_id); if (pc) pc.holds.pu
 // --- row summary per job (building permit drives the stage)
 const rows = [];
 const files = {};
+const DL7 = new Date(Date.now() - 7 * 864e5).toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
 for (const [xid, x] of J) {
   // drop placeholder septic cases copied from a duplicate S job
   if (x.permits.filter((p) => p.kind === 'septic').length > 1) x.permits = x.permits.filter((p) => !(p.kind === 'septic' && /^SEPTIC-S/.test(p.number || '')));
@@ -94,7 +97,9 @@ for (const [xid, x] of J) {
   x.photos = pj ? { last_upload: ts(pj.photos_last_at), by: pj.photos_last_by, folder: pj.photos_last_folder, daily_log: ts(pj.photos_last_daily_log), total_site_photos: pj.photos_count } : null;
   rows.push({
     photos_last_at: x.photos?.last_upload?.slice(0, 10) || null, photos_last_by: x.photos?.by || null, photos_total: x.photos?.total_site_photos ?? null,
-    last_daily_log: d(mail.find((m) => m.job_number === x.job_number && m.category === 'bt_daily_log')?.received_at),
+    last_daily_log: d(DL.find((l) => l.job_number === x.job_number)?.log_date) || d(mail.find((m) => m.job_number === x.job_number && m.category === 'bt_daily_log')?.received_at),
+    last_daily_log_at: DL.find((l) => l.job_number === x.job_number)?.at || null, last_daily_log_by: DL.find((l) => l.job_number === x.job_number)?.author || null,
+    daily_logs_7d: DL.filter((l) => l.job_number === x.job_number && d(l.log_date) >= DL7).length,
     clock_phase: ck.phase, build_start: ck.start || null, build_start_src: ck.startSource || null, build_days: ck.buildDays ?? null,
     finished_at: ck.finishedAt || null, finish_src: ck.finishSource || null, days_awaiting_co: ck.daysAwaitingCO ?? null,
     wait_to_start: ck.waitToStart ?? null, waiting_days: ck.waitingDays ?? null, wait_excuse: ck.excuse || null,
@@ -112,6 +117,7 @@ for (const [xid, x] of J) {
     insp_next: p?.supported ? p.next : null, insp_failed_open: p?.supported ? p.failedOpen.map((f) => f.name) : [],
     ready_for_finals_est: p?.supported ? p.readyForFinalsEstimate : null,
   });
+  x.daily_logs = DL.filter((l) => l.job_number === x.job_number).slice(0, 15).map((l) => ({ date: d(l.log_date), at: l.at, by: l.author, title: l.title, notes: l.notes }));
   files[x.job_number] = x;
 }
 rows.sort((a, b) => a.job_number.localeCompare(b.job_number));
@@ -161,6 +167,9 @@ for (const p of I.project_managers || []) addP(p, 'project manager');
 for (const [k, d] of Object.entries(CT.designers || {})) for (const p of d.people || []) addP(p, `${d.company || k} (${d.role || 'designer'})`);
 for (const [k, v] of Object.entries(CT.vendors || {})) { if (v.people?.length) for (const p of v.people) addP(p, `${v.company || k} (${v.role || 'vendor'})`); else for (const e of v.to || []) addP({ name: v.company || k, email: e }, v.role || 'vendor'); }
 agg.directory = [...dirMap.values()];
+// Daily Logs of the last 60 days, one line each (the portal's "Daily logs" report and the Ask).
+const DL60 = new Date(Date.now() - 60 * 864e5).toISOString().slice(0, 10);
+agg.daily_logs = DL.filter((l) => d(l.log_date) >= DL60).map((l) => ({ job_number: l.job_number, date: d(l.log_date), at: l.at, by: l.author, title: l.title }));
 const out = { asOf: new Date().toISOString().slice(0, 10), builtAt: new Date().toISOString(), jobs: rows, fails: recentFails.slice(0, 14), ...agg, files };
 const json = JSON.stringify(out);
 const o = process.argv.indexOf('--out');

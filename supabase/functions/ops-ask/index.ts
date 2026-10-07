@@ -27,7 +27,7 @@ const FALLBACK_BETA = 'server-side-fallback-2026-07-01';
 // The board snapshot is ~1 MB; keep it in the worker between calls, keyed by its timestamp.
 let cache: { at: string; board: Any; context: string } | null = null;
 
-const COLS = ['job_number', 'company', 'address', 'county', 'model', 'supervisor', 'stage', 'ops_status', 'permit', 'applied_at', 'issued_at', 'rounds', 'failed_depts_last_round', 'pause', 'turtle', 'inspections', 'failed_inspections', 'insp_progress', 'insp_next', 'insp_failed_open', 'ready_for_finals_est', 'signed_at', 'build_start', 'build_days', 'photos_last_at', 'photos_last_by', 'photos_total', 'last_daily_log', 'field_steps_done', 'last_field_report', 'permit_office'];
+const COLS = ['job_number', 'company', 'address', 'county', 'model', 'supervisor', 'stage', 'ops_status', 'permit', 'applied_at', 'issued_at', 'rounds', 'failed_depts_last_round', 'pause', 'turtle', 'inspections', 'failed_inspections', 'insp_progress', 'insp_next', 'insp_failed_open', 'ready_for_finals_est', 'signed_at', 'build_start', 'build_days', 'photos_last_at', 'photos_last_by', 'photos_total', 'last_daily_log', 'last_daily_log_at', 'last_daily_log_by', 'daily_logs_7d', 'field_steps_done', 'last_field_report', 'permit_office'];
 const cell = (v: Any) => (v == null || (Array.isArray(v) && !v.length) ? '' : Array.isArray(v) ? v.join('+') : String(v));
 
 function buildContext(D: Any): string {
@@ -48,6 +48,7 @@ CONSTRUCTION CLOCK: ${JSON.stringify(D.clock)}`;
 const INSTRUCTIONS = `You are PKB Ops, the operations assistant of PKB Homes, a Florida home builder. You talk to the company's partners.
 Answer using ONLY the data in the snapshot and the tools. Reply in the language of the question (Portuguese or English). Be concrete: job numbers, streets, permit numbers, dates, departments, people. Plain text and short lists, no markdown tables.
 Reading the data: stage pre = no permit yet; permit = in county review; inspections = issued, under construction; done = CO. failed_depts_last_round non-empty means the ball is with the designer (Sovereign). insp_progress = passed/required inspections from the permit's own list on the county portal. build_start / build_days = construction clock (starts at the later of permit issuance and the 2nd invoice payment). photos_* = last site photo upload in Buildertrend. permit_office = who coordinates the permit (sovereign = Sovereign, the designer/expediter, today for Marion and Citrus; pkb = Guilherme). field_steps_done = steps of the PKB field manual (39) confirmed from supervisors' field reports; get_job_file has field_checklist with the details. ready_for_finals_est is an estimate from PKB's own medians. Prime = legacy company being phased out.
+For who wrote the Buildertrend Daily Logs (per job, per supervisor, per person, which houses under construction had none), CALL get_daily_logs; the supervisor's log and the PM's log are told apart by the author. Before the Daily Logs collector, the only proxy was who uploaded the last photo (photos_last_by), which does not prove who wrote the text.
 For one job's reviews, corrections, inspections, holds, invoices or history, CALL get_job_file and quote the county's comments faithfully (itemize long ones). For review comments across many jobs, use search_reviews. For what the system sent or queued, use get_outbox.
 ACTIONS: when the partner asks you to DO something, draft it completely and call the matching propose_* tool:
 - propose_daily_log: a Buildertrend Daily Log on a job (write it in English; notify people by their Buildertrend names).
@@ -64,6 +65,7 @@ const strs = (description: string) => ({ type: 'array', items: { type: 'string' 
 const TOOLS: Any[] = [
   { name: 'get_job_file', description: 'Full file for one job: permits with every review round (department, status, reviewer, date, full county comments), holds, all inspections, pauses, inspection progress, construction clock, site photos, invoices.', input_schema: S({ job_number: str('Job number, e.g. "0034" or "S049"') }, ['job_number']) },
   { name: 'search_reviews', description: 'Search all county review comments for a word or phrase; returns job, permit, round, department, date and a snippet.', input_schema: S({ query: str('Word or phrase'), department: str('Optional department filter') }, ['query']) },
+  { name: 'get_daily_logs', description: 'Buildertrend Daily Logs of the last 60 days: job, date, time written (Florida), author, title, and the job\'s supervisor; plus the count per author and the jobs under construction (permit issued) with no log in the period. The log text is in get_job_file (daily_logs).', input_schema: S({ days: { type: 'integer', description: 'Period in days, counting today (default 7, max 60)' }, supervisor: str('Optional: only jobs of this supervisor'), author: str('Optional: only logs written by this person'), job_number: str('Optional job number') }, []) },
   { name: 'get_outbox', description: 'Messages the system sent or queued (e-mails, Buildertrend Daily Logs) and the recent assistant actions, newest first. Optional job filter.', input_schema: S({ job_number: str('Optional job number') }, []) },
   { name: 'propose_daily_log', description: 'Propose a Buildertrend Daily Log on a job. Posted on the next run after a partner confirms.', input_schema: S({ job_number: str('Job number'), title: str('Short title (max 50 chars)'), notes: str('Log text, in English'), notify: strs('Buildertrend names to notify') }, ['job_number', 'title', 'notes']) },
   { name: 'propose_email', description: 'Propose an e-mail from the bot mailbox (botpkbhomes@gmail.com). Sent within the hour after a partner confirms.', input_schema: S({ to: strs('Recipient e-mails'), cc: strs('Cc e-mails'), subject: str('Subject'), text: str('Plain-text body, signed "— PKB Ops"'), job_number: str('Optional related job') }, ['to', 'subject', 'text']) },
@@ -97,6 +99,20 @@ async function runTool(name: string, input: Any, D: Any, sb: SupabaseClient, pro
       out.push({ job: n, permit: p.number, round: r.round, department: x.department, failed: x.failed, date: x.completed_at, snippet: x.comments.slice(Math.max(0, i - 160), i + 260) });
     }
     return { matches: out.length, results: out.slice(0, 25) };
+  }
+  if (name === 'get_daily_logs') {
+    const days = Math.min(Math.max(Number(input.days) || 7, 1), 60);
+    const since = new Date(Date.now() - (days - 1) * 864e5).toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+    const low = (v: Any) => String(v || '').toLowerCase();
+    const job = (n: string) => D.jobs.find((j: Any) => j.job_number === n) || {};
+    const jobOk = (j: Any) => (!input.supervisor || low(j.supervisor).includes(low(input.supervisor))) && (!input.job_number || low(j.job_number).endsWith(low(input.job_number)));
+    const logs = (D.daily_logs || []).filter((l: Any) => l.date >= since && jobOk(job(l.job_number)) && (!input.author || low(l.by).includes(low(input.author))))
+      .map((l: Any) => ({ ...l, supervisor: job(l.job_number).supervisor || null, address: String(job(l.job_number).address || '').split(',')[0] }));
+    const per_author: Record<string, number> = {};
+    for (const l of logs) per_author[l.by || '?'] = (per_author[l.by || '?'] || 0) + 1;
+    const silent = D.jobs.filter((j: Any) => j.stage === 'inspections' && j.clock_phase !== 'co' && jobOk(j) && !logs.some((l: Any) => l.job_number === j.job_number))
+      .map((j: Any) => ({ job_number: j.job_number, address: String(j.address || '').split(',')[0], supervisor: j.supervisor, last_log: j.last_daily_log_at || j.last_daily_log, last_by: j.last_daily_log_by }));
+    return { since, days, logs: logs.length, per_author, entries: logs.slice(0, 150), under_construction_without_log: silent };
   }
   if (name === 'get_outbox') {
     const { data, error } = await sb.rpc('ops_board', { p_with_board: false });
