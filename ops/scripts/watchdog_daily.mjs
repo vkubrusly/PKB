@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // =============================================================================
-// watchdog_daily.mjs — makes sure the 4 AM / 1 PM Florida round happens (Victor, 2026-10-02:
+// watchdog_daily.mjs — makes sure each Florida round (4 AM, 9, 11 AM, 1, 3, 5 PM) happens (Victor, 2026-10-02:
 // "if it fails, try again every 15 min until it works").
 // Runs every 15 min (ops-watchdog.yml). A round is done when the portal snapshot is newer than
 // the slot. Otherwise — GitHub started it late, skipped it, or it failed — and when no ops-daily
@@ -10,7 +10,7 @@
 // =============================================================================
 import { sql } from './sb.mjs';
 
-const SLOTS = [4, 13];             // Florida hours of the rounds
+const SLOTS = [4, 9, 11, 13, 15, 17];           // Florida hours of the rounds
 const GRACE_MIN = 15;              // the scheduled run starts at :47 before the slot; step in 15 min after the slot
 const repo = process.env.GITHUB_REPOSITORY, ref = process.env.GITHUB_REF_NAME, token = process.env.GH_TOKEN;
 const q = (v) => (v == null ? 'null' : `'${String(v).replace(/'/g, "''")}'`);
