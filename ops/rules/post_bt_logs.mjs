@@ -35,7 +35,13 @@ const { browser, page, loggedIn } = await openBuildertrend();
 if (!loggedIn) { console.error('Buildertrend session expired — nothing posted'); await browser.close(); process.exit(0); }
 let ok = 0;
 for (const d of drafts) {
-  if (!d.bt_job_id) { console.log(`skip ${d.job_number}: not in Buildertrend`); continue; }
+  if (!d.bt_job_id) {
+    // A house with no Buildertrend job (spreadsheet-only "S…" rows) can't take a Daily Log; after 3 days
+    // stop retrying, so the hourly poster doesn't open Buildertrend for it every hour.
+    console.log(`skip ${d.job_number}: not in Buildertrend`);
+    await sql(`update ops.outbound_messages set status = 'cancelled', error = 'house has no Buildertrend job — not posted' where id = ${q(d.id)} and status = 'draft' and created_at < now() - interval '3 days'`);
+    continue;
+  }
   // claim the draft so a parallel run (hourly poster / daily round) never posts it twice
   const claim = await sql(`update ops.outbound_messages set error = 'posting:' || now()::text where id = ${q(d.id)} and status = 'draft'
     and (error is null or error not like 'posting:%' or substring(error from 9)::timestamptz < now() - interval '30 minutes') returning id`);
