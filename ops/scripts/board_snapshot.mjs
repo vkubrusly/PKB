@@ -140,7 +140,7 @@ const agg = {
   signed: Object.entries(signed).sort().map(([m, n]) => ({ m, n })),
   requests: await sql(`select to_char(received_at,'YYYY-MM') m, count(*)::int n from ops.inbound_emails where category = 'work_request' group by 1 order by 1`),
   workRequests: (await sql(`select received_at::date d, parsed from ops.inbound_emails where category = 'work_request' order by received_at desc limit 20`)).map((r) => ({ at: d(r.d), ...r.parsed })),
-  suggestions: await sql(`select key, area, impact, title, detail, evidence, status, created_at::date created from ops.suggestions order by case impact when 'high' then 0 when 'medium' then 1 else 2 end, created_at`),
+  suggestions: await sql(`select key, area, impact, title, detail, evidence, status, decided_by, decided_at::date decided_at, created_at::date created from ops.suggestions order by case impact when 'high' then 0 when 'medium' then 1 else 2 end, created_at`),
   inbox: await sql(`select category, count(*)::int n, max(received_at)::date last from ops.inbound_emails group by 1 order by 2 desc`),
 };
 agg.dept = agg.dept.map((r) => ({ ...r, department: short(r.department) }));

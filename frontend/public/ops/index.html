@@ -210,7 +210,9 @@ pre.icm.ok{border-left-color:var(--line);color:var(--ink-2)}
 .idea h4{font-size:16px;line-height:1.3}
 .idea p{margin:0;color:var(--ink-2);font-size:14px}
 .idea .ev{display:flex;flex-wrap:wrap;gap:6px}
-.idea .ev span{font:500 12px var(--f-mono);background:var(--surface-2);color:var(--ink-2);border-radius:6px;padding:2px 7px}
+.idea .ev span{font:500 12px var(--f-mono);background:var(--surface-2);color:var(--ink-2);border-radius:6px;padding:2px 7px;overflow-wrap:anywhere}
+.idea .pa{margin-top:2px}
+.idea.closed{opacity:.72}
 
 /* ask */
 .chat{display:flex;flex-direction:column;gap:14px;min-height:200px}
@@ -876,10 +878,23 @@ function renderIdeas(){
   const areas = [...new Set(all.map(s => s.area))];
   $('#ideaChips').innerHTML = ['', ...areas].map(a => `<button class="chip" data-a="${a}" aria-pressed="${ideaArea===a}">${a ? AREA[a]||a : 'All'}</button>`).join('');
   document.querySelectorAll('#ideaChips button').forEach(b => b.onclick = () => { ideaArea = b.dataset.a; renderIdeas(); });
-  const list = all.filter(s => !ideaArea || s.area === ideaArea);
+  // open ones first (by impact), then accepted, then dismissed / done
+  const ORD = {new:0, accepted:1, dismissed:2, done:3}, IMP = {high:0, medium:1, low:2};
+  const list = all.filter(s => !ideaArea || s.area === ideaArea).sort((a, b) => (ORD[a.status] ?? 9) - (ORD[b.status] ?? 9) || (IMP[a.impact] ?? 9) - (IMP[b.impact] ?? 9));
   $('#ideaCnt').textContent = `${list.length} suggestions`;
-  const ev = e => Object.entries(e || {}).map(([k,v]) => `<span>${esc(k.replace(/_/g,' '))}: ${esc(Array.isArray(v) ? v.join(', ') : v)}</span>`).join('');
-  $('#ideas').innerHTML = list.map(s => `<article class="idea"><div class="top"><span class="pill ${IMPACT[s.impact]?.[1]||'p-gry'}">${IMPACT[s.impact]?.[0]||s.impact}</span><span class="pill p-gold">${esc(AREA[s.area]||s.area)}</span><span class="pill ${STATUS[s.status]?.[1]||'p-gry'}">${STATUS[s.status]?.[0]||s.status}</span></div><h4>${esc(s.title)}</h4><p>${esc(s.detail)}</p><div class="ev">${ev(s.evidence)}</div></article>`).join('') || '<div class="empty">No suggestions yet.</div>';
+  const val = v => Array.isArray(v) ? v.map(val).join(', ') : v && typeof v === 'object' ? Object.entries(v).map(([k, x]) => `${k.replace(/_/g,' ')} ${val(x)}`).join(' · ') : String(v ?? '');
+  const ev = e => Object.entries(e || {}).map(([k,v]) => `<span>${esc(k.replace(/_/g,' '))}: ${esc(val(v).slice(0, 300))}</span>`).join('');
+  const who = s => s.decided_by ? `<span class="note">${s.status === 'accepted' ? 'Accepted' : 'Dismissed'} by ${esc(String(s.decided_by).split('@')[0])}${s.decided_at ? ' · ' + esc(String(s.decided_at).slice(0, 10)) : ''}</span>` : '';
+  const acts = s => s.status === 'done' ? '' : s.status === 'new'
+    ? `<div class="pa"><button class="btn" type="button" data-k="${esc(s.key)}" data-s="accepted">Accept</button><button class="btn ghost" type="button" data-k="${esc(s.key)}" data-s="dismissed">Dismiss</button><span class="st"></span></div>`
+    : `<div class="pa">${who(s)}<button class="btn ghost" type="button" data-k="${esc(s.key)}" data-s="new">Undo</button><span class="st"></span></div>`;
+  $('#ideas').innerHTML = list.map(s => `<article class="idea${['dismissed','done'].includes(s.status) ? ' closed' : ''}"><div class="top"><span class="pill ${IMPACT[s.impact]?.[1]||'p-gry'}">${IMPACT[s.impact]?.[0]||s.impact}</span><span class="pill p-gold">${esc(AREA[s.area]||s.area)}</span><span class="pill ${STATUS[s.status]?.[1]||'p-gry'}">${STATUS[s.status]?.[0]||s.status}</span></div><h4>${esc(s.title)}</h4><p>${esc(s.detail)}</p><div class="ev">${ev(s.evidence)}</div>${acts(s)}</article>`).join('') || '<div class="empty">No suggestions yet.</div>';
+  $('#ideas').querySelectorAll('button[data-k]').forEach(b => b.onclick = async () => {
+    const st = b.parentElement.querySelector('.st'); b.parentElement.querySelectorAll('button').forEach(x => x.disabled = true); st.textContent = 'Saving…';
+    const { data, error } = await window.OPS.sb.rpc('ops_suggestion_decide', { p_key: b.dataset.k, p_status: b.dataset.s });
+    if (error) { st.textContent = 'Error: ' + error.message; b.parentElement.querySelectorAll('button').forEach(x => x.disabled = false); return; }
+    const s = all.find(x => x.key === b.dataset.k); Object.assign(s, data); renderIdeas();
+  });
   const CAT = {bt_daily_log:'Buildertrend · Daily Log', bt_invoice:'Buildertrend · invoice', bt_invoice_paid:'Buildertrend · invoice paid', bt_bill:'Buildertrend · bill', bt_other:'Buildertrend · other', work_request:'Website · work request', county:'County', designer:'Designer (Sovereign / Michele)', septic:'Septic (Shady)', surveyor:'Surveyor (Bailey)', google:'Google', other:'Other'};
   const ib = D.inbox || [];
   bars('#c-inbox', ib.map(c => ({l: CAT[c.category]||c.category, v:c.n, t:`${c.n}`})), Math.max(1, ...ib.map(c=>c.n)), 'gold');
