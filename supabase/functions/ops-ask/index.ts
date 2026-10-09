@@ -49,6 +49,7 @@ const INSTRUCTIONS = `You are PKB Ops, the operations assistant of PKB Homes, a 
 Answer using ONLY the data in the snapshot and the tools. Reply in the language of the question (Portuguese or English). Be concrete: job numbers, streets, permit numbers, dates, departments, people. Plain text and short lists, no markdown tables.
 Reading the data: stage pre = no permit yet; permit = in county review; inspections = issued, under construction; done = CO. failed_depts_last_round non-empty means the ball is with the designer (Sovereign). insp_progress = passed/required inspections from the permit's own list on the county portal. build_start / build_days = construction clock (starts at the later of permit issuance and the 2nd invoice payment). photos_* = last site photo upload in Buildertrend. permit_office = who coordinates the permit (sovereign = Sovereign, the designer/expediter, today for Marion and Citrus; pkb = Guilherme). field_steps_done = steps of the PKB field manual (39) confirmed from supervisors' field reports; get_job_file has field_checklist with the details. ready_for_finals_est is an estimate from PKB's own medians. Prime = legacy company being phased out.
 For who wrote the Buildertrend Daily Logs (per job, per supervisor, per person, which houses under construction had none), CALL get_daily_logs; the supervisor's log and the PM's log are told apart by the author. Before the Daily Logs collector, the only proxy was who uploaded the last photo (photos_last_by), which does not prove who wrote the text.
+What the Daily Logs SAY (power/water hookup dates, delays, missing material, vendor problems, weather, scheduled inspections/pours/deliveries, a job's or a supervisor's latest logs): CALL search_daily_logs — with a query (it already matches Portuguese/English variants) or with no query to read the full texts of a job / author / supervisor / period — and read the texts yourself to extract dates and facts; quote job, log date, author. To compare a log with the county portal (e.g. "inspection called" but the portal shows none), also CALL get_job_file. get_daily_logs also lists coverage_gaps: Daily Logs Buildertrend e-mailed about whose text the system did not store — report them if any.
 For one job's reviews, corrections, inspections, holds, invoices or history, CALL get_job_file and quote the county's comments faithfully (itemize long ones). For review comments across many jobs, use search_reviews. For what the system sent or queued, use get_outbox.
 ACTIONS: when the partner asks you to DO something, draft it completely and call the matching propose_* tool:
 - propose_daily_log: a Buildertrend Daily Log on a job (write it in English; notify people by their Buildertrend names).
@@ -65,7 +66,8 @@ const strs = (description: string) => ({ type: 'array', items: { type: 'string' 
 const TOOLS: Any[] = [
   { name: 'get_job_file', description: 'Full file for one job: permits with every review round (department, status, reviewer, date, full county comments), holds, all inspections, pauses, inspection progress, construction clock, site photos, invoices.', input_schema: S({ job_number: str('Job number, e.g. "0034" or "S049"') }, ['job_number']) },
   { name: 'search_reviews', description: 'Search all county review comments for a word or phrase; returns job, permit, round, department, date and a snippet.', input_schema: S({ query: str('Word or phrase'), department: str('Optional department filter') }, ['query']) },
-  { name: 'get_daily_logs', description: 'Buildertrend Daily Logs of the last 60 days: job, date, time written (Florida), author, title, and the job\'s supervisor; plus the count per author and the jobs under construction (permit issued) with no log in the period. The log text is in get_job_file (daily_logs).', input_schema: S({ days: { type: 'integer', description: 'Period in days, counting today (default 7, max 60)' }, supervisor: str('Optional: only jobs of this supervisor'), author: str('Optional: only logs written by this person'), job_number: str('Optional job number') }, []) },
+  { name: 'get_daily_logs', description: 'Buildertrend Daily Logs of the last 60 days: job, date, time written (Florida), author, title, and the job\'s supervisor; plus the count per author, the jobs under construction (permit issued) with no log in the period, and coverage_gaps (logs Buildertrend e-mailed about whose text was not collected). For the log TEXT use search_daily_logs.', input_schema: S({ days: { type: 'integer', description: 'Period in days, counting today (default 7, max 60)' }, supervisor: str('Optional: only jobs of this supervisor'), author: str('Optional: only logs written by this person'), job_number: str('Optional job number') }, []) },
+  { name: 'search_daily_logs', description: 'Search the TEXT of every Buildertrend Daily Log (whole history). query: words or phrases separated by | (any may match); accents, case and common Portuguese/English variants are matched (energia/power/meter/FPL/SECO/Withlacoochee, água/water, inspeção/inspection, chuva/rain, atraso/delay, material/delivery, concreto/pour, etc.). Without a query, returns the full logs that pass the filters (newest first). Returns job, address, supervisor, date, time, author, title, and the text (whole text when few results, else a snippet around the match).', input_schema: S({ query: str('Optional: words/phrases separated by |'), job_number: str('Optional job number'), author: str('Optional: written by this person'), supervisor: str('Optional: only jobs of this supervisor'), days: { type: 'integer', description: 'Optional: only the last N days' }, limit: { type: 'integer', description: 'Max results (default 40, max 120)' } }, []) },
   { name: 'get_outbox', description: 'Messages the system sent or queued (e-mails, Buildertrend Daily Logs) and the recent assistant actions, newest first. Optional job filter.', input_schema: S({ job_number: str('Optional job number') }, []) },
   { name: 'propose_daily_log', description: 'Propose a Buildertrend Daily Log on a job. Posted on the next run after a partner confirms.', input_schema: S({ job_number: str('Job number'), title: str('Short title (max 50 chars)'), notes: str('Log text, in English'), notify: strs('Buildertrend names to notify') }, ['job_number', 'title', 'notes']) },
   { name: 'propose_email', description: 'Propose an e-mail from the bot mailbox (botpkbhomes@gmail.com). Sent within the hour after a partner confirms.', input_schema: S({ to: strs('Recipient e-mails'), cc: strs('Cc e-mails'), subject: str('Subject'), text: str('Plain-text body, signed "— PKB Ops"'), job_number: str('Optional related job') }, ['to', 'subject', 'text']) },
@@ -112,7 +114,47 @@ async function runTool(name: string, input: Any, D: Any, sb: SupabaseClient, pro
     for (const l of logs) per_author[l.by || '?'] = (per_author[l.by || '?'] || 0) + 1;
     const silent = D.jobs.filter((j: Any) => j.stage === 'inspections' && j.clock_phase !== 'co' && jobOk(j) && !logs.some((l: Any) => l.job_number === j.job_number))
       .map((j: Any) => ({ job_number: j.job_number, address: String(j.address || '').split(',')[0], supervisor: j.supervisor, last_log: j.last_daily_log_at || j.last_daily_log, last_by: j.last_daily_log_by }));
-    return { since, days, logs: logs.length, per_author, entries: logs.slice(0, 150), under_construction_without_log: silent };
+    const gaps = (D.daily_log_gaps || []).filter((g: Any) => jobOk(job(g.job_number)));
+    return { since, days, logs: logs.length, per_author, entries: logs.slice(0, 150), under_construction_without_log: silent, coverage_gaps: gaps };
+  }
+  if (name === 'search_daily_logs') {
+    const fold = (v: Any) => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    // Portuguese / English variants the field team uses for the same thing.
+    const GROUPS = [
+      ['energia', 'power', 'meter', 'medidor', 'fpl', 'seco', 'withlacoochee', 'duke', 'tug', 'pre-power', 'luz', 'ligacao de energia', 'energizar', 'energized'],
+      ['agua', 'water', 'poco', 'well pump', 'hidrometro', 'water meter'],
+      ['esgoto', 'sewer', 'septic', 'septico', 'fossa', 'drainfield'],
+      ['inspecao', 'inspection', 'inspector', 'inspetor', 'vistoria'],
+      ['chuva', 'rain', 'weather', 'clima', 'storm', 'tempestade', 'furacao', 'hurricane'],
+      ['atraso', 'atrasad', 'delay', 'postpon', 'adiad', 'reschedul', 'remarc'],
+      ['material', 'materiais', 'supply', 'supplies', 'delivery', 'entrega', 'fornecedor', 'vendor', 'supplier', 'falta', 'missing', 'shortage'],
+      ['concreto', 'concretagem', 'concrete', 'pour', 'slab', 'laje', 'footing', 'sapata'],
+      ['conexao', 'ligacao', 'connection', 'hookup', 'hook-up', 'hook up'],
+      ['telhado', 'roof', 'shingle', 'telha'],
+      ['drywall', 'gesso', 'sheetrock'],
+    ];
+    const terms = String(input.query || '').split('|').map((t) => fold(t).trim()).filter(Boolean);
+    const words = new Set<string>();
+    for (const t of terms) { words.add(t); for (const g of GROUPS) if (g.some((w) => t.includes(w) || w.includes(t))) g.forEach((w) => words.add(w)); }
+    const low = (v: Any) => String(v || '').toLowerCase();
+    const job = (n: string) => D.jobs.find((j: Any) => j.job_number === n) || {};
+    const since = input.days ? new Date(Date.now() - (Number(input.days) - 1) * 864e5).toLocaleDateString('en-CA', { timeZone: 'America/New_York' }) : '';
+    const limit = Math.min(Math.max(Number(input.limit) || 40, 1), 120);
+    const hits: Any[] = [];
+    for (const l of D.daily_log_texts || []) {
+      const j = job(l.job_number);
+      if (since && l.date < since) continue;
+      if (input.job_number && !low(l.job_number).endsWith(low(input.job_number))) continue;
+      if (input.author && !low(l.by).includes(low(input.author))) continue;
+      if (input.supervisor && !low(j.supervisor).includes(low(input.supervisor))) continue;
+      const text = `${l.title || ''}\n${l.notes || ''}`, f = fold(text);
+      let at = -1, matched = '';
+      if (words.size) { for (const w of words) { const i = f.indexOf(w); if (i >= 0 && (at < 0 || i < at)) { at = i; matched = w; } } if (at < 0) continue; }
+      hits.push({ job_number: l.job_number, address: String(j.address || '').split(',')[0], supervisor: j.supervisor || null, date: l.date, at: l.at, by: l.by, title: l.title, matched: matched || null, _text: l.notes || '', _i: at });
+    }
+    const full = hits.length <= 15;
+    const results = hits.slice(0, limit).map(({ _text, _i, ...h }) => ({ ...h, text: full || _i < 0 ? _text : _text.slice(Math.max(0, _i - 200), _i + 400) }));
+    return { matches: hits.length, matched_words: [...words], results };
   }
   if (name === 'get_outbox') {
     const { data, error } = await sb.rpc('ops_board', { p_with_board: false });

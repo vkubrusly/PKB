@@ -170,6 +170,15 @@ agg.directory = [...dirMap.values()];
 // Daily Logs of the last 60 days, one line each (the portal's "Daily logs" report and the Ask).
 const DL60 = new Date(Date.now() - 60 * 864e5).toISOString().slice(0, 10);
 agg.daily_logs = DL.filter((l) => d(l.log_date) >= DL60).map((l) => ({ job_number: l.job_number, date: d(l.log_date), at: l.at, by: l.author, title: l.title }));
+// Every Daily Log with its text (whole history) for the Ask's search / analysis (change request #4).
+agg.daily_log_texts = DL.map((l) => ({ job_number: l.job_number, date: d(l.log_date), at: l.at, by: l.author, title: l.title, notes: l.notes }));
+// Coverage check: Buildertrend e-mailed the bot about a Daily Log (last 30 days, older than 6 h so
+// the next collection had its chance) but no log of that job is stored within a day of it — the
+// collector missed it.
+const DLmail = Date.now() - 30 * 864e5, DLfresh = Date.now() - 6 * 36e5;
+agg.daily_log_gaps = mail.filter((m) => m.category === 'bt_daily_log' && +new Date(m.received_at) > DLmail && +new Date(m.received_at) < DLfresh)
+  .filter((m) => { const md = new Date(m.received_at).toLocaleDateString('en-CA', { timeZone: 'America/New_York' }); return !DL.some((l) => l.job_number === m.job_number && Math.abs(new Date(d(l.log_date)) - new Date(md)) <= 864e5); })
+  .map((m) => ({ job_number: m.job_number, mail_at: String(m.received_at).slice(0, 16), subject: m.subject }));
 const out = { asOf: new Date().toISOString().slice(0, 10), builtAt: new Date().toISOString(), jobs: rows, fails: recentFails.slice(0, 14), ...agg, files };
 const json = JSON.stringify(out);
 const o = process.argv.indexOf('--out');
