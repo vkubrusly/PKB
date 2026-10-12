@@ -6,7 +6,7 @@ Operations module for PKB Homes (separate from the estimator in `frontend/` +
 keeps history as events, and gives back a dashboard, alerts and automations
 (review e-mail to the designer, follow-ups, vendor requests).
 
-Design: [`ARCHITECTURE.md`](ARCHITECTURE.md).
+Design: [`ARCHITECTURE.md`](ARCHITECTURE.md). New Claude session? Start with [`HANDOFF.md`](HANDOFF.md).
 
 ```
 ops/
