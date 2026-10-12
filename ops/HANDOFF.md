@@ -19,8 +19,18 @@ writes in Portuguese; UI text in English. State as of 2026-10-12.
 - Database: `cd ops && npm ci && node -e "import('./scripts/sb.mjs').then(async m=>console.log(await m.sql('select 1')))"`
   (`sql()` uses `SUPABASE_ACCESS_TOKEN`, Management API; project `fvjknahpmihueyeasgbx`). The `ops`
   schema is not exposed to the API; the portal uses SECURITY DEFINER RPCs in `public`.
+  In Claude sessions the token comes from the Claude environment "PKB Ops" (network: full); only
+  sessions started after a secret change pick it up.
 - GitHub logs can't be downloaded from a session; use job steps + check-run annotations. Probes report
   through `::notice::` annotations (`ops-probe.yml`, `collectors/buildertrend/probe.mjs`).
+
+## Secrets (names and where they live — never the values)
+- GitHub Actions secrets: `SUPABASE_ACCESS_TOKEN` (expires 10/2027; the watchdog e-mails Victor if it
+  is refused), `BT_COOKIES_JSON` (bot's Buildertrend session), `BOT_EMAIL_PASSWORD` (bot Gmail app
+  password). Repo variables: `OPS_SEND_ENABLED`, `OPS_BT_POST`, `OPS_R1_ENABLED`.
+- Supabase: Edge Function secret `ANTHROPIC_API_KEY`; Vault `github_actions_token` (GitHub token with
+  Actions permission, used by pg_cron to dispatch workflows).
+- Claude environment "PKB Ops": `SUPABASE_ACCESS_TOKEN`.
 
 ## How it runs
 - **Clock:** Supabase pg_cron (migration 0031) dispatches GitHub workflows — `ops-daily` rounds at
@@ -39,18 +49,21 @@ writes in Portuguese; UI text in English. State as of 2026-10-12.
   `ops.snapshots` (board) + live outbox. **Field channel** /ops/field/. **Ask** = Edge Function
   `supabase/functions/ops-ask` (Sonnet 5.5; tools incl. `search_daily_logs`, `get_daily_logs`
   with coverage gaps). Field = `supabase/functions/ops-field`. Anthropic key: Supabase secret
-  `ANTHROPIC_API_KEY` (on 10/12 the account behind it hit its spend limit — Ask/field summaries fail
-  until the key is replaced or the limit raised).
+  `ANTHROPIC_API_KEY` (on 10/12 the account behind it hit its spend limit, blocked until 11/01 —
+  Ask/field summaries fail until the key is replaced with one from an org with credit).
 - **Portal roles** (`ops.portal_users`): admin Victor; partners Thiago, Guilherme, Cristiano, Daniela,
   Gabriel; pm Carlos, Camila; field supervisors.
 - **Permit office:** Sovereign coordinates Marion, Citrus and house 0042; everything else PKB (Guilherme).
 
-## Claude routines (claude.ai, owned by the account that created them)
-- "PKB Ops — pedidos de mudança (diário)" 7:52 AM: works open `ops.change_requests`, opens PRs (doesn't merge).
-- "PKB Ops — sugestões de melhoria (semanal)" Monday 6:41 AM: updates `ops.suggestions` from the data,
-  respects Victor's Accept/Dismiss (migration 0033), follows the accuracy rules above.
-- "PKB Ops — vigia da rodada diária" — disabled (replaced by the Supabase scheduler).
-When moving to another Claude account, recreate the first two there and disable them here.
+## Claude routines (claude.ai, Team account since 2026-10-12)
+- "PKB Ops — pedidos de mudança (diário)" 7:52 AM Florida: works open `ops.change_requests`, opens PRs
+  (doesn't merge), writes the answer on the request.
+- "PKB Ops — sugestões de melhoria (semanal)" Monday 6:41 AM Florida: updates `ops.suggestions` from the
+  last month of data, respects Victor's Accept/Dismiss (migration 0033), follows the accuracy rules
+  above, writes only to that table.
+- Both start a fresh session in the "PKB Ops" environment and clone the repo themselves (tested 10/12:
+  token present, `sb.mjs` query OK). Pending: add `vkubrusly/PKB` as a source of both routines in
+  claude.ai → Routines so they can push and open PRs. The old account's routines were disabled 10/12.
 
 ## Open items
 - Orange (FastTrack, needs login) and Lake have no collector: 0014, 0042, S050, 0030, S051 never collected.
@@ -58,4 +71,5 @@ When moving to another Claude account, recreate the first two there and disable 
 - S043: permit number BLD202502570 doesn't exist on the Citrus portal — needs the right number.
 - Pre-permit data still partly comes from a static spreadsheet CSV (2026-09-25).
 - Field channel barely used (1 confirmed report in October) — adoption with the supervisors.
+- `ANTHROPIC_API_KEY`: replace with a key from an org with credit (Ask and field summaries down).
 - WhatsApp channel, STT provider for audio/video, DocuSign: waiting on Victor.
