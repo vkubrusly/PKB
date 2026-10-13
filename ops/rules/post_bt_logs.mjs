@@ -5,7 +5,8 @@
 //
 // Opens the job's Daily Logs by its Buildertrend id, fills title and notes,
 // notifies exactly the people listed in to_addresses (Buildertrend display names;
-// names that are not Buildertrend users on the job are skipped and reported),
+// names that are not Buildertrend users on the job are skipped and kept in payload.not_notified
+// — a note, not an error: the log was posted),
 // checks the form is on the right job, then publishes.
 // Enabled by OPS_BT_POST=true (repository variable); otherwise lists what it would post.
 //   BT_COOKIES_FILE=… node rules/post_bt_logs.mjs [--post | --dry-run]
@@ -58,8 +59,8 @@ for (const d of drafts) {
       attachments.push(f);
     }
     const r = await createDailyLog(page, { jobId: d.bt_job_id, jobName: d.bt_job_name, title: d.subject.slice(0, 50), notes: `${d.body.trim().slice(0, 3850)}\n\n${signature(d)}`.slice(0, 4000), notify: d.to_addresses, attachments });
-    await sql(`update ops.outbound_messages set status = 'sent', sent_at = now(), external_id = ${q(r.logId ? String(r.logId) : r.url)},
-      error = ${q(r.skipped?.length ? `not notified (not Buildertrend users on the job): ${r.skipped.join(', ')}` : null)} where id = ${q(d.id)}`);
+    await sql(`update ops.outbound_messages set status = 'sent', sent_at = now(), external_id = ${q(r.logId ? String(r.logId) : r.url)}, error = null,
+      payload = ${r.skipped?.length ? `coalesce(payload, '{}'::jsonb) || jsonb_build_object('not_notified', ${q(JSON.stringify(r.skipped))}::jsonb)` : 'payload'} where id = ${q(d.id)}`);
     console.log(`POSTED ${d.job_number} "${d.subject}" log ${r.logId} · notified ${r.notified.join(', ')}${r.attached ? ` · ${r.attached} photo(s)` : ''}${r.skipped.length ? ` · skipped ${r.skipped.join(', ')}` : ''}`);
     ok++;
   } catch (e) {

@@ -8,6 +8,7 @@ import { spawn } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { sql } from './sb.mjs';
+import { startRun, finishRun } from './collector_run.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const limit = Number((process.argv.find((a, i) => process.argv[i - 1] === '--limit')) || 0);
@@ -27,11 +28,13 @@ for (const r of rows) (groups[`${r.portal}|${r.stage}`] ||= []).push(r.number);
 // Each county is its own website, so the portals run at the same time (the round takes as long
 // as the slowest portal, not the sum). Within one portal the stages still run one after another,
 // so a county never sees more than one bot at a time. Output lines are prefixed with the county.
+// Resolves { code, stderr: last lines printed to stderr } (kept in ops.collector_runs).
 const run = (script, args, tag) => new Promise((resolve) => {
   const p = spawn('node', [script, ...args], { cwd: ROOT });
-  const pipe = (src, dst) => { let buf = ''; src.on('data', (d) => { buf += d; const lines = buf.split('\n'); buf = lines.pop(); for (const l of lines) dst.write(`[${tag}] ${l}\n`); }); src.on('end', () => { if (buf) dst.write(`[${tag}] ${buf}\n`); }); };
-  pipe(p.stdout, process.stdout); pipe(p.stderr, process.stderr);
-  p.on('close', (code) => resolve(code));
+  const tail = [];
+  const pipe = (src, dst, keep) => { let buf = ''; const out = (l) => { dst.write(`[${tag}] ${l}\n`); if (keep && l.trim()) { tail.push(l.slice(0, 300)); if (tail.length > 15) tail.shift(); } }; src.on('data', (d) => { buf += d; const lines = buf.split('\n'); buf = lines.pop(); for (const l of lines) out(l); }); src.on('end', () => { if (buf) out(buf); }); };
+  pipe(p.stdout, process.stdout); pipe(p.stderr, process.stderr, true);
+  p.on('close', (code) => resolve({ code, stderr: tail }));
 });
 const byPortal = {};
 for (const [key, numbers] of Object.entries(groups)) {
@@ -47,7 +50,9 @@ const results = await Promise.all(Object.entries(byPortal).map(async ([portal, j
   for (const { script, county, stage, list } of jobs) {
     const t = Date.now();
     console.log(`== ${portal} · ${stage} · ${list.length} permit(s) — start`);
-    const code = await run(script, ['--county', county, '--stage', stage, ...list], county);
+    const runId = await startRun(`${portal}:${stage}`, list.length);
+    const { code, stderr } = await run(script, ['--county', county, '--stage', stage, ...list], county);
+    await finishRun(runId, { errors: code === 0 ? [] : [{ exit: code, stderr }] });
     console.log(`== ${portal} · ${stage} — ${code === 0 ? 'done' : 'FAILED (exit ' + code + ')'} in ${Math.round((Date.now() - t) / 60000)} min`);
     if (code !== 0) failed++;
   }

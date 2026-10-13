@@ -122,15 +122,15 @@ jobs:
         continue-on-error: true   # an expired session must not block the portal run
         run: |
           [ -f "$BT_COOKIES_FILE" ] || exit 0
-          node collectors/buildertrend/list_jobs.mjs > /dev/null
-          node collectors/buildertrend/job_fields.mjs
+          node scripts/collector_run.mjs buildertrend:jobs -- node collectors/buildertrend/list_jobs.mjs > /dev/null
+          node scripts/collector_run.mjs buildertrend:job_fields -- node collectors/buildertrend/job_fields.mjs
 
       - name: Buildertrend photos
         if: steps.bt.outputs.state == 'ok' && needs.gate.outputs.photos == 'true'
         continue-on-error: true
         run: |
           [ -f "$BT_COOKIES_FILE" ] || exit 0
-          node collectors/buildertrend/photos.mjs && node scripts/load_photos.mjs
+          node scripts/collector_run.mjs buildertrend:photos -- node collectors/buildertrend/photos.mjs && node scripts/load_photos.mjs
 
       # Every Daily Log with its author and time (ops.daily_logs). The first run, with the table
       # empty, imports the whole history; afterwards the last 30 days are re-read. Read-only.
@@ -139,15 +139,17 @@ jobs:
         continue-on-error: true
         run: |
           [ -f "$BT_COOKIES_FILE" ] || exit 0
-          node collectors/buildertrend/daily_logs.mjs $(node scripts/load_daily_logs.mjs --span) && node scripts/load_daily_logs.mjs
+          node scripts/collector_run.mjs buildertrend:daily_logs -- node collectors/buildertrend/daily_logs.mjs $(node scripts/load_daily_logs.mjs --span) && node scripts/load_daily_logs.mjs
 
       # Houses with no permit number yet (spreadsheet / Buildertrend "Permit #" empty): look them up on
       # the county portal (parcel / address, every county with a portal); accepted only when the
       # applicant is Prime Kubrusly Basso or Cristiano Pedrosa. Collected in the step below.
       - name: Discover new permits on the county portals
         continue-on-error: true
-        run: node scripts/discover_permits.mjs
+        run: node scripts/collector_run.mjs portals:discover -- node scripts/discover_permits.mjs
 
+      # Collectors record each run (start, end, items, errors) in ops.collector_runs —
+      # wrapped by scripts/collector_run.mjs; collect_all records one row per portal and stage.
       - name: County portals (queue-driven)
         continue-on-error: true
         run: node scripts/collect_all.mjs ${{ inputs.limit && format('--limit {0}', inputs.limit) || '' }}
@@ -169,7 +171,7 @@ jobs:
       # every required inspection on the permit already. Drives the progress/next steps.
       - name: Inspection plans per permit
         continue-on-error: true
-        run: node collectors/energov/inspection_plan.mjs
+        run: node scripts/collector_run.mjs energov:inspection_plan -- node collectors/energov/inspection_plan.mjs
 
       # R-INSP-FAIL: e-mail supervisor/PMs/Cristiano about new failed inspections (with the
       # inspector's comments) and queue a Buildertrend Daily Log. Sends only when the repo

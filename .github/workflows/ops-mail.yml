@@ -25,15 +25,15 @@ jobs:
     defaults: { run: { working-directory: ops } }
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: ops/package-lock.json }
       - name: Read mailbox
         env:
           BOT_EMAIL: ${{ secrets.BOT_EMAIL || 'botpkbhomes@gmail.com' }}
           BOT_EMAIL_PASSWORD: ${{ secrets.BOT_EMAIL_PASSWORD }}
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: python3 collectors/mail/collect_mail.py ${{ inputs.backfill && '--all' || '' }}
+        run: node scripts/collector_run.mjs mail -- python3 collectors/mail/collect_mail.py ${{ inputs.backfill && '--all' || '' }}
 
-      - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm, cache-dependency-path: ops/package-lock.json }
       - run: npm ci --omit=optional
         env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' }
       - name: Rules — website work requests (R-LEAD), start licensing (R0), septic from e-mail, e-mails approved in the portal
