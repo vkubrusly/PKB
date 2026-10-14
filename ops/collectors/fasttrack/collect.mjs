@@ -51,8 +51,10 @@ async function login(page, user, pass) {
 
 async function myPermits(page) {
   await page.goto(`${B}/MyPermits.aspx`, { waitUntil: 'domcontentloaded', timeout: 90000 });
-  await page.waitForTimeout(3000);
-  return page.$$eval('a[id$="lnkPermit"]', (els) => els.map((e) => (e.innerText || '').trim()).filter(Boolean));
+  // Permit links are ASP.NET postbacks: href "javascript:WebForm_DoPostBackWithOptions(...$lnkPermit...)".
+  await page.waitForSelector('a[href*="lnkPermit"]', { timeout: 30000 }).catch(() => {});
+  await page.waitForTimeout(1500);
+  return page.$$eval('a[href*="lnkPermit"]', (els) => els.map((e) => (e.innerText || '').trim()).filter(Boolean));
 }
 
 // Raw page facts, read in the browser: tables as rows of cell texts, and the body text.
@@ -71,7 +73,7 @@ function readDetail() {
 
 async function openPermit(page, number) {
   await myPermits(page);
-  const link = page.locator('a[id$="lnkPermit"]', { hasText: number }).first();
+  const link = page.locator('a[href*="lnkPermit"]', { hasText: number }).first();
   if (!(await link.count())) return null;
   await Promise.all([page.waitForLoadState('domcontentloaded', { timeout: 60000 }).catch(() => {}), link.click()]);
   await page.waitForSelector('#permitDetails2', { timeout: 60000 });
