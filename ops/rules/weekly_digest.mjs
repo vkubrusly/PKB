@@ -2,11 +2,13 @@
 // =============================================================================
 // Rule R6 — weekly digest for the partners (Monday morning run).
 // Stalled permits (no county activity for N days, N per status), permits issued and not
-// started, open failed inspections, idle jobs, open website leads and the week's numbers.
+// started, open failed inspections, houses slower than their county's normal in the current
+// construction phase (analysis/phase_times.mjs), idle jobs, open website leads and the week's numbers.
 // Sent once per ISO week (dedupe); --force sends now whatever the day.
 //   node rules/weekly_digest.mjs [--dry-run] [--force]
 // =============================================================================
 import { sql, q, DRY, brDate, street, orgId, seen, recordEvent, mail, contacts } from './lib.mjs';
+import { phaseTimesAll } from '../analysis/phase_times.mjs';
 
 const STALL = { in_review: 21, corrections: 7, fees_due: 7, requested: 30 };
 const nyDay = new Date().toLocaleDateString('en-US', { timeZone: 'America/New_York', weekday: 'short' });
@@ -33,6 +35,9 @@ const openFails = await sql(`select distinct on (j.job_number, i.type) j.job_num
   where j.org_id = ${org} and i.failed and coalesce(i.actual_at, i.scheduled_at) < now() - interval '5 days'
     and not exists (select 1 from ops.inspections k where k.permit_case_id = c.id and k.type = i.type and k.passed and coalesce(k.actual_at, k.scheduled_at) >= coalesce(i.actual_at, i.scheduled_at))
   order by j.job_number, i.type, at desc`);
+// Houses past the slowest quarter (p75) of PKB houses in the same county and phase, with no open pause.
+const phases = await phaseTimesAll();
+const slow = phases.houses.filter((h) => h.current?.slow && !h.paused).sort((a, b) => b.current.days - b.current.p75 - (a.current.days - a.current.p75));
 const idle = await sql(`select distinct on (e.job_id) j.job_number, j.address, (e.payload->>'days')::int days from ops.events e join ops.jobs j on j.id = e.job_id
   where e.org_id = ${org} and e.kind = 'job.idle' and e.occurred_at > now() - interval '7 days' order by e.job_id, e.occurred_at desc`);
 const leads = await sql(`select ref, client, model, received_at, followups from ops.leads where org_id = ${org} and status = 'open' order by received_at`);
@@ -57,6 +62,7 @@ Na semana: ${wk.issued} permit(s) emitido(s) · ${wk.passed} inspeção(ões) ap
 ${sec('PERMITS PARADOS', stalledRows, (s) => `  ${s.job_number} · ${street(s.address)} — ${STATUS[s.ops_status]}${s.days != null ? ` há ${s.days} dias` : ''}${s.number ? ` (permit ${s.number})` : ''}`)}
 ${sec('PERMIT EMITIDO E OBRA SEM INÍCIO (14+ dias)', notStarted, (s) => `  ${s.job_number} · ${street(s.address)} — emitido em ${brDate(s.issued_at)}`)}
 ${sec('INSPEÇÕES REPROVADAS SEM REINSPEÇÃO (5+ dias)', openFails, (s) => `  ${s.job_number} · ${street(s.address)} — ${String(s.type).replace(/ - 1 ?& ?2.*$/, '')} em ${brDate(s.at)}`)}
+${sec('OBRAS ACIMA DO TEMPO NORMAL DA FASE (mais lentas que 3 de cada 4 casas PKB do condado)', slow, (h) => `  ${h.job_number} · ${street(h.address)} — ${h.current.phase === 'espera_inicio' ? `sem inspeção de campo aprovada desde o permit (${brDate(h.current.since)}), ${h.current.days} dias` : `${h.current.name} há ${h.current.days} dias (desde ${brDate(h.current.since)})`}; mediana ${h.county} ${h.current.median} dias, +${h.current.delta} (base: ${h.current.n} casas PKB)`)}
 ${sec('OBRAS PARADAS (sem foto nem Daily Log)', idle, (s) => `  ${s.job_number} · ${street(s.address)}${s.days != null ? ` — ${s.days} dias` : ''}`)}
 ${sec('PEDIDOS DO SITE SEM RESPOSTA', leads, (l) => `  ${l.client || '—'} · ${l.model || ''} — desde ${brDate(l.received_at)} (${l.followups} cobrança(s))`)}
 ${aiLine ? `\nIA NO MÊS: campo US$ ${(aiLine.field || 0).toFixed(2)} (${aiLine.calls.field || 0} chamadas) · Ask US$ ${(aiLine.ask || 0).toFixed(2)} (${aiLine.calls.ask || 0} perguntas)\n` : ''}

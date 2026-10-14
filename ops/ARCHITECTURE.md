@@ -164,7 +164,7 @@ Idempotency keys: `events.dedupe_key` (e.g. `energov:review_item:<ItemReviewId>:
 | R3 | new `submittal` appears | close follow-ups; `ball_with = county`; Daily Log "Resubmitted v{n}" |
 | R4 | `permit_case.status → Issued` | `permit.issued` event; **task for the job's supervisor** to request vendors (stake-out, power, water, dumpster…) — PKB does not e-mail vendors directly; impact fees / NOC → daniela@pkbhomes.com, Cc Guilherme; Daily Log |
 | R5 | new `hold.active = true` | immediate alert (e-mail) with the reason; `ball_with = pkb` |
-| R6 | `permit_case` with no event for N days (N per status), and no open pause | "stalled" flag on the dashboard and in the weekly digest |
+| R6 | `permit_case` with no event for N days (N per status), and no open pause; a house in construction past the p75 of PKB houses of its county in its current phase (`analysis/phase_times.mjs`: phases cut at county inspection passes) | "stalled" flag on the dashboard and in the weekly digest; "slower than normal" section in the weekly digest |
 | R7 | new `inspection.failed` | notice to the job's supervisor + project manager(s) + Cristiano with the inspector's comment; "reschedule" reminder; Daily Log |
 | R8 | new `inspection.passed` | notice to the supervisor with the next step in the sequence; **reminder to request the next inspection** (supervisors schedule their own inspections); Daily Log; closes an open `owner_deferred_start` pause if it is the first inspection |
 | R9 | any permit/inspection change | Buildertrend Daily Log with the change text (one entry per day per job) |
