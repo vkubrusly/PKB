@@ -8,7 +8,7 @@ on:
       probe:
         description: 'Probe to run'
         type: choice
-        options: [fasttrack, lake, buildertrend]
+        options: [fasttrack, fasttrack-collect, lake, buildertrend]
         default: fasttrack
       arg:
         description: 'Optional argument (e.g. permit number)'
@@ -36,4 +36,10 @@ jobs:
           ORANGE_PORTAL_PASS: ${{ secrets.ORANGE_PORTAL_PASS }}
           ORANGE_PORTAL_USER_2: ${{ secrets.ORANGE_PORTAL_USER_2 }}
           ORANGE_PORTAL_PASS_2: ${{ secrets.ORANGE_PORTAL_PASS_2 }}
-        run: node collectors/${{ inputs.probe }}/probe.mjs ${{ inputs.arg }}
+        run: |
+          if [ "${{ inputs.probe }}" = fasttrack-collect ]; then
+            # Fast Track collector dry run: collect, then print the normalized JSON (no database write).
+            node collectors/fasttrack/collect.mjs --county orange ${{ inputs.arg }} && cat data/portal/orange/*.json
+          else
+            node collectors/${{ inputs.probe }}/probe.mjs ${{ inputs.arg }}
+          fi
