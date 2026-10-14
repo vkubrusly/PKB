@@ -15,7 +15,7 @@ if (!accounts.length) { console.error('ORANGE_PORTAL_USER / ORANGE_PORTAL_PASS n
 const secrets = accounts.flatMap(([, u, p]) => [u, p]);
 const clean = (s) => secrets.reduce((t, x) => t.replaceAll(x, '<redacted>'), String(s));
 const EXEC = process.env.CHROMIUM_PATH || (existsSync('/opt/pw-browsers/chromium-1194/chrome-linux/chrome') ? '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' : undefined);
-const target = process.argv[2] || 'B26013237';
+const targets = (process.argv[2] || 'B26013237').split(/[,\s]+/).filter(Boolean);
 
 const section = (t, s) => console.log(`\n===== ${t} =====\n${clean(s)}`);
 // GitHub shows at most 10 notices per step: 5 per account.
@@ -50,16 +50,34 @@ for (const [n, user, pass] of accounts) {
     section(`${tag}: permit links`, links.slice(0, 60).join('\n'));
     notice(`${tag}: permit links`, links.slice(0, 40).join('\n') || '(none)');
 
-    const link = page.locator(`a:has-text("${target}")`).first();
-    if (await link.count()) {
+    for (const target of targets) {
+      await page.goto(`${B}/MyPermits.aspx`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+      await page.waitForTimeout(4000);
+      const link = page.locator(`a:has-text("${target}")`).first();
+      if (!(await link.count())) { notice(`${tag}: permit ${target}`, 'not linked on My Permits'); continue; }
       await Promise.all([page.waitForLoadState('domcontentloaded', { timeout: 60000 }).catch(() => {}), link.click()]);
       await page.waitForTimeout(6000);
-      const t3 = await text();
-      section(`${tag}: permit ${target}`, `${page.url()}\n${t3.slice(0, 8000)}`);
-      notice(`${tag}: permit ${target}`, `${page.url()}\n${t3.slice(0, 3300)}`);
-      const tabs = await page.$$eval('a', (els) => els.map((e) => (e.innerText || '').trim()).filter((t) => t && t.length < 40 && /review|inspection|hold|fee|status|comment|condition|plan/i.test(t)));
-      notice(`${tag}: tabs`, JSON.stringify([...new Set(tabs)]));
-    } else notice(`${tag}: permit ${target}`, 'not linked on My Permits');
+      const detail = page.url();
+      section(`${tag}: permit ${target}`, `${detail}\n${(await text()).slice(0, 8000)}`);
+      // Processes table structure (for the collector's selectors).
+      const tables = await page.$$eval('table', (ts) => ts.map((t) => ({ id: t.id, cls: t.className, rows: t.rows.length, head: (t.rows[0]?.innerText || '').replace(/\s+/g, ' ').slice(0, 120) })).filter((t) => t.rows > 1));
+      section(`${tag}: ${target} tables`, JSON.stringify(tables, null, 1));
+      const sub = await page.$$eval('a', (els) => els.map((e) => ({ t: (e.innerText || '').trim(), h: e.getAttribute('href'), on: e.getAttribute('onclick'), tg: e.getAttribute('target') })).filter((x) => /view plan review comments|view inspection results|certificate of occupancy holds|sub ?permits|\.pdf/i.test(x.t)));
+      section(`${tag}: ${target} sub links`, JSON.stringify(sub, null, 1));
+      for (const label of ['View Plan Review Comments', 'View Inspection Results', 'View Certificate of Occupancy Holds']) {
+        const a = page.locator(`a:has-text("${label}")`).first();
+        if (!(await a.count())) { section(`${tag}: ${target} ${label}`, '(no link)'); continue; }
+        const popup = ctx.waitForEvent('page', { timeout: 15000 }).catch(() => null);
+        await a.click().catch(() => {});
+        const pp = await popup;
+        const pg = pp || page;
+        await pg.waitForLoadState('domcontentloaded').catch(() => {});
+        await pg.waitForTimeout(6000);
+        const tx = clean((await pg.innerText('body')).replace(/[ \t]+/g, ' ').replace(/\n{2,}/g, '\n'));
+        section(`${tag}: ${target} ${label}`, `${pg.url()}\n${tx.slice(0, 12000)}`);
+        if (pp) await pp.close(); else { await page.goto(detail).catch(() => {}); await page.waitForTimeout(4000); }
+      }
+    }
   } catch (e) {
     notice(`${tag}: error`, `${e.message} · ${page.url()}`);
   }
