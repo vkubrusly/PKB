@@ -12,7 +12,7 @@ export const brDate = (d) => (d ? new Date(String(d).slice(0, 10) + 'T12:00:00Z'
 export const street = (a) => String(a || '').split(',')[0];
 export const daysAgo = (d) => (d ? (Date.now() - new Date(String(d).slice(0, 10) + 'T12:00:00Z').getTime()) / 864e5 : Infinity);
 export const RECENT_DAYS = Number(process.env.OPS_RECENT_DAYS || 3);
-export const REVIEW_FAILED = /revisions? required|disapprov|denied|fail|incomplete|re-?submit|corrections?|rejected/i;
+export const REVIEW_FAILED = /revisions? required|disapprov|denied|fail|incomplete|re-?submit|corrections?|rejected|deficienc/i;
 
 export const contacts = JSON.parse(readFileSync(new URL('../config/contacts.json', import.meta.url), 'utf8'));
 const people = [...(contacts.internal.supervisors || []), ...(contacts.internal.project_managers || []), contacts.internal.contractor_of_record, contacts.internal.permits_owner].filter(Boolean);

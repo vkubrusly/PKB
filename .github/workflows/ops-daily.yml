@@ -150,6 +150,11 @@ jobs:
 
       - name: County portals (queue-driven)
         continue-on-error: true
+        env:   # Orange County Fast Track: the two contractor logins (config/fasttrack_accounts.json)
+          ORANGE_PORTAL_USER: ${{ secrets.ORANGE_PORTAL_USER }}
+          ORANGE_PORTAL_PASS: ${{ secrets.ORANGE_PORTAL_PASS }}
+          ORANGE_PORTAL_USER_2: ${{ secrets.ORANGE_PORTAL_USER_2 }}
+          ORANGE_PORTAL_PASS_2: ${{ secrets.ORANGE_PORTAL_PASS_2 }}
         run: node scripts/collect_all.mjs ${{ inputs.limit && format('--limit {0}', inputs.limit) || '' }}
 
       - name: Load into Supabase
