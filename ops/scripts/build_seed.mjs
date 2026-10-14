@@ -190,7 +190,7 @@ if (process.env.SUPABASE_ACCESS_TOKEN) {
 
 // ---- Portal data (EnerGov, Accela) ----
 const portalDir = join(ROOT, 'data', 'portal');
-const PORTAL_OF_DIR = { citrus: 'accela:citrus', charlotte: 'accela:charlotte', northport: 'accela:northport' }; // default: energov:<dir>
+const PORTAL_OF_DIR = { citrus: 'accela:citrus', charlotte: 'accela:charlotte', northport: 'accela:northport', orange: 'fasttrack:orange' }; // default: energov:<dir>
 for (const county of existsSync(portalDir) ? readdirSync(portalDir) : []) {
   const portal = PORTAL_OF_DIR[county] || `energov:${county}`;
   for (const f of readdirSync(join(portalDir, county)).filter(f => f.endsWith('.json') && !f.startsWith('_'))) {
@@ -213,7 +213,7 @@ for (const county of existsSync(portalDir) ? readdirSync(portalDir) : []) {
 on conflict (permit_case_id, round) do update set status = excluded.status, completed_at = excluded.completed_at;`);
     }
     for (const r of p.reviewItems) {
-      const failed = /re-?submit|denied|fail|disapprov|revisions? required/i.test(r.status || '');
+      const failed = /re-?submit|denied|fail|disapprov|revisions? required|deficienc/i.test(r.status || '');
       w(`insert into ops.review_items (org_id, permit_case_id, submittal_id, portal_id, round, department, status, failed, reviewer, reviewer_email, due_at, completed_at, comments)
 select (select id from _org), ${caseSel}, (select id from ops.submittals where permit_case_id = ${caseSel} and round = ${r.round ?? 'null'}), ${q(r.itemReviewId)}, ${r.round ?? 'null'}, ${q(r.department)}, ${q(r.status)}, ${failed}, ${q(r.assignedTo)}, ${q(r.assignedToEmail)}, ${qd(r.dueAt)}, ${qd(r.completedAt)}, ${q(r.comments)}
 on conflict (permit_case_id, portal_id) do update set status = excluded.status, failed = excluded.failed, completed_at = excluded.completed_at, comments = excluded.comments;`);
