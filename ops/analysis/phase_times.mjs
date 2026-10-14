@@ -2,9 +2,13 @@
 // each phase, and which houses in progress are taking longer than the county's normal.
 //
 // Phases are cut at county inspection passes (first pass of each step, from the portal):
-// the only dated milestones every house has. The 2nd-draw start date is not used here: it is
-// a payment date and can be months off the field work (0001: 2nd draw 09/28, slab 03/05).
-//   espera_inicio  permit issued        → first field inspection passed (pre-work/erosion excluded)
+// the only dated milestones every house has, plus the 2nd draw for the start: without the 2nd
+// installment paid the house only has a permit, construction has not started (Victor, 2026-10-14).
+//   espera_inicio  ready to build       → first field inspection passed (pre-work/erosion excluded)
+//                  ready = the later of permit issued and 2nd draw paid (control sheet date, else the
+//                  first Buildertrend "paid" e-mail for the 2nd Installment, as in the construction
+//                  clock). No 2nd draw and no field pass → not started, not measured. A sample whose
+//                  payment is recorded after the first field pass is dropped (late payment e-mail).
 //   fundacao       first field pass     → slab / foundation pre-pour
 //   paredes        slab                 → lintel / tie beam
 //   telhado        lintel               → roof dry-in
@@ -41,7 +45,7 @@ const STEP = {
   bfinal: /Final Structural|^Building Final|^RES Building Final/i,
 };
 export const PHASES = [
-  { key: 'espera_inicio', name: 'espera para começar', from: 'issued', to: 'start' },
+  { key: 'espera_inicio', name: 'espera para começar', from: 'ready', to: 'start' },
   { key: 'fundacao', name: 'fundação', from: 'start', to: 'slab' },
   { key: 'paredes', name: 'paredes', from: 'slab', to: 'lintel' },
   { key: 'telhado', name: 'telhado', from: 'lintel', to: 'dryin' },
@@ -53,9 +57,10 @@ export const PHASES = [
 ];
 
 // steps: [{name, final, passedAt}] (inspection_progress jobProgress().steps)
-export function milestones(issuedAt, steps = []) {
+export function milestones(issuedAt, steps = [], paid2At = null) {
   const first = (pred) => steps.filter((s) => s.passedAt && pred(s)).map((s) => iso(s.passedAt)).sort()[0] || null;
-  const m = { issued: iso(issuedAt), start: first((s) => !s.final && !/pre-?work|erosion/i.test(s.name)), final1: first((s) => s.final) };
+  const issued = iso(issuedAt), paid2 = iso(paid2At);
+  const m = { issued, paid2, ready: issued && paid2 ? (paid2 > issued ? paid2 : issued) : null, start: first((s) => !s.final && !/pre-?work|erosion/i.test(s.name)), final1: first((s) => s.final) };
   for (const [k, re] of Object.entries(STEP)) m[k] = first((s) => re.test(s.name));
   return m;
 }
@@ -85,7 +90,7 @@ export function currentPhase(h, base, today) {
   if (!h.ms.issued || h.ms.bfinal) return null;
   const last = PHASES.reduce((m, x, i) => (h.ms[x.to] ? i : m), -1);
   const p = PHASES[last + 1];
-  if (!p) return null;
+  if (!p || !h.ms[p.from]) return null; // no field pass and no 2nd draw: permit only, not started
   const b = base[h.county]?.[p.key];
   const inPhase = days(h.ms[p.from], today);
   const ok = b && b.n >= MIN_SAMPLES;
@@ -98,9 +103,11 @@ export async function phaseTimesAll(today = new Date().toISOString()) {
   const { progressAll } = await import('./inspection_progress.mjs');
   const prog = await progressAll();
   const jobs = await sql(`select j.job_number, j.address, j.county, j.company, j.status, c.issued_at,
+      coalesce(j.second_draw_at, (select min(e.received_at)::date from ops.inbound_emails e where e.job_number = j.job_number
+        and e.category = 'bt_invoice_paid' and e.parsed->>'title' ~* '2nd\\s+installment')) paid2,
       exists (select 1 from ops.job_pauses p where p.job_id = j.id and p.ended_at is null) paused
     from ops.jobs j join ops.permit_cases c on c.job_id = j.id and c.kind = 'building' where c.issued_at is not null`);
-  const houses = jobs.map((j) => ({ ...j, ms: milestones(j.issued_at, prog.jobs[j.job_number]?.steps) }));
+  const houses = jobs.map((j) => ({ ...j, ms: milestones(j.issued_at, prog.jobs[j.job_number]?.steps, j.paid2) }));
   const base = baselines(houses);
   for (const h of houses) h.current = ['construction', 'starting'].includes(h.status) ? currentPhase(h, base, iso(today)) : null;
   return { baselines: base, houses };
