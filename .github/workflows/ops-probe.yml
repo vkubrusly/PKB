@@ -34,4 +34,6 @@ jobs:
           BT_COOKIES_FILE: ${{ github.workspace }}/bt_cookies.json
           ORANGE_PORTAL_USER: ${{ secrets.ORANGE_PORTAL_USER }}
           ORANGE_PORTAL_PASS: ${{ secrets.ORANGE_PORTAL_PASS }}
+          ORANGE_PORTAL_USER_2: ${{ secrets.ORANGE_PORTAL_USER_2 }}
+          ORANGE_PORTAL_PASS_2: ${{ secrets.ORANGE_PORTAL_PASS_2 }}
         run: node collectors/${{ inputs.probe }}/probe.mjs ${{ inputs.arg }}
