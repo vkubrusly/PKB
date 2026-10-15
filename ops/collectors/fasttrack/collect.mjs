@@ -136,7 +136,28 @@ export function commentsFor(text, department) {
   if (start < 0) return text.slice(0, 8000);
   let end = lines.findIndex((l, i) => i > start && DEPT_WORDS.some((w) => w !== key && isHead(l, w)));
   if (end < 0) end = lines.length;
-  return lines.slice(start, end).join('\n').slice(0, 8000);
+  return lines.slice(start, end).filter((l) => !/^Page \d+ of \d+$/i.test(l.trim())).join('\n').slice(0, 8000);
+}
+
+// Reviewer named at the end of a department's comments: "<Name> - PH: <phone>- <email>".
+export function reviewerOf(comments) {
+  const m = /^(.+?) - PH:\s*(.*?)-\s*(\S+@\S+)\s*$/m.exec(comments || '');
+  return m ? { name: m[1].trim(), phone: m[2].trim(), email: m[3].trim() } : null;
+}
+
+// Inspection history report: entries "MM/DD/YYYY <Inspector> <NNN Type> <Result> [process]", then a phone
+// line, then the inspector's notes. Returns {date|type|result: {inspector, comments}}.
+export function inspectionNotes(text) {
+  const out = {}; let cur = null;
+  for (const raw of String(text || '').split('\n')) {
+    const l = raw.trim();
+    const m = /^(\d{2}\/\d{2}\/\d{4})\s+(.+?)\s+(\d{3}\s.+?)\s+(Passed|Failed|Partial|Approved|Disapproved|Cancell?ed|Not Required)\b(.*)$/i.exec(l);
+    if (m) { const k = `${iso(m[1])}|${m[3].trim().toLowerCase()}|${m[4].toLowerCase()}`; cur = (out[k] ??= { inspector: m[2].trim(), lines: [] }); if (m[5].trim()) cur.lines.push(m[5].trim()); continue; }
+    if (!cur || !l || /^page \d+ of \d+$/i.test(l) || /^(\(\d{3}\)\s*[\d-]+\s*)?Ext:/i.test(l) || /^Date Completed Inspector/i.test(l)) continue;
+    cur.lines.push(l);
+  }
+  for (const v of Object.values(out)) { v.comments = [...new Set(v.lines)].join('\n'); delete v.lines; }
+  return out;
 }
 
 export function parseDetail(number, raw, account) {
@@ -192,7 +213,11 @@ export function parseDetail(number, raw, account) {
   const comments = raw.reportTexts && Object.entries(raw.reportTexts).find(([k]) => /PLANREVIEWCOMMENTS/i.test(k))?.[1];
   if (comments?.text) {
     const failedRound = Math.max(0, ...reviewItems.filter((r) => REVIEW_FAILED.test(r.status || '')).map((r) => r.round));
-    for (const r of reviewItems.filter((x) => x.round === failedRound && REVIEW_FAILED.test(x.status || ''))) r.comments = commentsFor(comments.text, r.department);
+    for (const r of reviewItems.filter((x) => x.round === failedRound && REVIEW_FAILED.test(x.status || ''))) {
+      r.comments = commentsFor(comments.text, r.department);
+      const who = reviewerOf(r.comments);
+      if (who) { r.assignedTo = who.name; r.assignedToEmail = who.email; }
+    }
   }
   // Inspections: "Scheduled Inspections" rows, e.g. "110 Footing | Failed | 07/20/26 | 07/20/26 | 07/20/26".
   const seen = {};
@@ -200,6 +225,14 @@ export function parseDetail(number, raw, account) {
     const at = p.endAt || p.scheduledAt; const k = `${p.name}|${at || ''}`; seen[k] = (seen[k] || 0) + 1;
     return { number: `${k}|${seen[k]}`, type: p.name, status: p.status, passed: /^(passed|approved)/i.test(p.status || ''), failed: /fail|disapprov|partial/i.test(p.status || ''), reinspection: false, requestedAt: null, scheduledAt: p.scheduledAt, actualAt: /^(passed|approved|failed|disapproved|partial)/i.test(p.status || '') ? at : null, inspector: null, comments: null };
   });
+  const history = raw.reportTexts && Object.entries(raw.reportTexts).find(([k]) => /INSPECTION HISTORY/i.test(k))?.[1];
+  if (history?.text) {
+    const notes = inspectionNotes(history.text);
+    for (const i of inspections) {
+      const n = notes[`${i.actualAt}|${String(i.type).toLowerCase()}|${String(i.status).toLowerCase()}`];
+      if (n) { i.inspector = n.inspector; i.comments = n.comments || null; }
+    }
+  }
   const holds = proc.filter((p) => /holds/i.test(p.group || '')).map((p) => ({ name: p.name, type: 'Completion Hold', reason: null, comments: null, createdAt: p.scheduledAt || p.endAt, active: !/released|cleared|satisfied|complete/i.test(p.status || ''), status: p.status }));
   const total = raw.fees.find((r) => /^total/i.test(r[0] || ''));
   const issuance = proc.find((p) => /final issuance review/i.test(p.name) && p.endAt);
