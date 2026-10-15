@@ -205,7 +205,7 @@ for (const county of existsSync(portalDir) ? readdirSync(portalDir) : []) {
     if (!num) continue; // permit not in the spreadsheet
     const caseSel = `(select id from ops.permit_cases where org_id = (select id from _org) and portal = ${q(portal)} and number = ${q(p.number)})`;
     const lastSub = p.submittals[p.submittals.length - 1];
-    const ops = p.issuedAt ? 'issued' : /fees? due/i.test(p.status) ? 'fees_due' : lastSub && /re-?submit|revisions? required/i.test(lastSub.status) ? 'corrections' : 'in_review';
+    const ops = p.issuedAt ? 'issued' : /fees? due/i.test(p.status) ? 'fees_due' : lastSub && /re-?submit|revisions? required|failed verification/i.test(lastSub.status) ? 'corrections' : 'in_review';
     const ball = p.issuedAt ? null : ops === 'corrections' ? 'sovereign' : ops === 'fees_due' ? 'pkb' : 'county';
     w(`update ops.permit_cases set portal_case_id = ${q(p.caseId)}, portal_status = ${q(p.status)}, ops_status = ${q(ops)}, ball_with = ${q(ball)}, applied_at = coalesce(${qd(p.appliedAt)}, applied_at), issued_at = coalesce(${qd(p.issuedAt)}, issued_at), expires_at = ${qd(p.expiresAt)}, finaled_at = ${qd(p.finalizedAt)}, valuation = ${qn(p.valuation)}, square_feet = ${qn(p.squareFeet)}, fee_total = ${qn(p.feeSummary?.TotalFee)}, fee_unpaid = ${qn(p.feeSummary?.TotalUnpaidFee)}, last_collected_at = ${q(p.collectedAt)} where id = ${caseSel};`);
     for (const s of p.submittals) {

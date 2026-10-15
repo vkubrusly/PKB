@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "nodemailer": "^6.10.1",
+    "pdfjs-dist": "^4.10.38",
     "playwright": "^1.63.0"
   }
 }
