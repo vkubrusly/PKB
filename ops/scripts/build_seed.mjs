@@ -205,7 +205,7 @@ for (const county of existsSync(portalDir) ? readdirSync(portalDir) : []) {
     if (!num) continue; // permit not in the spreadsheet
     const caseSel = `(select id from ops.permit_cases where org_id = (select id from _org) and portal = ${q(portal)} and number = ${q(p.number)})`;
     const lastSub = p.submittals[p.submittals.length - 1];
-    const ops = p.issuedAt ? 'issued' : /fees? due/i.test(p.status) ? 'fees_due' : lastSub && /re-?submit|revisions? required/i.test(lastSub.status) ? 'corrections' : 'in_review';
+    const ops = p.issuedAt ? 'issued' : /fees? due/i.test(p.status) ? 'fees_due' : lastSub && /re-?submit|revisions? required|failed verification/i.test(lastSub.status) ? 'corrections' : 'in_review';
     const ball = p.issuedAt ? null : ops === 'corrections' ? 'sovereign' : ops === 'fees_due' ? 'pkb' : 'county';
     w(`update ops.permit_cases set portal_case_id = ${q(p.caseId)}, portal_status = ${q(p.status)}, ops_status = ${q(ops)}, ball_with = ${q(ball)}, applied_at = coalesce(${qd(p.appliedAt)}, applied_at), issued_at = coalesce(${qd(p.issuedAt)}, issued_at), expires_at = ${qd(p.expiresAt)}, finaled_at = ${qd(p.finalizedAt)}, valuation = ${qn(p.valuation)}, square_feet = ${qn(p.squareFeet)}, fee_total = ${qn(p.feeSummary?.TotalFee)}, fee_unpaid = ${qn(p.feeSummary?.TotalUnpaidFee)}, last_collected_at = ${q(p.collectedAt)} where id = ${caseSel};`);
     for (const s of p.submittals) {
@@ -216,7 +216,7 @@ on conflict (permit_case_id, round) do update set status = excluded.status, comp
       const failed = /re-?submit|denied|fail|disapprov|revisions? required|deficienc/i.test(r.status || '');
       w(`insert into ops.review_items (org_id, permit_case_id, submittal_id, portal_id, round, department, status, failed, reviewer, reviewer_email, due_at, completed_at, comments)
 select (select id from _org), ${caseSel}, (select id from ops.submittals where permit_case_id = ${caseSel} and round = ${r.round ?? 'null'}), ${q(r.itemReviewId)}, ${r.round ?? 'null'}, ${q(r.department)}, ${q(r.status)}, ${failed}, ${q(r.assignedTo)}, ${q(r.assignedToEmail)}, ${qd(r.dueAt)}, ${qd(r.completedAt)}, ${q(r.comments)}
-on conflict (permit_case_id, portal_id) do update set status = excluded.status, failed = excluded.failed, completed_at = excluded.completed_at, comments = excluded.comments;`);
+on conflict (permit_case_id, portal_id) do update set status = excluded.status, failed = excluded.failed, completed_at = excluded.completed_at, comments = coalesce(excluded.comments, ops.review_items.comments), reviewer = coalesce(excluded.reviewer, ops.review_items.reviewer), reviewer_email = coalesce(excluded.reviewer_email, ops.review_items.reviewer_email);`);
       if (r.completedAt) {
         w(`insert into ops.events (org_id, job_id, permit_case_id, kind, source, occurred_at, payload, dedupe_key)
 select c.org_id, c.job_id, c.id, ${q(failed ? 'review_item.failed' : 'review_item.approved')}, 'import', ${q(r.completedAt)}::timestamptz, ${q(JSON.stringify({ department: r.department, round: r.round, status: r.status }))}::jsonb, ${q(`${portal.split(':')[0]}:review_item:${r.itemReviewId}:${r.status}`)}
@@ -230,7 +230,7 @@ from ops.permit_cases c where c.id = ${caseSel} on conflict (org_id, dedupe_key)
       const passed = !failed && (/^(approved|passed|not required)/i.test(st) || (!!i.passed && !st));
       w(`insert into ops.inspections (org_id, permit_case_id, number, type, status, passed, failed, reinspection, requested_at, scheduled_at, actual_at, inspector, comments)
 select (select id from _org), ${caseSel}, ${q(i.number)}, ${q(i.type)}, ${q(i.status)}, ${passed}, ${failed}, ${!!i.reinspection}, ${qd(i.requestedAt)}, ${qd(i.scheduledAt)}, ${qd(i.actualAt)}, ${q(i.inspector)}, ${q(i.comments || null)}
-on conflict (permit_case_id, number) do update set status = excluded.status, passed = excluded.passed, failed = excluded.failed, actual_at = excluded.actual_at, comments = coalesce(excluded.comments, ops.inspections.comments);`);
+on conflict (permit_case_id, number) do update set status = excluded.status, passed = excluded.passed, failed = excluded.failed, actual_at = excluded.actual_at, inspector = coalesce(excluded.inspector, ops.inspections.inspector), comments = coalesce(excluded.comments, ops.inspections.comments);`);
     }
     for (const h of p.holds) {
       const key = `${h.name}|${h.createdAt}|${(h.comments || '').slice(0, 40)}`;

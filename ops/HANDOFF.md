@@ -68,8 +68,8 @@ writes in Portuguese; UI text in English. State as of 2026-10-12.
 ## Open items
 - Orange (FastTrack): collected every round since 2026-10-14 with both contractor logins (GitHub secrets
   `ORANGE_PORTAL_USER/PASS`, `ORANGE_PORTAL_USER_2/PASS_2`; which permit is on which login:
-  `config/fasttrack_accounts.json`). Not read yet: reviewer comments (PDF report) and permits older than 6 months
-  (My Permit Search). Dry run: `ops-probe.yml` → fasttrack-collect. S050 (BLD2026-16696) is a City of Orlando
+  `config/fasttrack_accounts.json`). Reviewer comments and inspector notes come from the portal's PDF reports.
+  Not read yet: permits older than 6 months (My Permit Search). Dry run: `ops-probe.yml` → fasttrack-collect. S050 (BLD2026-16696) is a City of Orlando
   number, not Fast Track. Lake (S051) has no collector.
 - City of Orlando houses (0041, 0060, 0061, 0072) have no permit search.
 - S043: permit number BLD202502570 doesn't exist on the Citrus portal — needs the right number.
