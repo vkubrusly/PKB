@@ -8,7 +8,7 @@ on:
       probe:
         description: 'Probe to run'
         type: choice
-        options: [fasttrack, fasttrack-collect, lake, buildertrend]
+        options: [fasttrack, fasttrack-collect, fasttrack-reports, lake, buildertrend]
         default: fasttrack
       arg:
         description: 'Optional argument (e.g. permit number)'
@@ -40,6 +40,8 @@ jobs:
           if [ "${{ inputs.probe }}" = fasttrack-collect ]; then
             # Fast Track collector dry run: collect, then print the normalized JSON (no database write).
             node collectors/fasttrack/collect.mjs --county orange ${{ inputs.arg }} && cat data/portal/orange/*.json
+          elif [ "${{ inputs.probe }}" = fasttrack-reports ]; then
+            node collectors/fasttrack/probe_reports.mjs ${{ inputs.arg }}
           else
             node collectors/${{ inputs.probe }}/probe.mjs ${{ inputs.arg }}
           fi
