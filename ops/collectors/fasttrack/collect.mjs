@@ -20,6 +20,7 @@
 // =============================================================================
 import { chromium } from 'playwright';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -90,12 +91,17 @@ async function openPermit(page, number) {
   return raw;
 }
 
-const PDF_URL = 'https://fasttrack.ocfl.net/OCServices/PDFViewer.aspx';
+// The report is served only through the portal's own link (a form post to PDFViewer.aspx that answers
+// with a download); a direct GET of PDFViewer.aspx returns an HTML page.
 async function reportText(page, rsn, report) {
-  const res = await page.context().request.get(`${PDF_URL}?txtFolderRSN=${rsn}&txtPDFReport=${encodeURIComponent(report)}`, { timeout: 90000 });
-  const type = res.headers()['content-type'] || '';
-  if (!res.ok() || !/pdf/i.test(type)) return { error: `HTTP ${res.status()} ${type}` };
-  return { text: await pdfText(await res.body()) };
+  const a = page.locator(`a[onclick*="'${rsn}'"][onclick*="'${report}'"]`).first();
+  if (!(await a.count())) return { error: 'report link not found' };
+  const dl = page.waitForEvent('download', { timeout: 60000 });
+  await a.click();
+  const d = await dl;
+  const buf = await readFile(await d.path());
+  if (buf.subarray(0, 5).toString() !== '%PDF-') return { error: `not a PDF (${d.suggestedFilename()})` };
+  return { text: await pdfText(buf) };
 }
 
 // Plain text of a PDF, one line per text row (pdf.js, no native dependencies).
@@ -222,7 +228,7 @@ const results = {};
 for (const [n, user, pass] of accounts) {
   const todo = permits.filter((p) => !results[p]?.found);
   if (!todo.length) break;
-  const ctx = await browser.newContext({ viewport: { width: 1400, height: 1000 }, ignoreHTTPSErrors: true });
+  const ctx = await browser.newContext({ viewport: { width: 1400, height: 1000 }, ignoreHTTPSErrors: true, acceptDownloads: true });
   const page = await ctx.newPage();
   page.setDefaultTimeout(90000);
   try {
