@@ -137,6 +137,20 @@ const agg = {
   cycle: await sql(`select j.county, count(*)::int n, percentile_cont(0.5) within group (order by c.issued_at - c.applied_at)::int median_days from ops.permit_cases c join ops.jobs j on j.id=c.job_id where c.kind='building' and c.issued_at >= c.applied_at group by 1 order by 2 desc`),
   rounds: (await sql(`with s as (select permit_case_id, completed_at, submitted_at, lead(submitted_at) over (partition by permit_case_id order by round) nx from ops.submittals) select coalesce(sum(completed_at - submitted_at) filter (where completed_at is not null),0)::int county_days, coalesce(sum(nx - completed_at) filter (where nx is not null and completed_at is not null),0)::int resubmit_days from s`))[0],
   monthly: await sql(`select to_char(issued_at,'YYYY-MM') m, count(*)::int n from ops.permit_cases where kind='building' and issued_at >= '2025-10-01' group by 1 order by 1`),
+  // COs per month, last 12 months (zeros kept so the chart shows the whole year). CO date = the job's CO
+  // date, else the county closing the issued building permit (finaled). Building finals passed per month
+  // go alongside: the CO follows them.
+  co: await (async () => {
+    const rows = await sql(`select j.job_number, coalesce(j.co_at, (select min(c.finaled_at) from ops.permit_cases c where c.job_id = j.id and c.kind = 'building' and c.issued_at is not null)) at,
+        case when j.co_at is not null then 'co_date' else 'permit_finaled' end src from ops.jobs j`);
+    const finals = await sql(`select to_char(min(coalesce(i.actual_at, i.scheduled_at)), 'YYYY-MM') m, j.job_number from ops.inspections i join ops.permit_cases c on c.id = i.permit_case_id join ops.jobs j on j.id = c.job_id
+        where i.passed and i.type ~* '(final structural|^building final|res building final)' group by j.job_number`);
+    const months = []; const now = new Date();
+    for (let k = 11; k >= 0; k--) { const x = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - k, 1)); months.push(x.toISOString().slice(0, 7)); }
+    const jobs = rows.filter((r) => r.at).map((r) => ({ job_number: r.job_number, at: d(r.at), src: r.src }));
+    const count = (list, key) => months.map((m) => ({ m, n: list.filter((x) => String(x[key] || '').slice(0, 7) === m).length }));
+    return { monthly: count(jobs, 'at'), jobs, finals: count(finals, 'm').filter((x) => x.n), finalJobs: finals.filter((f) => months.includes(f.m)) };
+  })(),
   signed: Object.entries(signed).sort().map(([m, n]) => ({ m, n })),
   requests: await sql(`select to_char(received_at,'YYYY-MM') m, count(*)::int n from ops.inbound_emails where category = 'work_request' group by 1 order by 1`),
   workRequests: (await sql(`select received_at::date d, parsed from ops.inbound_emails where category = 'work_request' order by received_at desc limit 20`)).map((r) => ({ at: d(r.d), ...r.parsed })),
