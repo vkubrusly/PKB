@@ -21,6 +21,9 @@ import { fileURLToPath } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const csvPath = join(ROOT, 'data', 'permits', readdirSync(join(ROOT, 'data', 'permits')).filter(f => f.endsWith('.csv')).sort().pop());
 
+// Job status set by Victor that the (static) spreadsheet does not carry yet; wins over its Status column.
+const STATUS_OVERRIDES = { '0030': 'completed' }; // 2026-10-16: 11025 Ledgement Ln finished
+
 // Spreadsheet rows whose building-permit number differs from the one the portal uses.
 const PERMIT_OVERRIDES = { '49': { number: 'BLDR-2026-0437', portal: 'energov:winterpark' } }; // BOA-2026-0004 is the Board of Adjustment case
 
@@ -140,7 +143,7 @@ for (const r of rows) {
   if (!b && !existingJob(r)) unmatched.push(`#${r['#']} ${r.Address}`);
   const turtle = r.Status === 'Turtle' || /turtle/i.test(r['Current Note']) ? 'relocation_pending' : 'none';
   w(`insert into ops.jobs (org_id, job_number, bt_job_id, bt_job_name, company, address, parcel, county, model, owner_name, contract_value, signed_at, first_draw_at, second_draw_at, status, turtle_state, note)
-select id, ${q(num)}, ${b ? b.jobId : 'null'}, ${q(b?.jobName)}, ${q(r.Company === 'Prime' ? 'Prime' : 'PKB')}, ${q(r.Address)}, ${q(r.Parcel)}, ${q(r.County)}, ${q(r.Model)}, ${q(r.Owner)}, ${qn(r['Contract $'])}, ${qd(r['Signed Date'])}, ${qd(r['1st Draw'])}, ${qd(r['2nd Draw'])}, ${q(STATUS[r.Status] || 'starting')}, ${q(turtle)}, ${q(r['Current Note'])} from _org
+select id, ${q(num)}, ${b ? b.jobId : 'null'}, ${q(b?.jobName)}, ${q(r.Company === 'Prime' ? 'Prime' : 'PKB')}, ${q(r.Address)}, ${q(r.Parcel)}, ${q(r.County)}, ${q(r.Model)}, ${q(r.Owner)}, ${qn(r['Contract $'])}, ${qd(r['Signed Date'])}, ${qd(r['1st Draw'])}, ${qd(r['2nd Draw'])}, ${q(STATUS_OVERRIDES[num] || STATUS[r.Status] || 'starting')}, ${q(turtle)}, ${q(r['Current Note'])} from _org
 on conflict (org_id, job_number) do update set bt_job_id = coalesce(excluded.bt_job_id, ops.jobs.bt_job_id), bt_job_name = coalesce(excluded.bt_job_name, ops.jobs.bt_job_name), company = excluded.company, address = excluded.address, parcel = excluded.parcel, county = excluded.county, model = excluded.model, owner_name = excluded.owner_name, contract_value = excluded.contract_value, signed_at = excluded.signed_at, first_draw_at = excluded.first_draw_at, second_draw_at = excluded.second_draw_at, status = excluded.status, turtle_state = excluded.turtle_state, note = excluded.note;`);
   // CO date ends monitoring for the job (see migration 0016).
   if (toDate(r.CO)) w(`update ops.jobs set co_at = ${qd(r.CO)} where org_id = (select id from _org) and job_number = ${q(num)};`);
