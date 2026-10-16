@@ -395,6 +395,7 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
     <div class="grid g2">
       <div class="panel"><div class="hd"><h3>New jobs per month</h3><span class="note" id="newNote"></span></div><div class="cols" id="c-new"></div><div class="legend"><span><i style="background:var(--blue)"></i>Requests (form e-mails)</span><span><i style="background:var(--gold)"></i>Contracts signed</span></div><div class="list" id="t-requests"></div></div>
       <div class="panel"><div class="hd"><h3>Permits issued per month</h3></div><div class="cols" id="c-month"></div></div>
+      <div class="panel"><div class="hd"><h3>COs per month</h3><span class="note" id="coNote"></span></div><div class="cols" id="c-co"></div><p class="note" style="margin:0" id="coFinals"></p></div>
       <div class="panel"><div class="hd"><h3>Applied → issued, median days</h3><span class="note">by county</span></div><div class="bars" id="c-cycle"></div></div>
       <div class="panel"><div class="hd"><h3>Where review time goes</h3><span class="note">sum over all rounds</span></div><div id="c-split"></div></div>
       <div class="panel"><div class="hd"><h3>Department review failures</h3><span class="note">failed / reviews</span></div><div class="bars" id="c-dept"></div></div>
@@ -642,6 +643,14 @@ function renderCharts(){
     $(el).innerHTML = months.map(m => `<div class="col"><div style="display:flex;gap:2px;align-items:flex-end;width:100%;height:100%;justify-content:center">${series.map(s => { const n = (s.data.find(x=>x.m===m)||{n:0}).n; return `<div class="c ${s.cls||''}" style="height:${(n/mx*100).toFixed(0)}%;${n?'':'min-height:1px'}"><span>${n||''}</span></div>`; }).join('')}</div><span class="x">${new Date(m+'-15').toLocaleDateString('en-US',{month:'short'})}</span></div>`).join('');
   };
   colChart('#c-month', [{data:D.monthly}]);
+  if (D.co) {
+    colChart('#c-co', [{data:D.co.monthly}]);
+    const total = D.co.monthly.reduce((a, x) => a + x.n, 0);
+    $('#coNote').textContent = total ? `${total} in the last 12 months` : 'none recorded yet';
+    const mon = m => new Date(m+'-15').toLocaleDateString('en-US',{month:'short', year:'numeric'});
+    $('#coFinals').textContent = (D.co.finals.length ? `Building final passed (the CO follows): ${D.co.finals.map(f => `${mon(f.m)} · ${f.n}`).join(', ')} (${D.co.finalJobs.map(f=>f.job_number).join(', ')}). ` : '')
+      + 'CO date: the job\'s CO date, else the county closing the issued permit (finaled).';
+  }
   colChart('#c-new', [{data:D.requests, cls:'blue'}, {data:D.signed}]);
   $('#t-requests').innerHTML = (D.workRequests||[]).map(r => `<div class="row" style="cursor:default"><span class="jn">new</span><div><div class="t">${esc(r.client||'—')}${r.company?' · '+esc(r.company):''}</div><div class="m">${esc([r.model, r.city, r.county, r.parcel && 'parcel '+r.parcel].filter(Boolean).join(' · '))}${r.agent?' · agent '+esc(r.agent):''}</div></div><div class="r">${r.price?'$'+esc(r.price):''}<br>${fmt(r.at)}</div></div>`).join('');
   $('#newNote').textContent = D.requests.length ? 'from the bot mailbox' : 'requests start counting with the first form e-mail';

@@ -200,7 +200,7 @@ function normalize(hit, raw) {
     number: hit.CaseNumber, caseId: hit.CaseId, county: county,
     type: hit.CaseType, workclass: hit.CaseWorkclass, status: hit.CaseStatus, projectName: hit.ProjectName,
     address: hit.AddressDisplay, parcel: hit.MainParcel,
-    appliedAt: day(hit.ApplyDate), issuedAt: day(hit.IssueDate), expiresAt: day(hit.ExpireDate), finalizedAt: day(hit.FinalDate),
+    appliedAt: day(hit.ApplyDate), issuedAt: day(hit.IssueDate), expiresAt: day(hit.ExpireDate), finalizedAt: hit.IssueDate ? day(hit.FinalDate) : null, // EnerGov fills FinalDate on some unissued applications (BLDR-26-09-25408)
     squareFeet: detail.SquareFeet ?? null, valuation: detail.Valuation ?? null, description: detail.Description ?? hit.Description ?? null,
     submittals, reviewItems, workflow, inspections, holds, contacts, feeSummary, subRecords,
     collectedAt: new Date().toISOString(),

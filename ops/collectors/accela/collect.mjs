@@ -250,7 +250,8 @@ async function collectOne(number) {
   const docs = wf.find(t => /^(document acceptance|intake sufficiency review|application intake)$/i.test(t.task))?.history.map(h => h.completedAt || h.dueAt).filter(Boolean).sort() || [];
   const mainRel = head.related.find(r => r[0] === number);
   const appliedAt = docs[0] || iso(mainRel?.[mainRel.length - 2] || mainRel?.[3]) || null;
-  const finaled = wf.find(t => /^(closure|finaled|closed)$/i.test(t.task))?.history.find(h => h.completedAt && h.status && !/pending|tbd/i.test(h.status))?.completedAt || null;
+  // Finaled only on a closing status: Closure "More Info Required" (e.g. termite certificate sent back) is not a CO.
+  const finaled = wf.find(t => /^(closure|finaled|closed)$/i.test(t.task))?.history.find(h => h.completedAt && /closed|finaled|complete|c\.?o\.? issued|certificate (of occupancy )?issued/i.test(h.status || '') && !/more info|required|revision|pending|tbd|hold/i.test(h.status || ''))?.completedAt || null;
 
   const upcoming = await allPages('#ctl00_PlaceHolderMain_InspectionList_gvListUpcoming', readInspectionRows);
   const completed = await allPages('#ctl00_PlaceHolderMain_InspectionList_gvListCompleted', readInspectionRows);
