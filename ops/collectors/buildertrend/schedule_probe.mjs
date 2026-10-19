@@ -7,7 +7,8 @@
 //   BT_COOKIES_FILE=… node collectors/buildertrend/schedule_probe.mjs <buildertrend job id>
 import { openBuildertrend } from './session.mjs';
 
-const jobId = process.argv[2] || '44609047'; // 0031 by default
+const jobIds = (process.argv[2] || '44609047').split(/[,\s]+/).filter(Boolean); // 0031 by default
+const jobId = jobIds[0];
 const section = (t, s) => console.log(`\n===== ${t} =====\n${s}`);
 const shape = (o, depth = 0) => {
   if (Array.isArray(o)) return o.length ? [`array(${o.length})`, shape(o[0], depth + 1)] : 'array(0)';
@@ -18,6 +19,8 @@ const shape = (o, depth = 0) => {
 const { browser, page, loggedIn } = await openBuildertrend();
 if (!loggedIn) { console.error('session expired'); await browser.close(); process.exit(1); }
 const calls = [];
+// any request the detail window makes (to learn the update / complete endpoint without calling it)
+page.on('request', (r) => { if (/\/api(x)?\//i.test(r.url()) && /schedul|calendar/i.test(r.url()) && !/CalendarList/i.test(r.url())) console.log(`[request] ${r.method()} ${r.url().slice(0, 200)}`); });
 page.on('response', async (r) => {
   const u = r.url();
   if (!/buildertrend\.net\/(api|apix)\//i.test(u) || !/schedul|calendar|phase|gantt/i.test(u)) return;
@@ -25,31 +28,26 @@ page.on('response', async (r) => {
   calls.push({ method: r.request().method(), url: u.slice(0, 250), status: r.status(), body: (r.request().postData() || '').slice(0, 600), shape: j ? JSON.stringify(shape(j)).slice(0, 2500) : null, json: j });
 });
 
-for (const url of [`https://buildertrend.net/app/Schedules?jobId=${jobId}`, `https://buildertrend.net/app/Schedules/List?jobId=${jobId}`]) {
-  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 120000 }).catch((e) => section('goto error', `${url} ${e.message}`));
-  await page.waitForTimeout(12000);
-  section(`page ${url}`, `${page.url()}\n${(await page.innerText('body').catch(() => '')).replace(/\n{2,}/g, '\n').slice(0, 3000)}`);
-  const tabs = await page.$$eval('a, button, [role="tab"]', (els) => els.map((e) => (e.innerText || '').trim()).filter((t) => t && t.length < 30 && /list|gantt|month|week|day|phase|baseline|calendar|agenda/i.test(t)));
-  section('view controls', JSON.stringify([...new Set(tabs)]));
-}
-
-section('schedule API calls', calls.map((c) => `${c.method} ${c.status} ${c.url}\n  body: ${c.body}\n  shape: ${c.shape}`).join('\n\n'));
-
-// Items: find the biggest array of objects that look like schedule items in the captured JSON.
-const items = [];
-const walk = (o) => { if (Array.isArray(o)) { if (o.length && o[0] && typeof o[0] === 'object' && Object.keys(o[0]).some((k) => /title|name/i.test(k)) && Object.keys(o[0]).some((k) => /start|date|complete|progress/i.test(k))) items.push(o); o.forEach(walk); } else if (o && typeof o === 'object') Object.values(o).forEach(walk); };
-for (const c of calls) if (c.json) walk(c.json);
-const list = items.sort((a, b) => b.length - a.length)[0] || [];
-section(`schedule items (${list.length})`, list.slice(0, 80).map((it) => JSON.stringify(Object.fromEntries(Object.entries(it).filter(([k, v]) => /id$|title|name|phase|start|end|complete|progress|status|duration|isComplete|percent/i.test(k) && (typeof v !== 'object' || v === null)))).slice(0, 400)).join('\n'));
-
-// One item's detail window (read-only): what controls mark it complete.
-const first = page.locator('text=/Footing|Slab|Lintel|Inspection/i').first();
-if (await first.count()) {
-  await first.click().catch(() => {});
-  await page.waitForTimeout(6000);
-  const modal = page.locator('.ant-modal-content, [role="dialog"]').last();
-  section('item detail (text)', (await modal.innerText().catch(() => '(no dialog)')).slice(0, 2500));
-  section('item detail (controls)', JSON.stringify(await modal.locator('input, button, [role="checkbox"], [role="switch"], .ant-checkbox, .ant-switch').evaluateAll((els) => els.map((e) => ({ tag: e.tagName, type: e.getAttribute('type'), id: e.id, name: e.getAttribute('name'), role: e.getAttribute('role'), text: (e.innerText || e.getAttribute('aria-label') || '').trim().slice(0, 40), checked: e.checked ?? e.getAttribute('aria-checked') }))).catch(() => []), null, 1));
-  await page.keyboard.press('Escape').catch(() => {});
-} else section('item detail', 'no item text found to open');
+let listReq = null;
+page.on('request', (r) => { if (!listReq && /\/api\/calendar\/CalendarList/i.test(r.url())) listReq = { url: r.url(), headers: r.headers(), body: r.postData() }; });
+await page.goto(`https://buildertrend.net/app/Schedules/List?jobId=${jobId}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+for (let i = 0; i < 60 && !listReq; i++) await page.waitForTimeout(500);
+await page.waitForTimeout(4000);
+// Every item of each job: replay the page's own CalendarList call month by month (read-only POST that lists).
+if (listReq) {
+  const headers = Object.fromEntries(Object.entries(listReq.headers).filter(([k]) => !/^(content-length|cookie|host|:)/i.test(k)));
+  for (const id of jobIds) {
+    const seen = new Map();
+    for (let k = -8; k <= 6; k++) {
+      const d = new Date(Date.UTC(2026, 9 + k, 1)).toISOString().slice(0, 10) + 'T00:00:00';
+      const body = { ...JSON.parse(listReq.body), startDate: d, selectedJobIds: [Number(id)], perDayLimit: 100 };
+      const res = await page.request.post(listReq.url, { headers: { ...headers, 'content-type': 'application/json' }, data: JSON.stringify(body) });
+      const j = await res.json().catch(() => null);
+      for (const it of j?.data?.calendarItems || []) seen.set(it.id, it);
+      if (k === 0) section(`job ${id} phases`, JSON.stringify(j?.data?.phases || []).slice(0, 1500));
+    }
+    const items = [...seen.values()].sort((a, b) => String(a.startDate).localeCompare(String(b.startDate)));
+    section(`job ${id} all items (${items.length})`, items.map((it) => `${it.id} | ${String(it.title).trim()} | ${String(it.startDate).slice(0, 10)} → ${String(it.endDate).slice(0, 10)} | completed=${it.completed} | phase=${it.phaseId} | type=${it.type}`).join('\n'));
+  }
+} else section('CalendarList', 'request not seen');
 await browser.close();
