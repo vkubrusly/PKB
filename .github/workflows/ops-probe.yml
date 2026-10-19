@@ -8,7 +8,7 @@ on:
       probe:
         description: 'Probe to run'
         type: choice
-        options: [fasttrack, fasttrack-collect, fasttrack-reports, lake, buildertrend]
+        options: [fasttrack, fasttrack-collect, fasttrack-reports, lake, buildertrend, buildertrend-schedule]
         default: fasttrack
       arg:
         description: 'Optional argument (e.g. permit number)'
@@ -26,7 +26,7 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - name: Buildertrend session
-        if: inputs.probe == 'buildertrend'
+        if: startsWith(inputs.probe, 'buildertrend')
         env: { BT_COOKIES_JSON: '${{ secrets.BT_COOKIES_JSON }}' }
         run: printf '%s' "$BT_COOKIES_JSON" > "$GITHUB_WORKSPACE/bt_cookies.json"
       - name: Run probe
@@ -40,6 +40,8 @@ jobs:
           if [ "${{ inputs.probe }}" = fasttrack-collect ]; then
             # Fast Track collector dry run: collect, then print the normalized JSON (no database write).
             node collectors/fasttrack/collect.mjs --county orange ${{ inputs.arg }} && cat data/portal/orange/*.json
+          elif [ "${{ inputs.probe }}" = buildertrend-schedule ]; then
+            node collectors/buildertrend/schedule_probe.mjs ${{ inputs.arg }}
           elif [ "${{ inputs.probe }}" = fasttrack-reports ]; then
             node collectors/fasttrack/probe_reports.mjs ${{ inputs.arg }}
           else
