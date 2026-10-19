@@ -1,0 +1,18 @@
+{
+  "_comment": "Buildertrend Schedule items marked complete from county evidence (approved by Victor, 2026-10-19). An item is marked complete only when the evidence exists: a PASSED county inspection matching 'inspection' (regex on the inspection type), the permit issued ('permit_issued'), or the CO recorded ('co'). Never un-marks, never changes dates, never touches items without a rule here (Windows, Doors, Stucco, Drywall, Shingles, Finishes, Painting, Cabinetry, Appliances, Irrigation, Landscaping, Final Cleaning, the draws). 'item' is a regex on the schedule item title (titles are the PKB template, typos included).",
+  "rules": [
+    { "item": "^permit approval$", "evidence": "permit_issued" },
+    { "item": "^clearing land", "inspection": "foundation pre-?pour|mono ?/ ?slab|^res slab|^footing" },
+    { "item": "^f[ou]+ndation conc?rete pouring", "inspection": "lintel|tie beam" },
+    { "item": "^exterior walls$", "inspection": "lintel|tie beam" },
+    { "item": "^framing$", "inspection": "roof assembly|roof sheathing|roofing deck|structural frame" },
+    { "item": "^trusses$", "inspection": "roof assembly|roof sheathing|roofing deck|structural frame" },
+    { "item": "^roofing$", "inspection": "dry-?in" },
+    { "item": "^electrical \\(infraestrutura\\)$", "inspection": "rough electrical|electrical rough" },
+    { "item": "^plumbing \\(infraestrutura\\)$", "inspection": "second rough plumbing|plumbing rough ii" },
+    { "item": "^hvac$", "inspection": "rough mechanical|mechanical rough" },
+    { "item": "^insulation$", "inspection": "insulation" },
+    { "item": "^septic system$", "inspection": "sewer|septic" },
+    { "item": "^co issued$", "evidence": "co" }
+  ]
+}

@@ -225,6 +225,15 @@ jobs:
           node rules/post_bt_logs.mjs || echo "::warning::post_bt_logs failed"
           node rules/post_bt_leads.mjs || echo "::warning::post_bt_leads failed"
 
+      # Buildertrend Schedule items marked complete from county evidence (config/bt_schedule_map.json:
+      # passed inspection / permit issued / CO). Only marks complete, never un-marks. Writes to
+      # Buildertrend, so only with OPS_BT_POST 'true'.
+      - name: Buildertrend Schedule (items done per county evidence)
+        if: steps.bt.outputs.state == 'ok' && vars.OPS_BT_POST == 'true'
+        continue-on-error: true
+        env: { OPS_BT_POST: 'true' }
+        run: node rules/bt_schedule.mjs || echo "::warning::bt_schedule failed"
+
       - name: Keep the raw snapshots (7 days)
         if: always()
         uses: actions/upload-artifact@v4

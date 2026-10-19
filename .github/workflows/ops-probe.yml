@@ -8,7 +8,7 @@ on:
       probe:
         description: 'Probe to run'
         type: choice
-        options: [fasttrack, fasttrack-collect, fasttrack-reports, lake, buildertrend]
+        options: [fasttrack, fasttrack-collect, fasttrack-reports, lake, buildertrend, buildertrend-schedule, buildertrend-schedule-api, bt-schedule-rule]
         default: fasttrack
       arg:
         description: 'Optional argument (e.g. permit number)'
@@ -26,12 +26,13 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - name: Buildertrend session
-        if: inputs.probe == 'buildertrend'
+        if: startsWith(inputs.probe, 'buildertrend') || startsWith(inputs.probe, 'bt-')
         env: { BT_COOKIES_JSON: '${{ secrets.BT_COOKIES_JSON }}' }
         run: printf '%s' "$BT_COOKIES_JSON" > "$GITHUB_WORKSPACE/bt_cookies.json"
       - name: Run probe
         env:
           BT_COOKIES_FILE: ${{ github.workspace }}/bt_cookies.json
+          SUPABASE_ACCESS_TOKEN: ${{ inputs.probe == 'bt-schedule-rule' && secrets.SUPABASE_ACCESS_TOKEN || '' }}
           ORANGE_PORTAL_USER: ${{ secrets.ORANGE_PORTAL_USER }}
           ORANGE_PORTAL_PASS: ${{ secrets.ORANGE_PORTAL_PASS }}
           ORANGE_PORTAL_USER_2: ${{ secrets.ORANGE_PORTAL_USER_2 }}
@@ -40,6 +41,13 @@ jobs:
           if [ "${{ inputs.probe }}" = fasttrack-collect ]; then
             # Fast Track collector dry run: collect, then print the normalized JSON (no database write).
             node collectors/fasttrack/collect.mjs --county orange ${{ inputs.arg }} && cat data/portal/orange/*.json
+          elif [ "${{ inputs.probe }}" = bt-schedule-rule ]; then
+            # rules/bt_schedule.mjs — dry run unless the argument has --post (e.g. "--job 0031 --limit 1 --post")
+            node rules/bt_schedule.mjs ${{ inputs.arg }}
+          elif [ "${{ inputs.probe }}" = buildertrend-schedule-api ]; then
+            node collectors/buildertrend/schedule_api_probe.mjs ${{ inputs.arg }}
+          elif [ "${{ inputs.probe }}" = buildertrend-schedule ]; then
+            node collectors/buildertrend/schedule_probe.mjs ${{ inputs.arg }}
           elif [ "${{ inputs.probe }}" = fasttrack-reports ]; then
             node collectors/fasttrack/probe_reports.mjs ${{ inputs.arg }}
           else
