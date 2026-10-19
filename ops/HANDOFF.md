@@ -10,7 +10,8 @@ writes in Portuguese; UI text in English. State as of 2026-10-12.
 - Never paste passwords/tokens in chat; secrets live in GitHub secrets / Supabase / the session environment.
 - Don't bypass CAPTCHAs/WAF. Buildertrend cookies stay out of the repo.
 - Never delete jobs in Buildertrend. Write to Buildertrend only where Victor said so (Daily Logs from
-  rules / field / Ask, Lead Opportunities after confirmation, "Permit number" field when empty).
+  rules / field / Ask, Lead Opportunities after confirmation, "Permit number" field when empty, Schedule
+  items marked complete from county evidence — `rules/bt_schedule.mjs`, `config/bt_schedule_map.json`, never un-marks).
 - Ask before any new outward-facing send (e-mail to outside PKB) or data deletion.
 - Merging your own PRs into the default branch is authorized. Default branch: `claude/new-session-zkg2g6`.
 - Reading the bot mailbox (botpkbhomes@gmail.com) and marking messages read is authorized.
