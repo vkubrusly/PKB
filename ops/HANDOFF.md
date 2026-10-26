@@ -54,7 +54,8 @@ writes in Portuguese; UI text in English. State as of 2026-10-12.
   Ask/field summaries fail until the key is replaced with one from an org with credit).
 - **Portal roles** (`ops.portal_users`): admin Victor; partners Thiago, Guilherme, Cristiano, Daniela,
   Gabriel; pm Carlos, Camila; field supervisors.
-- **Permit office:** Sovereign coordinates Marion, Citrus and house 0042; everything else PKB (Guilherme).
+- **Permit office:** Sovereign coordinates Marion, Citrus and house 0042; everything else PKB — Guilherme is the
+  responsible office: correction e-mails and reminders for PKB houses go to him (never straight to the designer, e.g. Michele on 0014).
 
 ## Claude routines (claude.ai, Team account since 2026-10-12)
 - "PKB Ops — pedidos de mudança (diário)" 7:52 AM Florida: works open `ops.change_requests`, opens PRs
