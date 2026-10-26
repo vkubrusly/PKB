@@ -4,9 +4,9 @@ name: PKB Ops — post Buildertrend Daily Logs (hourly)
 # go to Buildertrend within the hour instead of waiting for the next round.
 # Opens the browser only when something is queued. Gated by the repository variable OPS_BT_POST.
 
+# Started by Supabase only when a draft is waiting (pg_cron :25, migration 0034) and right away by
+# the bt_post_now trigger (0032); no GitHub cron (it started a second, empty run every hour).
 on:
-  schedule:
-    - cron: '25 * * * *'
   workflow_dispatch:
 
 concurrency:
@@ -37,6 +37,9 @@ jobs:
         run: |
           if [ -z "$BT_COOKIES_JSON" ]; then echo "::warning::BT_COOKIES_JSON not set"; exit 1; fi
           printf '%s' "$BT_COOKIES_JSON" > "$BT_COOKIES_FILE"
+      - name: Cache Playwright browser
+        uses: actions/cache@v4
+        with: { path: ~/.cache/ms-playwright, key: 'playwright-${{ runner.os }}-${{ hashFiles(''ops/package-lock.json'') }}' }
       - if: steps.q.outputs.n != '0'
         run: npx playwright install --with-deps chromium
       - name: Post
