@@ -8,7 +8,7 @@ on:
       probe:
         description: 'Probe to run'
         type: choice
-        options: [fasttrack, fasttrack-collect, fasttrack-reports, lake, buildertrend, buildertrend-schedule, buildertrend-schedule-api, bt-schedule-rule]
+        options: [fasttrack, fasttrack-collect, fasttrack-reports, lake, buildertrend, buildertrend-schedule, buildertrend-schedule-api, bt-schedule-rule, projectdox]
         default: fasttrack
       arg:
         description: 'Optional argument (e.g. permit number)'
@@ -37,6 +37,10 @@ jobs:
           ORANGE_PORTAL_PASS: ${{ secrets.ORANGE_PORTAL_PASS }}
           ORANGE_PORTAL_USER_2: ${{ secrets.ORANGE_PORTAL_USER_2 }}
           ORANGE_PORTAL_PASS_2: ${{ secrets.ORANGE_PORTAL_PASS_2 }}
+          ORLANDO_PROJECTDOX_USER: ${{ secrets.ORLANDO_PROJECTDOX_USER }}
+          ORLANDO_PROJECTDOX_PASS: ${{ secrets.ORLANDO_PROJECTDOX_PASS }}
+          ORLANDO_PROJECTDOX_USER_2: ${{ secrets.ORLANDO_PROJECTDOX_USER_2 }}
+          ORLANDO_PROJECTDOX_PASS_2: ${{ secrets.ORLANDO_PROJECTDOX_PASS_2 }}
         run: |
           if [ "${{ inputs.probe }}" = fasttrack-collect ]; then
             # Fast Track collector dry run: collect, then print the normalized JSON (no database write).
