@@ -35,10 +35,10 @@ writes in Portuguese; UI text in English. State as of 2026-10-12.
 
 ## How it runs
 - **Clock:** Supabase pg_cron (migration 0031) dispatches GitHub workflows — `ops-daily` rounds at
-  4 AM, 9, 11 AM, 1, 3, 5 PM Florida (13 min early), `ops-mail` hourly :07, `ops-bt-post` hourly :25.
+  4 AM, 9, 11 AM, 1, 3, 5 PM Florida (13 min early), `ops-mail` hourly :07, `ops-bt-post` at :25 only when a Daily Log / Lead draft is waiting (0034; no GitHub cron).
   Token: Vault secret `github_actions_token`. GitHub's own cron lines remain as fallback; the
   ops-daily gate skips them when a dispatched round started in the last 70 min. `ops-watchdog`
-  (every 15 min) restarts a missed round and e-mails Victor if the Supabase token is refused.
+  (every 30 min) restarts a missed round and e-mails Victor if the Supabase token is refused.
 - **Round (`ops-daily`, ~30 min; ~50 with Buildertrend photos at 4 AM / 1 PM):** Buildertrend jobs +
   custom fields → (photos) → Daily Logs text → permit discovery (`scripts/discover_permits.mjs`, all
   counties with a portal; applicant must be Prime Kubrusly Basso / Cristiano Pedrosa) → county portals
