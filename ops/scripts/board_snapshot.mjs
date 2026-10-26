@@ -118,6 +118,7 @@ for (const [xid, x] of J) {
     ready_for_finals_est: p?.supported ? p.readyForFinalsEstimate : null,
   });
   x.daily_logs = DL.filter((l) => l.job_number === x.job_number).slice(0, 15).map((l) => ({ date: d(l.log_date), at: l.at, by: l.author, title: l.title, notes: l.notes }));
+  x.permit_office = jobs.find((o) => o.job_number === x.job_number)?.permit_office || null;
   files[x.job_number] = x;
 }
 rows.sort((a, b) => a.job_number.localeCompare(b.job_number));
