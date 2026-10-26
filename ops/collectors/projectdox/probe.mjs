@@ -24,7 +24,7 @@ for (const [n, user, pass] of accounts) {
   const api = [];
   page.on('response', async (r) => {
     const ct = r.headers()['content-type'] || '';
-    if (/json/i.test(ct) && /avolvecloud/i.test(r.url())) api.push(`${r.request().method()} ${r.status()} ${r.url().slice(0, 200)} :: ${(await r.text().catch(() => '')).slice(0, 400)}`);
+    if (/json/i.test(ct) && /avolvecloud/i.test(r.url())) api.push(`${r.request().method()} ${r.status()} ${r.url().slice(0, 200)} :: ${(await r.text().catch(() => '')).slice(0, 1200)}`);
   });
   const text = async () => clean((await page.innerText('body').catch(() => '')).replace(/[ \t]+/g, ' ').replace(/\n{2,}/g, '\n'));
   try {
@@ -37,16 +37,25 @@ for (const [n, user, pass] of accounts) {
     section(`${tag}: after login`, `${page.url()}\n${(await text()).slice(0, 4000)}`);
     const links = await page.$$eval('a', (els) => els.map((e) => `${(e.innerText || '').trim().slice(0, 60)} -> ${(e.getAttribute('href') || '').slice(0, 160)}`).filter((s) => !/^ ->/.test(s)));
     section(`${tag}: links`, links.slice(0, 80).join('\n'));
-    // Open the project that matches the target (row / link text).
-    const hit = page.locator(`text=/${target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/i`).first();
-    if (await hit.count()) {
-      await Promise.all([page.waitForLoadState('domcontentloaded', { timeout: 60000 }).catch(() => {}), hit.click().catch(() => {})]);
+    // Open the project whose row matches the target (case number or address) through its own link.
+    const href = await page.$$eval('a[href*="Project/Index"]', (els, t) => { const re = new RegExp(t, 'i'); const a = els.find((e) => re.test(e.closest('tr')?.innerText || e.innerText || '')); return a ? a.href : null; }, target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    if (href) {
+      await page.goto(href, { waitUntil: 'domcontentloaded', timeout: 90000 });
       await page.waitForTimeout(10000);
       section(`${tag}: project "${target}"`, `${page.url()}\n${(await text()).slice(0, 8000)}`);
-      const tabs = await page.$$eval('a, button, [role="tab"]', (els) => els.map((e) => (e.innerText || '').trim()).filter((t) => t && t.length < 50));
-      section(`${tag}: project tabs/buttons`, JSON.stringify([...new Set(tabs)].slice(0, 120)));
-    } else section(`${tag}: project "${target}"`, 'not found on the landing page');
-    section(`${tag}: JSON API calls`, api.slice(0, 60).join('\n'));
+      const tabs = await page.$$eval('a, button, [role="tab"], li', (els) => els.map((e) => (e.innerText || '').trim()).filter((t) => t && t.length < 40));
+      section(`${tag}: project tabs/buttons`, JSON.stringify([...new Set(tabs)].slice(0, 150)));
+      // Read-only views: open each tab that shows status, tasks, reports, comments, history, files.
+      const names = [...new Set(tabs)].filter((t) => /^(project info|info|tasks?|reports?|workflow|history|comments?|changemarks?|checklists?|files|documents|status|review|corrections?|conditions)$/i.test(t));
+      for (const nm of names) {
+        const el = page.locator('a, [role="tab"], li', { hasText: new RegExp(`^\\s*${nm}\\s*$`, 'i') }).first();
+        if (!(await el.count())) continue;
+        await el.click({ timeout: 10000 }).catch(() => {});
+        await page.waitForTimeout(6000);
+        section(`${tag}: tab "${nm}"`, `${page.url()}\n${(await text()).slice(0, 6000)}`);
+      }
+    } else section(`${tag}: project "${target}"`, 'no project link matches');
+    section(`${tag}: JSON API calls`, api.slice(0, 80).join('\n'));
   } catch (e) { section(`${tag}: error`, `${e.message} · ${page.url()}`); }
   await ctx.close();
 }
