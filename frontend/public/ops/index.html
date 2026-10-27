@@ -738,7 +738,7 @@ function mailText(f, p){
   // Who coordinates the permit (ops.jobs.permit_office): Sovereign, or PKB with Michele as designer of the custom homes.
   const custom = f.permit_office ? f.permit_office !== 'sovereign' : /custom/i.test(f.model||'');
   const to = custom ? 'michele@fredianiputini.com' : 'sovereignpermit@gmail.com';
-  const cc = custom ? 'guilherme@pkbhomes.com' : 'fernanda.quiterio@sconsult.us, leonardo@sovereigninc.us, guilherme@pkbhomes.com';
+  const cc = custom ? 'guilherme@pkbhomes.com, stefano@pkbhomes.com' : 'fernanda.quiterio@sconsult.us, leonardo@sovereigninc.us, guilherme@pkbhomes.com, stefano@pkbhomes.com';
   const subj = `Correções – ${street(f.address)} – ${p.number} (rodada ${r.round})`;
   const body = `Olá, ${custom ? 'Michele' : 'Sarah e Fernanda'},
 

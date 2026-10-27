@@ -12,6 +12,7 @@ writes in Portuguese; UI text in English. State as of 2026-10-12.
 - Never delete jobs in Buildertrend. Write to Buildertrend only where Victor said so (Daily Logs from
   rules / field / Ask, Lead Opportunities after confirmation, "Permit number" field when empty, Schedule
   items marked complete from county evidence — `rules/bt_schedule.mjs`, `config/bt_schedule_map.json`, never un-marks).
+- Every e-mail that has Guilherme (to or Cc) also copies stefano@pkbhomes.com (`COPY_WITH` in `notify/email.mjs`; Victor, 2026-10-27).
 - Ask before any new outward-facing send (e-mail to outside PKB) or data deletion.
 - Merging your own PRs into the default branch is authorized. Default branch: `claude/new-session-zkg2g6`.
 - Reading the bot mailbox (botpkbhomes@gmail.com) and marking messages read is authorized.
