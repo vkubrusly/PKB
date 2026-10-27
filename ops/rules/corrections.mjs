@@ -118,6 +118,6 @@ PKB Homes — ${contacts.internal.permits_owner.name}
     on conflict (org_id, dedupe_key) do nothing returning id`);
   await sql(`update ops.permit_cases set ball_with = ${q(t.key === 'sovereign' ? 'sovereign' : 'pkb')} where id = ${q(c.id)};
     insert into ops.outbound_messages (org_id, job_id, channel, rule, to_addresses, cc_addresses, subject, body, status, external_id, in_reply_to_event, sent_at)
-    values (${q(orgId)}, ${q(c.job_id)}, 'email', ${q(kind)}, ${qa(t.to)}, ${qa([...cc, t.external ? process.env.OPS_ALWAYS_CC : null].filter(Boolean))}, ${q(subject)}, ${q(text)}, ${q(status)}, ${q(res.id || null)}, ${ev[0]?.id ?? 'null'}, now())`);
+    values (${q(orgId)}, ${q(c.job_id)}, 'email', ${q(kind)}, ${qa(t.to)}, ${qa(res.cc || [...cc, t.external ? process.env.OPS_ALWAYS_CC : null].filter(Boolean))}, ${q(subject)}, ${q(text)}, ${q(status)}, ${q(res.id || null)}, ${ev[0]?.id ?? 'null'}, now())`);
 }
 console.log(`corrections: ${cases.length} permit(s) waiting for resubmission${DRY ? ' · DRY RUN' : ''}`);

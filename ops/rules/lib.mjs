@@ -73,7 +73,7 @@ export async function mail({ rule, jobId = null, to, cc = [], subject, text, eve
   console.log(`${status.toUpperCase()} ${rule} → ${to.join(', ')}${cc.length ? ` cc ${cc.join(', ')}` : ''} · ${subject}`);
   if (DRY) { console.log(text + '\n'); return status; }
   await sql(`insert into ops.outbound_messages (org_id, job_id, channel, rule, to_addresses, cc_addresses, subject, body, status, error, external_id, in_reply_to_event, sent_at)
-    values (${q(await orgId())}, ${q(jobId)}, 'email', ${q(rule)}, ${qa(to)}, ${qa(cc)}, ${q(subject)}, ${q(text)}, ${q(status)}, ${q(res.error || null)}, ${q(res.id || null)}, ${eventId ?? 'null'}, ${status === 'sent' ? 'now()' : 'null'})`);
+    values (${q(await orgId())}, ${q(jobId)}, 'email', ${q(rule)}, ${qa(to)}, ${qa(res.cc || cc)}, ${q(subject)}, ${q(text)}, ${q(status)}, ${q(res.error || null)}, ${q(res.id || null)}, ${eventId ?? 'null'}, ${status === 'sent' ? 'now()' : 'null'})`);
   return status;
 }
 
