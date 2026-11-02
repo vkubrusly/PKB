@@ -7,7 +7,15 @@ import { openBuildertrend } from './session.mjs';
 
 const jobId = Number(process.argv[2] || 43923046);
 const { browser, page, loggedIn } = await openBuildertrend();
-if (!loggedIn) { console.error('session expired'); await browser.close(); process.exit(1); }
+if (!loggedIn) { console.error('session expired'); // The request the "New claim" form sends on Save, from the page's own code (field names of the POST body).
+const scripts = await page.evaluate(() => performance.getEntriesByType('resource').map((r) => r.name).filter((u) => /\.js(\?|$)/.test(u)));
+const seen = new Set();
+for (const u of scripts) {
+  const js = await (await page.request.get(u)).text().catch(() => '');
+  if (!/problemDescription/.test(js)) continue;
+  for (const m of js.matchAll(/.{0,700}problemDescription.{0,700}/g)) { const t = m[0].replace(/\s+/g, ' '); if (!seen.has(t)) { seen.add(t); console.log(`\n[${u.split('/').pop()}] ${t}`); } if (seen.size > 25) break; }
+}
+await browser.close(); process.exit(1); }
 let hdr = null;
 page.on('request', (r) => { if (!hdr && /buildertrend\.net\/api\//.test(r.url())) hdr = r.headers(); });
 await page.goto('https://buildertrend.net/app/Warranties', { waitUntil: 'domcontentloaded', timeout: 120000 });
