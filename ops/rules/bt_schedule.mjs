@@ -11,6 +11,7 @@
 // =============================================================================
 import { readFileSync } from 'node:fs';
 import { sql } from '../scripts/sb.mjs';
+import { usDate } from './lib.mjs';
 import { openBuildertrend } from '../collectors/buildertrend/session.mjs';
 
 const arg = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
@@ -32,10 +33,10 @@ for (const r of rows) {
 const jobIds = Object.keys(ev).map(Number);
 if (!jobIds.length) { console.log('no jobs with a Buildertrend id and a building permit'); process.exit(0); }
 const proof = (e, rule) => {
-  if (rule.evidence === 'permit_issued') return e.issued ? `permit issued ${String(e.issued).slice(0, 10)}` : null;
-  if (rule.evidence === 'co') return e.co ? `CO ${String(e.co).slice(0, 10)}` : null;
+  if (rule.evidence === 'permit_issued') return e.issued ? `permit issued ${usDate(e.issued)}` : null;
+  if (rule.evidence === 'co') return e.co ? `CO ${usDate(e.co)}` : null;
   const p = e.passed.filter((x) => rule.inspRe.test(x.type)).sort((a, b) => String(a.at).localeCompare(String(b.at)))[0];
-  return p ? `${p.type.replace(/ - 1 ?& ?2.*$/, '')} passed ${String(p.at || '').slice(0, 10)}` : null;
+  return p ? `${p.type.replace(/ - 1 ?& ?2.*$/, '')} passed ${usDate(p.at)}` : null;
 };
 
 const { browser, page, loggedIn } = await openBuildertrend();

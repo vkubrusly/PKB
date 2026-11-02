@@ -28,7 +28,7 @@ const ORG = process.env.OPS_ORG_NAME || 'PKB Homes';
 const q = (v) => (v == null ? 'null' : `'${String(v).replace(/'/g, "''")}'`);
 const qa = (a) => (a.length ? `array[${a.map(q).join(',')}]::text[]` : `'{}'::text[]`);
 const norm = (s) => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
-const brDate = (d) => (d ? new Date(String(d).slice(0, 10) + 'T12:00:00Z').toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '—');
+const usDate = (d) => (d ? new Date(String(d).slice(0, 10) + 'T12:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC', month: '2-digit', day: '2-digit', year: 'numeric' }) : '—');
 
 const contacts = JSON.parse(readFileSync(new URL('../config/contacts.json', import.meta.url), 'utf8'));
 const people = [...(contacts.internal.supervisors || []), ...(contacts.internal.project_managers || []), contacts.internal.contractor_of_record].filter(Boolean);
@@ -87,8 +87,8 @@ for (const j of jobs) {
     ? 'não tem fotos nem Daily Logs no Buildertrend.'
     : `está sem fotos novas e sem Daily Log há ${days} dias.`}
 
-Última foto: ${j.photos_last_at ? `${brDate(j.photos_last_at)}${j.photos_last_by ? ` · ${j.photos_last_by}` : ''}` : 'nenhuma'}
-Último Daily Log: ${j.log_last_at ? brDate(j.log_last_at) : 'nenhum registrado'}
+Última foto: ${j.photos_last_at ? `${usDate(j.photos_last_at)}${j.photos_last_by ? ` · ${j.photos_last_by}` : ''}` : 'nenhuma'}
+Último Daily Log: ${j.log_last_at ? usDate(j.log_last_at) : 'nenhum registrado'}
 
 Se a obra está andando, registre o andamento (fotos no Daily Log). Se está parada por algum motivo, avise para marcarmos a pausa.
 ${missing.length ? `\n(Sem e-mail cadastrado para: ${missing.join(', ')}.)\n` : ''}

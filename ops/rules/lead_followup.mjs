@@ -29,7 +29,7 @@ const ORG = process.env.OPS_ORG_NAME || 'PKB Homes';
 const q = (v) => (v == null ? 'null' : `'${String(v).replace(/'/g, "''")}'`);
 const digits = (s) => String(s || '').replace(/\D/g, '');
 const street = (s) => String(s || '').split(',')[0].toLowerCase().replace(/\b(street|st|road|rd|lane|ln|place|pl|court|ct|circle|cir|terrace|ter|avenue|ave|drive|dr|loop|way)\b\.?/g, '').replace(/(\d+)(st|nd|rd|th)\b/g, '$1').replace(/[^a-z0-9]/g, '');
-const brDate = (d) => new Date(d).toLocaleString('pt-BR', { timeZone: 'America/New_York', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+const usDate = (d) => new Date(d).toLocaleString('en-US', { timeZone: 'America/New_York', month: '2-digit', day: '2-digit', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 
 const contacts = JSON.parse(readFileSync(new URL('../config/contacts.json', import.meta.url), 'utf8'));
 const owner = contacts.internal.permits_owner; // Guilherme
@@ -55,7 +55,7 @@ for (const e of fresh) {
 const BT_USERS = ['Gabriel Basso', 'Guilherme Pinto', 'Cristiano Pedrosa', 'Daniela Pedrosa', 'Camila Haase', 'Carlos Basilio'];
 const btUser = (name) => { const w = String(name || '').toLowerCase().split(/\s+/).filter(Boolean); return BT_USERS.find((u) => { const [f, l] = u.toLowerCase().split(' '); return w[0] === f && w.includes(l); }) || null; };
 const leadNotes = (l) => [
-  `Pedido pelo site em ${brDate(l.received_at)} (ref. ${l.ref}).`,
+  `Pedido pelo site em ${usDate(l.received_at)} (ref. ${l.ref}).`,
   `Cliente: ${l.client || '—'}${l.company ? ` — ${l.company}` : ''}`,
   `Telefone: ${l.phone || '—'} · E-mail: ${l.email || '—'}`,
   `Lote: ${[l.address, l.city].filter(Boolean).join(', ') || '—'}${l.parcel ? ` · Parcel ${l.parcel}` : ''}${l.county ? ` · ${l.county}` : ''}`,
@@ -122,7 +122,7 @@ for (const l of leads) {
   const subject = `${n > 1 ? `(${n}ª cobrança) ` : ''}Contrato emitido? ${l.client || 'novo cliente'} — ${l.model || ''} [Lead ${l.ref}]`.replace(/\s+/g, ' ');
   const text = `Guilherme,
 
-Chegou uma solicitação de obra pelo site em ${brDate(l.received_at)} e ainda não vejo a obra na planilha nem no Buildertrend.
+Chegou uma solicitação de obra pelo site em ${usDate(l.received_at)} e ainda não vejo a obra na planilha nem no Buildertrend.
 
 Cliente: ${l.client || '—'}${l.company ? ` (${l.company})` : ''}
 Telefone: ${l.phone || '—'} · E-mail: ${l.email || '—'}
