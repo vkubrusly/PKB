@@ -132,15 +132,24 @@ if (process.env.SUPABASE_ACCESS_TOKEN) {
 const existingJob = (r) => (r.Parcel && existingByParcel[normParcel(r.Parcel)]) || existingByAddr[normAddr(r.Address)] || null;
 
 // ---- Jobs from the spreadsheet ----
+const ALIAS = Object.fromEntries(Object.entries(JSON.parse(readFileSync(join(ROOT, 'config', 'job_aliases.json'), 'utf8'))).filter(([k]) => !k.startsWith('_')));
+const ALIAS_TARGETS = new Set(Object.values(ALIAS));
 const rows = parseCsv(readFileSync(csvPath, 'utf8'));
 const permitToJob = {};
 const unmatched = [];
 for (const r of rows) {
   // job_number = the Buildertrend number when matched, else "S" + spreadsheet row.
   // Parcel ID first (Buildertrend custom field "Parcial ID"), address as fallback.
-  const b = (r.Parcel && matchBtByParcel(r.Parcel)) || matchBt(r.Address);
-  const num = b ? String(b.jobName).slice(0, 4) : existingJob(r) || 'S' + r['#'].padStart(3, '0');
-  if (!b && !existingJob(r)) unmatched.push(`#${r['#']} ${r.Address}`);
+  // config/job_aliases.json (Victor): spreadsheet row S001 is Buildertrend job 0001. That job then belongs to
+  // that row only — another row that matches it by street (row 88, "SW 41st Cir" with no house number) keeps
+  // its own S number.
+  const sid = 'S' + r['#'].padStart(3, '0');
+  let b = ALIAS[sid] ? bt[ALIAS[sid]] || { jobName: ALIAS[sid], jobId: null } : (r.Parcel && matchBtByParcel(r.Parcel)) || matchBt(r.Address);
+  let ex = existingJob(r);
+  if (!ALIAS[sid] && b && ALIAS_TARGETS.has(String(b.jobName).slice(0, 4))) b = null;
+  if (!ALIAS[sid] && ALIAS_TARGETS.has(ex)) ex = null;
+  const num = b ? String(b.jobName).slice(0, 4) : ex || sid;
+  if (!b && !ex) unmatched.push(`#${r['#']} ${r.Address}`);
   const turtle = r.Status === 'Turtle' || /turtle/i.test(r['Current Note']) ? 'relocation_pending' : 'none';
   w(`insert into ops.jobs (org_id, job_number, bt_job_id, bt_job_name, company, address, parcel, county, model, owner_name, contract_value, signed_at, first_draw_at, second_draw_at, status, turtle_state, note)
 select id, ${q(num)}, ${b ? b.jobId : 'null'}, ${q(b?.jobName)}, ${q(r.Company === 'Prime' ? 'Prime' : 'PKB')}, ${q(r.Address)}, ${q(r.Parcel)}, ${q(r.County)}, ${q(r.Model)}, ${q(r.Owner)}, ${qn(r['Contract $'])}, ${qd(r['Signed Date'])}, ${qd(r['1st Draw'])}, ${qd(r['2nd Draw'])}, ${q(STATUS_OVERRIDES[num] || STATUS[r.Status] || 'starting')}, ${q(turtle)}, ${q(r['Current Note'])} from _org
