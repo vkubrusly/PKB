@@ -128,9 +128,26 @@ def work_request(body):
     }.items()}
 
 
+def warranty_request(body):
+    # Website warranty form (Victor, 2026-11-02): "Nome… Telefone… Endereço… Data da Compra…", then
+    # "ITEM n: CATEGORY — LOCATION" followed by the homeowner's description of each item.
+    t = re.sub(r'[ \t]+', ' ', body or '')
+    flat = re.sub(r'\s+', ' ', t)
+    grab = lambda a, b: ((re.search(a + r'\s*(.*?)\s*(?=' + b + r'|$)', flat) or [None, None])[1] or '').strip() or None
+    items = []
+    for m in re.finditer(r'ITEM\s*(\d+)\s*:\s*([^\n—-]+?)\s*[—-]\s*([^\n]+)\n(.*?)(?=\n\s*ITEM\s*\d+\s*:|\n-{10,}|\Z)', t, re.S):
+        items.append({'item': int(m.group(1)), 'category': m.group(2).strip(), 'location': m.group(3).strip(),
+                      'description': re.sub(r'\n{3,}', '\n\n', m.group(4)).strip()})
+    return {'homeowner': grab('Nome', 'Telefone'), 'phone': grab('Telefone', 'Endereço|E-mail'),
+            'email': grab('E-mail', 'Endereço|Data da Compra|ITEM'), 'address': grab('Endereço', 'Data da Compra|ITEM'),
+            'purchase_date': grab('Data da Compra', 'ITEM'), 'items': items}
+
+
 def classify(from_addr, subject, body):
     f, s = (from_addr or '').lower(), subject or ''
     parsed = {}
+    if 'notify.pkbhomes.com' in f and re.search(r'garantia|warranty', s, re.I):
+        return 'warranty_request', warranty_request(body)
     if 'notify.pkbhomes.com' in f or re.search(r'new work request', s, re.I):
         return 'work_request', work_request(body)
     m = AMOUNT_RE.search(s)
