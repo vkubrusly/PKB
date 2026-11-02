@@ -22,7 +22,10 @@ await page.goto('https://buildertrend.net/app/Warranties', { waitUntil: 'domcont
 for (let i = 0; i < 60 && !hdr; i++) await page.waitForTimeout(500);
 const headers = { ...Object.fromEntries(Object.entries(hdr || {}).filter(([k]) => !/^(content-length|cookie|host|:)/i.test(k))), 'content-type': 'application/json' };
 const show = async (label, res) => console.log(`\n===== ${label}: HTTP ${res.status()} =====\n${(await res.text()).slice(0, 12000)}`);
-await show(`DefaultInfo job ${jobId}`, await page.request.get(`https://buildertrend.net/api/Warranty/DefaultInfo?jobId=${jobId}`, { headers }));
+const defRes = await page.request.get(`https://buildertrend.net/api/Warranty/DefaultInfo?jobId=${jobId}`, { headers });
+const def = (await defRes.json().catch(() => null))?.data || {};
+console.log(`\n===== DefaultInfo job ${jobId}: HTTP ${defRes.status()} · fields: ${Object.keys(def).join(', ')} =====`);
+for (const [k, v] of Object.entries(def)) if (/coordinat|owner|assign|user|service/i.test(k)) console.log(`\n--- ${k} ---\n${JSON.stringify(v).slice(0, 4000)}`);
 for (const body of [
   { gridRequest: { hasFooter: true }, pagingData: { pageNumber: 1, pageSize: 50 }, filters: '{}', jobIds: [jobId] },
   { gridRequest: {}, pagingData: { pageNumber: 1, pageSize: 50, sortColumn: null, sortDirection: 0 }, filters: {}, jobIds: [jobId] },
