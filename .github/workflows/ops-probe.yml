@@ -8,7 +8,7 @@ on:
       probe:
         description: 'Probe to run'
         type: choice
-        options: [fasttrack, fasttrack-collect, fasttrack-reports, lake, buildertrend, buildertrend-schedule, buildertrend-schedule-api, bt-schedule-rule, projectdox]
+        options: [fasttrack, fasttrack-collect, fasttrack-reports, lake, buildertrend, buildertrend-schedule, buildertrend-schedule-api, bt-schedule-rule, buildertrend-warranty, buildertrend-warranty-api, bt-warranty-rule, projectdox]
         default: fasttrack
       arg:
         description: 'Optional argument (e.g. permit number)'
@@ -35,7 +35,7 @@ jobs:
       - name: Run probe
         env:
           BT_COOKIES_FILE: ${{ github.workspace }}/bt_cookies.json
-          SUPABASE_ACCESS_TOKEN: ${{ inputs.probe == 'bt-schedule-rule' && secrets.SUPABASE_ACCESS_TOKEN || '' }}
+          SUPABASE_ACCESS_TOKEN: ${{ (inputs.probe == 'bt-schedule-rule' || inputs.probe == 'bt-warranty-rule') && secrets.SUPABASE_ACCESS_TOKEN || '' }}
           ORANGE_PORTAL_USER: ${{ secrets.ORANGE_PORTAL_USER }}
           ORANGE_PORTAL_PASS: ${{ secrets.ORANGE_PORTAL_PASS }}
           ORANGE_PORTAL_USER_2: ${{ secrets.ORANGE_PORTAL_USER_2 }}
@@ -53,6 +53,13 @@ jobs:
             node rules/bt_schedule.mjs ${{ inputs.arg }}
           elif [ "${{ inputs.probe }}" = buildertrend-schedule-api ]; then
             node collectors/buildertrend/schedule_api_probe.mjs ${{ inputs.arg }}
+          elif [ "${{ inputs.probe }}" = bt-warranty-rule ]; then
+            # rules/bt_warranty.mjs — dry run unless the argument has --post
+            node rules/bt_warranty.mjs ${{ inputs.arg }}
+          elif [ "${{ inputs.probe }}" = buildertrend-warranty-api ]; then
+            node collectors/buildertrend/warranty_api_probe.mjs ${{ inputs.arg }}
+          elif [ "${{ inputs.probe }}" = buildertrend-warranty ]; then
+            node collectors/buildertrend/warranty_probe.mjs ${{ inputs.arg }}
           elif [ "${{ inputs.probe }}" = buildertrend-schedule ]; then
             node collectors/buildertrend/schedule_probe.mjs ${{ inputs.arg }}
           elif [ "${{ inputs.probe }}" = fasttrack-reports ]; then

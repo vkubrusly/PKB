@@ -1,7 +1,7 @@
 name: PKB Ops — post Buildertrend Daily Logs (hourly)
 
-# Field reports confirmed in budget.pkbhomes.com/ops/field/ (and any other queued Daily Log)
-# go to Buildertrend within the hour instead of waiting for the next round.
+# Field reports confirmed in budget.pkbhomes.com/ops/field/ (and any other queued Daily Log), confirmed
+# leads and new warranty request items go to Buildertrend within the hour instead of waiting for the next round.
 # Opens the browser only when something is queued. Gated by the repository variable OPS_BT_POST.
 
 # Started by Supabase only when a draft is waiting (pg_cron :25, migration 0034) and right away by
@@ -30,7 +30,7 @@ jobs:
         env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' }
       - name: Anything queued?
         id: q
-        run: echo "n=$(node -e "import('./scripts/sb.mjs').then(async ({sql}) => console.log((await sql(\"select count(*)::int n from ops.outbound_messages where channel in ('bt_daily_log', 'bt_lead') and status = 'draft'\"))[0].n))")" >> "$GITHUB_OUTPUT"
+        run: echo "n=$(node -e "import('./scripts/sb.mjs').then(async ({sql}) => console.log((await sql(\"select (select count(*)::int from ops.outbound_messages where channel in ('bt_daily_log', 'bt_lead') and status = 'draft') + (select count(*)::int from ops.warranty_claims w join ops.jobs j on j.id = w.job_id where w.bt_claim_id is null and w.bt_attempts < 5 and j.bt_job_id is not null) n\"))[0].n))")" >> "$GITHUB_OUTPUT"
       - name: Buildertrend session
         if: steps.q.outputs.n != '0'
         env: { BT_COOKIES_JSON: '${{ secrets.BT_COOKIES_JSON }}' }
@@ -48,3 +48,4 @@ jobs:
         run: |
           node rules/post_bt_logs.mjs || echo "::warning::post_bt_logs failed"
           node rules/post_bt_leads.mjs || echo "::warning::post_bt_leads failed"
+          node rules/bt_warranty.mjs || echo "::warning::bt_warranty failed"

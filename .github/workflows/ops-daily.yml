@@ -237,6 +237,14 @@ jobs:
         env: { OPS_BT_POST: 'true' }
         run: node rules/bt_schedule.mjs || echo "::warning::bt_schedule failed"
 
+      # Warranty claims (rules/bt_warranty.mjs): create the Buildertrend claim of each new website request
+      # item and follow every claim's status until it is resolved. Only with OPS_BT_POST 'true'.
+      - name: Buildertrend Warranty (create claims, follow status)
+        if: steps.bt.outputs.state == 'ok' && vars.OPS_BT_POST == 'true'
+        continue-on-error: true
+        env: { OPS_BT_POST: 'true' }
+        run: node rules/bt_warranty.mjs || echo "::warning::bt_warranty failed"
+
       - name: Keep the raw snapshots (7 days)
         if: always()
         uses: actions/upload-artifact@v4

@@ -322,6 +322,7 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
       <div class="panel"><div class="hd"><h3>Failed inspections · last 30 days</h3><span class="note">→ supervisor, PMs, Cristiano</span></div><div class="list" id="t-fails"></div></div>
       <div class="panel"><div class="hd"><h3>Permits in county review</h3><span class="note">days since applied</span></div><div class="list" id="t-review"></div></div>
       <div class="panel"><div class="hd"><h3>Paused &amp; blocked</h3><span class="note">excluded from KPI clocks</span></div><div class="list" id="t-paused"></div></div>
+      <div class="panel"><div class="hd"><h3>Warranty claims</h3><span class="note" id="t-warr-sum"></span></div><div class="list" id="t-warr"></div></div>
     </div>
   </section>
 
@@ -523,6 +524,10 @@ function renderToday(){
   });
   const corr = per.filter(j => permitState(j) === 'corr').sort((a,b) => (a.last_round_at||'').localeCompare(b.last_round_at||''));
   $('#t-corr').innerHTML = corr.length ? corr.map(j => row(j.job_number, esc(street(j.address)), `${esc(j.permit)} · round ${j.rounds} · ${fmt(j.last_round_at)}`, `<div class="pills" style="justify-content:flex-end">${j.failed_depts_last_round.map(d=>`<span class="pill p-red">${esc(d)}</span>`).join('')}</div>${j.last_round_at?`<span class="note">${days(j.last_round_at)} days waiting</span>`:''}`)).join('') : '<div class="empty">No open correction requests in collected portals.</div>';
+  const W = D.warranty || {claims: []};
+  $('#t-warr-sum').textContent = `${W.open || 0} open · ${W.resolved || 0} resolved${W.avg_days_to_resolve != null ? ` · ${W.avg_days_to_resolve} days to resolve on average` : ''}`;
+  const wOpen = W.claims.filter(w => !['resolved','closed'].includes(w.status));
+  $('#t-warr').innerHTML = wOpen.length ? wOpen.map(w => row(w.job_number || '—', `${esc(w.category || 'Item')}${w.location ? ' · ' + esc(w.location) : ''} — ${esc(w.homeowner || '')}`, `${esc(street(w.address || ''))} · received ${fmt(w.received_at)}${w.bt_claim_id ? ' · Buildertrend claim ' + esc(w.bt_claim_id) : w.bt_error ? ' · Buildertrend: ' + esc(w.bt_error) : ' · not in Buildertrend yet'}`, `<span class="pill ${w.status === 'scheduled' ? 'p-gry' : 'p-red'}">${esc(w.bt_status || w.status)}</span><span class="note">${w.days_open} days open</span>`)).join('') : '<div class="empty">No open warranty claims.</div>';
   const cutoff = new Date(AS - 30*864e5).toISOString().slice(0,10);
   $('#t-fails').innerHTML = failsHtml(D.fails.filter(f => f.at >= cutoff && js.some(j => j.job_number === f.job_number)).slice(0, 6));
   const inRev = per.filter(j => permitState(j) !== 'corr').sort((a, b) => (a.applied_at||'9').localeCompare(b.applied_at||'9'));

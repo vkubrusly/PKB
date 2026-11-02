@@ -11,7 +11,8 @@ writes in Portuguese; UI text in English. State as of 2026-10-12.
 - Don't bypass CAPTCHAs/WAF. Buildertrend cookies stay out of the repo.
 - Never delete jobs in Buildertrend. Write to Buildertrend only where Victor said so (Daily Logs from
   rules / field / Ask, Lead Opportunities after confirmation, "Permit number" field when empty, Schedule
-  items marked complete from county evidence — `rules/bt_schedule.mjs`, `config/bt_schedule_map.json`, never un-marks).
+  items marked complete from county evidence — `rules/bt_schedule.mjs`, `config/bt_schedule_map.json`, never un-marks;
+  Warranty claims, one per item of a website warranty request — `rules/bt_warranty.mjs`, never edits/deletes a claim).
 - Dates always in US format, MM/DD/YYYY, in every system, e-mail, Daily Log and AI answer (`usDate` in `rules/lib.mjs`; Victor, 2026-11-02).
 - Every e-mail that has Guilherme (to or Cc) also copies stefano@pkbhomes.com (`COPY_WITH` in `notify/email.mjs`; Victor, 2026-10-27).
 - Ask before any new outward-facing send (e-mail to outside PKB) or data deletion.
@@ -68,6 +69,15 @@ writes in Portuguese; UI text in English. State as of 2026-10-12.
 - Both start a fresh session in the "PKB Ops" environment and clone the repo themselves (tested 10/12:
   token present, `sb.mjs` query OK). Pending: add `vkubrusly/PKB` as a source of both routines in
   claude.ai → Routines so they can push and open PRs. The old account's routines were disabled 10/12.
+
+## Warranty (since 2026-11-02)
+- Website warranty form e-mails (noreply@notify.pkbhomes.com, "Solicitação de Garantia") → category
+  `warranty_request` (collect_mail.py) → `rules/warranty.mjs` (hourly, ops-mail): one `ops.warranty_claims` row
+  per item, linked to the house by address (`config/job_aliases.json` maps spreadsheet S-numbers to the
+  Buildertrend job, e.g. S001 → 0001).
+- `rules/bt_warranty.mjs` (ops-bt-post when an item waits — 0036 — and every ops-daily round): creates the
+  Buildertrend claim and follows its class/status; "(closed)" classes = resolved/closed. Board panel "Warranty claims".
+- No e-mail notification: everyone already gets Buildertrend's own notices (Victor).
 
 ## Open items
 - Orange (FastTrack): collected every round since 2026-10-14 with both contractor logins (GitHub secrets

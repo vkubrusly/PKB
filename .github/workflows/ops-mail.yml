@@ -5,6 +5,7 @@ name: PKB Ops — read bot mailbox
 # the messages read. Manual run with backfill=true reads the whole inbox once.
 # Then R-LEAD: website work requests are chased with the permits owner (24 h, then every 48 h)
 # until he answers or the job appears in the spreadsheet / Buildertrend.
+# Warranty requests from the website form become ops.warranty_claims (rules/warranty.mjs).
 
 on:
   schedule:
@@ -48,3 +49,4 @@ jobs:
           node rules/start_licensing.mjs || echo "::warning::rules/start_licensing.mjs failed"
           node rules/septic_mail.mjs || echo "::warning::rules/septic_mail.mjs failed"
           node rules/send_approved.mjs || echo "::warning::rules/send_approved.mjs failed"
+          node rules/warranty.mjs || echo "::warning::rules/warranty.mjs failed"
