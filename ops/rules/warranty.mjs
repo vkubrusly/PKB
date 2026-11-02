@@ -6,7 +6,10 @@
 // "resolved" is done by collectors/buildertrend/warranty.mjs.
 //   node rules/warranty.mjs [--dry-run]
 // =============================================================================
+import { readFileSync } from 'node:fs';
 import { sql, q, DRY, orgId } from './lib.mjs';
+
+const ALIAS = JSON.parse(readFileSync(new URL('../config/job_aliases.json', import.meta.url), 'utf8'));
 
 const org = await orgId();
 // Street number + first word of the street name ("17146 SW 41 circle" ~ "17146 SW 41st Cir").
@@ -18,7 +21,8 @@ const mails = await sql(`select e.id, e.received_at, e.parsed from ops.inbound_e
     and not exists (select 1 from ops.warranty_claims w where w.inbound_email_id = e.id)`);
 for (const e of mails) {
   const p = e.parsed || {};
-  const job = jobs.filter((j) => j.k && j.k === key(p.address));
+  // The Buildertrend job of the house (config/job_aliases.json: S001 → 0001).
+  const job = jobs.filter((j) => j.k && j.k === key(p.address)).map((j) => jobs.find((b) => b.job_number === ALIAS[j.job_number]) || j);
   const jobId = job.length === 1 ? job[0].id : null;
   const items = p.items?.length ? p.items : [{ item: 1, category: null, location: null, description: null }];
   console.log(`${String(e.received_at).slice(0, 16)} ${p.homeowner || '—'} · ${p.address || '—'} → ${job.length === 1 ? job[0].job_number : job.length ? 'several houses match' : 'no house matched'} · ${items.length} item(s)`);
