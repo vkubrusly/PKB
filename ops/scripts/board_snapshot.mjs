@@ -194,6 +194,17 @@ const DLmail = Date.now() - 30 * 864e5, DLfresh = Date.now() - 6 * 36e5;
 agg.daily_log_gaps = mail.filter((m) => m.category === 'bt_daily_log' && +new Date(m.received_at) > DLmail && +new Date(m.received_at) < DLfresh)
   .filter((m) => { const md = new Date(m.received_at).toLocaleDateString('en-CA', { timeZone: 'America/New_York' }); return !DL.some((l) => l.job_number === m.job_number && Math.abs(new Date(d(l.log_date)) - new Date(md)) <= 864e5); })
   .map((m) => ({ job_number: m.job_number, mail_at: String(m.received_at).slice(0, 16), subject: m.subject }));
+// Warranty claims (rules/warranty.mjs, Buildertrend Warranty): every item, open ones first.
+const WC = await sql(`select w.item_no, w.received_at, w.homeowner, w.address, w.category, w.location, w.description, w.status, w.bt_claim_id, w.bt_status, w.bt_error, w.resolved_at, j.job_number
+  from ops.warranty_claims w left join ops.jobs j on j.id = w.job_id order by (w.status in ('resolved', 'closed')), w.received_at`).catch(() => []);
+const daysTo = (a, b) => Math.round((new Date(b) - new Date(a)) / 864e5);
+const solved = WC.filter((w) => w.resolved_at);
+agg.warranty = {
+  open: WC.filter((w) => !['resolved', 'closed'].includes(w.status)).length, resolved: solved.length,
+  avg_days_to_resolve: solved.length ? Math.round(solved.reduce((t, w) => t + daysTo(w.received_at, w.resolved_at), 0) / solved.length) : null,
+  by_category: Object.entries(WC.reduce((m, w) => ((m[w.category || '—'] = (m[w.category || '—'] || 0) + 1), m), {})).map(([category, n]) => ({ category, n })).sort((a, b) => b.n - a.n),
+  claims: WC.map((w) => ({ ...w, received_at: d(w.received_at), resolved_at: d(w.resolved_at), days_open: w.resolved_at ? null : daysTo(w.received_at, new Date()) })),
+};
 const out = { asOf: new Date().toISOString().slice(0, 10), builtAt: new Date().toISOString(), jobs: rows, fails: recentFails.slice(0, 14), ...agg, files };
 const json = JSON.stringify(out);
 const o = process.argv.indexOf('--out');
