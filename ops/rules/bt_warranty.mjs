@@ -70,10 +70,14 @@ for (const w of todo) {
       `Homeowner: ${w.homeowner || '—'} · phone ${w.phone || '—'}${w.email ? ` · ${w.email}` : ''}`, `Address: ${w.address || '—'}`,
       w.purchase_date ? `Purchase date: ${new Date(w.purchase_date + 'T12:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC' })}` : null,
       `Item ${w.item_no}: ${w.category || '—'} — ${w.location || '—'}`, '(created by PKB Ops)'].filter(Boolean).join('\n');
-    const body = { jobId: Number(w.bt_job_id), title, priority: priority?.id ?? 1, category: category?.id ?? -1, classification: classification?.id ?? 70,
+    // Every form field as the "New claim" form would send it untouched (its default / selected option —
+    // e.g. Service Coordinator "All", as Victor wants: everyone on the job is notified), then our values.
+    const formDefaults = Object.fromEntries(Object.entries(def).filter(([, v]) => v && typeof v === 'object' && 'value' in v)
+      .map(([k, v]) => [k, Array.isArray(v.value) ? (v.value.find((o) => o.selected)?.id ?? null) : v.value]));
+    const body = { ...formDefaults, id: 0, jobId: Number(w.bt_job_id), title, priority: priority?.id ?? 1, category: category?.id ?? -1, classification: classification?.id ?? 70,
       problemDescription: String(w.description || '').slice(0, 4000), internalComments: comments.slice(0, 4000), showOwner: true,
-      completedByDate: null, followUpDate: null, addedCost: 0, claimId: '', customFields: [], warrantyServices: [] };
-    if (!POST) { console.log(`[dry run] ${label} · ${catName} · ${priority?.name} · ${classification?.name}`); continue; }
+      completedByDate: null, followUpDate: null, addedCost: 0, customFields: [], warrantyServices: [] };
+    if (!POST) { console.log(`[dry run] ${label} · ${catName} · ${priority?.name} · ${classification?.name} · coordinator ${body.coordinator}`); continue; }
     const res = await api('POST', `/api/Warranty?jobId=${w.bt_job_id}`, body);
     console.log(`create ${label}: HTTP ${res.status} ${res.text.slice(0, 600)}`);
     let id = Number(res.json?.data?.id ?? res.json?.data?.warrantyId ?? res.json?.data) || null;
