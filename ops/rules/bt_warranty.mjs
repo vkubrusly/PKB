@@ -4,8 +4,8 @@
 // 1. Create: each item without a Buildertrend claim, on a house with a Buildertrend job, becomes one claim
 //    (POST /api/Warranty?jobId=…, the call the "New claim" form makes) — title "<Category> — <Location>",
 //    the homeowner's text as description, name/phone/e-mail in the internal comments, class "Needs
-//    Inspection", priority High when the text says the house lost power / water is coming in / sparks /
-//    smoke / gas, Medium otherwise. Up to 5 attempts; the error is kept on the row.
+//    Inspection", priority High when the text says the house lost power / sparks / smoke / gas / a pipe
+//    leak or flood, Medium otherwise. Up to 5 attempts; the error is kept on the row.
 // 2. Follow: every claim's status from the job's Warranty list (POST /api/Warranty/Grid, a read). A class
 //    "(closed)" = resolved (Service Completed / Meets Warranty Standards) or closed (Non-Warranty).
 // Writes only with OPS_BT_POST=true or --post; otherwise lists what it would create. Never edits or
@@ -28,7 +28,7 @@ const CATEGORY = [[/electric/i, 'Electrical'], [/plumb|water heater|toilet|fauce
   [/roof/i, 'Roofing'], [/window/i, 'Windows'], [/floor|tile/i, 'Flooring'], [/paint/i, 'Painting'], [/drywall/i, 'Drywall'],
   [/cabinet/i, 'Cabinets'], [/counter/i, 'Countertops'], [/applian/i, 'Appliances'], [/light/i, 'Lighting'], [/concrete|driveway/i, 'Concrete'],
   [/foundation/i, 'Foundation'], [/landscap|sod|irrigation/i, 'Landscaping'], [/trim/i, 'Trim'], [/siding/i, 'Siding'], [/framing/i, 'Framing']];
-const URGENT = /no (electric|power)|without (electric|power)|short(ed)? out|spark|smoke|burn|gas (smell|leak)|water (is )?(getting|coming) in|leak|flood/i;
+const URGENT = /no (electric|power)|without (electric|power)|short(ed)? out|spark|smoke|burn|gas (smell|leak)|pipe leak|leaking pipe|flood/i;
 const cap = (s) => String(s || '').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
 const opt = (field, name) => (field?.value || []).find((o) => o.name === name);
 
