@@ -10,7 +10,7 @@
 // finaled). A failed final septic inspection e-mails the supervisor(s)/PM(s) + Guilherme.
 //   node rules/septic_mail.mjs [--dry-run]
 // =============================================================================
-import { sql, q, DRY, EMAIL, RECENT_DAYS, brDate, street, daysAgo, orgId, team, seen, recordEvent, mail } from './lib.mjs';
+import { sql, q, DRY, EMAIL, RECENT_DAYS, usDate, street, daysAgo, orgId, team, seen, recordEvent, mail } from './lib.mjs';
 
 const FINAL = String.raw`(?:final\s+septic|septic\s+final|inspe\S*\s+(?:de\s+)?(?:final\s+)?septic|septic\s+inspection)`;
 const STAGES = [
@@ -82,7 +82,7 @@ for (const f of found) {
     await mail({
       rule: 'SEPTIC', jobId: f.m.job_id, eventId: ev, to: t.emails.length ? t.emails : [EMAIL.guilherme], cc: [EMAIL.guilherme],
       subject: `Inspeção final do septic REPROVADA — ${f.m.job_number} · ${street(f.m.address)}`,
-      text: `Obra ${f.m.job_number} — ${f.m.address}\n\nDaily Log de ${brDate(f.at)}:\n${f.detail}\n\nCorrigir e remarcar a inspeção final do septic com o Departamento de Saúde.\n\n— PKB Ops (aviso automático)`,
+      text: `Obra ${f.m.job_number} — ${f.m.address}\n\nDaily Log de ${usDate(f.at)}:\n${f.detail}\n\nCorrigir e remarcar a inspeção final do septic com o Departamento de Saúde.\n\n— PKB Ops (aviso automático)`,
     });
   }
 }

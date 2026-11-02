@@ -7,7 +7,7 @@
 // was turned on are a silent baseline.
 //   node rules/holds.mjs [--dry-run]
 // =============================================================================
-import { sql, q, DRY, EMAIL, brDate, street, orgId, seen, recordEvent, mail } from './lib.mjs';
+import { sql, q, DRY, EMAIL, usDate, street, orgId, seen, recordEvent, mail } from './lib.mjs';
 
 const holds = await sql(`select h.id, h.name, h.type, h.reason, h.comments, h.created_at, h.blocking, c.id case_id, c.number, c.portal, j.id job_id, j.job_number, j.address
   from ops.holds h join ops.permit_cases c on c.id = h.permit_case_id join ops.jobs j on j.id = c.job_id
@@ -25,7 +25,7 @@ for (const h of holds) {
     text: `O condado colocou um hold no permit ${h.number} da obra ${h.job_number} — ${h.address}.
 
 Hold: ${h.name}${h.type ? ` (${h.type}${h.blocking ? ' — bloqueia o andamento' : ''})` : ''}
-Desde: ${brDate(h.created_at)}${h.reason ? `\nMotivo: ${h.reason}` : ''}${h.comments ? `\nComentário do condado: ${h.comments}` : ''}
+Desde: ${usDate(h.created_at)}${h.reason ? `\nMotivo: ${h.reason}` : ''}${h.comments ? `\nComentário do condado: ${h.comments}` : ''}
 
 A bola está com a PKB: resolver o hold para o permit seguir.
 

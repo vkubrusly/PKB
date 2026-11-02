@@ -10,7 +10,7 @@
 //   node rules/start_licensing.mjs [--dry-run]
 // =============================================================================
 import { readFileSync } from 'node:fs';
-import { sql, q, DRY, EMAIL, RECENT_DAYS, brDate, daysAgo, orgId, seen, recordEvent, mail, contacts } from './lib.mjs';
+import { sql, q, DRY, EMAIL, RECENT_DAYS, usDate, daysAgo, orgId, seen, recordEvent, mail, contacts } from './lib.mjs';
 
 const tpl = readFileSync(new URL('../templates/start_licensing.pt.md', import.meta.url), 'utf8').replace(/<!--[\s\S]*?-->\s*/, '');
 const sov = contacts.designers.sovereign;
@@ -46,7 +46,7 @@ for (const p of paid) {
       subject: `1ª parcela paga — iniciar licenciamento (PKB): ${p.job_number} · ${p.address}`,
       text: `Guilherme,
 
-A 1ª parcela da obra ${p.job_number} — ${p.address} (${p.county || 'condado?'}) foi paga (aviso do Buildertrend em ${brDate(p.received_at)}) e ainda não há permit pedido.
+A 1ª parcela da obra ${p.job_number} — ${p.address} (${p.county || 'condado?'}) foi paga (aviso do Buildertrend em ${usDate(p.received_at)}) e ainda não há permit pedido.
 
 Esta obra NÃO é coordenada pela Sovereign (escritório responsável: PKB). Iniciar o licenciamento pelo nosso lado.
 Modelo: ${p.model || '—'} · Parcel: ${p.parcel || '—'} · Proprietário: ${p.owner_name || '—'}
@@ -61,7 +61,7 @@ Modelo: ${p.model || '—'} · Parcel: ${p.parcel || '—'} · Proprietário: ${
     subject: `1ª parcela paga — iniciar licenciamento: ${p.job_number} · ${p.address}`,
     text: `Guilherme,
 
-A 1ª parcela da obra ${p.job_number} foi paga (aviso do Buildertrend em ${brDate(p.received_at)}) e ainda não há permit pedido.
+A 1ª parcela da obra ${p.job_number} foi paga (aviso do Buildertrend em ${usDate(p.received_at)}) e ainda não há permit pedido.
 
 Encaminhe à Sovereign o pedido abaixo, com os anexos:
 - Sunbiz do proprietário (${p.owner_name || '—'})

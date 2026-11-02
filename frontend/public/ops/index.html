@@ -742,7 +742,7 @@ function mailText(f, p){
   const subj = `Correções – ${street(f.address)} – ${p.number} (rodada ${r.round})`;
   const body = `Olá, ${custom ? 'Michele' : 'Sarah e Fernanda'},
 
-O condado (${PORTAL[p.portal]||p.portal}) devolveu a rodada ${r.round} do permit ${p.number} (${f.address}${f.parcel ? ', parcel ' + f.parcel : ''}) em ${new Date((r.completed_at || items[0].completed_at) + 'T12:00:00').toLocaleDateString('pt-BR')} pedindo correções de ${items.length === 1 ? 'um departamento' : items.length + ' departamentos'}:
+O condado (${PORTAL[p.portal]||p.portal}) devolveu a rodada ${r.round} do permit ${p.number} (${f.address}${f.parcel ? ', parcel ' + f.parcel : ''}) em ${new Date((r.completed_at || items[0].completed_at) + 'T12:00:00').toLocaleDateString('en-US', {month:'2-digit', day:'2-digit', year:'numeric'})} pedindo correções de ${items.length === 1 ? 'um departamento' : items.length + ' departamentos'}:
 
 ${items.map((x, i) => `${i+1}. ${x.department} — ${x.status}${x.reviewer ? ' (revisor: ' + x.reviewer + ')' : ''}
 ${(x.comments || '(sem comentário no portal)').trim().split('\n').map(l => '   ' + l).join('\n')}`).join('\n\n')}

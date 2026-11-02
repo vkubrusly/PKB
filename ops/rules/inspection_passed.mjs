@@ -10,7 +10,7 @@
 //   node rules/inspection_passed.mjs [--dry-run]
 // =============================================================================
 import { readFileSync } from 'node:fs';
-import { sql, q, DRY, EMAIL, RECENT_DAYS, brDate, street, daysAgo, orgId, team, seen, recordEvent, mail, queueDailyLog, contacts } from './lib.mjs';
+import { sql, q, DRY, EMAIL, RECENT_DAYS, usDate, street, daysAgo, orgId, team, seen, recordEvent, mail, queueDailyLog, contacts } from './lib.mjs';
 import { progressAll } from '../analysis/inspection_progress.mjs';
 
 const seq = JSON.parse(readFileSync(new URL('../config/construction_sequence.json', import.meta.url), 'utf8'));
@@ -59,7 +59,7 @@ for (const [jobNumber, list] of Object.entries(byJob)) {
   const next = pr?.supported ? pr.next : null;
   const nextStep = pr?.steps?.find((s) => s.name === next);
   const w = next && nextStep?.state !== 'failed_open' ? workBefore(next) : { tasks: [] };
-  const done = recent.map((p) => `✔ ${shortType(p.type)} — aprovada em ${brDate(p.at)}${p.inspector ? ` (${p.inspector})` : ''}`).join('\n');
+  const done = recent.map((p) => `✔ ${shortType(p.type)} — aprovada em ${usDate(p.at)}${p.inspector ? ` (${p.inspector})` : ''}`).join('\n');
   const nextText = next
     ? `Próxima inspeção do permit: ${next}${nextStep?.state === 'failed_open' ? ' (REPROVADA, falta a reinspeção)' : ''}${w.phase ? `\n${w.phase}${w.step ? ` (${w.step})` : ''}` : ''}${w.tasks.length ? `\n\nAntes de pedir essa inspeção, concluir:\n${w.tasks.map((t) => `- ${t}`).join('\n')}` : ''}`
     : 'Não há próxima inspeção pendente neste permit.';
@@ -80,7 +80,7 @@ ${t.missing.length ? `\n(Sem e-mail cadastrado para: ${t.missing.join(', ')}.)\n
   });
   await queueDailyLog({
     rule: 'R8', jobId: j.job_id, eventId: evId, title: `Inspection passed — ${recent.map((p) => shortType(p.type)).join(', ')}`,
-    notes: `${recent.map((p) => `${shortType(p.type)} passed on ${brDate(p.at)}${p.inspector ? ` (inspector ${p.inspector})` : ''}.`).join('\n')}${next ? `\nNext inspection: ${next}.${w.tasks.length ? ` Work before it: ${w.tasks.join(', ')}.` : ''}` : ''}`,
+    notes: `${recent.map((p) => `${shortType(p.type)} passed on ${usDate(p.at)}${p.inspector ? ` (inspector ${p.inspector})` : ''}.`).join('\n')}${next ? `\nNext inspection: ${next}.${w.tasks.length ? ` Work before it: ${w.tasks.join(', ')}.` : ''}` : ''}`,
     notify: [...t.btNames, contacts.internal.contractor_of_record?.bt_name].filter(Boolean),
   });
   sent++;

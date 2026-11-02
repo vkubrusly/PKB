@@ -9,7 +9,7 @@
 // silent baseline, so turning the rule on sends no history.
 //   node rules/permit_issued.mjs [--dry-run]
 // =============================================================================
-import { sql, q, DRY, EMAIL, RECENT_DAYS, brDate, street, daysAgo, orgId, team, seen, recordEvent, mail, queueDailyLog, contacts } from './lib.mjs';
+import { sql, q, DRY, EMAIL, RECENT_DAYS, usDate, street, daysAgo, orgId, team, seen, recordEvent, mail, queueDailyLog, contacts } from './lib.mjs';
 
 const money = (n) => (n == null ? null : Number(n).toLocaleString('en-US', { style: 'currency', currency: 'USD' }));
 const cases = await sql(`select c.id, c.number, c.portal, c.issued_at, c.fee_total, c.fee_unpaid, c.expires_at, j.id job_id, j.job_number, j.address, j.model
@@ -29,9 +29,9 @@ for (const c of cases) {
   await mail({
     rule: 'R4', jobId: c.job_id, eventId: ev, to: [...t.emails, EMAIL.cristiano],
     subject: `Permit EMITIDO — ${where}`,
-    text: `O permit de construção da obra ${c.job_number} — ${c.address} foi emitido pelo condado em ${brDate(c.issued_at)}.
+    text: `O permit de construção da obra ${c.job_number} — ${c.address} foi emitido pelo condado em ${usDate(c.issued_at)}.
 
-Permit: ${c.number}${c.model ? ` · Modelo: ${c.model}` : ''}${c.expires_at ? `\nValidade: ${brDate(c.expires_at)}` : ''}
+Permit: ${c.number}${c.model ? ` · Modelo: ${c.model}` : ''}${c.expires_at ? `\nValidade: ${usDate(c.expires_at)}` : ''}
 
 Próximos passos (supervisor):
 - Pedir os fornecedores: marcação (stake-out), energia provisória / T-pole, água, caçamba e banheiro químico.
@@ -44,7 +44,7 @@ ${t.missing.length ? `\n(Sem e-mail cadastrado para: ${t.missing.join(', ')}.)\n
     subject: `Taxas do permit — ${where} (permit ${c.number} emitido)`,
     text: `Daniela,
 
-O permit ${c.number} da obra ${c.job_number} — ${c.address} foi emitido em ${brDate(c.issued_at)}.
+O permit ${c.number} da obra ${c.job_number} — ${c.address} foi emitido em ${usDate(c.issued_at)}.
 
 Por favor, verifique e providencie:
 - Impact fees do condado${c.fee_unpaid != null ? ` — em aberto no portal: ${money(c.fee_unpaid)}` : ''}${c.fee_total != null ? ` (total de taxas do permit: ${money(c.fee_total)})` : ''}
@@ -54,7 +54,7 @@ Por favor, verifique e providencie:
   });
   await queueDailyLog({
     rule: 'R4', jobId: c.job_id, eventId: ev, title: `Permit issued — ${c.number}`,
-    notes: `Building permit ${c.number} issued by the county on ${brDate(c.issued_at)}.\nNext: supervisor requests vendors (stake-out, temporary power / T-pole, water, dumpster, portable toilet); first field inspection: erosion control / pre-work.`,
+    notes: `Building permit ${c.number} issued by the county on ${usDate(c.issued_at)}.\nNext: supervisor requests vendors (stake-out, temporary power / T-pole, water, dumpster, portable toilet); first field inspection: erosion control / pre-work.`,
     notify: [contacts.internal.contractor_of_record?.bt_name, contacts.internal.permits_owner?.name].filter(Boolean),
   });
   sent++;

@@ -7,7 +7,7 @@
 // Sent once per ISO week (dedupe); --force sends now whatever the day.
 //   node rules/weekly_digest.mjs [--dry-run] [--force]
 // =============================================================================
-import { sql, q, DRY, brDate, street, orgId, seen, recordEvent, mail, contacts } from './lib.mjs';
+import { sql, q, DRY, usDate, street, orgId, seen, recordEvent, mail, contacts } from './lib.mjs';
 import { phaseTimesAll } from '../analysis/phase_times.mjs';
 
 const STALL = { in_review: 21, corrections: 7, fees_due: 7, requested: 30 };
@@ -60,11 +60,11 @@ const text = `Resumo semanal do PKB Ops — semana ${week}
 
 Na semana: ${wk.issued} permit(s) emitido(s) · ${wk.passed} inspeção(ões) aprovada(s) · ${wk.failed} reprovada(s) · ${wk.signed} contrato(s) assinado(s).
 ${sec('PERMITS PARADOS', stalledRows, (s) => `  ${s.job_number} · ${street(s.address)} — ${STATUS[s.ops_status]}${s.days != null ? ` há ${s.days} dias` : ''}${s.number ? ` (permit ${s.number})` : ''}`)}
-${sec('PERMIT EMITIDO E OBRA SEM INÍCIO (14+ dias)', notStarted, (s) => `  ${s.job_number} · ${street(s.address)} — emitido em ${brDate(s.issued_at)}`)}
-${sec('INSPEÇÕES REPROVADAS SEM REINSPEÇÃO (5+ dias)', openFails, (s) => `  ${s.job_number} · ${street(s.address)} — ${String(s.type).replace(/ - 1 ?& ?2.*$/, '')} em ${brDate(s.at)}`)}
-${sec('OBRAS ACIMA DO TEMPO NORMAL DA FASE (mais lentas que 3 de cada 4 casas PKB do condado)', slow, (h) => `  ${h.job_number} · ${street(h.address)} — ${h.current.phase === 'espera_inicio' ? `liberada para obra em ${brDate(h.current.since)} (permit e 2º pagamento), sem inspeção de campo aprovada há ${h.current.days} dias` : `${h.current.name} há ${h.current.days} dias (desde ${brDate(h.current.since)})`}; mediana ${h.county} ${h.current.median} dias, +${h.current.delta} (base: ${h.current.n} casas PKB)`)}
+${sec('PERMIT EMITIDO E OBRA SEM INÍCIO (14+ dias)', notStarted, (s) => `  ${s.job_number} · ${street(s.address)} — emitido em ${usDate(s.issued_at)}`)}
+${sec('INSPEÇÕES REPROVADAS SEM REINSPEÇÃO (5+ dias)', openFails, (s) => `  ${s.job_number} · ${street(s.address)} — ${String(s.type).replace(/ - 1 ?& ?2.*$/, '')} em ${usDate(s.at)}`)}
+${sec('OBRAS ACIMA DO TEMPO NORMAL DA FASE (mais lentas que 3 de cada 4 casas PKB do condado)', slow, (h) => `  ${h.job_number} · ${street(h.address)} — ${h.current.phase === 'espera_inicio' ? `liberada para obra em ${usDate(h.current.since)} (permit e 2º pagamento), sem inspeção de campo aprovada há ${h.current.days} dias` : `${h.current.name} há ${h.current.days} dias (desde ${usDate(h.current.since)})`}; mediana ${h.county} ${h.current.median} dias, +${h.current.delta} (base: ${h.current.n} casas PKB)`)}
 ${sec('OBRAS PARADAS (sem foto nem Daily Log)', idle, (s) => `  ${s.job_number} · ${street(s.address)}${s.days != null ? ` — ${s.days} dias` : ''}`)}
-${sec('PEDIDOS DO SITE SEM RESPOSTA', leads, (l) => `  ${l.client || '—'} · ${l.model || ''} — desde ${brDate(l.received_at)} (${l.followups} cobrança(s))`)}
+${sec('PEDIDOS DO SITE SEM RESPOSTA', leads, (l) => `  ${l.client || '—'} · ${l.model || ''} — desde ${usDate(l.received_at)} (${l.followups} cobrança(s))`)}
 ${aiLine ? `\nIA NO MÊS: campo US$ ${(aiLine.field || 0).toFixed(2)} (${aiLine.calls.field || 0} chamadas) · Ask US$ ${(aiLine.ask || 0).toFixed(2)} (${aiLine.calls.ask || 0} perguntas)\n` : ''}
 — PKB Ops (resumo automático, toda segunda-feira)`;
 
