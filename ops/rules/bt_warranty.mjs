@@ -85,7 +85,7 @@ for (const w of todo) {
     const back = (await grid(w.bt_job_id)).find((r) => (id && rowId(r) === id) || rowTitle(r).trim() === title);
     if (!back) throw new Error(res.ok ? 'Buildertrend answered OK but the claim is not in the job\'s Warranty list' : `HTTP ${res.status} ${res.json?.message || res.text.slice(0, 200)}`);
     id = id || rowId(back);
-    await sql(`update ops.warranty_claims set bt_claim_id = ${id ?? 'null'}, bt_status = ${q(back.claimStatus || null)}, bt_created_at = now(), bt_error = null, bt_attempts = bt_attempts + 1, last_synced_at = now(), updated_at = now() where id = ${q(w.id)}`);
+    await sql(`update ops.warranty_claims set bt_claim_id = ${id ?? 'null'}, bt_status = ${q([back.claimStatus, back.class].filter(Boolean).join(' · ') || null)}, bt_created_at = now(), bt_error = null, bt_attempts = bt_attempts + 1, last_synced_at = now(), updated_at = now() where id = ${q(w.id)}`);
     await sql(`insert into ops.events (org_id, job_id, kind, source, occurred_at, payload, dedupe_key)
       values (${q(org)}, ${q(w.job_id)}, 'bt.warranty_created', 'rule', now(), ${q(JSON.stringify({ claim_id: id, title, item: w.item_no, homeowner: w.homeowner }))}::jsonb, ${q(`bt.warranty_created:${w.id}`)})
       on conflict (org_id, dedupe_key) do nothing`);
@@ -107,7 +107,7 @@ for (const [jobId, claims] of Object.entries(byJob)) {
     if (!r) continue;
     const cls = String(r.class ?? r.classification ?? ''), st = String(r.claimStatus ?? '');
     const status = /non-warranty/i.test(cls) ? 'closed' : /\(closed\)|service completed|meets warranty/i.test(cls) ? 'resolved'
-      : (Array.isArray(r.warrantyScheduleList) ? r.warrantyScheduleList.length : r.warrantyScheduleList) ? 'scheduled' : 'open';
+      : (r.warrantyScheduleList?.appointmentsCount > 0 || r.warrantyScheduleList?.appointment) ? 'scheduled' : 'open';   // a service appointment set
     if (status === 'resolved' || status === 'closed') resolved++;
     await sql(`update ops.warranty_claims set bt_status = ${q([st, cls].filter(Boolean).join(' · ') || null)}, status = ${q(status)},
       scheduled_at = case when ${q(status)} = 'scheduled' then coalesce(scheduled_at, now()) else scheduled_at end,
