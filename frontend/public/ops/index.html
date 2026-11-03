@@ -915,12 +915,13 @@ async function reloadIdeas(){
   b.disabled = false; b.innerHTML = '&#x21bb; Reload';
   if (error) { $('#ideaCnt').textContent = 'Reload failed: ' + error.message; return; }
   D.suggestions = data; renderIdeas();
+  $('#ideaCnt').textContent += ` · updated ${new Date().toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'})}`;
 }
 function renderIdeas(){
   const all = D.suggestions || [];
   $('#ideaReload').onclick = reloadIdeas;
   $('#ideaLang').innerHTML = [['en','English'],['pt','Português']].map(([k, l]) => `<button class="chip" data-l="${k}" aria-pressed="${ideaLang===k}">${l}</button>`).join('');
-  document.querySelectorAll('#ideaLang button').forEach(b => b.onclick = () => { ideaLang = b.dataset.l; try { localStorage.setItem('opsIdeaLang', ideaLang); } catch {} renderIdeas(); });
+  document.querySelectorAll('#ideaLang button').forEach(b => b.onclick = () => { ideaLang = b.dataset.l; try { localStorage.setItem('opsIdeaLang', ideaLang); } catch {} renderIdeas(); if (ideaLang === 'pt' && all.some(x => !x.title_pt)) reloadIdeas(); });
   // Open (new) suggestions by default; accepted / dismissed / done move to "Decided".
   const nDecided = all.filter(s => s.status !== 'new').length;
   $('#ideaView').innerHTML = [['open','Open'],['decided',`Decided (${nDecided})`]].map(([k, l]) => `<button class="chip" data-v="${k}" aria-pressed="${ideaShow===k}">${l}</button>`).join('');
