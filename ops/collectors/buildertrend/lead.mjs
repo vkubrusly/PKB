@@ -40,16 +40,17 @@ async function pickOption(page, inputId, text) {
 export async function findLead(page, key) {
   if (!key) return false;
   await openList(page);
-  const search = page.locator('#keywordSearch').first();
-  if (!(await search.isVisible().catch(() => false))) return false;
-  await search.fill(key); await search.press('Enter');
-  await page.waitForTimeout(5000);
-  const body = await page.locator('body').innerText();
-  const found = body.toLowerCase().includes(String(key).toLowerCase()) && !/no (lead opportunities|results)/i.test(body);
-  if (!found) return false;
-  // Truthy result; with the Buildertrend lead id when the list links to it (…/Lead/<id> or leadId=<id>).
-  const id = await page.evaluate(() => { for (const a of document.querySelectorAll('a[href], [data-lead-id], [data-id]')) { const h = a.getAttribute('href') || ''; const m = /lead[s]?(?:\/|.*[?&]leadId=)(\d{3,})/i.exec(h) || [null, a.getAttribute('data-lead-id')]; if (m[1]) return m[1]; } return null; }).catch(() => null);
-  return { id: id ? Number(id) : null };
+  // The list has no keyword search box (seen 11/03): read the lead title links (…/opportunities/Lead/<id>) and
+  // match the key in the title. Truthy result with the lead id, false when no title contains the key.
+  await page.locator('a[href*="/opportunities/Lead/"]').first().waitFor({ timeout: 20000 }).catch(() => {});
+  const id = await page.evaluate((k) => {
+    for (const a of document.querySelectorAll('a[href*="/opportunities/Lead/"]')) {
+      const m = /\/opportunities\/Lead\/(\d+)$/.exec(a.getAttribute('href') || '');
+      if (m && (a.innerText || '').toLowerCase().includes(k)) return m[1];
+    }
+    return null;
+  }, String(key).toLowerCase()).catch(() => null);
+  return id ? { id: Number(id) } : false;
 }
 
 export async function createLead(page, d, { stopBeforeSave = false } = {}) {
