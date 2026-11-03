@@ -13,7 +13,7 @@ writes in Portuguese; UI text in English. State as of 2026-10-12.
   rules / field / Ask, Lead Opportunities after confirmation, "Permit number" field when empty, Schedule
   items marked complete from county evidence — `rules/bt_schedule.mjs`, `config/bt_schedule_map.json`, never un-marks;
   Warranty claims, one per item of a website warranty request — `rules/bt_warranty.mjs`, never edits/deletes a claim).
-- Dates always in US format, MM/DD/YYYY, in every system, e-mail, Daily Log and AI answer (`usDate` in `rules/lib.mjs`; Victor, 2026-11-02).
+- Dates always in US format, MM/DD/YY, in every system, e-mail, Daily Log and AI answer (`usDate` in `rules/lib.mjs`; Victor, 2026-11-03).
 - Every e-mail that has Guilherme (to or Cc) also copies stefano@pkbhomes.com (`COPY_WITH` in `notify/email.mjs`; Victor, 2026-10-27).
 - Ask before any new outward-facing send (e-mail to outside PKB) or data deletion.
 - Merging your own PRs into the default branch is authorized. Default branch: `claude/new-session-zkg2g6`.

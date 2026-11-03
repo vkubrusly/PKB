@@ -40,7 +40,7 @@ const PORTAL_BASE = {
 };
 const shortType = (t) => String(t || '').replace(/ - 1 ?& ?2 Res(idential)? Fam(ily)?/i, '').trim();
 const cleanComments = (c) => String(c || '').replace(/\r/g, '').replace(/^\s*\d{1,2}\/\d{1,2}\/\d{2,4}\s*\n/, '').replace(/[ \t]+/g, ' ').trim();
-const usDate = (d) => (d ? new Date(String(d).slice(0, 10) + 'T12:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC', month: '2-digit', day: '2-digit', year: 'numeric' }) : '—');
+const usDate = (d) => (d ? new Date(String(d).slice(0, 10) + 'T12:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC', month: '2-digit', day: '2-digit', year: '2-digit' }) : '—');
 
 const orgId = (await sql(`select id from public.orgs where name = ${q(ORG)} limit 1`))[0]?.id;
 if (!orgId) throw new Error(`org "${ORG}" not found`);

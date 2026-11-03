@@ -457,13 +457,15 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const AS = new Date(D.asOf + 'T12:00:00');
 const days = (a, b) => Math.round(((b ? new Date(b + 'T12:00:00') : AS) - new Date(a + 'T12:00:00')) / 864e5);
-const fmt = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric'}) : '—';
-const fmtY = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : '—';
+// Dates always MM/DD/YY (Victor, 2026-11-03).
+const fmt = d => d ? new Date(String(d).slice(0, 10) + 'T12:00:00').toLocaleDateString('en-US', {month:'2-digit', day:'2-digit', year:'2-digit'}) : '—';
+const fmtT = t => t ? `${fmt(t)}${String(t).length > 10 ? ' ' + String(t).slice(11, 16) : ''}` : '—';   // 'YYYY-MM-DD HH:MM' → MM/DD/YY HH:MM
+const fmtY = fmt;
 const street = a => (a || '').split(',')[0];
 const PAUSE = {awaiting_1st_draw:'Waiting 1st draw', awaiting_impact_fees:'Waiting impact fees', awaiting_warranty_deed:'Waiting warranty deed', owner_deferred_start:'Owner deferred start'};
 const PORTAL = {'energov:marion':'Marion EnerGov','energov:winterpark':'Winter Park EnerGov','accela:citrus':'Citrus Accela','fasttrack:orange':'Orange Fast Track','fdep':'FDEP (septic)',charlotte:'Charlotte',lake:'Lake',sarasota:'Sarasota'};
 const REVIEW_PORTALS = ['energov:marion','energov:winterpark'];
-$('#asof').textContent = D.builtAt ? new Date(D.builtAt).toLocaleString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit', timeZone:'America/New_York'}) : fmtY(D.asOf);
+$('#asof').textContent = D.builtAt ? new Date(D.builtAt).toLocaleString('en-US', {month:'2-digit', day:'2-digit', year:'2-digit', hour:'numeric', minute:'2-digit', timeZone:'America/New_York'}) : fmtY(D.asOf);
 
 let CO = 'PKB';
 try { CO = localStorage.getItem('pkbops.co') || 'PKB' } catch(e) {}
@@ -596,7 +598,7 @@ function renderDlogs(){
       .sort((a,b) => (a.L.length - b.L.length) || a.j.job_number.localeCompare(b.j.job_number));
     const authors = L => Object.entries(L.reduce((m,l) => (m[l.by||'?'] = (m[l.by||'?']||0)+1, m), {})).map(([n,c]) => `${esc(n)}${c>1?' ×'+c:''}`).join(', ');
     return `<div class="panel"><div class="hd"><h3>${esc(k || 'No supervisor')}</h3><span class="note">${rows.length} jobs · ${rows.reduce((n,r)=>n+r.L.length,0)} logs</span></div>
-      <div class="tbl"><table><thead><tr><th>Job</th><th>Address</th><th class="num">Logs</th><th>Last log</th><th>Written by</th></tr></thead><tbody>${rows.map(({j,L,building}) => `<tr data-job="${esc(j.job_number)}"><td class="mono">${esc(j.job_number)}</td><td>${esc(street(j.address))}<span class="sub">${building ? 'under construction' : esc(j.stage)}</span></td><td class="num">${L.length || (building ? '<span class="pill p-red">0</span>' : '0')}</td><td>${L[0] ? `${esc(L[0].at || L[0].date)}<span class="sub">${esc(L[0].by || '')} · ${esc(L[0].title || '')}</span>` : j.last_daily_log_at ? `<span class="note">${esc(j.last_daily_log_at)} · ${esc(j.last_daily_log_by || '')}</span>` : '<span class="note">—</span>'}</td><td>${L.length ? authors(L) : '<span class="note">—</span>'}</td></tr>`).join('')}</tbody></table></div></div>`;
+      <div class="tbl"><table><thead><tr><th>Job</th><th>Address</th><th class="num">Logs</th><th>Last log</th><th>Written by</th></tr></thead><tbody>${rows.map(({j,L,building}) => `<tr data-job="${esc(j.job_number)}"><td class="mono">${esc(j.job_number)}</td><td>${esc(street(j.address))}<span class="sub">${building ? 'under construction' : esc(j.stage)}</span></td><td class="num">${L.length || (building ? '<span class="pill p-red">0</span>' : '0')}</td><td>${L[0] ? `${esc(L[0].at || L[0].date)}<span class="sub">${esc(L[0].by || '')} · ${esc(L[0].title || '')}</span>` : j.last_daily_log_at ? `<span class="note">${fmtT(j.last_daily_log_at)} · ${esc(j.last_daily_log_by || '')}</span>` : '<span class="note">—</span>'}</td><td>${L.length ? authors(L) : '<span class="note">—</span>'}</td></tr>`).join('')}</tbody></table></div></div>`;
   }).join('') || '<div class="empty">No jobs match.</div>';
   $('#dCnt').textContent = `${logs.length} logs · ${missing} job${missing === 1 ? '' : 's'} under construction without a log`;
 }
@@ -696,7 +698,7 @@ function openJob(n, tab){
     f.county && `<span>County <b>${esc(f.county)}</b></span>`, f.model && `<span>Model <b>${esc(f.model)}</b></span>`,
     `<span>Supervisor <b>${esc(f.supervisor || '—')}</b></span>`, f.parcel && `<span>Parcel <b>${esc(f.parcel)}</b></span>`,
     f.signed_at && `<span>Signed <b>${fmtY(f.signed_at)}</b></span>`,
-    j.last_daily_log ? `<span>Last Daily Log <b>${j.last_daily_log_at ? esc(j.last_daily_log_at) : fmt(j.last_daily_log)}</b>${j.last_daily_log_by ? ' · ' + esc(j.last_daily_log_by) : ''}</span>` : '',
+    j.last_daily_log ? `<span>Last Daily Log <b>${j.last_daily_log_at ? fmtT(j.last_daily_log_at) : fmt(j.last_daily_log)}</b>${j.last_daily_log_by ? ' · ' + esc(j.last_daily_log_by) : ''}</span>` : '',
     j.photos_last_at ? `<span>Last photo <b>${fmt(j.photos_last_at)}</b> · ${esc(j.photos_last_by || '')}</span>` : '',
     `<a class="gmaps" target="_blank" rel="noopener" href="${gmaps(j)}">Open in Google Maps ↗</a>`,
   ].filter(Boolean).join('');
@@ -762,7 +764,7 @@ function mailText(f, p){
   const subj = `Correções – ${street(f.address)} – ${p.number} (rodada ${r.round})`;
   const body = `Olá, ${custom ? 'Michele' : 'Sarah e Fernanda'},
 
-O condado (${PORTAL[p.portal]||p.portal}) devolveu a rodada ${r.round} do permit ${p.number} (${f.address}${f.parcel ? ', parcel ' + f.parcel : ''}) em ${new Date((r.completed_at || items[0].completed_at) + 'T12:00:00').toLocaleDateString('en-US', {month:'2-digit', day:'2-digit', year:'numeric'})} pedindo correções de ${items.length === 1 ? 'um departamento' : items.length + ' departamentos'}:
+O condado (${PORTAL[p.portal]||p.portal}) devolveu a rodada ${r.round} do permit ${p.number} (${f.address}${f.parcel ? ', parcel ' + f.parcel : ''}) em ${new Date((r.completed_at || items[0].completed_at) + 'T12:00:00').toLocaleDateString('en-US', {month:'2-digit', day:'2-digit', year:'2-digit'})} pedindo correções de ${items.length === 1 ? 'um departamento' : items.length + ' departamentos'}:
 
 ${items.map((x, i) => `${i+1}. ${x.department} — ${x.status}${x.reviewer ? ' (revisor: ' + x.reviewer + ')' : ''}
 ${(x.comments || '(sem comentário no portal)').trim().split('\n').map(l => '   ' + l).join('\n')}`).join('\n\n')}
@@ -875,7 +877,7 @@ $('#sugs').addEventListener('click', e => { const b = e.target.closest('button')
 /* outbox */
 const OST = {sent:['Sent','p-grn'], draft:['Queued','p-amb'], approved:['Approved','p-blue'], failed:['Failed','p-red'], cancelled:['Cancelled','p-gry'], proposed:['Waiting','p-amb'], done:['Done','p-grn'], open:['Open','p-amb'], doing:['In progress','p-blue'], dismissed:['Dismissed','p-gry']};
 const pill = s => { const [t, c] = OST[s] || [s, 'p-gry']; return `<span class="pill ${c}">${esc(t)}</span>`; };
-const when = t => t ? new Date(t).toLocaleString('en-US', {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'}) : '—';
+const when = t => t ? new Date(t).toLocaleString('en-US', {month:'2-digit', day:'2-digit', year:'2-digit', hour:'numeric', minute:'2-digit'}) : '—';
 function renderOutbox(){
   const L = window.OPS.state || {};
   const pend = (L.actions || []).filter(a => a.status === 'proposed');
@@ -935,7 +937,7 @@ function renderIdeas(){
   $('#ideaCnt').textContent = `${list.length} ${ideaShow === 'open' ? 'open' : 'decided'}`;
   const val = v => Array.isArray(v) ? v.map(val).join(', ') : v && typeof v === 'object' ? Object.entries(v).map(([k, x]) => `${k.replace(/_/g,' ')} ${val(x)}`).join(' · ') : String(v ?? '');
   const ev = e => Object.entries(e || {}).map(([k,v]) => `<span>${esc(k.replace(/_/g,' '))}: ${esc(val(v).slice(0, 300))}</span>`).join('');
-  const who = s => s.decided_by ? `<span class="note">${s.status === 'accepted' ? 'Accepted' : 'Dismissed'} by ${esc(String(s.decided_by).split('@')[0])}${s.decided_at ? ' · ' + esc(String(s.decided_at).slice(0, 10)) : ''}</span>` : '';
+  const who = s => s.decided_by ? `<span class="note">${s.status === 'accepted' ? 'Accepted' : 'Dismissed'} by ${esc(String(s.decided_by).split('@')[0])}${s.decided_at ? ' · ' + fmt(s.decided_at) : ''}</span>` : '';
   const acts = s => s.status === 'done' ? '' : s.status === 'new'
     ? `<div class="pa"><button class="btn" type="button" data-k="${esc(s.key)}" data-s="accepted">Accept</button><button class="btn ghost" type="button" data-k="${esc(s.key)}" data-s="dismissed">Dismiss</button><span class="st"></span></div>`
     : `<div class="pa">${who(s)}<button class="btn ghost" type="button" data-k="${esc(s.key)}" data-s="new">Undo</button><span class="st"></span></div>`;
