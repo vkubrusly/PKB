@@ -103,7 +103,7 @@ for (const l of leads) {
     const [first, ...rest] = String(l.client || '').trim().split(/\s+/);
     const input = {
       lead_ref: l.ref,
-      title: `${l.client || 'Novo cliente'} — ${l.model || 'modelo?'}${pl.city ? ` · ${pl.city}` : ''}${l.parcel ? ` (${l.parcel})` : ''}`.slice(0, 100),
+      title: `${l.client || 'Novo cliente'} — ${l.model || 'modelo?'}${pl.city ? ` · ${pl.city}` : ''}${l.parcel ? ` (${l.parcel})` : ''}`,   // collectors/buildertrend/lead.mjs fits it to Buildertrend's 50 characters
       dedupe_key: l.parcel || l.client,
       contact: { first: first || null, last: rest.join(' ') || null, display: l.client || l.company, phone: l.phone, email: l.email },
       address: pl, salespeople: [...new Set([btUser(l.agent), 'Guilherme Pinto'].filter(Boolean))],
