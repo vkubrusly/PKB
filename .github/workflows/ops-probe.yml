@@ -54,7 +54,7 @@ jobs:
           elif [ "${{ inputs.probe }}" = buildertrend-schedule-api ]; then
             node collectors/buildertrend/schedule_api_probe.mjs ${{ inputs.arg }}
           elif [ "${{ inputs.probe }}" = buildertrend-lead-find ]; then
-            node collectors/buildertrend/lead_find.mjs "PAULO GUIMARAES UBINHA — Florida · Marion Oaks" "Jorge Diaz — Custom House · Lake County"
+            node collectors/buildertrend/lead_find.mjs "Ubinha" "Jorge Diaz"
           elif [ "${{ inputs.probe }}" = bt-warranty-rule ]; then
             # rules/bt_warranty.mjs — dry run unless the argument has --post
             node rules/bt_warranty.mjs ${{ inputs.arg }}
