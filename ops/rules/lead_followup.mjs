@@ -29,7 +29,7 @@ const ORG = process.env.OPS_ORG_NAME || 'PKB Homes';
 const q = (v) => (v == null ? 'null' : `'${String(v).replace(/'/g, "''")}'`);
 const digits = (s) => String(s || '').replace(/\D/g, '');
 const street = (s) => String(s || '').split(',')[0].toLowerCase().replace(/\b(street|st|road|rd|lane|ln|place|pl|court|ct|circle|cir|terrace|ter|avenue|ave|drive|dr|loop|way)\b\.?/g, '').replace(/(\d+)(st|nd|rd|th)\b/g, '$1').replace(/[^a-z0-9]/g, '');
-const usDate = (d) => new Date(d).toLocaleString('en-US', { timeZone: 'America/New_York', month: '2-digit', day: '2-digit', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+const usDate = (d) => new Date(d).toLocaleString('en-US', { timeZone: 'America/New_York', month: '2-digit', day: '2-digit', year: '2-digit', hour: 'numeric', minute: '2-digit' });
 
 const contacts = JSON.parse(readFileSync(new URL('../config/contacts.json', import.meta.url), 'utf8'));
 const owner = contacts.internal.permits_owner; // Guilherme

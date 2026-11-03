@@ -66,9 +66,9 @@ for (const w of todo) {
     const category = opt(def.category, catName) || opt(def.category, 'Other');
     const priority = opt(def.priority, URGENT.test(w.description || '') ? 'High' : 'Medium');
     const classification = opt(def.classification, 'Needs Inspection');
-    const comments = [`Warranty request from the website form, received ${new Date(w.received_at).toLocaleDateString('en-US', { timeZone: 'America/New_York' })}.`,
+    const comments = [`Warranty request from the website form, received ${new Date(w.received_at).toLocaleDateString('en-US', { timeZone: 'America/New_York', month: '2-digit', day: '2-digit', year: '2-digit' })}.`,
       `Homeowner: ${w.homeowner || '—'} · phone ${w.phone || '—'}${w.email ? ` · ${w.email}` : ''}`, `Address: ${w.address || '—'}`,
-      w.purchase_date ? `Purchase date: ${new Date(w.purchase_date + 'T12:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC' })}` : null,
+      w.purchase_date ? `Purchase date: ${new Date(w.purchase_date + 'T12:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC', month: '2-digit', day: '2-digit', year: '2-digit' })}` : null,
       `Item ${w.item_no}: ${w.category || '—'} — ${w.location || '—'}`, '(created by PKB Ops)'].filter(Boolean).join('\n');
     // Every form field as the "New claim" form would send it untouched (its default / selected option —
     // e.g. Service Coordinator "All", as Victor wants: everyone on the job is notified), then our values.

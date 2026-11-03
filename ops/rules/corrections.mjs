@@ -25,7 +25,7 @@ const RECENT_DAYS = Number(process.env.OPS_RECENT_DAYS || 3);
 const ORG = process.env.OPS_ORG_NAME || 'PKB Homes';
 const q = (v) => (v == null ? 'null' : `'${String(v).replace(/'/g, "''")}'`);
 const qa = (a) => (a.length ? `array[${a.map(q).join(',')}]::text[]` : `'{}'::text[]`);
-const usDate = (d) => (d instanceof Date ? d : new Date(String(d).slice(0, 10) + 'T12:00:00Z')).toLocaleDateString('en-US', { timeZone: 'UTC', month: '2-digit', day: '2-digit', year: 'numeric' });
+const usDate = (d) => (d instanceof Date ? d : new Date(String(d).slice(0, 10) + 'T12:00:00Z')).toLocaleDateString('en-US', { timeZone: 'UTC', month: '2-digit', day: '2-digit', year: '2-digit' });
 const addBusinessDays = (d, n) => { const x = new Date(String(d).slice(0, 10) + 'T12:00:00Z'); while (n > 0) { x.setUTCDate(x.getUTCDate() + 1); if (x.getUTCDay() % 6) n--; } return x; };
 const clean = (c) => String(c || '').replace(/\r/g, '').replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
 

@@ -8,8 +8,8 @@ export const DRY = process.argv.includes('--dry-run');
 export const q = (v) => (v == null ? 'null' : `'${String(v).replace(/'/g, "''")}'`);
 export const qa = (a) => (a.length ? `array[${a.map(q).join(',')}]::text[]` : `'{}'::text[]`);
 export const norm = (s) => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
-// Dates always in US format, MM/DD/YYYY (Victor, 2026-11-02).
-export const usDate = (d) => (d ? new Date(String(d).slice(0, 10) + 'T12:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC', month: '2-digit', day: '2-digit', year: 'numeric' }) : '—');
+// Dates always in US format, MM/DD/YY (Victor, 2026-11-03).
+export const usDate = (d) => (d ? new Date(String(d).slice(0, 10) + 'T12:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC', month: '2-digit', day: '2-digit', year: '2-digit' }) : '—');
 export const street = (a) => String(a || '').split(',')[0];
 export const daysAgo = (d) => (d ? (Date.now() - new Date(String(d).slice(0, 10) + 'T12:00:00Z').getTime()) / 864e5 : Infinity);
 export const RECENT_DAYS = Number(process.env.OPS_RECENT_DAYS || 3);
