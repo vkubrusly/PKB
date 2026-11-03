@@ -55,7 +55,9 @@ export async function findLead(page, key) {
 export async function createLead(page, d, { stopBeforeSave = false } = {}) {
   // d: { title, dedupeKey, contact: {first, last, display, phone, email, street, city, state, zip},
   //      address: {street, city, state, zip}, salespeople: [names], revenue, source, notes }
-  if (d.dedupeKey) { const dup = await findLead(page, d.dedupeKey); if (dup) return { duplicate: true, leadId: dup.id || null }; }
+  // Already there? By the dedupe key (parcel) and by the title as Buildertrend stores it (the parcel may have
+  // been dropped from it to fit 50 characters).
+  for (const k of [d.dedupeKey, leadTitle(d.title)].filter(Boolean)) { const dup = await findLead(page, k); if (dup) return { duplicate: true, leadId: dup.id || null }; }
   await openList(page);
   const newBtn = page.locator('button', { hasText: /^\W*Lead Opportunity\s*$/ }).first();
   let ok = false;
@@ -131,6 +133,6 @@ export async function createLead(page, d, { stopBeforeSave = false } = {}) {
   let m = page.url().match(/Lead\/(\d+)/);
   let leadId = m && m[1] !== '0' ? Number(m[1]) : null;
   // Form closed without an id in the URL: find the new lead by its parcel/client to get the id.
-  if (!leadId && d.dedupeKey) { const f = await findLead(page, d.dedupeKey).catch(() => null); if (f?.id) leadId = Number(f.id); }
+  for (const k of [d.dedupeKey, leadTitle(d.title)].filter(Boolean)) { if (leadId) break; const f = await findLead(page, k).catch(() => null); if (f?.id) leadId = Number(f.id); }
   return { saved: true, leadId, url: leadId ? page.url() : null, ...filled };
 }
