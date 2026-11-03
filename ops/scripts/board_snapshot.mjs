@@ -203,6 +203,10 @@ agg.warranty = {
   open: WC.filter((w) => !['resolved', 'closed'].includes(w.status)).length, resolved: solved.length,
   avg_days_to_resolve: solved.length ? Math.round(solved.reduce((t, w) => t + daysTo(w.received_at, w.resolved_at), 0) / solved.length) : null,
   by_category: Object.entries(WC.reduce((m, w) => ((m[w.category || '—'] = (m[w.category || '—'] || 0) + 1), m), {})).map(([category, n]) => ({ category, n })).sort((a, b) => b.n - a.n),
+  // Last 12 months: items received and items resolved per month (KPIs).
+  monthly: (() => { const now = new Date(); const ms = Array.from({ length: 12 }, (_, i) => new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11 + i, 1)).toISOString().slice(0, 7));
+    return ms.map((m) => ({ m, received: WC.filter((w) => d(w.received_at)?.slice(0, 7) === m).length, resolved: WC.filter((w) => d(w.resolved_at)?.slice(0, 7) === m).length })); })(),
+  houses: new Set(WC.map((w) => w.job_number).filter(Boolean)).size,
   claims: WC.map((w) => ({ ...w, received_at: d(w.received_at), resolved_at: d(w.resolved_at), days_open: w.resolved_at ? null : daysTo(w.received_at, new Date()) })),
 };
 const out = { asOf: new Date().toISOString().slice(0, 10), builtAt: new Date().toISOString(), jobs: rows, fails: recentFails.slice(0, 14), ...agg, files };

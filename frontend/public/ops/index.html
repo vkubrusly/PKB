@@ -123,7 +123,7 @@ td .sub{display:block;font-size:12.5px;color:var(--ink-3)}
 .cols{display:flex;align-items:flex-end;gap:8px;height:160px;padding-top:18px}
 .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end;min-width:0}
 .col .c{width:100%;max-width:40px;background:var(--gold);border-radius:3px 3px 0 0;position:relative}
-.col .c.blue{background:var(--blue)}
+.col .c.blue{background:var(--blue)} .col .c.red{background:var(--red)}
 .col .c span{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font:600 12px var(--f-body);color:var(--ink-2)}
 .col .x{font-size:11.5px;color:var(--ink-3);white-space:nowrap}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:18px}
@@ -397,6 +397,7 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
       <div class="panel"><div class="hd"><h3>New jobs per month</h3><span class="note" id="newNote"></span></div><div class="cols" id="c-new"></div><div class="legend"><span><i style="background:var(--blue)"></i>Requests (form e-mails)</span><span><i style="background:var(--gold)"></i>Contracts signed</span></div><div class="list" id="t-requests"></div></div>
       <div class="panel"><div class="hd"><h3>Permits issued per month</h3></div><div class="cols" id="c-month"></div></div>
       <div class="panel"><div class="hd"><h3>COs per month</h3><span class="note" id="coNote"></span></div><div class="cols" id="c-co"></div><p class="note" style="margin:0" id="coFinals"></p></div>
+      <div class="panel"><div class="hd"><h3>Warranty</h3><span class="note" id="warrNote"></span></div><div class="kpis" id="warrKpis"></div><div class="cols" id="c-warr"></div><div class="legend"><span><i style="background:var(--red)"></i>Items received</span><span><i style="background:var(--gold)"></i>Items resolved</span></div><div class="bars" id="c-warrcat"></div></div>
       <div class="panel"><div class="hd"><h3>Applied → issued, median days</h3><span class="note">by county</span></div><div class="bars" id="c-cycle"></div></div>
       <div class="panel"><div class="hd"><h3>Where review time goes</h3><span class="note">sum over all rounds</span></div><div id="c-split"></div></div>
       <div class="panel"><div class="hd"><h3>Department review failures</h3><span class="note">failed / reviews</span></div><div class="bars" id="c-dept"></div></div>
@@ -655,6 +656,20 @@ function renderCharts(){
     const mon = m => new Date(m+'-15').toLocaleDateString('en-US',{month:'short', year:'numeric'});
     $('#coFinals').textContent = (D.co.finals.length ? `Building final passed (the CO follows): ${D.co.finals.map(f => `${mon(f.m)} · ${f.n}`).join(', ')} (${D.co.finalJobs.map(f=>f.job_number).join(', ')}). ` : '')
       + 'CO date: the job\'s CO date, else the county closing the issued permit (finaled).';
+  }
+  if (D.warranty) {
+    const W = D.warranty, tile = (h, v, c) => `<div class="kpi"><h3>${h}</h3><div class="big">${v}</div><div class="cap">${c}</div></div>`;
+    const openC = W.claims.filter(w => !['resolved','closed'].includes(w.status));
+    const oldest = openC.reduce((a, w) => Math.max(a, w.days_open || 0), 0);
+    $('#warrKpis').innerHTML = [
+      tile('Open items', `${W.open}`, openC.length ? `oldest ${oldest} days open` : 'none open'),
+      tile('Resolved', `${W.resolved}`, `${W.claims.filter(w => w.status === 'closed').length} closed as non-warranty`),
+      tile('Days to resolve (avg)', W.avg_days_to_resolve == null ? '—' : `${W.avg_days_to_resolve}<small>days</small>`, 'request received → Buildertrend claim closed'),
+      tile('Houses with claims', `${W.houses}`, `${W.claims.length} items in total`),
+    ].join('');
+    colChart('#c-warr', [{data: W.monthly.map(x => ({m: x.m, n: x.received})), cls:'red'}, {data: W.monthly.map(x => ({m: x.m, n: x.resolved}))}]);
+    bars('#c-warrcat', W.by_category.map(c => ({l: c.category, v: c.n, t: `${c.n}`})), Math.max(1, ...W.by_category.map(c => c.n)), 'red');
+    $('#warrNote').textContent = W.claims.length ? `since ${fmtY(W.claims.map(w => w.received_at).sort()[0])} · website warranty form` : 'counts start with the first warranty request';
   }
   colChart('#c-new', [{data:D.requests, cls:'blue'}, {data:D.signed}]);
   $('#t-requests').innerHTML = (D.workRequests||[]).map(r => `<div class="row" style="cursor:default"><span class="jn">new</span><div><div class="t">${esc(r.client||'—')}${r.company?' · '+esc(r.company):''}</div><div class="m">${esc([r.model, r.city, r.county, r.parcel && 'parcel '+r.parcel].filter(Boolean).join(' · '))}${r.agent?' · agent '+esc(r.agent):''}</div></div><div class="r">${r.price?'$'+esc(r.price):''}<br>${fmt(r.at)}</div></div>`).join('');
