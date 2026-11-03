@@ -8,7 +8,7 @@
 const LIST = 'https://buildertrend.net/app/leads/opportunities';
 const hideBanners = (page) => page.evaluate(() => document.getElementById('chmln-dom')?.remove()).catch(() => {});
 
-async function openList(page) {
+export async function openList(page) {
   for (let k = 0; k < 3; k++) {
     await page.goto(LIST, { waitUntil: 'domcontentloaded' });
     if (await page.locator('button', { hasText: /^\W*Lead Opportunity\s*$/ }).first().waitFor({ timeout: 30000 }).then(() => true).catch(() => false)) { await hideBanners(page); return; }
