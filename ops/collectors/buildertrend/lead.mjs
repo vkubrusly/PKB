@@ -18,6 +18,8 @@ async function openList(page) {
 }
 
 // close an open dropdown without Escape (Escape on the form asks "discard changes?")
+// Buildertrend's lead title holds 50 characters: drop the trailing "(parcel)" first (it is in the notes), then cut.
+export const leadTitle = (t) => { let x = String(t || '').trim(); if (x.length > 50) x = x.replace(/\s*\([^)]*\)\s*$/, ''); return x.length > 50 ? x.slice(0, 49).trimEnd() + '…' : x; };
 const closeDropdown = (page) => page.locator('.ant-modal-content:has(#name) .ant-modal-title, .ant-modal-content:has(#name) h1, .ant-modal-content:has(#name) h2').first().click({ force: true }).catch(() => {});
 
 async function pickOption(page, inputId, text) {
@@ -67,7 +69,7 @@ export async function createLead(page, d, { stopBeforeSave = false } = {}) {
   await hideBanners(page);
   const form = page.locator('.ant-modal-content:has(#name)').first();
 
-  await page.locator('#name').first().fill(String(d.title).slice(0, 100));
+  await page.locator('#name').first().fill(leadTitle(d.title));
   const a = d.address || {};
   for (const [id, v] of [['address.street', a.street], ['address.city', a.city], ['address.state', a.state], ['address.zip', a.zip]]) if (v) await page.locator(`[id="${id}"]`).first().fill(String(v));
   if (d.revenue) for (const id of ['estimatedStartPrice', 'estimatedEndPrice']) await page.locator(`#${id}`).first().fill(String(d.revenue)).catch(() => {});
