@@ -407,7 +407,7 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
   <!-- SUGGESTIONS -->
   <section class="view" id="v-ideas" hidden>
     <div><h2>Suggestions</h2><p class="lead">Improvements proposed from what the system reads every day: county portals, inspector and reviewer comments, Buildertrend and the bot mailbox. Each one shows the evidence behind it. Accept or dismiss in the chat and it becomes a rule, a report or a to-do.</p></div>
-    <div class="tools"><span class="chips" id="ideaChips"></span><span class="count" id="ideaCnt"></span></div>
+    <div class="tools"><span class="chips" id="ideaChips"></span><span class="chips" id="ideaView"></span><span class="chips" id="ideaLang"></span><button class="btn ghost" type="button" id="ideaReload" title="Load the latest suggestions" aria-label="Reload suggestions">&#x21bb; Reload</button><span class="count" id="ideaCnt"></span></div>
     <div class="ideas" id="ideas"></div>
     <div class="panel"><div class="hd"><h3>What the bot mailbox has read</h3><span class="note">every message is stored, linked to its job and marked read</span></div><div class="bars" id="c-inbox"></div></div>
   </section>
@@ -905,23 +905,40 @@ renderOutbox();
 const AREA = {permits:'Permits', inspections:'Inspections', construction:'Construction', process:'Process', data:'Data', finance:'Finance'};
 const IMPACT = {high:['High impact','p-red'], medium:['Medium','p-amb'], low:['Low','p-gry']};
 const STATUS = {new:['New','p-blue'], accepted:['Accepted','p-grn'], dismissed:['Dismissed','p-gry'], done:['Done','p-grn']};
-let ideaArea = '';
+let ideaArea = '', ideaShow = 'open';
+// Language of the suggestion texts (EN / PT), remembered per browser.
+let ideaLang = (() => { try { return localStorage.getItem('opsIdeaLang') || 'en'; } catch { return 'en'; } })();
+const T = (s, f) => (ideaLang === 'pt' && s[f + '_pt']) || s[f];
+async function reloadIdeas(){
+  const b = $('#ideaReload'); b.disabled = true; b.textContent = '↻ Loading…';
+  const { data, error } = await window.OPS.sb.rpc('ops_suggestions');
+  b.disabled = false; b.innerHTML = '&#x21bb; Reload';
+  if (error) { $('#ideaCnt').textContent = 'Reload failed: ' + error.message; return; }
+  D.suggestions = data; renderIdeas();
+}
 function renderIdeas(){
   const all = D.suggestions || [];
+  $('#ideaReload').onclick = reloadIdeas;
+  $('#ideaLang').innerHTML = [['en','English'],['pt','Português']].map(([k, l]) => `<button class="chip" data-l="${k}" aria-pressed="${ideaLang===k}">${l}</button>`).join('');
+  document.querySelectorAll('#ideaLang button').forEach(b => b.onclick = () => { ideaLang = b.dataset.l; try { localStorage.setItem('opsIdeaLang', ideaLang); } catch {} renderIdeas(); });
+  // Open (new) suggestions by default; accepted / dismissed / done move to "Decided".
+  const nDecided = all.filter(s => s.status !== 'new').length;
+  $('#ideaView').innerHTML = [['open','Open'],['decided',`Decided (${nDecided})`]].map(([k, l]) => `<button class="chip" data-v="${k}" aria-pressed="${ideaShow===k}">${l}</button>`).join('');
+  document.querySelectorAll('#ideaView button').forEach(b => b.onclick = () => { ideaShow = b.dataset.v; renderIdeas(); });
   const areas = [...new Set(all.map(s => s.area))];
   $('#ideaChips').innerHTML = ['', ...areas].map(a => `<button class="chip" data-a="${a}" aria-pressed="${ideaArea===a}">${a ? AREA[a]||a : 'All'}</button>`).join('');
   document.querySelectorAll('#ideaChips button').forEach(b => b.onclick = () => { ideaArea = b.dataset.a; renderIdeas(); });
   // open ones first (by impact), then accepted, then dismissed / done
   const ORD = {new:0, accepted:1, dismissed:2, done:3}, IMP = {high:0, medium:1, low:2};
-  const list = all.filter(s => !ideaArea || s.area === ideaArea).sort((a, b) => (ORD[a.status] ?? 9) - (ORD[b.status] ?? 9) || (IMP[a.impact] ?? 9) - (IMP[b.impact] ?? 9));
-  $('#ideaCnt').textContent = `${list.length} suggestions`;
+  const list = all.filter(s => (!ideaArea || s.area === ideaArea) && (ideaShow === 'open' ? s.status === 'new' : s.status !== 'new')).sort((a, b) => (ORD[a.status] ?? 9) - (ORD[b.status] ?? 9) || (IMP[a.impact] ?? 9) - (IMP[b.impact] ?? 9));
+  $('#ideaCnt').textContent = `${list.length} ${ideaShow === 'open' ? 'open' : 'decided'}`;
   const val = v => Array.isArray(v) ? v.map(val).join(', ') : v && typeof v === 'object' ? Object.entries(v).map(([k, x]) => `${k.replace(/_/g,' ')} ${val(x)}`).join(' · ') : String(v ?? '');
   const ev = e => Object.entries(e || {}).map(([k,v]) => `<span>${esc(k.replace(/_/g,' '))}: ${esc(val(v).slice(0, 300))}</span>`).join('');
   const who = s => s.decided_by ? `<span class="note">${s.status === 'accepted' ? 'Accepted' : 'Dismissed'} by ${esc(String(s.decided_by).split('@')[0])}${s.decided_at ? ' · ' + esc(String(s.decided_at).slice(0, 10)) : ''}</span>` : '';
   const acts = s => s.status === 'done' ? '' : s.status === 'new'
     ? `<div class="pa"><button class="btn" type="button" data-k="${esc(s.key)}" data-s="accepted">Accept</button><button class="btn ghost" type="button" data-k="${esc(s.key)}" data-s="dismissed">Dismiss</button><span class="st"></span></div>`
     : `<div class="pa">${who(s)}<button class="btn ghost" type="button" data-k="${esc(s.key)}" data-s="new">Undo</button><span class="st"></span></div>`;
-  $('#ideas').innerHTML = list.map(s => `<article class="idea${['dismissed','done'].includes(s.status) ? ' closed' : ''}"><div class="top"><span class="pill ${IMPACT[s.impact]?.[1]||'p-gry'}">${IMPACT[s.impact]?.[0]||s.impact}</span><span class="pill p-gold">${esc(AREA[s.area]||s.area)}</span><span class="pill ${STATUS[s.status]?.[1]||'p-gry'}">${STATUS[s.status]?.[0]||s.status}</span></div><h4>${esc(s.title)}</h4><p>${esc(s.detail)}</p><div class="ev">${ev(s.evidence)}</div>${acts(s)}</article>`).join('') || '<div class="empty">No suggestions yet.</div>';
+  $('#ideas').innerHTML = list.map(s => `<article class="idea${['dismissed','done'].includes(s.status) ? ' closed' : ''}"><div class="top"><span class="pill ${IMPACT[s.impact]?.[1]||'p-gry'}">${IMPACT[s.impact]?.[0]||s.impact}</span><span class="pill p-gold">${esc(AREA[s.area]||s.area)}</span><span class="pill ${STATUS[s.status]?.[1]||'p-gry'}">${STATUS[s.status]?.[0]||s.status}</span></div><h4>${esc(T(s,'title'))}</h4><p>${esc(T(s,'detail'))}</p><div class="ev">${ev(s.evidence)}</div>${acts(s)}</article>`).join('') || (ideaShow === 'open' ? '<div class="empty">No open suggestions. Decided ones are under “Decided”.</div>' : '<div class="empty">Nothing decided yet.</div>');
   $('#ideas').querySelectorAll('button[data-k]').forEach(b => b.onclick = async () => {
     const st = b.parentElement.querySelector('.st'); b.parentElement.querySelectorAll('button').forEach(x => x.disabled = true); st.textContent = 'Saving…';
     const { data, error } = await window.OPS.sb.rpc('ops_suggestion_decide', { p_key: b.dataset.k, p_status: b.dataset.s });
