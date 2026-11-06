@@ -310,6 +310,7 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
     <button role="tab" data-v="ideas" aria-selected="false">Suggestions</button>
     <button role="tab" data-v="ask" aria-selected="false">Ask</button>
     <button role="tab" data-v="outbox" aria-selected="false">Outbox</button>
+    <button role="tab" data-v="users" aria-selected="false" hidden id="usersTab">Users</button>
   </nav>
 </div></header>
 
@@ -426,6 +427,14 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
   </section>
 
   <!-- OUTBOX -->
+  <!-- USERS (admin only) -->
+  <section class="view" id="v-users" hidden>
+    <div><h2>Users</h2><p class="lead">Everyone with access to PKB Ops and their access level. Visible to the admin only.</p></div>
+    <div class="tools"><button class="btn ghost" type="button" id="usersReload">&#x21bb; Reload</button><span class="count" id="usersCnt"></span></div>
+    <div class="tbl" id="usersTbl"></div>
+    <div class="panel"><div class="hd"><h3>Access levels</h3></div><div class="list" id="usersLevels"></div></div>
+  </section>
+
   <section class="view" id="v-outbox" hidden>
     <div><h2>Outbox</h2><p class="lead">What PKB Ops sent or queued (e-mails, Buildertrend Daily Logs), actions waiting for confirmation, and change requests to Claude.</p></div>
     <div class="panel"><div class="hd"><h3>Waiting for confirmation</h3><span class="note">proposed by the assistant</span></div><div class="list" id="o-pending"></div></div>
@@ -478,16 +487,37 @@ const permitState = j => {
 const PSTATE = {pre:['Pre-permit','p-gry'], requested:['Requested','p-gry'], review:['In county review','p-amb'], corr:['Corrections requested','p-red'], issued:['Issued','p-grn']};
 
 /* tabs */
-const VIEWS = ['today','permits','inspections','dlogs','map','kpis','ideas','ask','outbox'];
+const VIEWS = ['today','permits','inspections','dlogs','map','kpis','ideas','ask','outbox','users'];
 function show(v){
   document.querySelectorAll('nav.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.v === v));
   document.querySelectorAll('section.view').forEach(s => s.hidden = s.id !== 'v-' + v);
   try { localStorage.setItem('pkbops.tab', v) } catch(e) {}
   if (v === 'outbox') refreshOutbox();
+  if (v === 'users') renderUsers();
   if (v === 'map') { if (!mapState) initMap(); if (mapState && !mapState.ready) { mapState.ready = true; mapState.fit(); } }
 }
 document.querySelectorAll('nav.tabs button').forEach(b => b.onclick = () => show(b.dataset.v));
 document.querySelectorAll('.seg button').forEach(b => b.onclick = () => { CO = b.dataset.co; try { localStorage.setItem('pkbops.co', CO) } catch(e) {} renderAll(); });
+
+/* users (admin only) */
+const LEVELS = {
+  admin: ['Admin', 'p-red', 'Everything partners see, plus this Users tab.'],
+  partner: ['Partner', 'p-gold', 'Portal (all tabs), Ask, Accept / Dismiss suggestions, Outbox (approve / cancel sends), field channel.'],
+  pm: ['Project manager', 'p-blue', 'Same as partner: portal, Ask, suggestions, Outbox, field channel.'],
+  field: ['Field', 'p-gry', 'Field channel only (budget.pkbhomes.com/ops/field/): sends site reports and sees their own. No portal.'],
+};
+async function renderUsers(){
+  if (window.OPS?.state?.me?.role !== 'admin') return;
+  $('#usersReload').onclick = renderUsers;
+  $('#usersCnt').textContent = 'Loading…';
+  const { data, error } = await window.OPS.sb.rpc('ops_users');
+  if (error) { $('#usersCnt').textContent = 'Could not load: ' + error.message; return; }
+  const n = r => data.filter(u => u.role === r).length;
+  $('#usersCnt').textContent = `${data.length} users · ${Object.keys(LEVELS).map(r => `${n(r)} ${LEVELS[r][0].toLowerCase()}`).join(' · ')}`;
+  const login = u => !u.has_login ? '<span class="pill p-amb">No login yet</span>' : !u.confirmed ? '<span class="pill p-amb">Not confirmed</span>' : '<span class="pill p-grn">Active</span>';
+  $('#usersTbl').innerHTML = `<table><thead><tr><th>Name</th><th>E-mail</th><th>Access level</th><th>Buildertrend name</th><th>Login</th><th>Last sign-in</th><th>Added</th></tr></thead><tbody>${data.map(u => `<tr><td>${esc(u.name || '—')}</td><td>${esc(u.email)}</td><td><span class="pill ${LEVELS[u.role]?.[1] || 'p-gry'}">${esc(LEVELS[u.role]?.[0] || u.role)}</span></td><td>${esc(u.bt_name || '—')}</td><td>${login(u)}</td><td>${u.last_sign_in ? fmtT(u.last_sign_in) : 'never'}</td><td>${fmt(u.added)}</td></tr>`).join('')}</tbody></table>`;
+  $('#usersLevels').innerHTML = Object.entries(LEVELS).map(([k, [l, c, d]]) => `<div class="row" style="cursor:default"><span class="jn"><span class="pill ${c}">${l}</span></span><div><div class="t">${esc(d)}</div><div class="m">${data.filter(u => u.role === k).map(u => esc(u.name)).join(', ') || '—'}</div></div><div class="r"></div></div>`).join('');
+}
 
 /* shared bits */
 const cleanCm = s => String(s || '').replace(/\r/g, '').replace(/^\s*\d{1,2}\/\d{1,2}\/\d{2,4}\s*\n/, '').replace(/[ \t]+/g, ' ').trim();
@@ -1081,6 +1111,7 @@ else show(VIEWS.includes(h0) ? h0 : VIEWS.includes(t0) ? t0 : 'today');
     if (!res.data.board) return msg('No data yet — the first snapshot is built on the next round.', true);
     window.OPS.state = res.data;
     g('whoami').textContent = res.data.me.name || res.data.me.email;
+    if (res.data.me.role === 'admin') g('usersTab').hidden = false;
     g('gate').hidden = true;
     boot(Object.assign({}, res.data.board, { geo }));
   }
