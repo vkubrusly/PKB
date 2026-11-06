@@ -34,6 +34,16 @@ jobs:
         continue-on-error: true
         run: npx --yes supabase@latest secrets set ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}" --project-ref "$PROJECT_REF" || echo "secret unchanged / insufficient privilege — continuing to deploy"
 
+      # The bot mailbox for ops-users (access links). Set through the Management API with the same token.
+      - name: Set bot mailbox secrets (best-effort)
+        continue-on-error: true
+        env: { BOT_EMAIL_PASSWORD: '${{ secrets.BOT_EMAIL_PASSWORD }}' }
+        run: |
+          [ -n "$BOT_EMAIL_PASSWORD" ] || { echo "BOT_EMAIL_PASSWORD not set in GitHub"; exit 0; }
+          jq -n --arg p "$BOT_EMAIL_PASSWORD" '[{name:"BOT_EMAIL",value:"botpkbhomes@gmail.com"},{name:"BOT_EMAIL_PASSWORD",value:$p}]' \
+            | curl -sS -o /dev/null -w "secrets: HTTP %{http_code}\n" -X POST -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H 'Content-Type: application/json' \
+              --data @- "https://api.supabase.com/v1/projects/$PROJECT_REF/secrets"
+
       - name: Deploy functions
         run: |
           SB="npx --yes supabase@latest"
@@ -48,3 +58,4 @@ jobs:
           $SB functions deploy team --project-ref "$PROJECT_REF" --yes
           $SB functions deploy ops-ask --project-ref "$PROJECT_REF" --yes
           $SB functions deploy ops-field --project-ref "$PROJECT_REF" --yes
+          $SB functions deploy ops-users --project-ref "$PROJECT_REF" --yes

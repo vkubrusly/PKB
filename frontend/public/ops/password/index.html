@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PKB Ops — Password</title>
+<style>
+  :root{--bg:#F6F4F0;--surface:#fff;--ink:#2E2E30;--ink-2:#6B6A66;--line:#E4E0D8;--gold:#C9A227;--red:#B8402F;--green:#2F7A4B}
+  @media (prefers-color-scheme: dark){:root{--bg:#1C1C1E;--surface:#262628;--ink:#F2F0EC;--ink-2:#A8A6A0;--line:#3A3A3C;--red:#E57866;--green:#6CC08C}}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;display:grid;place-items:center;min-height:100vh;padding:16px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:28px;width:100%;max-width:380px}
+  h1{font-size:20px;margin:0 0 6px} p{color:var(--ink-2);margin:0 0 18px}
+  label{display:block;font-size:13px;color:var(--ink-2);margin:12px 0 4px}
+  input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+  button{margin-top:18px;width:100%;padding:11px;border:0;border-radius:8px;background:var(--gold);color:#2E2E30;font:600 15px system-ui;cursor:pointer}
+  button:disabled{opacity:.6} .msg{margin-top:14px;font-size:14px} .err{color:var(--red)} .ok{color:var(--green)}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Choose your password</h1>
+  <p id="who">Checking your link…</p>
+  <form id="f" hidden>
+    <label for="p1">New password (at least 8 characters)</label><input id="p1" type="password" autocomplete="new-password" minlength="8" required>
+    <label for="p2">Repeat the password</label><input id="p2" type="password" autocomplete="new-password" minlength="8" required>
+    <button id="b" type="submit">Save password</button>
+  </form>
+  <div class="msg" id="m"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+(async function(){
+  // Same project and publishable key as the portal. The access link (password reset or first access)
+  // brings the session in the URL; supabase-js reads it.
+  const sb = window.supabase.createClient('https://fvjknahpmihueyeasgbx.supabase.co', 'sb_publishable_wr3657pmQAxZy2FEmLQ-RQ_pAPxEm7J');
+  const $ = (id) => document.getElementById(id);
+  const msg = (t, cls) => { $('m').textContent = t; $('m').className = 'msg ' + (cls || ''); };
+  const err = new URLSearchParams(location.hash.slice(1)).get('error_description');
+  await new Promise((r) => setTimeout(r, 600));
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { $('who').textContent = ''; return msg(err ? `This link did not work: ${err}. Ask the admin to send a new one.` : 'This link has expired or was already used. Ask the admin to send a new one.', 'err'); }
+  $('who').textContent = session.user.email; $('f').hidden = false; $('p1').focus();
+  $('f').onsubmit = async (e) => {
+    e.preventDefault();
+    if ($('p1').value !== $('p2').value) return msg('The two passwords are different.', 'err');
+    $('b').disabled = true; msg('Saving…');
+    const { error } = await sb.auth.updateUser({ password: $('p1').value });
+    if (error) { $('b').disabled = false; return msg(error.message, 'err'); }
+    const { data: me } = await sb.rpc('ops_me');
+    const dest = me && me.role === 'field' ? '/ops/field/' : '/ops/';
+    $('f').hidden = true; msg('Password saved. Opening PKB Ops…', 'ok');
+    setTimeout(() => { location.href = dest; }, 1200);
+  };
+})();
+</script>
+</body>
+</html>

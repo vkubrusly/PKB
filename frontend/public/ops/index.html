@@ -429,7 +429,7 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
   <!-- OUTBOX -->
   <!-- USERS (admin only) -->
   <section class="view" id="v-users" hidden>
-    <div><h2>Users</h2><p class="lead">Everyone with access to PKB Ops and their access level. Visible to the admin only.</p></div>
+    <div><h2>Users</h2><p class="lead">Everyone with access to PKB Ops and their access level. Visible to the admin only. “Reset password” / “Send first access” e-mails the person a link to choose their password.</p></div>
     <div class="tools"><button class="btn ghost" type="button" id="usersReload">&#x21bb; Reload</button><span class="count" id="usersCnt"></span></div>
     <div class="tbl" id="usersTbl"></div>
     <div class="panel"><div class="hd"><h3>Access levels</h3></div><div class="list" id="usersLevels"></div></div>
@@ -506,6 +506,23 @@ const LEVELS = {
   pm: ['Project manager', 'p-blue', 'Same as partner: portal, Ask, suggestions, Outbox, field channel.'],
   field: ['Field', 'p-gry', 'Field channel only (budget.pkbhomes.com/ops/field/): sends site reports and sees their own. No portal.'],
 };
+// Password reset (has a login) or first access (no login): the ops-users function e-mails the link from the
+// bot mailbox and returns it, so it can also go by WhatsApp if the e-mail does not arrive.
+async function sendAccess(b){
+  const email = b.dataset.access, out = document.querySelector(`[data-access-out="${CSS.escape(email)}"]`);
+  if (!confirm(`${b.textContent} — send the access link to ${email}?`)) return;
+  b.disabled = true; out.textContent = 'Sending…';
+  try {
+    const { data: { session } } = await window.OPS.sb.auth.getSession();
+    const r = await fetch('https://fvjknahpmihueyeasgbx.supabase.co/functions/v1/ops-users', { method: 'POST', headers: { 'content-type': 'application/json', apikey: 'sb_publishable_wr3657pmQAxZy2FEmLQ-RQ_pAPxEm7J', Authorization: 'Bearer ' + session.access_token }, body: JSON.stringify({ email }) });
+    const j = await r.json().catch(() => ({ error: 'HTTP ' + r.status }));
+    if (!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status);
+    const wa = `https://wa.me/?text=${encodeURIComponent(j.text)}`;
+    out.innerHTML = `${j.sent ? `<span style="color:var(--green)">E-mail sent to ${esc(email)}.</span>` : `<span style="color:var(--red)">E-mail not sent (${esc(j.mailError || 'unknown')}).</span>`} Link valid 24 h, one use: <a href="#" data-copy>copy link</a> · <a href="${wa}" target="_blank" rel="noopener">WhatsApp</a>`;
+    out.querySelector('[data-copy]').onclick = (e) => { e.preventDefault(); navigator.clipboard.writeText(j.link).then(() => { e.target.textContent = 'copied'; }); };
+  } catch (e) { out.textContent = 'Error: ' + e.message; }
+  b.disabled = false;
+}
 async function renderUsers(){
   if (window.OPS?.state?.me?.role !== 'admin') return;
   $('#usersReload').onclick = renderUsers;
@@ -515,7 +532,8 @@ async function renderUsers(){
   const n = r => data.filter(u => u.role === r).length;
   $('#usersCnt').textContent = `${data.length} users · ${Object.keys(LEVELS).map(r => `${n(r)} ${LEVELS[r][0].toLowerCase()}`).join(' · ')}`;
   const login = u => !u.has_login ? '<span class="pill p-amb">No login yet</span>' : !u.confirmed ? '<span class="pill p-amb">Not confirmed</span>' : '<span class="pill p-grn">Active</span>';
-  $('#usersTbl').innerHTML = `<table><thead><tr><th>Name</th><th>E-mail</th><th>Access level</th><th>Buildertrend name</th><th>Login</th><th>Last sign-in</th><th>Added</th></tr></thead><tbody>${data.map(u => `<tr><td>${esc(u.name || '—')}</td><td>${esc(u.email)}</td><td><span class="pill ${LEVELS[u.role]?.[1] || 'p-gry'}">${esc(LEVELS[u.role]?.[0] || u.role)}</span></td><td>${esc(u.bt_name || '—')}</td><td>${login(u)}</td><td>${u.last_sign_in ? fmtT(u.last_sign_in) : 'never'}</td><td>${fmt(u.added)}</td></tr>`).join('')}</tbody></table>`;
+  $('#usersTbl').innerHTML = `<table><thead><tr><th>Name</th><th>E-mail</th><th>Access level</th><th>Buildertrend name</th><th>Login</th><th>Last sign-in</th><th>Added</th><th>Access link</th></tr></thead><tbody>${data.map(u => `<tr><td>${esc(u.name || '—')}</td><td>${esc(u.email)}</td><td><span class="pill ${LEVELS[u.role]?.[1] || 'p-gry'}">${esc(LEVELS[u.role]?.[0] || u.role)}</span></td><td>${esc(u.bt_name || '—')}</td><td>${login(u)}</td><td>${u.last_sign_in ? fmtT(u.last_sign_in) : 'never'}</td><td>${fmt(u.added)}</td><td><button class="btn ghost" type="button" data-access="${esc(u.email)}">${u.has_login ? 'Reset password' : 'Send first access'}</button><div class="note" data-access-out="${esc(u.email)}"></div></td></tr>`).join('')}</tbody></table>`;
+  document.querySelectorAll('[data-access]').forEach(b => b.onclick = () => sendAccess(b));
   $('#usersLevels').innerHTML = Object.entries(LEVELS).map(([k, [l, c, d]]) => `<div class="row" style="cursor:default"><span class="jn"><span class="pill ${c}">${l}</span></span><div><div class="t">${esc(d)}</div><div class="m">${data.filter(u => u.role === k).map(u => esc(u.name)).join(', ') || '—'}</div></div><div class="r"></div></div>`).join('');
 }
 
