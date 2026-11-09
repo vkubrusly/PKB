@@ -19,7 +19,7 @@
 <body>
 <div class="card">
   <h1>Choose your password</h1>
-  <p id="who">Checking your link…</p>
+  <p id="who"></p>
   <form id="f" hidden>
     <label for="p1">New password (at least 8 characters)</label><input id="p1" type="password" autocomplete="new-password" minlength="8" required>
     <label for="p2">Repeat the password</label><input id="p2" type="password" autocomplete="new-password" minlength="8" required>
@@ -35,9 +35,24 @@
   const sb = window.supabase.createClient('https://fvjknahpmihueyeasgbx.supabase.co', 'sb_publishable_wr3657pmQAxZy2FEmLQ-RQ_pAPxEm7J');
   const $ = (id) => document.getElementById(id);
   const msg = (t, cls) => { $('m').textContent = t; $('m').className = 'msg ' + (cls || ''); };
-  const err = new URLSearchParams(location.hash.slice(1)).get('error_description');
-  await new Promise((r) => setTimeout(r, 600));
-  const { data: { session } } = await sb.auth.getSession();
+  const q = new URLSearchParams(location.search), err = new URLSearchParams(location.hash.slice(1)).get('error_description');
+  let session = null;
+  if (q.get('t')) {
+    // Link from the admin (Users tab): the one-use code is spent only when the person taps Continue, so a
+    // WhatsApp / e-mail link preview opening the page does not use it up.
+    $('who').textContent = q.get('e') || '';
+    const go = document.createElement('button'); go.type = 'button'; go.textContent = 'Continue'; $('m').before(go);
+    await new Promise((resolve) => { go.onclick = resolve; });
+    go.disabled = true; msg('Checking your link…');
+    const { data, error } = await sb.auth.verifyOtp({ token_hash: q.get('t'), type: q.get('k') === 'invite' ? 'invite' : 'recovery' });
+    go.remove(); msg('');
+    if (error) return msg(`This link did not work: ${error.message}. Ask the admin to send a new one (only the newest link works).`, 'err');
+    session = data.session;
+    history.replaceState(null, '', location.pathname);
+  } else {
+    await new Promise((r) => setTimeout(r, 600));
+    session = (await sb.auth.getSession()).data.session;
+  }
   if (!session) { $('who').textContent = ''; return msg(err ? `This link did not work: ${err}. Ask the admin to send a new one.` : 'This link has expired or was already used. Ask the admin to send a new one.', 'err'); }
   $('who').textContent = session.user.email; $('f').hidden = false; $('p1').focus();
   $('f').onsubmit = async (e) => {
