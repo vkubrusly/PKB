@@ -1,6 +1,7 @@
 // ops-users — admin only (Victor, 2026-11-06): send a portal user their access link.
 //   POST { email }  → user with a login: password reset link; without one: first-access (invite) link.
-// The link opens budget.pkbhomes.com/ops/password/, where the person chooses a password. It is e-mailed
+// The link opens budget.pkbhomes.com/ops/password/ (token in the query, used only when the person taps
+// Continue, so link previews cannot spend it), where the person chooses a password. It is e-mailed
 // from the bot mailbox (BOT_EMAIL / BOT_EMAIL_PASSWORD secrets, Gmail SMTP) and also returned, so the
 // admin can send it another way (WhatsApp) if the e-mail does not arrive. Only e-mails in ops.portal_users.
 // Env: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, BOT_EMAIL, BOT_EMAIL_PASSWORD
@@ -27,7 +28,9 @@ Deno.serve(async (req) => {
     const kind = u.has_login ? 'recovery' : 'invite';
     const { data: link, error: le } = await admin.auth.admin.generateLink({ type: kind, email: String(u.email), options: { redirectTo: REDIRECT } });
     if (le) return json({ error: le.message }, 400);
-    const url = link.properties.action_link;
+    // Not Supabase's one-use verify link: WhatsApp / e-mail previews open links in the background and that
+    // spent it before the person tapped (11/09). Our page gets the token and uses it only on "Continue".
+    const url = `${REDIRECT}?t=${encodeURIComponent(link.properties.hashed_token)}&k=${kind}&e=${encodeURIComponent(String(u.email))}`;
 
     const first = String(u.name || '').split(' ')[0] || '';
     const subject = kind === 'invite' ? 'PKB Ops — your first access' : 'PKB Ops — reset your password';
