@@ -26,7 +26,7 @@ for (const [label, st] of [['default', JSON.parse(body.filters || '{}')['3'] || 
   console.log(`${label}: ${jobs.length} jobs`);
   for (const j of jobs) if (j.jobId) all.set(j.jobId, j);
 }
-const show = (j) => `${j.jobId} · ${j.jobName} · ${[j.street, j.city].filter(Boolean).join(', ')} · status ${j.status} · closed ${j.isClosed}`;
+const show = (j) => `${j.jobId} · builder ${j.builderId} · ${j.jobName} · ${[j.street, j.city].filter(Boolean).join(', ')} · status ${j.status} · closed ${j.isClosed}`;
 console.log(`\n===== ${all.size} distinct jobs; names NOT starting with a 4-digit number =====`);
 for (const j of all.values()) if (!/^\d{4} - /.test(j.jobName || '')) console.log(show(j));
 console.log('\n===== matching the words =====');
