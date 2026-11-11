@@ -68,7 +68,8 @@ const bt = {};
 const btFile = join(ROOT, 'data', 'buildertrend', 'jobpicker_raw.json');
 if (existsSync(btFile)) {
   const find = (o) => { if (Array.isArray(o)) { if (o[0] && o[0].jobName) return o; for (const v of o) { const r = find(v); if (r) return r; } } else if (o && typeof o === 'object') for (const v of Object.values(o)) { const r = find(v); if (r) return r; } return null; };
-  for (const j of find(JSON.parse(readFileSync(btFile, 'utf8'))) || []) { const m = String(j.jobName).match(/^(\d{4})\s*-/); if (m) bt[m[1]] = j; }
+  // By job number; Prime jobs have none ("PRIME - …") and keep the spreadsheet's S number (see below).
+  for (const j of find(JSON.parse(readFileSync(btFile, 'utf8'))) || []) { const m = String(j.jobName).match(/^(\d{4})\s*-/); if (m) bt[m[1]] = j; else if (/^PRIME\s*-/i.test(j.jobName) && j.jobId) bt['P' + j.jobId] = j; }
 }
 // Match spreadsheet rows to Buildertrend jobs by address (the spreadsheet '#' is
 // not the Buildertrend job number). Key = house number + street core, e.g.
@@ -148,7 +149,7 @@ for (const r of rows) {
   let ex = existingJob(r);
   if (!ALIAS[sid] && b && ALIAS_TARGETS.has(String(b.jobName).slice(0, 4))) b = null;
   if (!ALIAS[sid] && ALIAS_TARGETS.has(ex)) ex = null;
-  const num = b ? String(b.jobName).slice(0, 4) : ex || sid;
+  const num = b && /^\d{4}/.test(b.jobName) ? String(b.jobName).slice(0, 4) : ex || sid;
   if (!b && !ex) unmatched.push(`#${r['#']} ${r.Address}`);
   const turtle = r.Status === 'Turtle' || /turtle/i.test(r['Current Note']) ? 'relocation_pending' : 'none';
   w(`insert into ops.jobs (org_id, job_number, bt_job_id, bt_job_name, company, address, parcel, county, model, owner_name, contract_value, signed_at, first_draw_at, second_draw_at, status, turtle_state, note)
