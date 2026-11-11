@@ -8,7 +8,7 @@ on:
       probe:
         description: 'Probe to run'
         type: choice
-        options: [fasttrack, fasttrack-collect, fasttrack-reports, lake, buildertrend, buildertrend-schedule, buildertrend-schedule-api, bt-schedule-rule, buildertrend-warranty, buildertrend-warranty-api, bt-warranty-rule, buildertrend-lead-find, projectdox]
+        options: [fasttrack, fasttrack-collect, fasttrack-reports, lake, buildertrend, buildertrend-schedule, buildertrend-schedule-api, bt-schedule-rule, buildertrend-warranty, buildertrend-warranty-api, bt-warranty-rule, buildertrend-lead-find, buildertrend-jobs-find, projectdox]
         default: fasttrack
       arg:
         description: 'Optional argument (e.g. permit number)'
@@ -53,6 +53,8 @@ jobs:
             node rules/bt_schedule.mjs ${{ inputs.arg }}
           elif [ "${{ inputs.probe }}" = buildertrend-schedule-api ]; then
             node collectors/buildertrend/schedule_api_probe.mjs ${{ inputs.arg }}
+          elif [ "${{ inputs.probe }}" = buildertrend-jobs-find ]; then
+            node collectors/buildertrend/jobs_find.mjs Jourden Dandee Overlook Triana Medici Antioch Shorewood "130th Ln" Rosevear "Fort Myers" Galaxie "Spring Dr"
           elif [ "${{ inputs.probe }}" = buildertrend-lead-find ]; then
             node collectors/buildertrend/lead_find.mjs "Ubinha" "Jorge Diaz"
           elif [ "${{ inputs.probe }}" = bt-warranty-rule ]; then
