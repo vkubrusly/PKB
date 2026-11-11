@@ -118,7 +118,8 @@ export async function createDailyLog(page, { jobId = null, jobName, title, notes
   if (selectedNames.length !== notify.length || !wanted.every((w) => selectedNames.some((x) => x.toLowerCase().endsWith(w))))
     throw new Error(`notify list is [${selectedNames.join(', ')}], expected [${notify.join(', ')}]; not publishing`);
   // The form must be on the intended job before anything is published.
-  const formJob = (await page.locator('body').innerText()).match(/\b\d{4} - [A-Z]{2} - [^\n]+/)?.[0] || '';
+  // (job names: "0001 - OC - …" or Prime jobs "PRIME - CT - …" / "PRIME - Custom - …")
+  const formJob = (await page.locator('body').innerText()).match(/\b(?:\d{4}|PRIME) - [A-Za-z]+ - [^\n]+/)?.[0] || '';
   if (jobName && !formJob.startsWith(jobName.slice(0, 7))) throw new Error(`form is on "${formJob}", expected "${jobName}"; not publishing`);
   if (stopBeforePublish) return { stopped: true, formJob, notify: selectedNames, skipped };
 
