@@ -1,4 +1,5 @@
 {
-  "_note": "Houses recorded twice: the spreadsheet / county number (S…) and the Buildertrend job number. Requests that match the left one are filed on the right one (Victor, 2026-11-02).",
-  "S001": "0001"
+  "_note": "Houses recorded twice: the spreadsheet / county number (S…) and the Buildertrend job number. Requests that match the left one are filed on the right one (Victor, 2026-11-02). S050 = 0095 (Buildertrend spells it '25 E Roseveard St'; Presale), 11/11.",
+  "S001": "0001",
+  "S050": "0095"
 }
