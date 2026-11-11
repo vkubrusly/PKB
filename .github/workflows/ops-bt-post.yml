@@ -30,7 +30,7 @@ jobs:
         env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' }
       - name: Anything queued?
         id: q
-        run: echo "n=$(node -e "import('./scripts/sb.mjs').then(async ({sql}) => console.log((await sql(\"select (select count(*)::int from ops.outbound_messages where channel in ('bt_daily_log', 'bt_lead') and status = 'draft') + (select count(*)::int from ops.warranty_claims w join ops.jobs j on j.id = w.job_id where w.bt_claim_id is null and w.bt_attempts < 5 and j.bt_job_id is not null) n\"))[0].n))")" >> "$GITHUB_OUTPUT"
+        run: echo "n=$(node -e "import('./scripts/sb.mjs').then(async ({sql}) => console.log((await sql(\"select (select count(*)::int from ops.outbound_messages m left join ops.jobs j on j.id = m.job_id where m.status = 'draft' and (m.channel = 'bt_lead' or (m.channel = 'bt_daily_log' and j.bt_job_id is not null))) + (select count(*)::int from ops.warranty_claims w join ops.jobs j on j.id = w.job_id where w.bt_claim_id is null and w.bt_attempts < 5 and j.bt_job_id is not null) n\"))[0].n))")" >> "$GITHUB_OUTPUT"
       - name: Buildertrend session
         if: steps.q.outputs.n != '0'
         env: { BT_COOKIES_JSON: '${{ secrets.BT_COOKIES_JSON }}' }
