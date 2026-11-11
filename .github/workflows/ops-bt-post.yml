@@ -41,7 +41,7 @@ jobs:
         uses: actions/cache@v4
         with: { path: ~/.cache/ms-playwright, key: 'playwright-${{ runner.os }}-${{ hashFiles(''ops/package-lock.json'') }}' }
       - if: steps.q.outputs.n != '0'
-        run: npx playwright install --with-deps chromium
+        run: timeout 300 npx playwright install --with-deps chromium || { echo "::warning::Ubuntu packages unavailable (mirror) — browser installed without the extra system packages"; npx playwright install chromium; }
       - name: Post
         if: steps.q.outputs.n != '0'
         env: { OPS_BT_POST: 'true' }
