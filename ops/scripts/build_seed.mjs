@@ -21,6 +21,9 @@ import { fileURLToPath } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const csvPath = join(ROOT, 'data', 'permits', readdirSync(join(ROOT, 'data', 'permits')).filter(f => f.endsWith('.csv')).sort().pop());
 
+// Job status set by Victor that the (static) spreadsheet does not carry yet; wins over its Status column.
+const STATUS_OVERRIDES = { '0030': 'completed' }; // 2026-10-16: 11025 Ledgement Ln finished
+
 // Spreadsheet rows whose building-permit number differs from the one the portal uses.
 const PERMIT_OVERRIDES = { '49': { number: 'BLDR-2026-0437', portal: 'energov:winterpark' } }; // BOA-2026-0004 is the Board of Adjustment case
 
@@ -65,7 +68,8 @@ const bt = {};
 const btFile = join(ROOT, 'data', 'buildertrend', 'jobpicker_raw.json');
 if (existsSync(btFile)) {
   const find = (o) => { if (Array.isArray(o)) { if (o[0] && o[0].jobName) return o; for (const v of o) { const r = find(v); if (r) return r; } } else if (o && typeof o === 'object') for (const v of Object.values(o)) { const r = find(v); if (r) return r; } return null; };
-  for (const j of find(JSON.parse(readFileSync(btFile, 'utf8'))) || []) { const m = String(j.jobName).match(/^(\d{4})\s*-/); if (m) bt[m[1]] = j; }
+  // By job number; Prime jobs have none ("PRIME - …") and keep the spreadsheet's S number (see below).
+  for (const j of find(JSON.parse(readFileSync(btFile, 'utf8'))) || []) { const m = String(j.jobName).match(/^(\d{4})\s*-/); if (m) bt[m[1]] = j; else if (/^PRIME\s*-/i.test(j.jobName) && j.jobId) bt['P' + j.jobId] = j; }
 }
 // Match spreadsheet rows to Buildertrend jobs by address (the spreadsheet '#' is
 // not the Buildertrend job number). Key = house number + street core, e.g.
@@ -129,18 +133,27 @@ if (process.env.SUPABASE_ACCESS_TOKEN) {
 const existingJob = (r) => (r.Parcel && existingByParcel[normParcel(r.Parcel)]) || existingByAddr[normAddr(r.Address)] || null;
 
 // ---- Jobs from the spreadsheet ----
+const ALIAS = Object.fromEntries(Object.entries(JSON.parse(readFileSync(join(ROOT, 'config', 'job_aliases.json'), 'utf8'))).filter(([k]) => !k.startsWith('_')));
+const ALIAS_TARGETS = new Set(Object.values(ALIAS));
 const rows = parseCsv(readFileSync(csvPath, 'utf8'));
 const permitToJob = {};
 const unmatched = [];
 for (const r of rows) {
   // job_number = the Buildertrend number when matched, else "S" + spreadsheet row.
   // Parcel ID first (Buildertrend custom field "Parcial ID"), address as fallback.
-  const b = (r.Parcel && matchBtByParcel(r.Parcel)) || matchBt(r.Address);
-  const num = b ? String(b.jobName).slice(0, 4) : existingJob(r) || 'S' + r['#'].padStart(3, '0');
-  if (!b && !existingJob(r)) unmatched.push(`#${r['#']} ${r.Address}`);
+  // config/job_aliases.json (Victor): spreadsheet row S001 is Buildertrend job 0001. That job then belongs to
+  // that row only — another row that matches it by street (row 88, "SW 41st Cir" with no house number) keeps
+  // its own S number.
+  const sid = 'S' + r['#'].padStart(3, '0');
+  let b = ALIAS[sid] ? bt[ALIAS[sid]] || { jobName: ALIAS[sid], jobId: null } : (r.Parcel && matchBtByParcel(r.Parcel)) || matchBt(r.Address);
+  let ex = existingJob(r);
+  if (!ALIAS[sid] && b && ALIAS_TARGETS.has(String(b.jobName).slice(0, 4))) b = null;
+  if (!ALIAS[sid] && ALIAS_TARGETS.has(ex)) ex = null;
+  const num = b && /^\d{4}/.test(b.jobName) ? String(b.jobName).slice(0, 4) : ex || sid;
+  if (!b && !ex) unmatched.push(`#${r['#']} ${r.Address}`);
   const turtle = r.Status === 'Turtle' || /turtle/i.test(r['Current Note']) ? 'relocation_pending' : 'none';
   w(`insert into ops.jobs (org_id, job_number, bt_job_id, bt_job_name, company, address, parcel, county, model, owner_name, contract_value, signed_at, first_draw_at, second_draw_at, status, turtle_state, note)
-select id, ${q(num)}, ${b ? b.jobId : 'null'}, ${q(b?.jobName)}, ${q(r.Company === 'Prime' ? 'Prime' : 'PKB')}, ${q(r.Address)}, ${q(r.Parcel)}, ${q(r.County)}, ${q(r.Model)}, ${q(r.Owner)}, ${qn(r['Contract $'])}, ${qd(r['Signed Date'])}, ${qd(r['1st Draw'])}, ${qd(r['2nd Draw'])}, ${q(STATUS[r.Status] || 'starting')}, ${q(turtle)}, ${q(r['Current Note'])} from _org
+select id, ${q(num)}, ${b ? b.jobId : 'null'}, ${q(b?.jobName)}, ${q(r.Company === 'Prime' ? 'Prime' : 'PKB')}, ${q(r.Address)}, ${q(r.Parcel)}, ${q(r.County)}, ${q(r.Model)}, ${q(r.Owner)}, ${qn(r['Contract $'])}, ${qd(r['Signed Date'])}, ${qd(r['1st Draw'])}, ${qd(r['2nd Draw'])}, ${q(STATUS_OVERRIDES[num] || STATUS[r.Status] || 'starting')}, ${q(turtle)}, ${q(r['Current Note'])} from _org
 on conflict (org_id, job_number) do update set bt_job_id = coalesce(excluded.bt_job_id, ops.jobs.bt_job_id), bt_job_name = coalesce(excluded.bt_job_name, ops.jobs.bt_job_name), company = excluded.company, address = excluded.address, parcel = excluded.parcel, county = excluded.county, model = excluded.model, owner_name = excluded.owner_name, contract_value = excluded.contract_value, signed_at = excluded.signed_at, first_draw_at = excluded.first_draw_at, second_draw_at = excluded.second_draw_at, status = excluded.status, turtle_state = excluded.turtle_state, note = excluded.note;`);
   // CO date ends monitoring for the job (see migration 0016).
   if (toDate(r.CO)) w(`update ops.jobs set co_at = ${qd(r.CO)} where org_id = (select id from _org) and job_number = ${q(num)};`);
@@ -190,7 +203,7 @@ if (process.env.SUPABASE_ACCESS_TOKEN) {
 
 // ---- Portal data (EnerGov, Accela) ----
 const portalDir = join(ROOT, 'data', 'portal');
-const PORTAL_OF_DIR = { citrus: 'accela:citrus', charlotte: 'accela:charlotte', northport: 'accela:northport' }; // default: energov:<dir>
+const PORTAL_OF_DIR = { citrus: 'accela:citrus', charlotte: 'accela:charlotte', northport: 'accela:northport', orange: 'fasttrack:orange' }; // default: energov:<dir>
 for (const county of existsSync(portalDir) ? readdirSync(portalDir) : []) {
   const portal = PORTAL_OF_DIR[county] || `energov:${county}`;
   for (const f of readdirSync(join(portalDir, county)).filter(f => f.endsWith('.json') && !f.startsWith('_'))) {
@@ -205,18 +218,19 @@ for (const county of existsSync(portalDir) ? readdirSync(portalDir) : []) {
     if (!num) continue; // permit not in the spreadsheet
     const caseSel = `(select id from ops.permit_cases where org_id = (select id from _org) and portal = ${q(portal)} and number = ${q(p.number)})`;
     const lastSub = p.submittals[p.submittals.length - 1];
-    const ops = p.issuedAt ? 'issued' : /fees? due/i.test(p.status) ? 'fees_due' : lastSub && /re-?submit|revisions? required/i.test(lastSub.status) ? 'corrections' : 'in_review';
-    const ball = p.issuedAt ? null : ops === 'corrections' ? 'sovereign' : ops === 'fees_due' ? 'pkb' : 'county';
-    w(`update ops.permit_cases set portal_case_id = ${q(p.caseId)}, portal_status = ${q(p.status)}, ops_status = ${q(ops)}, ball_with = ${q(ball)}, applied_at = coalesce(${qd(p.appliedAt)}, applied_at), issued_at = coalesce(${qd(p.issuedAt)}, issued_at), expires_at = ${qd(p.expiresAt)}, finaled_at = ${qd(p.finalizedAt)}, valuation = ${qn(p.valuation)}, square_feet = ${qn(p.squareFeet)}, fee_total = ${qn(p.feeSummary?.TotalFee)}, fee_unpaid = ${qn(p.feeSummary?.TotalUnpaidFee)}, last_collected_at = ${q(p.collectedAt)} where id = ${caseSel};`);
+    const ops = p.issuedAt ? 'issued' : /fees? due/i.test(p.status) ? 'fees_due' : lastSub && /re-?submit|revisions? required|failed verification/i.test(lastSub.status) ? 'corrections' : 'in_review';
+    // Corrections: the ball is with whoever coordinates the house's permit (ops.jobs.permit_office) — Sovereign or PKB.
+    const ball = p.issuedAt ? 'null' : ops === 'corrections' ? `(select case when permit_office = 'sovereign' then 'sovereign' else 'pkb' end from ops.jobs where id = ops.permit_cases.job_id)` : q(ops === 'fees_due' ? 'pkb' : 'county');
+    w(`update ops.permit_cases set portal_case_id = ${q(p.caseId)}, portal_status = ${q(p.status)}, ops_status = ${q(ops)}, ball_with = ${ball}, applied_at = coalesce(${qd(p.appliedAt)}, applied_at), issued_at = coalesce(${qd(p.issuedAt)}, issued_at), expires_at = ${qd(p.expiresAt)}, finaled_at = ${qd(p.finalizedAt)}, valuation = ${qn(p.valuation)}, square_feet = ${qn(p.squareFeet)}, fee_total = ${qn(p.feeSummary?.TotalFee)}, fee_unpaid = ${qn(p.feeSummary?.TotalUnpaidFee)}, last_collected_at = ${q(p.collectedAt)} where id = ${caseSel};`);
     for (const s of p.submittals) {
       w(`insert into ops.submittals (org_id, permit_case_id, portal_id, round, type, status, submitted_at, due_at, completed_at) select (select id from _org), ${caseSel}, ${q(s.submittalId)}, ${s.round}, ${q(s.type)}, ${q(s.status)}, ${qd(s.submittedAt)}, ${qd(s.dueAt)}, ${qd(s.completedAt)}
 on conflict (permit_case_id, round) do update set status = excluded.status, completed_at = excluded.completed_at;`);
     }
     for (const r of p.reviewItems) {
-      const failed = /re-?submit|denied|fail|disapprov|revisions? required/i.test(r.status || '');
+      const failed = /re-?submit|denied|fail|disapprov|revisions? required|deficienc/i.test(r.status || '');
       w(`insert into ops.review_items (org_id, permit_case_id, submittal_id, portal_id, round, department, status, failed, reviewer, reviewer_email, due_at, completed_at, comments)
 select (select id from _org), ${caseSel}, (select id from ops.submittals where permit_case_id = ${caseSel} and round = ${r.round ?? 'null'}), ${q(r.itemReviewId)}, ${r.round ?? 'null'}, ${q(r.department)}, ${q(r.status)}, ${failed}, ${q(r.assignedTo)}, ${q(r.assignedToEmail)}, ${qd(r.dueAt)}, ${qd(r.completedAt)}, ${q(r.comments)}
-on conflict (permit_case_id, portal_id) do update set status = excluded.status, failed = excluded.failed, completed_at = excluded.completed_at, comments = excluded.comments;`);
+on conflict (permit_case_id, portal_id) do update set status = excluded.status, failed = excluded.failed, completed_at = excluded.completed_at, comments = coalesce(excluded.comments, ops.review_items.comments), reviewer = coalesce(excluded.reviewer, ops.review_items.reviewer), reviewer_email = coalesce(excluded.reviewer_email, ops.review_items.reviewer_email);`);
       if (r.completedAt) {
         w(`insert into ops.events (org_id, job_id, permit_case_id, kind, source, occurred_at, payload, dedupe_key)
 select c.org_id, c.job_id, c.id, ${q(failed ? 'review_item.failed' : 'review_item.approved')}, 'import', ${q(r.completedAt)}::timestamptz, ${q(JSON.stringify({ department: r.department, round: r.round, status: r.status }))}::jsonb, ${q(`${portal.split(':')[0]}:review_item:${r.itemReviewId}:${r.status}`)}
@@ -230,7 +244,7 @@ from ops.permit_cases c where c.id = ${caseSel} on conflict (org_id, dedupe_key)
       const passed = !failed && (/^(approved|passed|not required)/i.test(st) || (!!i.passed && !st));
       w(`insert into ops.inspections (org_id, permit_case_id, number, type, status, passed, failed, reinspection, requested_at, scheduled_at, actual_at, inspector, comments)
 select (select id from _org), ${caseSel}, ${q(i.number)}, ${q(i.type)}, ${q(i.status)}, ${passed}, ${failed}, ${!!i.reinspection}, ${qd(i.requestedAt)}, ${qd(i.scheduledAt)}, ${qd(i.actualAt)}, ${q(i.inspector)}, ${q(i.comments || null)}
-on conflict (permit_case_id, number) do update set status = excluded.status, passed = excluded.passed, failed = excluded.failed, actual_at = excluded.actual_at, comments = coalesce(excluded.comments, ops.inspections.comments);`);
+on conflict (permit_case_id, number) do update set status = excluded.status, passed = excluded.passed, failed = excluded.failed, actual_at = excluded.actual_at, inspector = coalesce(excluded.inspector, ops.inspections.inspector), comments = coalesce(excluded.comments, ops.inspections.comments);`);
     }
     for (const h of p.holds) {
       const key = `${h.name}|${h.createdAt}|${(h.comments || '').slice(0, 40)}`;

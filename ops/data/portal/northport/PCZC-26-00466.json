@@ -13,7 +13,7 @@
     "address": "4528 ANTIOCH ST NORTH PORT FL 34288",
     "parcel": null,
     "appliedAt": "2026-02-16",
-    "issuedAt": null,
+    "issuedAt": "2026-08-05",
     "expiresAt": null,
     "finalizedAt": null,
     "squareFeet": null,
@@ -1182,6 +1182,6 @@
     "contacts": [],
     "feeSummary": null,
     "subRecords": [],
-    "collectedAt": "2026-09-29T23:17:15.127Z"
+    "collectedAt": "2026-10-27T17:45:02.021Z"
   }
 }

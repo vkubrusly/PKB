@@ -40,7 +40,7 @@ const PORTAL_BASE = {
 };
 const shortType = (t) => String(t || '').replace(/ - 1 ?& ?2 Res(idential)? Fam(ily)?/i, '').trim();
 const cleanComments = (c) => String(c || '').replace(/\r/g, '').replace(/^\s*\d{1,2}\/\d{1,2}\/\d{2,4}\s*\n/, '').replace(/[ \t]+/g, ' ').trim();
-const brDate = (d) => (d ? new Date(String(d).slice(0, 10) + 'T12:00:00Z').toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '—');
+const usDate = (d) => (d ? new Date(String(d).slice(0, 10) + 'T12:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC', month: '2-digit', day: '2-digit', year: '2-digit' }) : '—');
 
 const orgId = (await sql(`select id from public.orgs where name = ${q(ORG)} limit 1`))[0]?.id;
 if (!orgId) throw new Error(`org "${ORG}" not found`);
@@ -88,7 +88,7 @@ for (const list of byJob.values()) {
 
   const block = (f) => {
     const fee = /fee owed|w\/fee|with fee/i.test(f.status) ? 'SIM — taxa de reinspeção devida' : /no fees?/i.test(f.status) ? 'não' : '—';
-    return `■ ${shortType(f.type)} (nº ${f.number}) — ${brDate(f.at)}
+    return `■ ${shortType(f.type)} (nº ${f.number}) — ${usDate(f.at)}
 Inspetor: ${f.inspector || '—'} · Resultado: ${f.status} · Taxa de reinspeção: ${fee}
 Comentários do inspetor:
 ${cleanComments(f.comments) || '(o inspetor não deixou comentário no portal)'}`;
@@ -106,7 +106,7 @@ Próximo passo: corrigir os itens acima e pedir a reinspeção no portal.${porta
 ${missing.length ? `\n(Sem e-mail cadastrado para: ${missing.join(', ')} — avisado(s) pelo Daily Log do Buildertrend.)` : ''}
 — PKB Ops (aviso automático)`;
   const logTitle = `Inspection failed — ${types.join(', ')}`.slice(0, 50);
-  const logNotes = list.map((f) => `${shortType(f.type)} (${f.number}) failed on ${brDate(f.at)} — ${f.status}. Inspector: ${f.inspector || '—'}.\nInspector comments:\n${cleanComments(f.comments) || '(none on the portal)'}`).join('\n\n') + '\n\nNext: fix the items and request the re-inspection on the portal.';
+  const logNotes = list.map((f) => `${shortType(f.type)} (${f.number}) failed on ${usDate(f.at)} — ${f.status}. Inspector: ${f.inspector || '—'}.\nInspector comments:\n${cleanComments(f.comments) || '(none on the portal)'}`).join('\n\n') + '\n\nNext: fix the items and request the re-inspection on the portal.';
 
   let sendResult = { dryRun: true };
   if (!DRY) {

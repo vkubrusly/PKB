@@ -68,7 +68,7 @@ if (attempts + 1 >= 3) {
     const { sendEmail } = await import('../notify/email.mjs');
     const contacts = JSON.parse((await import('node:fs')).readFileSync(new URL('../config/contacts.json', import.meta.url), 'utf8'));
     await sendEmail({ to: [contacts.internal.director.email], subject: `PKB Ops — a rodada das ${slot.getHours()}h ainda não concluiu (tentativa ${attempts + 1})`, alwaysCc: false, force: true,
-      text: `A atualização das ${slot.getHours()}h (${slot.toLocaleDateString('pt-BR')}) ainda não terminou com sucesso. O sistema está tentando de novo a cada 15 minutos.\n\nÚltimos dados no portal: ${last ? last.toLocaleString('pt-BR', { timeZone: 'America/New_York' }) : '—'} (Flórida).\nDetalhes: https://github.com/${repo}/actions/workflows/ops-daily.yml\n\n— PKB Ops (aviso automático)` });
+      text: `A atualização das ${slot.getHours()}h (${slot.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' })}) ainda não terminou com sucesso. O sistema está tentando de novo a cada 30 minutos.\n\nÚltimos dados no portal: ${last ? last.toLocaleString('en-US', { timeZone: 'America/New_York', month: '2-digit', day: '2-digit', year: '2-digit', hour: 'numeric', minute: '2-digit' }) : '—'} (Flórida).\nDetalhes: https://github.com/${repo}/actions/workflows/ops-daily.yml\n\n— PKB Ops (aviso automático)` });
     await sql(`insert into ops.events (org_id, kind, source, occurred_at, payload, dedupe_key, processed_at) values (${q(org.id)}, 'watchdog.alert', 'rule', now(), ${q(JSON.stringify({ attempts: attempts + 1 }))}::jsonb, ${q(key)}, now()) on conflict do nothing`);
     console.log('alert e-mail sent to Victor');
   }

@@ -8,11 +8,12 @@ export const DRY = process.argv.includes('--dry-run');
 export const q = (v) => (v == null ? 'null' : `'${String(v).replace(/'/g, "''")}'`);
 export const qa = (a) => (a.length ? `array[${a.map(q).join(',')}]::text[]` : `'{}'::text[]`);
 export const norm = (s) => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim();
-export const brDate = (d) => (d ? new Date(String(d).slice(0, 10) + 'T12:00:00Z').toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '—');
+// Dates always in US format, MM/DD/YY (Victor, 2026-11-03).
+export const usDate = (d) => (d ? new Date(String(d).slice(0, 10) + 'T12:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC', month: '2-digit', day: '2-digit', year: '2-digit' }) : '—');
 export const street = (a) => String(a || '').split(',')[0];
 export const daysAgo = (d) => (d ? (Date.now() - new Date(String(d).slice(0, 10) + 'T12:00:00Z').getTime()) / 864e5 : Infinity);
 export const RECENT_DAYS = Number(process.env.OPS_RECENT_DAYS || 3);
-export const REVIEW_FAILED = /revisions? required|disapprov|denied|fail|incomplete|re-?submit|corrections?|rejected/i;
+export const REVIEW_FAILED = /revisions? required|disapprov|denied|fail|incomplete|re-?submit|corrections?|rejected|deficienc/i;
 
 export const contacts = JSON.parse(readFileSync(new URL('../config/contacts.json', import.meta.url), 'utf8'));
 const people = [...(contacts.internal.supervisors || []), ...(contacts.internal.project_managers || []), contacts.internal.contractor_of_record, contacts.internal.permits_owner].filter(Boolean);
@@ -73,7 +74,7 @@ export async function mail({ rule, jobId = null, to, cc = [], subject, text, eve
   console.log(`${status.toUpperCase()} ${rule} → ${to.join(', ')}${cc.length ? ` cc ${cc.join(', ')}` : ''} · ${subject}`);
   if (DRY) { console.log(text + '\n'); return status; }
   await sql(`insert into ops.outbound_messages (org_id, job_id, channel, rule, to_addresses, cc_addresses, subject, body, status, error, external_id, in_reply_to_event, sent_at)
-    values (${q(await orgId())}, ${q(jobId)}, 'email', ${q(rule)}, ${qa(to)}, ${qa(cc)}, ${q(subject)}, ${q(text)}, ${q(status)}, ${q(res.error || null)}, ${q(res.id || null)}, ${eventId ?? 'null'}, ${status === 'sent' ? 'now()' : 'null'})`);
+    values (${q(await orgId())}, ${q(jobId)}, 'email', ${q(rule)}, ${qa(to)}, ${qa(res.cc || cc)}, ${q(subject)}, ${q(text)}, ${q(status)}, ${q(res.error || null)}, ${q(res.id || null)}, ${eventId ?? 'null'}, ${status === 'sent' ? 'now()' : 'null'})`);
   return status;
 }
 

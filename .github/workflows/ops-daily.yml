@@ -91,7 +91,10 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm, cache-dependency-path: ops/package-lock.json }
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      - name: Cache Playwright browser
+        uses: actions/cache@v4
+        with: { path: ~/.cache/ms-playwright, key: 'playwright-${{ runner.os }}-${{ hashFiles(''ops/package-lock.json'') }}' }
+      - run: timeout 300 npx playwright install --with-deps chromium || { echo "::warning::Ubuntu packages unavailable (mirror) — browser installed without the extra system packages"; npx playwright install chromium; }
 
       - name: Test e-mail
         if: ${{ inputs.test_email != '' && inputs.test_email != null }}
@@ -152,6 +155,11 @@ jobs:
       # wrapped by scripts/collector_run.mjs; collect_all records one row per portal and stage.
       - name: County portals (queue-driven)
         continue-on-error: true
+        env:   # Orange County Fast Track: the two contractor logins (config/fasttrack_accounts.json)
+          ORANGE_PORTAL_USER: ${{ secrets.ORANGE_PORTAL_USER }}
+          ORANGE_PORTAL_PASS: ${{ secrets.ORANGE_PORTAL_PASS }}
+          ORANGE_PORTAL_USER_2: ${{ secrets.ORANGE_PORTAL_USER_2 }}
+          ORANGE_PORTAL_PASS_2: ${{ secrets.ORANGE_PORTAL_PASS_2 }}
         run: node scripts/collect_all.mjs ${{ inputs.limit && format('--limit {0}', inputs.limit) || '' }}
 
       - name: Load into Supabase
@@ -221,6 +229,23 @@ jobs:
         run: |
           node rules/post_bt_logs.mjs || echo "::warning::post_bt_logs failed"
           node rules/post_bt_leads.mjs || echo "::warning::post_bt_leads failed"
+
+      # Buildertrend Schedule items marked complete from county evidence (config/bt_schedule_map.json:
+      # passed inspection / permit issued / CO). Only marks complete, never un-marks. Writes to
+      # Buildertrend, so only with OPS_BT_POST 'true'.
+      - name: Buildertrend Schedule (items done per county evidence)
+        if: steps.bt.outputs.state == 'ok' && vars.OPS_BT_POST == 'true'
+        continue-on-error: true
+        env: { OPS_BT_POST: 'true' }
+        run: node rules/bt_schedule.mjs || echo "::warning::bt_schedule failed"
+
+      # Warranty claims (rules/bt_warranty.mjs): create the Buildertrend claim of each new website request
+      # item and follow every claim's status until it is resolved. Only with OPS_BT_POST 'true'.
+      - name: Buildertrend Warranty (create claims, follow status)
+        if: steps.bt.outputs.state == 'ok' && vars.OPS_BT_POST == 'true'
+        continue-on-error: true
+        env: { OPS_BT_POST: 'true' }
+        run: node rules/bt_warranty.mjs || echo "::warning::bt_warranty failed"
 
       - name: Keep the raw snapshots (7 days)
         if: always()

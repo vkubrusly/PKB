@@ -26,9 +26,24 @@ const signature = (d) => d.rule === 'FIELD' ? `— Enviado por ${d.requested_by 
   : `— Registro automático do PKB Ops (regra ${d.rule})`;
 const q = (v) => (v == null ? 'null' : `'${String(v).replace(/'/g, "''")}'`);
 
+// A spreadsheet "S…" house that now has its Buildertrend job is a second row (the Buildertrend number):
+// move its waiting Daily Logs there (same parcel, or same address).
+const moved = await sql(`update ops.outbound_messages m set job_id = b.id, error = null
+  from ops.jobs s, ops.jobs b where s.id = m.job_id and m.channel = 'bt_daily_log' and m.status = 'draft' and s.bt_job_id is null
+    and b.bt_job_id is not null and b.id <> s.id and b.org_id = s.org_id
+    and ((s.parcel is not null and b.parcel = s.parcel) or lower(regexp_replace(b.address, '[^a-zA-Z0-9]', '', 'g')) = lower(regexp_replace(s.address, '[^a-zA-Z0-9]', '', 'g')))
+  returning s.job_number s, b.job_number b`);
+for (const x of moved) console.log(`moved a waiting Daily Log ${x.s} → ${x.b} (job now in Buildertrend)`);
 const drafts = await sql(`select m.id, m.rule, m.requested_by, m.subject, m.body, m.to_addresses, m.media, j.job_number, j.bt_job_id, j.bt_job_name
   from ops.outbound_messages m join ops.jobs j on j.id = m.job_id
-  where m.channel = 'bt_daily_log' and m.status = 'draft' order by m.created_at limit 20`);
+  where m.channel = 'bt_daily_log' and m.status = 'draft' and j.bt_job_id is not null order by m.created_at limit 20`);
+// Houses with no Buildertrend job yet (spreadsheet-only "S…" rows): their Daily Logs wait as drafts and go
+// out as soon as the job exists in Buildertrend and the round links it (Victor, 11/11: 9370 N Jourden lost
+// its inspection logs). Not counted as "queued", so they do not start the hourly poster.
+const waiting = await sql(`update ops.outbound_messages m set error = 'waiting: house has no Buildertrend job yet'
+  from ops.jobs j where j.id = m.job_id and m.channel = 'bt_daily_log' and m.status = 'draft' and j.bt_job_id is null
+    and m.error is distinct from 'waiting: house has no Buildertrend job yet' returning j.job_number`);
+if (waiting.length) console.log(`waiting for a Buildertrend job: ${[...new Set(waiting.map((w) => w.job_number))].join(', ')}`);
 if (!drafts.length) { console.log('no Daily Logs to post'); process.exit(0); }
 if (DRY) { for (const d of drafts) console.log(`[dry run] ${d.job_number} "${d.subject}" → notify ${d.to_addresses.join(', ')}`); process.exit(0); }
 
@@ -36,13 +51,6 @@ const { browser, page, loggedIn } = await openBuildertrend();
 if (!loggedIn) { console.error('Buildertrend session expired — nothing posted'); await browser.close(); process.exit(0); }
 let ok = 0;
 for (const d of drafts) {
-  if (!d.bt_job_id) {
-    // A house with no Buildertrend job (spreadsheet-only "S…" rows) can't take a Daily Log; after 3 days
-    // stop retrying, so the hourly poster doesn't open Buildertrend for it every hour.
-    console.log(`skip ${d.job_number}: not in Buildertrend`);
-    await sql(`update ops.outbound_messages set status = 'cancelled', error = 'house has no Buildertrend job — not posted' where id = ${q(d.id)} and status = 'draft' and created_at < now() - interval '3 days'`);
-    continue;
-  }
   // claim the draft so a parallel run (hourly poster / daily round) never posts it twice
   const claim = await sql(`update ops.outbound_messages set error = 'posting:' || now()::text where id = ${q(d.id)} and status = 'draft'
     and (error is null or error not like 'posting:%' or substring(error from 9)::timestamptz < now() - interval '30 minutes') returning id`);

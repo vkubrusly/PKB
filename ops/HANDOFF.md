@@ -10,7 +10,11 @@ writes in Portuguese; UI text in English. State as of 2026-10-12.
 - Never paste passwords/tokens in chat; secrets live in GitHub secrets / Supabase / the session environment.
 - Don't bypass CAPTCHAs/WAF. Buildertrend cookies stay out of the repo.
 - Never delete jobs in Buildertrend. Write to Buildertrend only where Victor said so (Daily Logs from
-  rules / field / Ask, Lead Opportunities after confirmation, "Permit number" field when empty).
+  rules / field / Ask, Lead Opportunities after confirmation, "Permit number" field when empty, Schedule
+  items marked complete from county evidence — `rules/bt_schedule.mjs`, `config/bt_schedule_map.json`, never un-marks;
+  Warranty claims, one per item of a website warranty request — `rules/bt_warranty.mjs`, never edits/deletes a claim).
+- Dates always in US format, MM/DD/YY, in every system, e-mail, Daily Log and AI answer (`usDate` in `rules/lib.mjs`; Victor, 2026-11-03).
+- Every e-mail that has Guilherme (to or Cc) also copies stefano@pkbhomes.com (`COPY_WITH` in `notify/email.mjs`; Victor, 2026-10-27).
 - Ask before any new outward-facing send (e-mail to outside PKB) or data deletion.
 - Merging your own PRs into the default branch is authorized. Default branch: `claude/new-session-zkg2g6`.
 - Reading the bot mailbox (botpkbhomes@gmail.com) and marking messages read is authorized.
@@ -34,10 +38,10 @@ writes in Portuguese; UI text in English. State as of 2026-10-12.
 
 ## How it runs
 - **Clock:** Supabase pg_cron (migration 0031) dispatches GitHub workflows — `ops-daily` rounds at
-  4 AM, 9, 11 AM, 1, 3, 5 PM Florida (13 min early), `ops-mail` hourly :07, `ops-bt-post` hourly :25.
+  4 AM, 9, 11 AM, 1, 3, 5 PM Florida (13 min early), `ops-mail` hourly :07, `ops-bt-post` at :25 only when a Daily Log / Lead draft is waiting (0034; no GitHub cron).
   Token: Vault secret `github_actions_token`. GitHub's own cron lines remain as fallback; the
   ops-daily gate skips them when a dispatched round started in the last 70 min. `ops-watchdog`
-  (every 15 min) restarts a missed round and e-mails Victor if the Supabase token is refused.
+  (every 30 min) restarts a missed round and e-mails Victor if the Supabase token is refused.
 - **Round (`ops-daily`, ~30 min; ~50 with Buildertrend photos at 4 AM / 1 PM):** Buildertrend jobs +
   custom fields → (photos) → Daily Logs text → permit discovery (`scripts/discover_permits.mjs`, all
   counties with a portal; applicant must be Prime Kubrusly Basso / Cristiano Pedrosa) → county portals
@@ -53,7 +57,8 @@ writes in Portuguese; UI text in English. State as of 2026-10-12.
   Ask/field summaries fail until the key is replaced with one from an org with credit).
 - **Portal roles** (`ops.portal_users`): admin Victor; partners Thiago, Guilherme, Cristiano, Daniela,
   Gabriel; pm Carlos, Camila; field supervisors.
-- **Permit office:** Sovereign coordinates Marion, Citrus and house 0042; everything else PKB (Guilherme).
+- **Permit office:** Sovereign coordinates Marion, Citrus and house 0042; everything else PKB — Guilherme is the
+  responsible office: correction e-mails and reminders for PKB houses go to him (never straight to the designer, e.g. Michele on 0014).
 
 ## Claude routines (claude.ai, Team account since 2026-10-12)
 - "PKB Ops — pedidos de mudança (diário)" 7:52 AM Florida: works open `ops.change_requests`, opens PRs
@@ -65,8 +70,21 @@ writes in Portuguese; UI text in English. State as of 2026-10-12.
   token present, `sb.mjs` query OK). Pending: add `vkubrusly/PKB` as a source of both routines in
   claude.ai → Routines so they can push and open PRs. The old account's routines were disabled 10/12.
 
+## Warranty (since 2026-11-02)
+- Website warranty form e-mails (noreply@notify.pkbhomes.com, "Solicitação de Garantia") → category
+  `warranty_request` (collect_mail.py) → `rules/warranty.mjs` (hourly, ops-mail): one `ops.warranty_claims` row
+  per item, linked to the house by address (`config/job_aliases.json` maps spreadsheet S-numbers to the
+  Buildertrend job, e.g. S001 → 0001).
+- `rules/bt_warranty.mjs` (ops-bt-post when an item waits — 0036 — and every ops-daily round): creates the
+  Buildertrend claim and follows its class/status; "(closed)" classes = resolved/closed. Board panel "Warranty claims".
+- No e-mail notification: everyone already gets Buildertrend's own notices (Victor).
+
 ## Open items
-- Orange (FastTrack, needs login) and Lake have no collector: 0014, 0042, S050, 0030, S051 never collected.
+- Orange (FastTrack): collected every round since 2026-10-14 with both contractor logins (GitHub secrets
+  `ORANGE_PORTAL_USER/PASS`, `ORANGE_PORTAL_USER_2/PASS_2`; which permit is on which login:
+  `config/fasttrack_accounts.json`). Reviewer comments and inspector notes come from the portal's PDF reports.
+  Not read yet: permits older than 6 months (My Permit Search). Dry run: `ops-probe.yml` → fasttrack-collect. S050 (BLD2026-16696) is a City of Orlando
+  number, not Fast Track. Lake (S051) has no collector.
 - City of Orlando houses (0041, 0060, 0061, 0072) have no permit search.
 - S043: permit number BLD202502570 doesn't exist on the Citrus portal — needs the right number.
 - Pre-permit data still partly comes from a static spreadsheet CSV (2026-09-25).

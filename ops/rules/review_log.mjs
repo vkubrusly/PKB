@@ -9,7 +9,7 @@
 // are logged; older rounds are a silent baseline.
 //   node rules/review_log.mjs [--dry-run]
 // =============================================================================
-import { sql, q, DRY, RECENT_DAYS, brDate, daysAgo, orgId, seen, seenPrefix, recordEvent, queueDailyLog, contacts, REVIEW_FAILED } from './lib.mjs';
+import { sql, q, DRY, RECENT_DAYS, usDate, daysAgo, orgId, seen, seenPrefix, recordEvent, queueDailyLog, contacts, REVIEW_FAILED } from './lib.mjs';
 
 const notify = [contacts.internal.contractor_of_record?.bt_name, contacts.internal.permits_owner?.name].filter(Boolean);
 const rounds = await sql(`select s.permit_case_id case_id, s.round, s.type, s.status, s.submitted_at, s.completed_at, c.number, c.job_id, j.job_number
@@ -32,8 +32,8 @@ for (const r of rounds) {
     key: `review.submitted:${r.case_id}:${r.round}`, kind: 'review.submitted', at: r.submitted_at, r, payload: { round: r.round },
     title: r.round > 1 ? `Corrections resubmitted — round ${r.round}` : 'Plans submitted to the county',
     notes: r.round > 1
-      ? `Permit ${r.number}: corrections resubmitted to the county on ${brDate(r.submitted_at)} — review round ${r.round} (${r.type}).`
-      : `Permit ${r.number}: plans submitted to the county on ${brDate(r.submitted_at)} (${r.type}).`,
+      ? `Permit ${r.number}: corrections resubmitted to the county on ${usDate(r.submitted_at)} — review round ${r.round} (${r.type}).`
+      : `Permit ${r.number}: plans submitted to the county on ${usDate(r.submitted_at)} (${r.type}).`,
   });
   if (!r.completed_at) continue;
   const failed = REVIEW_FAILED.test(r.status || '');
@@ -46,8 +46,8 @@ for (const r of rounds) {
     key: `review.completed:${r.case_id}:${r.round}`, kind: 'review.completed', at: r.completed_at, r, payload: { round: r.round, status: r.status, failed },
     title: failed ? `County review round ${r.round}: corrections` : `County review round ${r.round}: approved`,
     notes: failed
-      ? `Permit ${r.number}: county review round ${r.round} came back on ${brDate(r.completed_at)} — ${r.status}.\n${detail}\nCorrections sent to the designer (Sovereign), 2 business days per item.`
-      : `Permit ${r.number}: county review round ${r.round} ${r.status.toLowerCase()} on ${brDate(r.completed_at)}.`,
+      ? `Permit ${r.number}: county review round ${r.round} came back on ${usDate(r.completed_at)} — ${r.status}.\n${detail}\nCorrections sent to the designer (Sovereign), 2 business days per item.`
+      : `Permit ${r.number}: county review round ${r.round} ${r.status.toLowerCase()} on ${usDate(r.completed_at)}.`,
   });
 }
 console.log(`review log: ${logged} Daily Log(s) queued · ${baseline} baseline${DRY ? ' · DRY RUN' : ''}`);

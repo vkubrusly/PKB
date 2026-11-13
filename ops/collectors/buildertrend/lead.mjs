@@ -8,7 +8,7 @@
 const LIST = 'https://buildertrend.net/app/leads/opportunities';
 const hideBanners = (page) => page.evaluate(() => document.getElementById('chmln-dom')?.remove()).catch(() => {});
 
-async function openList(page) {
+export async function openList(page) {
   for (let k = 0; k < 3; k++) {
     await page.goto(LIST, { waitUntil: 'domcontentloaded' });
     if (await page.locator('button', { hasText: /^\W*Lead Opportunity\s*$/ }).first().waitFor({ timeout: 30000 }).then(() => true).catch(() => false)) { await hideBanners(page); return; }
@@ -18,6 +18,8 @@ async function openList(page) {
 }
 
 // close an open dropdown without Escape (Escape on the form asks "discard changes?")
+// Buildertrend's lead title holds 50 characters: drop the trailing "(parcel)" first (it is in the notes), then cut.
+export const leadTitle = (t) => { let x = String(t || '').trim(); if (x.length > 50) x = x.replace(/\s*\([^)]*\)\s*$/, ''); return x.length > 50 ? x.slice(0, 49).trimEnd() + '…' : x; };
 const closeDropdown = (page) => page.locator('.ant-modal-content:has(#name) .ant-modal-title, .ant-modal-content:has(#name) h1, .ant-modal-content:has(#name) h2').first().click({ force: true }).catch(() => {});
 
 async function pickOption(page, inputId, text) {
@@ -38,18 +40,25 @@ async function pickOption(page, inputId, text) {
 export async function findLead(page, key) {
   if (!key) return false;
   await openList(page);
-  const search = page.locator('#keywordSearch').first();
-  if (!(await search.isVisible().catch(() => false))) return false;
-  await search.fill(key); await search.press('Enter');
-  await page.waitForTimeout(5000);
-  const body = await page.locator('body').innerText();
-  return body.toLowerCase().includes(String(key).toLowerCase()) && !/no (lead opportunities|results)/i.test(body);
+  // The list has no keyword search box (seen 11/03): read the lead title links (…/opportunities/Lead/<id>) and
+  // match the key in the title. Truthy result with the lead id, false when no title contains the key.
+  await page.locator('a[href*="/opportunities/Lead/"]').first().waitFor({ timeout: 20000 }).catch(() => {});
+  const id = await page.evaluate((k) => {
+    for (const a of document.querySelectorAll('a[href*="/opportunities/Lead/"]')) {
+      const m = /\/opportunities\/Lead\/(\d+)$/.exec(a.getAttribute('href') || '');
+      if (m && (a.innerText || '').toLowerCase().includes(k)) return m[1];
+    }
+    return null;
+  }, String(key).toLowerCase()).catch(() => null);
+  return id ? { id: Number(id) } : false;
 }
 
 export async function createLead(page, d, { stopBeforeSave = false } = {}) {
   // d: { title, dedupeKey, contact: {first, last, display, phone, email, street, city, state, zip},
   //      address: {street, city, state, zip}, salespeople: [names], revenue, source, notes }
-  if (d.dedupeKey && await findLead(page, d.dedupeKey)) return { duplicate: true };
+  // Already there? By the dedupe key (parcel) and by the title as Buildertrend stores it (the parcel may have
+  // been dropped from it to fit 50 characters).
+  for (const k of [d.dedupeKey, leadTitle(d.title)].filter(Boolean)) { const dup = await findLead(page, k); if (dup) return { duplicate: true, leadId: dup.id || null }; }
   await openList(page);
   const newBtn = page.locator('button', { hasText: /^\W*Lead Opportunity\s*$/ }).first();
   let ok = false;
@@ -63,7 +72,7 @@ export async function createLead(page, d, { stopBeforeSave = false } = {}) {
   await hideBanners(page);
   const form = page.locator('.ant-modal-content:has(#name)').first();
 
-  await page.locator('#name').first().fill(String(d.title).slice(0, 100));
+  await page.locator('#name').first().fill(leadTitle(d.title));
   const a = d.address || {};
   for (const [id, v] of [['address.street', a.street], ['address.city', a.city], ['address.state', a.state], ['address.zip', a.zip]]) if (v) await page.locator(`[id="${id}"]`).first().fill(String(v));
   if (d.revenue) for (const id of ['estimatedStartPrice', 'estimatedEndPrice']) await page.locator(`#${id}`).first().fill(String(d.revenue)).catch(() => {});
@@ -98,17 +107,33 @@ export async function createLead(page, d, { stopBeforeSave = false } = {}) {
     const cm = page.locator('.ant-modal-content').last();
     if (stopBeforeSave) await cm.locator('button', { hasText: /^Cancel$/ }).first().click();
     else { await cm.locator('button', { hasText: /^Save$/ }).first().click(); contactSaved = true; }
-    await page.waitForTimeout(3000);
+    // The contact window must be gone before the lead's own Save: while it closes it sits over the
+    // lead form and takes the click (lead L-1016-1337, 2026-10-16: "Save" visible and enabled, click timed out).
+    await page.locator('#displayName').first().waitFor({ state: 'hidden', timeout: 20000 }).catch(() => {});
+    await page.waitForTimeout(1500);
   }
 
   const chips = await form.locator('#salespeople').locator('xpath=ancestor::div[contains(@class,"ant-select")][1]').locator('.BTUser .text-overflow-auto').allInnerTexts().catch(() => []);
   const filled = { title: await page.locator('#name').first().inputValue(), salespeople: chips.length ? chips : added, source: sourceOk ? d.source : null, contact: contactSaved || (stopBeforeSave ? 'filled, not saved (test)' : false) };
   if (stopBeforeSave) return { stopped: true, ...filled };
 
-  await form.locator('.ant-modal-footer button, button').filter({ hasText: /^Save$/ }).first().click();
-  await page.waitForTimeout(6000);
+  // Close any open dropdown / banner that could cover the footer, then Save. A normal click first; if
+  // something still covers the button, click it through the DOM (the button itself is enabled).
+  await page.keyboard.press('Escape').catch(() => {});
+  await closeDropdown(page);
+  await hideBanners(page);
+  const save = form.locator('[data-testid="save"], .ant-modal-footer button').filter({ hasText: /^Save$/ }).first();
+  try { await save.click({ timeout: 15000 }); }
+  catch { await save.evaluate((b) => b.click()); }
+  // Saved = the lead got its own id in the URL (Lead/<id>) or the form closed. Anything else is an error,
+  // never "created".
+  const savedOk = await page.waitForFunction(() => /Lead\/[1-9]\d*/.test(location.href) || !document.querySelector('#name'), null, { timeout: 30000 }).then(() => true).catch(() => false);
   const err = await page.locator('.ant-form-item-explain-error').allInnerTexts().catch(() => []);
   if (err.length) throw new Error('Buildertrend did not save the lead: ' + err.join('; '));
-  const m = page.url().match(/Lead\/(\d+)/);
-  return { saved: true, leadId: m && m[1] !== '0' ? Number(m[1]) : null, url: page.url(), ...filled };
+  if (!savedOk) throw new Error('Buildertrend did not confirm the save (form still open, no lead id)');
+  let m = page.url().match(/Lead\/(\d+)/);
+  let leadId = m && m[1] !== '0' ? Number(m[1]) : null;
+  // Form closed without an id in the URL: find the new lead by its parcel/client to get the id.
+  for (const k of [d.dedupeKey, leadTitle(d.title)].filter(Boolean)) { if (leadId) break; const f = await findLead(page, k).catch(() => null); if (f?.id) leadId = Number(f.id); }
+  return { saved: true, leadId, url: leadId ? page.url() : null, ...filled };
 }

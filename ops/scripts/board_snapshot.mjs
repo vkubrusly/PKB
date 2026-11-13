@@ -118,6 +118,7 @@ for (const [xid, x] of J) {
     ready_for_finals_est: p?.supported ? p.readyForFinalsEstimate : null,
   });
   x.daily_logs = DL.filter((l) => l.job_number === x.job_number).slice(0, 15).map((l) => ({ date: d(l.log_date), at: l.at, by: l.author, title: l.title, notes: l.notes }));
+  x.permit_office = jobs.find((o) => o.job_number === x.job_number)?.permit_office || null;
   files[x.job_number] = x;
 }
 rows.sort((a, b) => a.job_number.localeCompare(b.job_number));
@@ -137,10 +138,24 @@ const agg = {
   cycle: await sql(`select j.county, count(*)::int n, percentile_cont(0.5) within group (order by c.issued_at - c.applied_at)::int median_days from ops.permit_cases c join ops.jobs j on j.id=c.job_id where c.kind='building' and c.issued_at >= c.applied_at group by 1 order by 2 desc`),
   rounds: (await sql(`with s as (select permit_case_id, completed_at, submitted_at, lead(submitted_at) over (partition by permit_case_id order by round) nx from ops.submittals) select coalesce(sum(completed_at - submitted_at) filter (where completed_at is not null),0)::int county_days, coalesce(sum(nx - completed_at) filter (where nx is not null and completed_at is not null),0)::int resubmit_days from s`))[0],
   monthly: await sql(`select to_char(issued_at,'YYYY-MM') m, count(*)::int n from ops.permit_cases where kind='building' and issued_at >= '2025-10-01' group by 1 order by 1`),
+  // COs per month, last 12 months (zeros kept so the chart shows the whole year). CO date = the job's CO
+  // date, else the county closing the issued building permit (finaled). Building finals passed per month
+  // go alongside: the CO follows them.
+  co: await (async () => {
+    const rows = await sql(`select j.job_number, coalesce(j.co_at, (select min(c.finaled_at) from ops.permit_cases c where c.job_id = j.id and c.kind = 'building' and c.issued_at is not null)) at,
+        case when j.co_at is not null then 'co_date' else 'permit_finaled' end src from ops.jobs j`);
+    const finals = await sql(`select to_char(min(coalesce(i.actual_at, i.scheduled_at)), 'YYYY-MM') m, j.job_number from ops.inspections i join ops.permit_cases c on c.id = i.permit_case_id join ops.jobs j on j.id = c.job_id
+        where i.passed and i.type ~* '(final structural|^building final|res building final)' group by j.job_number`);
+    const months = []; const now = new Date();
+    for (let k = 11; k >= 0; k--) { const x = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - k, 1)); months.push(x.toISOString().slice(0, 7)); }
+    const jobs = rows.filter((r) => r.at).map((r) => ({ job_number: r.job_number, at: d(r.at), src: r.src }));
+    const count = (list, key) => months.map((m) => ({ m, n: list.filter((x) => String(x[key] || '').slice(0, 7) === m).length }));
+    return { monthly: count(jobs, 'at'), jobs, finals: count(finals, 'm').filter((x) => x.n), finalJobs: finals.filter((f) => months.includes(f.m)) };
+  })(),
   signed: Object.entries(signed).sort().map(([m, n]) => ({ m, n })),
   requests: await sql(`select to_char(received_at,'YYYY-MM') m, count(*)::int n from ops.inbound_emails where category = 'work_request' group by 1 order by 1`),
   workRequests: (await sql(`select received_at::date d, parsed from ops.inbound_emails where category = 'work_request' order by received_at desc limit 20`)).map((r) => ({ at: d(r.d), ...r.parsed })),
-  suggestions: await sql(`select key, area, impact, title, detail, evidence, status, decided_by, decided_at::date decided_at, created_at::date created from ops.suggestions order by case impact when 'high' then 0 when 'medium' then 1 else 2 end, created_at`),
+  suggestions: await sql(`select key, area, impact, title, detail, title_pt, detail_pt, evidence, status, decided_by, decided_at::date decided_at, created_at::date created from ops.suggestions order by case impact when 'high' then 0 when 'medium' then 1 else 2 end, created_at`),
   inbox: await sql(`select category, count(*)::int n, max(received_at)::date last from ops.inbound_emails group by 1 order by 2 desc`),
 };
 agg.dept = agg.dept.map((r) => ({ ...r, department: short(r.department) }));
@@ -179,6 +194,21 @@ const DLmail = Date.now() - 30 * 864e5, DLfresh = Date.now() - 6 * 36e5;
 agg.daily_log_gaps = mail.filter((m) => m.category === 'bt_daily_log' && +new Date(m.received_at) > DLmail && +new Date(m.received_at) < DLfresh)
   .filter((m) => { const md = new Date(m.received_at).toLocaleDateString('en-CA', { timeZone: 'America/New_York' }); return !DL.some((l) => l.job_number === m.job_number && Math.abs(new Date(d(l.log_date)) - new Date(md)) <= 864e5); })
   .map((m) => ({ job_number: m.job_number, mail_at: String(m.received_at).slice(0, 16), subject: m.subject }));
+// Warranty claims (rules/warranty.mjs, Buildertrend Warranty): every item, open ones first.
+const WC = await sql(`select w.item_no, w.received_at, w.homeowner, w.address, w.category, w.location, w.description, w.status, w.bt_claim_id, w.bt_status, w.bt_error, w.resolved_at, j.job_number
+  from ops.warranty_claims w left join ops.jobs j on j.id = w.job_id order by (w.status in ('resolved', 'closed')), w.received_at`).catch(() => []);
+const daysTo = (a, b) => Math.round((new Date(b) - new Date(a)) / 864e5);
+const solved = WC.filter((w) => w.resolved_at);
+agg.warranty = {
+  open: WC.filter((w) => !['resolved', 'closed'].includes(w.status)).length, resolved: solved.length,
+  avg_days_to_resolve: solved.length ? Math.round(solved.reduce((t, w) => t + daysTo(w.received_at, w.resolved_at), 0) / solved.length) : null,
+  by_category: Object.entries(WC.reduce((m, w) => ((m[w.category || '—'] = (m[w.category || '—'] || 0) + 1), m), {})).map(([category, n]) => ({ category, n })).sort((a, b) => b.n - a.n),
+  // Last 12 months: items received and items resolved per month (KPIs).
+  monthly: (() => { const now = new Date(); const ms = Array.from({ length: 12 }, (_, i) => new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11 + i, 1)).toISOString().slice(0, 7));
+    return ms.map((m) => ({ m, received: WC.filter((w) => d(w.received_at)?.slice(0, 7) === m).length, resolved: WC.filter((w) => d(w.resolved_at)?.slice(0, 7) === m).length })); })(),
+  houses: new Set(WC.map((w) => w.job_number).filter(Boolean)).size,
+  claims: WC.map((w) => ({ ...w, received_at: d(w.received_at), resolved_at: d(w.resolved_at), days_open: w.resolved_at ? null : daysTo(w.received_at, new Date()) })),
+};
 const out = { asOf: new Date().toISOString().slice(0, 10), builtAt: new Date().toISOString(), jobs: rows, fails: recentFails.slice(0, 14), ...agg, files };
 const json = JSON.stringify(out);
 const o = process.argv.indexOf('--out');

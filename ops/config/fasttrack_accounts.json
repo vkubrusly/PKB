@@ -1,0 +1,32 @@
+{
+  "_comment": "Orange County Fast Track (fasttrack.ocfl.net) contractor logins and the permits each one lists under My Permits. Credentials live only in GitHub secrets (names below), never here. Mapped by collectors/fasttrack/probe.mjs (ops-probe.yml) on 2026-10-14. My Permits shows the last 6 months only; older permits are under My Permit Search. A collector must read BOTH accounts and merge by permit number (B26013237 is on both).",
+  "accounts": [
+    {
+      "id": 1,
+      "secrets": ["ORANGE_PORTAL_USER", "ORANGE_PORTAL_PASS"],
+      "welcome_name": "Cristiano",
+      "permits": [
+        { "number": "B26013826", "job": "0042", "address": "14721 Bray Rd", "type": "Residential", "status": "Review", "fees_due": 30360.58 },
+        { "number": "B26013237", "job": "0014", "address": "1519 Miller Ave", "type": "Residential", "status": "Review", "fees_due": 11406.69 }
+      ]
+    },
+    {
+      "id": 2,
+      "secrets": ["ORANGE_PORTAL_USER_2", "ORANGE_PORTAL_PASS_2"],
+      "welcome_name": "Cristiano",
+      "permits": [
+        { "number": "B26013237", "job": "0014", "address": "1519 Miller Ave", "type": "Residential", "status": "Review", "fees_due": 11406.69 },
+        { "number": "F26019996", "job": "0014", "address": "1519 Miller Ave", "type": "Fence", "status": "Denied", "fees_due": 0 },
+        { "number": "B26006511", "job": "0030", "address": "11025 Ledgement Ln", "type": "Residential", "status": "Issued", "fees_due": 0 },
+        { "number": "E26008079", "job": "0030", "address": "11025 Ledgement Ln", "type": "Electrical", "status": "Issued", "fees_due": 0 },
+        { "number": "P26005438", "job": "0030", "address": "11025 Ledgement Ln", "type": "Plumbing", "status": "Issued", "fees_due": 0 },
+        { "number": "B26008570", "job": null, "address": "17000 Red Bird Rd", "type": "Residential", "status": "Issued", "fees_due": 38, "note": "no PKB Ops job at this address" },
+        { "number": "B26008573", "job": null, "address": "17000 Red Bird Rd", "type": "Residential", "status": "Issued", "fees_due": 38, "note": "sub permit of B26008570" },
+        { "number": "B26008574", "job": null, "address": "17000 Red Bird Rd", "type": "Residential", "status": "Issued", "fees_due": 38, "note": "sub permit of B26008570" }
+      ]
+    }
+  ],
+  "not_on_either": [
+    { "number": "BLD2026-16696", "job": "S050", "address": "25 E Rosevear St, Orlando", "note": "City of Orlando number format, not Fast Track; ops.permit_cases has it as fasttrack:orange" }
+  ]
+}

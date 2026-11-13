@@ -123,7 +123,7 @@ td .sub{display:block;font-size:12.5px;color:var(--ink-3)}
 .cols{display:flex;align-items:flex-end;gap:8px;height:160px;padding-top:18px}
 .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end;min-width:0}
 .col .c{width:100%;max-width:40px;background:var(--gold);border-radius:3px 3px 0 0;position:relative}
-.col .c.blue{background:var(--blue)}
+.col .c.blue{background:var(--blue)} .col .c.red{background:var(--red)}
 .col .c span{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font:600 12px var(--f-body);color:var(--ink-2)}
 .col .x{font-size:11.5px;color:var(--ink-3);white-space:nowrap}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:18px}
@@ -310,6 +310,7 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
     <button role="tab" data-v="ideas" aria-selected="false">Suggestions</button>
     <button role="tab" data-v="ask" aria-selected="false">Ask</button>
     <button role="tab" data-v="outbox" aria-selected="false">Outbox</button>
+    <button role="tab" data-v="users" aria-selected="false" hidden id="usersTab">Users</button>
   </nav>
 </div></header>
 
@@ -322,6 +323,7 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
       <div class="panel"><div class="hd"><h3>Failed inspections · last 30 days</h3><span class="note">→ supervisor, PMs, Cristiano</span></div><div class="list" id="t-fails"></div></div>
       <div class="panel"><div class="hd"><h3>Permits in county review</h3><span class="note">days since applied</span></div><div class="list" id="t-review"></div></div>
       <div class="panel"><div class="hd"><h3>Paused &amp; blocked</h3><span class="note">excluded from KPI clocks</span></div><div class="list" id="t-paused"></div></div>
+      <div class="panel"><div class="hd"><h3>Warranty claims</h3><span class="note" id="t-warr-sum"></span></div><div class="list" id="t-warr"></div></div>
     </div>
   </section>
 
@@ -395,6 +397,8 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
     <div class="grid g2">
       <div class="panel"><div class="hd"><h3>New jobs per month</h3><span class="note" id="newNote"></span></div><div class="cols" id="c-new"></div><div class="legend"><span><i style="background:var(--blue)"></i>Requests (form e-mails)</span><span><i style="background:var(--gold)"></i>Contracts signed</span></div><div class="list" id="t-requests"></div></div>
       <div class="panel"><div class="hd"><h3>Permits issued per month</h3></div><div class="cols" id="c-month"></div></div>
+      <div class="panel"><div class="hd"><h3>COs per month</h3><span class="note" id="coNote"></span></div><div class="cols" id="c-co"></div><p class="note" style="margin:0" id="coFinals"></p></div>
+      <div class="panel"><div class="hd"><h3>Warranty</h3><span class="note" id="warrNote"></span></div><div class="kpis" id="warrKpis"></div><div class="cols" id="c-warr"></div><div class="legend"><span><i style="background:var(--red)"></i>Items received</span><span><i style="background:var(--gold)"></i>Items resolved</span></div><div class="bars" id="c-warrcat"></div></div>
       <div class="panel"><div class="hd"><h3>Applied → issued, median days</h3><span class="note">by county</span></div><div class="bars" id="c-cycle"></div></div>
       <div class="panel"><div class="hd"><h3>Where review time goes</h3><span class="note">sum over all rounds</span></div><div id="c-split"></div></div>
       <div class="panel"><div class="hd"><h3>Department review failures</h3><span class="note">failed / reviews</span></div><div class="bars" id="c-dept"></div></div>
@@ -404,7 +408,7 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
   <!-- SUGGESTIONS -->
   <section class="view" id="v-ideas" hidden>
     <div><h2>Suggestions</h2><p class="lead">Improvements proposed from what the system reads every day: county portals, inspector and reviewer comments, Buildertrend and the bot mailbox. Each one shows the evidence behind it. Accept or dismiss in the chat and it becomes a rule, a report or a to-do.</p></div>
-    <div class="tools"><span class="chips" id="ideaChips"></span><span class="count" id="ideaCnt"></span></div>
+    <div class="tools"><span class="chips" id="ideaChips"></span><span class="chips" id="ideaView"></span><span class="chips" id="ideaLang"></span><button class="btn ghost" type="button" id="ideaReload" title="Load the latest suggestions" aria-label="Reload suggestions">&#x21bb; Reload</button><span class="count" id="ideaCnt"></span></div>
     <div class="ideas" id="ideas"></div>
     <div class="panel"><div class="hd"><h3>What the bot mailbox has read</h3><span class="note">every message is stored, linked to its job and marked read</span></div><div class="bars" id="c-inbox"></div></div>
   </section>
@@ -423,6 +427,14 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
   </section>
 
   <!-- OUTBOX -->
+  <!-- USERS (admin only) -->
+  <section class="view" id="v-users" hidden>
+    <div><h2>Users</h2><p class="lead">Everyone with access to PKB Ops and their access level. Visible to the admin only. “Reset password” / “Send first access” e-mails the person a link to choose their password.</p></div>
+    <div class="tools"><button class="btn ghost" type="button" id="usersReload">&#x21bb; Reload</button><span class="count" id="usersCnt"></span></div>
+    <div class="tbl" id="usersTbl"></div>
+    <div class="panel"><div class="hd"><h3>Access levels</h3></div><div class="list" id="usersLevels"></div></div>
+  </section>
+
   <section class="view" id="v-outbox" hidden>
     <div><h2>Outbox</h2><p class="lead">What PKB Ops sent or queued (e-mails, Buildertrend Daily Logs), actions waiting for confirmation, and change requests to Claude.</p></div>
     <div class="panel"><div class="hd"><h3>Waiting for confirmation</h3><span class="note">proposed by the assistant</span></div><div class="list" id="o-pending"></div></div>
@@ -454,13 +466,15 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const AS = new Date(D.asOf + 'T12:00:00');
 const days = (a, b) => Math.round(((b ? new Date(b + 'T12:00:00') : AS) - new Date(a + 'T12:00:00')) / 864e5);
-const fmt = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric'}) : '—';
-const fmtY = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'}) : '—';
+// Dates always MM/DD/YY (Victor, 2026-11-03).
+const fmt = d => d ? new Date(String(d).slice(0, 10) + 'T12:00:00').toLocaleDateString('en-US', {month:'2-digit', day:'2-digit', year:'2-digit'}) : '—';
+const fmtT = t => t ? `${fmt(t)}${String(t).length > 10 ? ' ' + String(t).slice(11, 16) : ''}` : '—';   // 'YYYY-MM-DD HH:MM' → MM/DD/YY HH:MM
+const fmtY = fmt;
 const street = a => (a || '').split(',')[0];
 const PAUSE = {awaiting_1st_draw:'Waiting 1st draw', awaiting_impact_fees:'Waiting impact fees', awaiting_warranty_deed:'Waiting warranty deed', owner_deferred_start:'Owner deferred start'};
 const PORTAL = {'energov:marion':'Marion EnerGov','energov:winterpark':'Winter Park EnerGov','accela:citrus':'Citrus Accela','fasttrack:orange':'Orange Fast Track','fdep':'FDEP (septic)',charlotte:'Charlotte',lake:'Lake',sarasota:'Sarasota'};
 const REVIEW_PORTALS = ['energov:marion','energov:winterpark'];
-$('#asof').textContent = D.builtAt ? new Date(D.builtAt).toLocaleString('en-US', {month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit', timeZone:'America/New_York'}) : fmtY(D.asOf);
+$('#asof').textContent = D.builtAt ? new Date(D.builtAt).toLocaleString('en-US', {month:'2-digit', day:'2-digit', year:'2-digit', hour:'numeric', minute:'2-digit', timeZone:'America/New_York'}) : fmtY(D.asOf);
 
 let CO = 'PKB';
 try { CO = localStorage.getItem('pkbops.co') || 'PKB' } catch(e) {}
@@ -473,16 +487,55 @@ const permitState = j => {
 const PSTATE = {pre:['Pre-permit','p-gry'], requested:['Requested','p-gry'], review:['In county review','p-amb'], corr:['Corrections requested','p-red'], issued:['Issued','p-grn']};
 
 /* tabs */
-const VIEWS = ['today','permits','inspections','dlogs','map','kpis','ideas','ask','outbox'];
+const VIEWS = ['today','permits','inspections','dlogs','map','kpis','ideas','ask','outbox','users'];
 function show(v){
   document.querySelectorAll('nav.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.v === v));
   document.querySelectorAll('section.view').forEach(s => s.hidden = s.id !== 'v-' + v);
   try { localStorage.setItem('pkbops.tab', v) } catch(e) {}
   if (v === 'outbox') refreshOutbox();
+  if (v === 'users') renderUsers();
   if (v === 'map') { if (!mapState) initMap(); if (mapState && !mapState.ready) { mapState.ready = true; mapState.fit(); } }
 }
 document.querySelectorAll('nav.tabs button').forEach(b => b.onclick = () => show(b.dataset.v));
 document.querySelectorAll('.seg button').forEach(b => b.onclick = () => { CO = b.dataset.co; try { localStorage.setItem('pkbops.co', CO) } catch(e) {} renderAll(); });
+
+/* users (admin only) */
+const LEVELS = {
+  admin: ['Admin', 'p-red', 'Everything partners see, plus this Users tab.'],
+  partner: ['Partner', 'p-gold', 'Portal (all tabs), Ask, Accept / Dismiss suggestions, Outbox (approve / cancel sends), field channel.'],
+  pm: ['Project manager', 'p-blue', 'Same as partner: portal, Ask, suggestions, Outbox, field channel.'],
+  field: ['Field', 'p-gry', 'Field channel only (budget.pkbhomes.com/ops/field/): sends site reports and sees their own. No portal.'],
+};
+// Password reset (has a login) or first access (no login): the ops-users function e-mails the link from the
+// bot mailbox and returns it, so it can also go by WhatsApp if the e-mail does not arrive.
+async function sendAccess(b){
+  const email = b.dataset.access, out = document.querySelector(`[data-access-out="${CSS.escape(email)}"]`);
+  if (!confirm(`${b.textContent} — send the access link to ${email}?`)) return;
+  b.disabled = true; out.textContent = 'Sending…';
+  try {
+    const { data: { session } } = await window.OPS.sb.auth.getSession();
+    const r = await fetch('https://fvjknahpmihueyeasgbx.supabase.co/functions/v1/ops-users', { method: 'POST', headers: { 'content-type': 'application/json', apikey: 'sb_publishable_wr3657pmQAxZy2FEmLQ-RQ_pAPxEm7J', Authorization: 'Bearer ' + session.access_token }, body: JSON.stringify({ email }) });
+    const j = await r.json().catch(() => ({ error: 'HTTP ' + r.status }));
+    if (!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status);
+    const wa = `https://wa.me/?text=${encodeURIComponent(j.text)}`;
+    out.innerHTML = `${j.sent ? `<span style="color:var(--green)">E-mail sent to ${esc(email)}.</span>` : `<span style="color:var(--red)">E-mail not sent (${esc(j.mailError || 'unknown')}).</span>`} Link valid 24 h, one use: <a href="#" data-copy>copy link</a> · <a href="${wa}" target="_blank" rel="noopener">WhatsApp</a>`;
+    out.querySelector('[data-copy]').onclick = (e) => { e.preventDefault(); navigator.clipboard.writeText(j.link).then(() => { e.target.textContent = 'copied'; }); };
+  } catch (e) { out.textContent = 'Error: ' + e.message; }
+  b.disabled = false;
+}
+async function renderUsers(){
+  if (window.OPS?.state?.me?.role !== 'admin') return;
+  $('#usersReload').onclick = renderUsers;
+  $('#usersCnt').textContent = 'Loading…';
+  const { data, error } = await window.OPS.sb.rpc('ops_users');
+  if (error) { $('#usersCnt').textContent = 'Could not load: ' + error.message; return; }
+  const n = r => data.filter(u => u.role === r).length;
+  $('#usersCnt').textContent = `${data.length} users · ${Object.keys(LEVELS).map(r => `${n(r)} ${LEVELS[r][0].toLowerCase()}`).join(' · ')}`;
+  const login = u => !u.has_login ? '<span class="pill p-amb">No login yet</span>' : !u.confirmed ? '<span class="pill p-amb">Not confirmed</span>' : '<span class="pill p-grn">Active</span>';
+  $('#usersTbl').innerHTML = `<table><thead><tr><th>Name</th><th>E-mail</th><th>Access level</th><th>Buildertrend name</th><th>Login</th><th>Last sign-in</th><th>Added</th><th>Access link</th></tr></thead><tbody>${data.map(u => `<tr><td>${esc(u.name || '—')}</td><td>${esc(u.email)}</td><td><span class="pill ${LEVELS[u.role]?.[1] || 'p-gry'}">${esc(LEVELS[u.role]?.[0] || u.role)}</span></td><td>${esc(u.bt_name || '—')}</td><td>${login(u)}</td><td>${u.last_sign_in ? fmtT(u.last_sign_in) : 'never'}</td><td>${fmt(u.added)}</td><td><button class="btn ghost" type="button" data-access="${esc(u.email)}">${u.has_login ? 'Reset password' : 'Send first access'}</button><div class="note" data-access-out="${esc(u.email)}"></div></td></tr>`).join('')}</tbody></table>`;
+  document.querySelectorAll('[data-access]').forEach(b => b.onclick = () => sendAccess(b));
+  $('#usersLevels').innerHTML = Object.entries(LEVELS).map(([k, [l, c, d]]) => `<div class="row" style="cursor:default"><span class="jn"><span class="pill ${c}">${l}</span></span><div><div class="t">${esc(d)}</div><div class="m">${data.filter(u => u.role === k).map(u => esc(u.name)).join(', ') || '—'}</div></div><div class="r"></div></div>`).join('');
+}
 
 /* shared bits */
 const cleanCm = s => String(s || '').replace(/\r/g, '').replace(/^\s*\d{1,2}\/\d{1,2}\/\d{2,4}\s*\n/, '').replace(/[ \t]+/g, ' ').trim();
@@ -522,6 +575,10 @@ function renderToday(){
   });
   const corr = per.filter(j => permitState(j) === 'corr').sort((a,b) => (a.last_round_at||'').localeCompare(b.last_round_at||''));
   $('#t-corr').innerHTML = corr.length ? corr.map(j => row(j.job_number, esc(street(j.address)), `${esc(j.permit)} · round ${j.rounds} · ${fmt(j.last_round_at)}`, `<div class="pills" style="justify-content:flex-end">${j.failed_depts_last_round.map(d=>`<span class="pill p-red">${esc(d)}</span>`).join('')}</div>${j.last_round_at?`<span class="note">${days(j.last_round_at)} days waiting</span>`:''}`)).join('') : '<div class="empty">No open correction requests in collected portals.</div>';
+  const W = D.warranty || {claims: []};
+  $('#t-warr-sum').textContent = `${W.open || 0} open · ${W.resolved || 0} resolved${W.avg_days_to_resolve != null ? ` · ${W.avg_days_to_resolve} days to resolve on average` : ''}`;
+  const wOpen = W.claims.filter(w => !['resolved','closed'].includes(w.status));
+  $('#t-warr').innerHTML = wOpen.length ? wOpen.map(w => row(w.job_number || '—', `${esc(w.category || 'Item')}${w.location ? ' · ' + esc(w.location) : ''} — ${esc(w.homeowner || '')}`, `${esc(street(w.address || ''))} · received ${fmt(w.received_at)}${w.bt_claim_id ? ' · Buildertrend claim ' + esc(w.bt_claim_id) : w.bt_error ? ' · Buildertrend: ' + esc(w.bt_error) : ' · not in Buildertrend yet'}`, `<span class="pill ${w.status === 'scheduled' ? 'p-gry' : 'p-red'}">${esc(w.bt_status || w.status)}</span><span class="note">${w.days_open} days open</span>`)).join('') : '<div class="empty">No open warranty claims.</div>';
   const cutoff = new Date(AS - 30*864e5).toISOString().slice(0,10);
   $('#t-fails').innerHTML = failsHtml(D.fails.filter(f => f.at >= cutoff && js.some(j => j.job_number === f.job_number)).slice(0, 6));
   const inRev = per.filter(j => permitState(j) !== 'corr').sort((a, b) => (a.applied_at||'9').localeCompare(b.applied_at||'9'));
@@ -589,7 +646,7 @@ function renderDlogs(){
       .sort((a,b) => (a.L.length - b.L.length) || a.j.job_number.localeCompare(b.j.job_number));
     const authors = L => Object.entries(L.reduce((m,l) => (m[l.by||'?'] = (m[l.by||'?']||0)+1, m), {})).map(([n,c]) => `${esc(n)}${c>1?' ×'+c:''}`).join(', ');
     return `<div class="panel"><div class="hd"><h3>${esc(k || 'No supervisor')}</h3><span class="note">${rows.length} jobs · ${rows.reduce((n,r)=>n+r.L.length,0)} logs</span></div>
-      <div class="tbl"><table><thead><tr><th>Job</th><th>Address</th><th class="num">Logs</th><th>Last log</th><th>Written by</th></tr></thead><tbody>${rows.map(({j,L,building}) => `<tr data-job="${esc(j.job_number)}"><td class="mono">${esc(j.job_number)}</td><td>${esc(street(j.address))}<span class="sub">${building ? 'under construction' : esc(j.stage)}</span></td><td class="num">${L.length || (building ? '<span class="pill p-red">0</span>' : '0')}</td><td>${L[0] ? `${esc(L[0].at || L[0].date)}<span class="sub">${esc(L[0].by || '')} · ${esc(L[0].title || '')}</span>` : j.last_daily_log_at ? `<span class="note">${esc(j.last_daily_log_at)} · ${esc(j.last_daily_log_by || '')}</span>` : '<span class="note">—</span>'}</td><td>${L.length ? authors(L) : '<span class="note">—</span>'}</td></tr>`).join('')}</tbody></table></div></div>`;
+      <div class="tbl"><table><thead><tr><th>Job</th><th>Address</th><th class="num">Logs</th><th>Last log</th><th>Written by</th></tr></thead><tbody>${rows.map(({j,L,building}) => `<tr data-job="${esc(j.job_number)}"><td class="mono">${esc(j.job_number)}</td><td>${esc(street(j.address))}<span class="sub">${building ? 'under construction' : esc(j.stage)}</span></td><td class="num">${L.length || (building ? '<span class="pill p-red">0</span>' : '0')}</td><td>${L[0] ? `${esc(L[0].at || L[0].date)}<span class="sub">${esc(L[0].by || '')} · ${esc(L[0].title || '')}</span>` : j.last_daily_log_at ? `<span class="note">${fmtT(j.last_daily_log_at)} · ${esc(j.last_daily_log_by || '')}</span>` : '<span class="note">—</span>'}</td><td>${L.length ? authors(L) : '<span class="note">—</span>'}</td></tr>`).join('')}</tbody></table></div></div>`;
   }).join('') || '<div class="empty">No jobs match.</div>';
   $('#dCnt').textContent = `${logs.length} logs · ${missing} job${missing === 1 ? '' : 's'} under construction without a log`;
 }
@@ -642,6 +699,28 @@ function renderCharts(){
     $(el).innerHTML = months.map(m => `<div class="col"><div style="display:flex;gap:2px;align-items:flex-end;width:100%;height:100%;justify-content:center">${series.map(s => { const n = (s.data.find(x=>x.m===m)||{n:0}).n; return `<div class="c ${s.cls||''}" style="height:${(n/mx*100).toFixed(0)}%;${n?'':'min-height:1px'}"><span>${n||''}</span></div>`; }).join('')}</div><span class="x">${new Date(m+'-15').toLocaleDateString('en-US',{month:'short'})}</span></div>`).join('');
   };
   colChart('#c-month', [{data:D.monthly}]);
+  if (D.co) {
+    colChart('#c-co', [{data:D.co.monthly}]);
+    const total = D.co.monthly.reduce((a, x) => a + x.n, 0);
+    $('#coNote').textContent = total ? `${total} in the last 12 months` : 'none recorded yet';
+    const mon = m => new Date(m+'-15').toLocaleDateString('en-US',{month:'short', year:'numeric'});
+    $('#coFinals').textContent = (D.co.finals.length ? `Building final passed (the CO follows): ${D.co.finals.map(f => `${mon(f.m)} · ${f.n}`).join(', ')} (${D.co.finalJobs.map(f=>f.job_number).join(', ')}). ` : '')
+      + 'CO date: the job\'s CO date, else the county closing the issued permit (finaled).';
+  }
+  if (D.warranty) {
+    const W = D.warranty, tile = (h, v, c) => `<div class="kpi"><h3>${h}</h3><div class="big">${v}</div><div class="cap">${c}</div></div>`;
+    const openC = W.claims.filter(w => !['resolved','closed'].includes(w.status));
+    const oldest = openC.reduce((a, w) => Math.max(a, w.days_open || 0), 0);
+    $('#warrKpis').innerHTML = [
+      tile('Open items', `${W.open}`, openC.length ? `oldest ${oldest} days open` : 'none open'),
+      tile('Resolved', `${W.resolved}`, `${W.claims.filter(w => w.status === 'closed').length} closed as non-warranty`),
+      tile('Days to resolve (avg)', W.avg_days_to_resolve == null ? '—' : `${W.avg_days_to_resolve}<small>days</small>`, 'request received → Buildertrend claim closed'),
+      tile('Houses with claims', `${W.houses}`, `${W.claims.length} items in total`),
+    ].join('');
+    colChart('#c-warr', [{data: W.monthly.map(x => ({m: x.m, n: x.received})), cls:'red'}, {data: W.monthly.map(x => ({m: x.m, n: x.resolved}))}]);
+    bars('#c-warrcat', W.by_category.map(c => ({l: c.category, v: c.n, t: `${c.n}`})), Math.max(1, ...W.by_category.map(c => c.n)), 'red');
+    $('#warrNote').textContent = W.claims.length ? `since ${fmtY(W.claims.map(w => w.received_at).sort()[0])} · website warranty form` : 'counts start with the first warranty request';
+  }
   colChart('#c-new', [{data:D.requests, cls:'blue'}, {data:D.signed}]);
   $('#t-requests').innerHTML = (D.workRequests||[]).map(r => `<div class="row" style="cursor:default"><span class="jn">new</span><div><div class="t">${esc(r.client||'—')}${r.company?' · '+esc(r.company):''}</div><div class="m">${esc([r.model, r.city, r.county, r.parcel && 'parcel '+r.parcel].filter(Boolean).join(' · '))}${r.agent?' · agent '+esc(r.agent):''}</div></div><div class="r">${r.price?'$'+esc(r.price):''}<br>${fmt(r.at)}</div></div>`).join('');
   $('#newNote').textContent = D.requests.length ? 'from the bot mailbox' : 'requests start counting with the first form e-mail';
@@ -667,7 +746,7 @@ function openJob(n, tab){
     f.county && `<span>County <b>${esc(f.county)}</b></span>`, f.model && `<span>Model <b>${esc(f.model)}</b></span>`,
     `<span>Supervisor <b>${esc(f.supervisor || '—')}</b></span>`, f.parcel && `<span>Parcel <b>${esc(f.parcel)}</b></span>`,
     f.signed_at && `<span>Signed <b>${fmtY(f.signed_at)}</b></span>`,
-    j.last_daily_log ? `<span>Last Daily Log <b>${j.last_daily_log_at ? esc(j.last_daily_log_at) : fmt(j.last_daily_log)}</b>${j.last_daily_log_by ? ' · ' + esc(j.last_daily_log_by) : ''}</span>` : '',
+    j.last_daily_log ? `<span>Last Daily Log <b>${j.last_daily_log_at ? fmtT(j.last_daily_log_at) : fmt(j.last_daily_log)}</b>${j.last_daily_log_by ? ' · ' + esc(j.last_daily_log_by) : ''}</span>` : '',
     j.photos_last_at ? `<span>Last photo <b>${fmt(j.photos_last_at)}</b> · ${esc(j.photos_last_by || '')}</span>` : '',
     `<a class="gmaps" target="_blank" rel="noopener" href="${gmaps(j)}">Open in Google Maps ↗</a>`,
   ].filter(Boolean).join('');
@@ -726,13 +805,14 @@ function roundHtml(r){
 function mailText(f, p){
   const r = [...p.rounds].reverse().find(x => x.reviews.some(y => y.failed));
   const items = r.reviews.filter(x => x.failed);
-  const custom = /custom/i.test(f.model||'');
+  // Who coordinates the permit (ops.jobs.permit_office): Sovereign, or PKB with Michele as designer of the custom homes.
+  const custom = f.permit_office ? f.permit_office !== 'sovereign' : /custom/i.test(f.model||'');
   const to = custom ? 'michele@fredianiputini.com' : 'sovereignpermit@gmail.com';
-  const cc = custom ? 'guilherme@pkbhomes.com' : 'fernanda.quiterio@sconsult.us, leonardo@sovereigninc.us, guilherme@pkbhomes.com';
+  const cc = custom ? 'guilherme@pkbhomes.com, stefano@pkbhomes.com' : 'fernanda.quiterio@sconsult.us, leonardo@sovereigninc.us, guilherme@pkbhomes.com, stefano@pkbhomes.com';
   const subj = `Correções – ${street(f.address)} – ${p.number} (rodada ${r.round})`;
   const body = `Olá, ${custom ? 'Michele' : 'Sarah e Fernanda'},
 
-O condado (${PORTAL[p.portal]||p.portal}) devolveu a rodada ${r.round} do permit ${p.number} (${f.address}${f.parcel ? ', parcel ' + f.parcel : ''}) em ${new Date((r.completed_at || items[0].completed_at) + 'T12:00:00').toLocaleDateString('pt-BR')} pedindo correções de ${items.length === 1 ? 'um departamento' : items.length + ' departamentos'}:
+O condado (${PORTAL[p.portal]||p.portal}) devolveu a rodada ${r.round} do permit ${p.number} (${f.address}${f.parcel ? ', parcel ' + f.parcel : ''}) em ${new Date((r.completed_at || items[0].completed_at) + 'T12:00:00').toLocaleDateString('en-US', {month:'2-digit', day:'2-digit', year:'2-digit'})} pedindo correções de ${items.length === 1 ? 'um departamento' : items.length + ' departamentos'}:
 
 ${items.map((x, i) => `${i+1}. ${x.department} — ${x.status}${x.reviewer ? ' (revisor: ' + x.reviewer + ')' : ''}
 ${(x.comments || '(sem comentário no portal)').trim().split('\n').map(l => '   ' + l).join('\n')}`).join('\n\n')}
@@ -845,7 +925,7 @@ $('#sugs').addEventListener('click', e => { const b = e.target.closest('button')
 /* outbox */
 const OST = {sent:['Sent','p-grn'], draft:['Queued','p-amb'], approved:['Approved','p-blue'], failed:['Failed','p-red'], cancelled:['Cancelled','p-gry'], proposed:['Waiting','p-amb'], done:['Done','p-grn'], open:['Open','p-amb'], doing:['In progress','p-blue'], dismissed:['Dismissed','p-gry']};
 const pill = s => { const [t, c] = OST[s] || [s, 'p-gry']; return `<span class="pill ${c}">${esc(t)}</span>`; };
-const when = t => t ? new Date(t).toLocaleString('en-US', {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'}) : '—';
+const when = t => t ? new Date(t).toLocaleString('en-US', {month:'2-digit', day:'2-digit', year:'2-digit', hour:'numeric', minute:'2-digit'}) : '—';
 function renderOutbox(){
   const L = window.OPS.state || {};
   const pend = (L.actions || []).filter(a => a.status === 'proposed');
@@ -875,23 +955,41 @@ renderOutbox();
 const AREA = {permits:'Permits', inspections:'Inspections', construction:'Construction', process:'Process', data:'Data', finance:'Finance'};
 const IMPACT = {high:['High impact','p-red'], medium:['Medium','p-amb'], low:['Low','p-gry']};
 const STATUS = {new:['New','p-blue'], accepted:['Accepted','p-grn'], dismissed:['Dismissed','p-gry'], done:['Done','p-grn']};
-let ideaArea = '';
+let ideaArea = '', ideaShow = 'open';
+// Language of the suggestion texts (EN / PT), remembered per browser.
+let ideaLang = (() => { try { return localStorage.getItem('opsIdeaLang') || 'en'; } catch { return 'en'; } })();
+const T = (s, f) => (ideaLang === 'pt' && s[f + '_pt']) || s[f];
+async function reloadIdeas(){
+  const b = $('#ideaReload'); b.disabled = true; b.textContent = '↻ Loading…';
+  const { data, error } = await window.OPS.sb.rpc('ops_suggestions');
+  b.disabled = false; b.innerHTML = '&#x21bb; Reload';
+  if (error) { $('#ideaCnt').textContent = 'Reload failed: ' + error.message; return; }
+  D.suggestions = data; renderIdeas();
+  $('#ideaCnt').textContent += ` · updated ${new Date().toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'})}`;
+}
 function renderIdeas(){
   const all = D.suggestions || [];
+  $('#ideaReload').onclick = reloadIdeas;
+  $('#ideaLang').innerHTML = [['en','English'],['pt','Português']].map(([k, l]) => `<button class="chip" data-l="${k}" aria-pressed="${ideaLang===k}">${l}</button>`).join('');
+  document.querySelectorAll('#ideaLang button').forEach(b => b.onclick = () => { ideaLang = b.dataset.l; try { localStorage.setItem('opsIdeaLang', ideaLang); } catch {} renderIdeas(); if (ideaLang === 'pt' && all.some(x => !x.title_pt)) reloadIdeas(); });
+  // Open (new) suggestions by default; accepted / dismissed / done move to "Decided".
+  const nDecided = all.filter(s => s.status !== 'new').length;
+  $('#ideaView').innerHTML = [['open','Open'],['decided',`Decided (${nDecided})`]].map(([k, l]) => `<button class="chip" data-v="${k}" aria-pressed="${ideaShow===k}">${l}</button>`).join('');
+  document.querySelectorAll('#ideaView button').forEach(b => b.onclick = () => { ideaShow = b.dataset.v; renderIdeas(); });
   const areas = [...new Set(all.map(s => s.area))];
   $('#ideaChips').innerHTML = ['', ...areas].map(a => `<button class="chip" data-a="${a}" aria-pressed="${ideaArea===a}">${a ? AREA[a]||a : 'All'}</button>`).join('');
   document.querySelectorAll('#ideaChips button').forEach(b => b.onclick = () => { ideaArea = b.dataset.a; renderIdeas(); });
   // open ones first (by impact), then accepted, then dismissed / done
   const ORD = {new:0, accepted:1, dismissed:2, done:3}, IMP = {high:0, medium:1, low:2};
-  const list = all.filter(s => !ideaArea || s.area === ideaArea).sort((a, b) => (ORD[a.status] ?? 9) - (ORD[b.status] ?? 9) || (IMP[a.impact] ?? 9) - (IMP[b.impact] ?? 9));
-  $('#ideaCnt').textContent = `${list.length} suggestions`;
+  const list = all.filter(s => (!ideaArea || s.area === ideaArea) && (ideaShow === 'open' ? s.status === 'new' : s.status !== 'new')).sort((a, b) => (ORD[a.status] ?? 9) - (ORD[b.status] ?? 9) || (IMP[a.impact] ?? 9) - (IMP[b.impact] ?? 9));
+  $('#ideaCnt').textContent = `${list.length} ${ideaShow === 'open' ? 'open' : 'decided'}`;
   const val = v => Array.isArray(v) ? v.map(val).join(', ') : v && typeof v === 'object' ? Object.entries(v).map(([k, x]) => `${k.replace(/_/g,' ')} ${val(x)}`).join(' · ') : String(v ?? '');
   const ev = e => Object.entries(e || {}).map(([k,v]) => `<span>${esc(k.replace(/_/g,' '))}: ${esc(val(v).slice(0, 300))}</span>`).join('');
-  const who = s => s.decided_by ? `<span class="note">${s.status === 'accepted' ? 'Accepted' : 'Dismissed'} by ${esc(String(s.decided_by).split('@')[0])}${s.decided_at ? ' · ' + esc(String(s.decided_at).slice(0, 10)) : ''}</span>` : '';
+  const who = s => s.decided_by ? `<span class="note">${s.status === 'accepted' ? 'Accepted' : 'Dismissed'} by ${esc(String(s.decided_by).split('@')[0])}${s.decided_at ? ' · ' + fmt(s.decided_at) : ''}</span>` : '';
   const acts = s => s.status === 'done' ? '' : s.status === 'new'
     ? `<div class="pa"><button class="btn" type="button" data-k="${esc(s.key)}" data-s="accepted">Accept</button><button class="btn ghost" type="button" data-k="${esc(s.key)}" data-s="dismissed">Dismiss</button><span class="st"></span></div>`
     : `<div class="pa">${who(s)}<button class="btn ghost" type="button" data-k="${esc(s.key)}" data-s="new">Undo</button><span class="st"></span></div>`;
-  $('#ideas').innerHTML = list.map(s => `<article class="idea${['dismissed','done'].includes(s.status) ? ' closed' : ''}"><div class="top"><span class="pill ${IMPACT[s.impact]?.[1]||'p-gry'}">${IMPACT[s.impact]?.[0]||s.impact}</span><span class="pill p-gold">${esc(AREA[s.area]||s.area)}</span><span class="pill ${STATUS[s.status]?.[1]||'p-gry'}">${STATUS[s.status]?.[0]||s.status}</span></div><h4>${esc(s.title)}</h4><p>${esc(s.detail)}</p><div class="ev">${ev(s.evidence)}</div>${acts(s)}</article>`).join('') || '<div class="empty">No suggestions yet.</div>';
+  $('#ideas').innerHTML = list.map(s => `<article class="idea${['dismissed','done'].includes(s.status) ? ' closed' : ''}"><div class="top"><span class="pill ${IMPACT[s.impact]?.[1]||'p-gry'}">${IMPACT[s.impact]?.[0]||s.impact}</span><span class="pill p-gold">${esc(AREA[s.area]||s.area)}</span><span class="pill ${STATUS[s.status]?.[1]||'p-gry'}">${STATUS[s.status]?.[0]||s.status}</span></div><h4>${esc(T(s,'title'))}</h4><p>${esc(T(s,'detail'))}</p><div class="ev">${ev(s.evidence)}</div>${acts(s)}</article>`).join('') || (ideaShow === 'open' ? '<div class="empty">No open suggestions. Decided ones are under “Decided”.</div>' : '<div class="empty">Nothing decided yet.</div>');
   $('#ideas').querySelectorAll('button[data-k]').forEach(b => b.onclick = async () => {
     const st = b.parentElement.querySelector('.st'); b.parentElement.querySelectorAll('button').forEach(x => x.disabled = true); st.textContent = 'Saving…';
     const { data, error } = await window.OPS.sb.rpc('ops_suggestion_decide', { p_key: b.dataset.k, p_status: b.dataset.s });
@@ -1031,6 +1129,7 @@ else show(VIEWS.includes(h0) ? h0 : VIEWS.includes(t0) ? t0 : 'today');
     if (!res.data.board) return msg('No data yet — the first snapshot is built on the next round.', true);
     window.OPS.state = res.data;
     g('whoami').textContent = res.data.me.name || res.data.me.email;
+    if (res.data.me.role === 'admin') g('usersTab').hidden = false;
     g('gate').hidden = true;
     boot(Object.assign({}, res.data.board, { geo }));
   }

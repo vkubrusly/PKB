@@ -25,7 +25,7 @@ const RECENT_DAYS = Number(process.env.OPS_RECENT_DAYS || 3);
 const ORG = process.env.OPS_ORG_NAME || 'PKB Homes';
 const q = (v) => (v == null ? 'null' : `'${String(v).replace(/'/g, "''")}'`);
 const qa = (a) => (a.length ? `array[${a.map(q).join(',')}]::text[]` : `'{}'::text[]`);
-const brDate = (d) => (d instanceof Date ? d : new Date(String(d).slice(0, 10) + 'T12:00:00Z')).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+const usDate = (d) => (d instanceof Date ? d : new Date(String(d).slice(0, 10) + 'T12:00:00Z')).toLocaleDateString('en-US', { timeZone: 'UTC', month: '2-digit', day: '2-digit', year: '2-digit' });
 const addBusinessDays = (d, n) => { const x = new Date(String(d).slice(0, 10) + 'T12:00:00Z'); while (n > 0) { x.setUTCDate(x.getUTCDate() + 1); if (x.getUTCDay() % 6) n--; } return x; };
 const clean = (c) => String(c || '').replace(/\r/g, '').replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
 
@@ -59,7 +59,7 @@ for (const c of cases) {
   const sentReq = (await sql(`select occurred_at, payload from ops.events where org_id = ${q(orgId)} and dedupe_key = ${q(keyReq)}`))[0];
   const followups = await sql(`select occurred_at from ops.events where org_id = ${q(orgId)} and dedupe_key like ${q(`r2.followup:${c.id}:${c.round}:%`)} order by occurred_at`);
 
-  const list = items.map((i, n) => `${n + 1}. ${i.department}${i.reviewer ? ` (${i.reviewer})` : ''} — ${i.status} em ${brDate(i.completed_at)}
+  const list = items.map((i, n) => `${n + 1}. ${i.department}${i.reviewer ? ` (${i.reviewer})` : ''} — ${i.status} em ${usDate(i.completed_at)}
 ${clean(i.comments) ? clean(i.comments).split('\n').map((l) => '   ' + l).join('\n') : '   (sem comentário no portal: ver os documentos de revisão do condado)'}`).join('\n\n');
 
   let kind, subject, text, cc = [...t.cc];
@@ -79,7 +79,7 @@ O condado devolveu o permit ${c.number} (obra ${c.job_number} — ${c.address}) 
 
 ${list}
 
-Prazo para reenviar: ${brDate(deadline)} (${PER_ITEM} dias úteis por item).
+Prazo para reenviar: ${usDate(deadline)} (${PER_ITEM} dias úteis por item).
 Por favor, confirmem o recebimento e a previsão de reenvio.
 
 Atenciosamente,
@@ -95,10 +95,10 @@ PKB Homes — ${contacts.internal.permits_owner.name}
     subject = `${n > 1 ? `(${n}º lembrete) ` : ''}Reenvio pendente — ${c.job_number} · ${street} · Permit ${c.number}`;
     text = `${t.hello}
 ${t.note || ''}
-O prazo de reenvio das correções do permit ${c.number} (obra ${c.job_number} — ${c.address}) venceu em ${brDate(deadline)} e ainda não vemos o reenvio no portal do condado.
+O prazo de reenvio das correções do permit ${c.number} (obra ${c.job_number} — ${c.address}) venceu em ${usDate(deadline)} e ainda não vemos o reenvio no portal do condado.
 
 Itens pendentes:
-${items.map((i, k) => `${k + 1}. ${i.department} — ${i.status} em ${brDate(i.completed_at)}`).join('\n')}
+${items.map((i, k) => `${k + 1}. ${i.department} — ${i.status} em ${usDate(i.completed_at)}`).join('\n')}
 
 Qual a previsão de reenvio?
 
@@ -118,6 +118,6 @@ PKB Homes — ${contacts.internal.permits_owner.name}
     on conflict (org_id, dedupe_key) do nothing returning id`);
   await sql(`update ops.permit_cases set ball_with = ${q(t.key === 'sovereign' ? 'sovereign' : 'pkb')} where id = ${q(c.id)};
     insert into ops.outbound_messages (org_id, job_id, channel, rule, to_addresses, cc_addresses, subject, body, status, external_id, in_reply_to_event, sent_at)
-    values (${q(orgId)}, ${q(c.job_id)}, 'email', ${q(kind)}, ${qa(t.to)}, ${qa([...cc, t.external ? process.env.OPS_ALWAYS_CC : null].filter(Boolean))}, ${q(subject)}, ${q(text)}, ${q(status)}, ${q(res.id || null)}, ${ev[0]?.id ?? 'null'}, now())`);
+    values (${q(orgId)}, ${q(c.job_id)}, 'email', ${q(kind)}, ${qa(t.to)}, ${qa(res.cc || [...cc, t.external ? process.env.OPS_ALWAYS_CC : null].filter(Boolean))}, ${q(subject)}, ${q(text)}, ${q(status)}, ${q(res.id || null)}, ${ev[0]?.id ?? 'null'}, now())`);
 }
 console.log(`corrections: ${cases.length} permit(s) waiting for resubmission${DRY ? ' · DRY RUN' : ''}`);
