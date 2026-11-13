@@ -1,5 +1,5 @@
 -- =============================================================================
--- 0034 — "not notified" is a note, not an error (Victor, 2026-10-13).
+-- 0040 — "not notified" is a note, not an error (Victor, 2026-10-13).
 -- A Buildertrend Daily Log that was posted but could not notify someone who is not a
 -- Buildertrend user on that job kept the names in outbound_messages.error, so a sent log
 -- looked like a failure (health check: 68 of 148 sent messages "with error"). The poster
