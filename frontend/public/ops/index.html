@@ -132,6 +132,29 @@ td .sub{display:block;font-size:12.5px;color:var(--ink-3)}
 .kpi .cap{font-size:13px;color:var(--ink-3)}
 .callout{font-size:13.5px;color:var(--ink-2);background:var(--gold-soft);border-radius:8px;padding:10px 12px}
 .empty{color:var(--ink-3);font-size:14px;padding:6px 0}
+/* board (phase columns) */
+.kb{display:flex;gap:12px;overflow-x:auto;padding-bottom:10px;align-items:flex-start}
+.kcol{flex:0 0 250px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;max-height:78vh}
+.kcol.over{outline:2px dashed var(--gold);outline-offset:-2px}
+.khd{display:flex;justify-content:space-between;align-items:center;gap:8px;font:700 13.5px var(--f-brand)}
+.kn{font:500 12px var(--f-mono);color:var(--ink-3)}
+.kavg{font-size:12px;color:var(--ink-3);margin-top:-6px}
+.kbody{display:flex;flex-direction:column;gap:8px;overflow-y:auto;min-height:44px}
+.kempty{color:var(--ink-3);font-size:13px;text-align:center;padding:8px 0}
+.kcard{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 10px;cursor:pointer;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:2px}
+.kcard:hover{border-color:var(--gold)}
+.kcard.dragging{opacity:.45}
+.ktop{display:flex;align-items:center;gap:8px}
+.lt{width:11px;height:11px;border-radius:50%;flex:none;border:1px solid var(--line)}
+.kd{margin-left:auto;font:600 12.5px var(--f-mono);font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.kt{font-weight:600;font-size:14px;line-height:1.3}
+.km{font-size:12.5px;color:var(--ink-3)}
+.kw{font-size:12.5px;color:var(--red)}
+.kmv{font-size:12px;color:var(--blue)}
+.kmove{font:inherit;font-size:12px;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:3px 6px;margin-top:5px;max-width:100%}
+.klegend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--ink-3)}
+.klegend span{display:inline-flex;align-items:center;gap:6px}
+@media (max-width:640px){.kcol{flex-basis:82vw}}
 /* drawer */
 .scrim{position:fixed;inset:0;background:var(--scrim);z-index:20}
 .drawer{position:fixed;top:0;right:0;bottom:0;width:min(760px,100%);background:var(--bg);z-index:21;display:flex;flex-direction:column;box-shadow:-8px 0 30px rgba(0,0,0,.18);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -302,6 +325,7 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
   </div>
   <nav class="tabs" role="tablist">
     <button role="tab" data-v="today" aria-selected="true">Today</button>
+    <button role="tab" data-v="board" aria-selected="false">Board</button>
     <button role="tab" data-v="permits" aria-selected="false">Permits</button>
     <button role="tab" data-v="inspections" aria-selected="false">Inspections</button>
     <button role="tab" data-v="dlogs" aria-selected="false">Daily logs</button>
@@ -328,6 +352,17 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
   </section>
 
   <!-- PERMITS -->
+  <section class="view" id="v-board" hidden>
+    <div><h2>Board</h2><p class="lead">Each job in its phase, from the permit, the construction start, the inspections and the CO. Drag a card or use “Move to” to correct it; the correction holds until the data shows a newer phase.</p></div>
+    <div class="tools">
+      <input id="bq" type="search" placeholder="Search job, address, model…">
+      <select id="bSup"><option value="">All supervisors</option></select>
+      <span class="klegend"><span><i class="lt" style="background:var(--green)"></i>Up to the average</span><span><i class="lt" style="background:var(--amber)"></i>Up to 1.5×</span><span><i class="lt" style="background:var(--red)"></i>Over 1.5×</span></span>
+    </div>
+    <div class="kb" id="kb"></div>
+    <p class="note">Construction phases follow the field manual: Walls starts at the slab pre-pour inspection, Roof &amp; frame at the lintel, MEP at roof sheathing, Close-in at framing, Finishes at wire lath, Final stretch at pre-power. Averages count PKB jobs with both dates; a light shows only with 3 or more jobs of history.</p>
+  </section>
+
   <section class="view" id="v-permits" hidden>
     <div><h2>Permits</h2><p class="lead">Licensing only: from contract to permit issued. Click a row for the job file with every review round, department and comment.</p></div>
     <div class="tools">
@@ -487,7 +522,7 @@ const permitState = j => {
 const PSTATE = {pre:['Pre-permit','p-gry'], requested:['Requested','p-gry'], review:['In county review','p-amb'], corr:['Corrections requested','p-red'], issued:['Issued','p-grn']};
 
 /* tabs */
-const VIEWS = ['today','permits','inspections','dlogs','map','kpis','ideas','ask','outbox','users'];
+const VIEWS = ['today','board','permits','inspections','dlogs','map','kpis','ideas','ask','outbox','users'];
 function show(v){
   document.querySelectorAll('nav.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.v === v));
   document.querySelectorAll('section.view').forEach(s => s.hidden = s.id !== 'v-' + v);
@@ -1073,10 +1108,78 @@ function initMap(){
 
 /* init */
 [...new Set(D.jobs.map(j => j.county).filter(Boolean))].sort().forEach(c => $('#pCounty').insertAdjacentHTML('beforeend', `<option>${esc(c)}</option>`));
+[...new Set(D.jobs.map(j => j.supervisor).filter(Boolean))].sort().forEach(c => $('#bSup').insertAdjacentHTML('beforeend', `<option>${esc(c)}</option>`));
 [...new Set(D.jobs.map(j => j.supervisor).filter(Boolean))].sort().forEach(c => { $('#iSup').insertAdjacentHTML('beforeend', `<option>${esc(c)}</option>`); $('#dSup').insertAdjacentHTML('beforeend', `<option value="${esc(c)}">${esc(c)}</option>`); });
+/* board (phase columns; ops/analysis/phase_board.mjs) */
+const PH = D.phases || null;
+const todayFL = () => new Date().toLocaleDateString('en-CA', {timeZone:'America/New_York'});
+const daysIn = since => since ? Math.max(0, Math.round((new Date(todayFL() + 'T12:00:00') - new Date(String(since).slice(0, 10) + 'T12:00:00')) / 864e5)) : null;
+const LIGHT = {g:['var(--green)','On or under the average'], y:['var(--amber)','Over the average, up to 1.5×'], r:['var(--red)','More than 1.5× the average']};
+// A partner's move holds until the data shows a newer phase change (computed phase starting after the move).
+function boardCards(){
+  const moves = new Map(((window.OPS && window.OPS.state) || {}).moves?.map(m => [m.job_number, m]) || []);
+  return J().map(j => {
+    let col = j.standby ? 'standby' : j.phase, since = j.standby ? j.standby_since : j.phase_since, moved = null;
+    const mv = moves.get(j.job_number), mvAt = mv ? String(mv.moved_at).slice(0, 10) : null;
+    if (mv && !(j.phase_since && j.phase_since > mvAt && j.phase !== mv.phase)) { col = mv.phase; since = mvAt; moved = mv; }
+    const n = daysIn(since), a = PH.avg[col];
+    let light = null;
+    if (n != null && a && a.avg != null && a.n >= 3 && !['done', 'standby'].includes(col)) light = n <= a.avg ? 'g' : n <= a.avg * 1.5 ? 'y' : 'r';
+    return {j, col, since, days: n, light, moved};
+  }).filter(c => c.col);
+}
+function boardCard(c){
+  const j = c.j, L = c.light ? LIGHT[c.light] : null;
+  const PERMIT_ST = {in_review:'In county review', corrections:'Corrections requested', fees_due:'Fees due', requested:'Requested', issued:'Issued'};
+  const extra = c.col === 'licensing' ? (j.permit ? `${esc(PERMIT_ST[j.ops_status] || 'Permit')} · ${esc(j.permit)}` : 'No permit number yet')
+    : c.col === 'waiting' ? `Permit issued ${fmt(j.issued_at)}`
+    : c.col === 'standby' ? esc(PAUSE[j.pause] || j.pause || 'Stand-by')
+    : c.col === 'awaiting_co' ? `Finished ${fmt(j.finished_at)}`
+    : j.last_passed ? `Last passed: ${esc(j.last_passed.replace(/ \(\d{4}-\d\d-\d\d\)$/, ''))}` : '';
+  return `<div class="kcard" draggable="true" data-job="${esc(j.job_number)}">
+    <div class="ktop"><span class="jn">${esc(j.job_number)}</span>${L ? `<i class="lt" style="background:${L[0]}" title="${L[1]}"></i>` : ''}<span class="kd" title="Days in this phase since ${fmt(c.since)}">${c.days != null ? c.days + ' d' : '—'}</span></div>
+    <div class="kt">${esc(street(j.address))}</div>
+    <div class="km">${esc([j.model, j.supervisor].filter(Boolean).join(' · '))}</div>
+    ${extra ? `<div class="km">${extra}</div>` : ''}
+    ${(j.insp_failed_open || []).length ? `<div class="kw">Open failure: ${esc(j.insp_failed_open.join(', '))}</div>` : ''}
+    ${c.moved ? `<div class="kmv">Moved by ${esc(String(c.moved.moved_by).split('@')[0])} · ${fmt(c.moved.moved_at)}</div>` : ''}
+    <select class="kmove" aria-label="Move ${esc(j.job_number)} to"><option value="">Move to…</option>${PH.order.filter(p => p.key !== c.col).map(p => `<option value="${p.key}">${esc(p.label)}</option>`).join('')}${c.moved ? '<option value="auto">Back to automatic</option>' : ''}</select>
+  </div>`;
+}
+async function boardMove(jn, phase){
+  const { error } = await window.OPS.sb.rpc('ops_board_move', {p_job: jn, p_phase: phase === 'auto' ? null : phase});
+  if (error) { alert('Could not move ' + jn + ': ' + error.message); return; }
+  try { window.OPS.state = await window.OPS.live(); } catch(e) {}
+  renderBoard();
+}
+function renderBoard(){
+  const box = $('#kb');
+  if (!PH) { box.innerHTML = '<div class="empty">The board is built with the next daily round.</div>'; return; }
+  const q = $('#bq').value.trim().toLowerCase(), sup = $('#bSup').value;
+  const cards = boardCards().filter(c => (!sup || c.j.supervisor === sup) && (!q || `${c.j.job_number} ${c.j.address} ${c.j.model || ''} ${c.j.supervisor || ''}`.toLowerCase().includes(q)));
+  box.innerHTML = PH.order.map(p => {
+    const list = cards.filter(c => c.col === p.key).sort((a, b) => p.key === 'done' ? (a.days ?? 1e9) - (b.days ?? 1e9) : (b.days ?? -1) - (a.days ?? -1));
+    const a = PH.avg[p.key];
+    const avg = ['done', 'standby'].includes(p.key) ? '' : a && a.avg != null && a.n >= 3 ? `avg ${a.avg} d · ${a.n} jobs` : 'avg — (not enough history)';
+    return `<div class="kcol" data-col="${p.key}"><div class="khd"><span>${esc(p.label)}</span><span class="kn">${list.length}</span></div>${avg ? `<div class="kavg">${avg}</div>` : ''}<div class="kbody">${list.map(boardCard).join('') || '<div class="kempty">—</div>'}</div></div>`;
+  }).join('');
+  box.querySelectorAll('.kcard').forEach(el => {
+    el.onclick = e => { if (!e.target.closest('select')) openJob(el.dataset.job); };
+    el.querySelector('select').onchange = e => { if (e.target.value) boardMove(el.dataset.job, e.target.value); };
+    el.ondragstart = e => { e.dataTransfer.setData('text/plain', el.dataset.job); el.classList.add('dragging'); };
+    el.ondragend = () => el.classList.remove('dragging');
+  });
+  box.querySelectorAll('.kcol').forEach(col => {
+    col.ondragover = e => { e.preventDefault(); col.classList.add('over'); };
+    col.ondragleave = () => col.classList.remove('over');
+    col.ondrop = e => { e.preventDefault(); col.classList.remove('over'); const jn = e.dataTransfer.getData('text/plain'); const c = boardCards().find(x => x.j.job_number === jn); if (jn && c && c.col !== col.dataset.col) boardMove(jn, col.dataset.col); };
+  });
+}
+$('#bq').oninput = renderBoard; $('#bSup').onchange = renderBoard;
+
 function renderAll(){
   document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.co === CO));
-  renderToday(); renderPermits(); renderInsp(); renderDlogs(); renderKpis(); renderClock();
+  renderToday(); renderBoard(); renderPermits(); renderInsp(); renderDlogs(); renderKpis(); renderClock();
   if (mapState) mapState.draw();
 }
 renderCharts(); renderAll(); renderIdeas();

@@ -11,6 +11,7 @@ import { sql } from './sb.mjs';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { clock, summarize } from '../analysis/construction_clock.mjs';
 import { progressAll } from '../analysis/inspection_progress.mjs';
+import { jobPhase, phaseAverages, PHASES, STANDBY } from '../analysis/phase_board.mjs';
 
 const prog = await progressAll();
 const d = (x) => (x ? String(x).slice(0, 10) : null);
@@ -91,6 +92,8 @@ for (const [xid, x] of J) {
   const paid2 = mail.filter((m) => m.job_number === x.job_number && m.category === 'bt_invoice_paid' && /2nd\s+installment/i.test(m.parsed?.title || '')).map((m) => d(m.received_at)).sort()[0] || null;
   const ck = b ? clock({ second_invoice_paid_at: paid2, status: x.status, bt_closed: x.bt ? x.bt.status !== 1 : false, bt_actual_start: x.bt?.actualStart, bt_actual_completion: x.bt?.actualCompletion, issued_at: b.issued_at, co_at: x.co_at, second_draw_at: x.second_draw_at, pauses: x.pauses, inspections: b.inspections }) : { phase: 'no_permit' };
   x.clock = ck;
+  const ph = jobPhase(x, b, ck);
+  x.phase_entries = ph.entries;
   x.mail = mail.filter((m) => m.job_number === x.job_number && m.category.startsWith('bt_invoice')).filter((m, i, a) => a.findIndex((o) => (o.parsed?.invoice_id || o.parsed?.title) === (m.parsed?.invoice_id || m.parsed?.title)) === i).slice(0, 12).map((m) => ({ at: d(m.received_at), paid: m.category === 'bt_invoice_paid', title: m.parsed?.title, amount: m.parsed?.invoice_amount ?? m.parsed?.amount, status: m.parsed?.status }));
   const pj = jobs.filter((o) => canon.get(o.id)?.id === xid && o.photos_last_at).sort((m, n) => String(n.photos_last_at).localeCompare(String(m.photos_last_at)))[0];
   const ts = (v) => (v ? new Date(v).toISOString().slice(0, 16).replace('T', ' ') : null);
@@ -100,6 +103,7 @@ for (const [xid, x] of J) {
     last_daily_log: d(DL.find((l) => l.job_number === x.job_number)?.log_date) || d(mail.find((m) => m.job_number === x.job_number && m.category === 'bt_daily_log')?.received_at),
     last_daily_log_at: DL.find((l) => l.job_number === x.job_number)?.at || null, last_daily_log_by: DL.find((l) => l.job_number === x.job_number)?.author || null,
     daily_logs_7d: DL.filter((l) => l.job_number === x.job_number && d(l.log_date) >= DL7).length,
+    phase: ph.phase, phase_since: ph.since, standby: ph.standby, standby_since: ph.standby_since,
     clock_phase: ck.phase, build_start: ck.start || null, build_start_src: ck.startSource || null, build_days: ck.buildDays ?? null,
     finished_at: ck.finishedAt || null, finish_src: ck.finishSource || null, days_awaiting_co: ck.daysAwaitingCO ?? null,
     wait_to_start: ck.waitToStart ?? null, waiting_days: ck.waitingDays ?? null, wait_excuse: ck.excuse || null,
@@ -164,6 +168,8 @@ agg.insp = agg.insp.map((r) => ({ ...r, type: short(r.type) }));
 const geo = JSON.parse(readFileSync(new URL('../config/job_geo.json', import.meta.url), 'utf8'));
 const LL = new Map(keep.filter((j) => j.latitude != null).map((j) => [j.job_number, [j.latitude, j.longitude]]));
 for (const r of rows) r.ll = LL.get(r.job_number) || geo[r.job_number]?.ll || null;
+// Board tab: columns in order and each phase's average days over PKB jobs.
+agg.phases = { order: [...PHASES.map(({ key, label }) => ({ key, label })), STANDBY], avg: phaseAverages(pkb.map((r) => files[r.job_number].phase_entries)) };
 agg.clock = summarize(rows.filter((r) => r.company === 'PKB' && r.clock_phase !== 'no_permit').map((r) => files[r.job_number].clock));
 // Field checklist (PKB field manual steps confirmed from field reports).
 const FC = await sql(`select j.job_number, f.step_n, f.status, f.note, f.updated_by, f.updated_at::date at from ops.field_checklist f join ops.jobs j on j.id = f.job_id order by f.updated_at`);
