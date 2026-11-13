@@ -120,11 +120,13 @@ def work_request(body):
     grab = lambda a, b: (re.search(a + r'\s*(.*?)\s*(?=' + b + r'|$)', t) or [None, None])[1]
     return {k: (v or '').strip() or None for k, v in {
         'client': grab('CLIENTE Nome', 'Empresa'), 'company': grab('Empresa', 'Telefone'),
-        'phone': grab('Telefone', 'E-mail'), 'email': grab('E-mail', 'PROJETO|🏠'),
+        # "E-mail CC" (added to the form ~11/2026) follows the client's e-mail; it is not part of it.
+        'phone': grab('Telefone', 'E-mail'), 'email': grab('E-mail', 'E-mail CC|PROJETO|🏠'),
+        'email_cc': grab('E-mail CC', 'PROJETO|🏠'),
         'address': grab('Endereço-?', 'Cidade'), 'city': grab('Cidade', 'Parcel ID'),
         'parcel': grab('Parcel ID', 'Modelo'), 'model': grab('Modelo', 'County'),
         'county': grab('County', 'Preço'), 'price': grab('Preço', 'CORRETOR|📋'),
-        'agent': grab('CORRETOR Nome', 'Telefone'),
+        'agent': grab('CORRETOR Nome', 'Brokerage|Telefone'), 'brokerage': grab('CORRETOR Nome.*?Brokerage', 'Telefone'),
     }.items()}
 
 

@@ -413,6 +413,19 @@ async function openReport(r){
     const btn = document.createElement('button'); btn.className = 'btn small'; btn.style.marginTop = '8px'; btn.textContent = 'Process again'; b.appendChild(document.createElement('br')); b.appendChild(btn);
     btn.onclick = async () => { btn.disabled = true; btn.textContent = 'Processing…'; try { const x = await call({ report_id: r.id, retry: true }); b.textContent = x.reply || ''; if (x.status === 'draft' && x.draft) draftCard(x.report_id, x.draft); loadRecent(); } catch(e) { btn.disabled = false; btn.textContent = 'Process again'; b.firstChild.textContent = 'Could not process: ' + e.message + ' '; } };
   }
+  // A report still waiting for an answer (which house? / open) can be dropped too, not only a draft.
+  if (['needs_job', 'open'].includes(r.status)) {
+    const row = document.createElement('div'); row.className = 'row'; row.style.marginTop = '8px';
+    const btn = document.createElement('button'); btn.className = 'btn ghost small'; btn.type = 'button'; btn.textContent = 'Discard this report';
+    const st = document.createElement('span'); st.className = 'st';
+    row.append(btn, st); $('thread').appendChild(row);
+    btn.onclick = async () => {
+      if (!confirm('Discard report #' + r.id + '? Nothing is posted to Buildertrend.')) return;
+      btn.disabled = true;
+      try { await call({ cancel: r.id }); row.remove(); bubbleAI('Discarded.'); closeReport(); loadRecent(); }
+      catch(e) { st.textContent = 'Error: ' + e.message; btn.disabled = false; }
+    };
+  }
   if (r.status === 'confirmed' && r.daily_log_error && !/^posting:/.test(r.daily_log_error) && r.daily_log_status !== 'sent') bubbleAI('Buildertrend post failed last time — it is retried automatically every hour. (' + r.daily_log_error + ')', 'err');
   if (!open) bubbleAI(r.status === 'confirmed' ? `Confirmed${r.daily_log_status === 'sent' ? ' and posted to Buildertrend' : ' — waiting to be posted to Buildertrend'}.` : 'Discarded.');
 }
