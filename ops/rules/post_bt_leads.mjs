@@ -46,7 +46,9 @@ for (const d of drafts) {
     // Keep the reason readable: Playwright's call log is long; the line that says what blocked the click matters.
     const msg = String(e.message || e);
     const why = (msg.match(/.*intercepts pointer events.*/) || [])[0];
-    const reason = (msg.split('\n')[0] + (why ? ` — ${why.trim()}` : '')).slice(0, 900);
+    // and which element it waited for (a bare "locator.click: Timeout" does not say where it stopped)
+    const at = (msg.match(/waiting for (.+)/) || [])[1];
+    const reason = (msg.split('\n')[0] + (at ? ` — at ${at.trim()}` : '') + (why ? ` — ${why.trim()}` : '')).slice(0, 900);
     const giveUp = attempt >= MAX_ATTEMPTS;
     const result = `Error creating in Buildertrend (attempt ${attempt}/${MAX_ATTEMPTS}${giveUp ? ', stopped — needs a person' : ', retried next hour'}): ${reason}`;
     await sql(`update ops.outbound_messages set error = ${q(reason)}, status = ${q(giveUp ? 'failed' : 'draft')}, payload = coalesce(payload, '{}'::jsonb) || ${q(JSON.stringify({ attempts: attempt }))}::jsonb where id = ${q(d.id)};

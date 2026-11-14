@@ -147,7 +147,7 @@ outbound_messages    drafts and sends: channel (email|whatsapp|bt_daily_log), to
 vendor_requests      per job: type (survey|stakeout|septic_design|noc|power|water|dumpster...), trigger_event, sent_at, done_at
 contracts            phase 2: source_email, client, lot, model, value, status (requested|drafted|sent|signed), signed_at, job_id
 field_reports        phase 2: job_id, supervisor, audio_path, photos[], transcript, summary, suggested_phase, confirmed
-collector_runs       audit: connector, started_at, finished_at, items, errors
+collector_runs       audit: connector, started_at, finished_at, items, errors (scripts/collector_run.mjs; collect_all per portal+stage)
 rules                active rules and mode (draft|auto) per rule
 ```
 
