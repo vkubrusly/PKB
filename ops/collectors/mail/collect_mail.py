@@ -155,7 +155,8 @@ def classify(from_addr, subject, body):
     m = AMOUNT_RE.search(s)
     if m:
         parsed['amount'] = float(m.group(1).replace(',', ''))
-    if 'buildertrend.com' in f:
+    # Buildertrend notifications come from notifications@buildertrend.net since 2026-10-24 (was .com).
+    if re.search(r'buildertrend\.(?:com|net)\b', f):
         a = re.match(r'^(.+?) (created|updated|voided|deleted|sent) an? (?:new )?\$', s)
         if a:
             parsed.update(actor=a.group(1), action=a.group(2))
