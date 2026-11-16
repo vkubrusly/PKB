@@ -30,7 +30,8 @@ const MANUAL_TEXT = STEPS.map((s: Any) => `${s.n} | ${s.phase} | ${s.name} (${s.
 
 // House numbers: "casa 1", "house 01", "obra 001", "#0001", "job 1" → 0001; "S49"/"S049" → S049.
 // Addresses: street number + a word of the street ("8188 Hale", "13304 SW 42nd" = "42"); a street number
-// alone ("6321") when only one house has it. Extra leading zeros are fine ("casa 00067").
+// alone ("6321") when only one house has it. Any number of leading zeros is fine ("0000067"), and a
+// message that is only a number is the house number ("67" = 0067).
 const padJob = (raw: string) => { const m = String(raw).trim().match(/^(s)?\s*0*(\d{1,4})$/i); if (!m) return null; return m[1] ? 'S' + m[2].padStart(3, '0') : m[2].padStart(4, '0'); };
 function houseCandidates(text: string, jobs: Any[]): { job: string; why: string }[] {
   const out = new Map<string, string>();
@@ -39,7 +40,11 @@ function houseCandidates(text: string, jobs: Any[]): { job: string; why: string 
   for (const m of t.matchAll(/(?:casa|house|home|obra|job|n[ºo°]|numero|número|#)\s*(?:n[ºo°.]?\s*)?(?:do|da|de|number|no\.?)?\s*#?\s*(s\s*0*\d{1,3}|0*\d{1,4})\b/gi)) {
     const k = padJob(m[1].replace(/\s+/g, '')); if (k && byNum.has(k)) out.set(k, m[0].trim());
   }
-  for (const m of t.matchAll(/\b(0\d{3}|S\s?\d{1,3})\b/gi)) { const k = padJob(m[1].replace(/\s+/g, '')); if (k && byNum.has(k)) out.set(k, m[1]); }
+  // any number written with leading zeros is a house number: 0067, 0000067 = 0067
+  for (const m of t.matchAll(/\b(0+\d{1,4}|S\s?0*\d{1,3})\b/gi)) { const k = padJob(m[1].replace(/\s+/g, '')); if (k && byNum.has(k)) out.set(k, m[1]); }
+  // a message that is only a number answers "which house?": 67 = 0067
+  const only = String(text || '').trim().match(/^#?\s*(s\s*\d{1,3}|\d{1,7})\.?$/i);
+  if (only) { const k = padJob(only[1].replace(/\s+/g, '')); if (k && byNum.has(k)) out.set(k, only[1]); }
   // "155th" and "155" are the same street (the sheet and Buildertrend write it both ways)
   const words = (s: string) => String(s || '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\b(\d+)(st|nd|rd|th)\b/g, '$1').split(/\s+/).filter(Boolean);
   for (const m of t.matchAll(/\b(\d{3,6})\s+([A-Za-z0-9 .]{2,40})/g)) {
