@@ -23,7 +23,7 @@ type Any = any;
 
 // Sonnet 5.5: Victor's choice for cost (2026-09-30); Opus stays as the fallback.
 const MODELS = [Deno.env.get('OPS_FIELD_MODEL') || 'claude-sonnet-5-5', 'claude-sonnet-5', 'claude-opus-5-5'].filter((v, i, a) => a.indexOf(v) === i);
-const MAX_PHOTOS = 8, MAX_FRAMES = 4;   // what the assistant sees; Buildertrend still gets every photo
+const MAX_PHOTOS = 8;   // what the assistant sees; Buildertrend still gets every photo (and every video)
 
 const STEPS = (manual as Any).phases.flatMap((ph: Any) => ph.steps.map((s: Any) => ({ ...s, phase: `${ph.n}. ${ph.name}` })));
 const MANUAL_TEXT = STEPS.map((s: Any) => `${s.n} | ${s.phase} | ${s.name} (${s.en})${s.type === 'inspection' ? ' [inspection]' : ''}`).join('\n');
@@ -88,7 +88,7 @@ const INSTRUCTIONS = `You are PKB Ops, the field assistant of PKB Homes (Florida
 DATES: always write dates in US format, MM/DD/YY (e.g. 07/30/26), in the Daily Log and everywhere else.
 Your job for each report:
 1. Identify the house. The author must say the house number or the street address. House numbers are the Buildertrend job numbers with leading zeros: "casa 1", "house 01", "obra 001" and "0001" all mean job 0001; "S49" means S049. A street address (e.g. "8188 Hale") also identifies the house. DETECTED HOUSE CANDIDATES lists what the system matched in the text — use it. Match against JOBS. If the report covers more than one house, ask the author to send one report per house (a Daily Log belongs to one job). If the report does not identify the house, or it matches more than one job, set job_number null and ask in "question" which house it is (list the likely options if you have them). Never guess the house from the photos alone.
-2. Understand the report: the text, the audio transcripts and the photos (frames marked as video frames come from a video the author filmed). The author's statements about the work are the primary source: include what they report even if the photos don't show it — a photo shows only part of the site, so something missing from a photo is not evidence against the report. Use the photos to add detail and to spot problems; flag a contradiction only when a photo clearly shows the opposite of what was said.
+2. Understand the report: the text, the audio transcripts and the photos. Videos are only attached to the Buildertrend Daily Log: you do not see them and must never describe or guess their content; when a report has nothing but videos (and the house), write the title "Vídeo de campo" and the notes "Vídeo(s) do campo em anexo." in the author's language, with no steps and no issues. The author's statements about the work are the primary source: include what they report even if the photos don't show it — a photo shows only part of the site, so something missing from a photo is not evidence against the report. Use the photos to add detail and to spot problems; flag a contradiction only when a photo clearly shows the opposite of what was said.
 3. Write the Buildertrend Daily Log as a SUMMARY a manager can read in 20 seconds — never paste or paraphrase the transcript line by line, never narrate the photos. Title: max 50 characters, the main work of the day. Notes, in the author's language, plain text, short lines, with these labels translated to that language (Portuguese: "Feito hoje:", "Em andamento:", "Próximo:", "Problemas:"):
    Done today: …
    In progress: …
@@ -169,7 +169,8 @@ Deno.serve(async (req) => {
 
     // Photos of the whole report (latest first, capped) as signed URLs Claude can fetch.
     const allPhotos = messages.flatMap((m: Any) => (m.media || []).filter((x: Any) => x.kind === 'photo'));
-    const photos = [...allPhotos.filter((x: Any) => !x.from_video).slice(-MAX_PHOTOS), ...allPhotos.filter((x: Any) => x.from_video).slice(-MAX_FRAMES)];
+    // Videos go to Buildertrend only (Victor, 11/16): frames of older reports are not sent to the assistant.
+    const photos = allPhotos.filter((x: Any) => !x.from_video).slice(-MAX_PHOTOS);
     let urls: string[] = [];
     if (photos.length) {
       const { data, error } = await sb.storage.from('field-media').createSignedUrls(photos.map((p: Any) => p.ai_path || p.path), 900);
@@ -181,10 +182,10 @@ Deno.serve(async (req) => {
     const jobsText = `${j.job_number} | ${j.bt_job_name || ''} | ${j.address} | ${j.status} | supervisor ${j.supervisor || '—'} | PM ${j.pms || '—'} | done steps: ${Object.entries(j.checklist || {}).filter(([, st]) => st === 'done').map(([n]) => n).join(',') || '—'}`;
     const convo = messages.map((m: Any) => m.from === 'assistant'
       ? `PKB Ops: ${m.text}`
-      : `${me.name || me.email}: ${[m.text, m.transcript ? `[audio transcript] ${m.transcript}` : '', (m.media || []).some((x: Any) => x.kind === 'audio') && !m.transcript ? '[audio sent without transcript]' : '', (m.media || []).filter((x: Any) => x.kind === 'photo' && !x.from_video).length ? `[${(m.media || []).filter((x: Any) => x.kind === 'photo' && !x.from_video).length} photo(s)]` : '', (m.media || []).filter((x: Any) => x.from_video).length ? `[video: ${(m.media || []).filter((x: Any) => x.from_video).length} frames${(m.media || []).some((x: Any) => x.kind === 'video') ? '' : ', video file too large to keep'}; the sound of the video is not available]` : ''].filter(Boolean).join(' ')}`).join('\n');
+      : `${me.name || me.email}: ${[m.text, m.transcript ? `[audio transcript] ${m.transcript}` : '', (m.media || []).some((x: Any) => x.kind === 'audio') && !m.transcript ? '[audio sent without transcript]' : '', (m.media || []).filter((x: Any) => x.kind === 'photo' && !x.from_video).length ? `[${(m.media || []).filter((x: Any) => x.kind === 'photo' && !x.from_video).length} photo(s)]` : '', (m.media || []).filter((x: Any) => x.kind === 'video').length ? `[${(m.media || []).filter((x: Any) => x.kind === 'video').length} video(s) attached to the Daily Log — not analyzed]` : ''].filter(Boolean).join(' ')}`).join('\n');
 
     const content: Any[] = [
-      ...urls.flatMap((u, i) => [{ type: 'text', text: photos[i]?.from_video ? `Video frame (${photos[i].name || ''})` : `Photo ${i + 1}` }, { type: 'image', source: { type: 'url', url: u } }]),
+      ...urls.flatMap((u, i) => [{ type: 'text', text: `Photo ${i + 1}` }, { type: 'image', source: { type: 'url', url: u } }]),
       { type: 'text', text: `THE HOUSE (identified by the system from "${known[0].why}"; use this job_number): job | Buildertrend name | address | status | team | manual steps already done\n${jobsText}\n\nAUTHOR: ${me.name || me.email} (${me.role})\nNOW: ${new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })} Florida time\n\nREPORT CONVERSATION:\n${convo}` },
     ];
 
