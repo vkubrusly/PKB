@@ -214,6 +214,11 @@ jobs:
           OPS_SEND_ENABLED: ${{ vars.OPS_SEND_ENABLED || 'false' }}
         run: node rules/corrections.mjs
 
+      # QuickBooks safety sync (webhooks normally keep it current; this catches a missed one). Read-only.
+      - name: QuickBooks sync
+        continue-on-error: true
+        run: node scripts/qbo_sync.mjs
+
       # Portal data for budget.pkbhomes.com/ops/ (ops.snapshots, read by the page and the Ask).
       # Before the Buildertrend posting, so the portal is up to date as early as possible.
       - name: Portal snapshot

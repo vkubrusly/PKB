@@ -59,3 +59,8 @@ jobs:
           $SB functions deploy ops-ask --project-ref "$PROJECT_REF" --yes
           $SB functions deploy ops-field --project-ref "$PROJECT_REF" --yes
           $SB functions deploy ops-users --project-ref "$PROJECT_REF" --yes
+          $SB functions deploy ops-qbo --project-ref "$PROJECT_REF" --yes
+          # Intuit calls these two directly (OAuth return, webhooks): no Supabase login; the one-time
+          # state / the intuit-signature HMAC protect them.
+          $SB functions deploy ops-qbo-callback --project-ref "$PROJECT_REF" --yes --no-verify-jwt
+          $SB functions deploy ops-qbo-webhook --project-ref "$PROJECT_REF" --yes --no-verify-jwt
