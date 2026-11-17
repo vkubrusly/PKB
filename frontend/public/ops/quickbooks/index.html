@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" sizes="32x32" href="/ops/icon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+:root{--bg:#F6F5F1;--surface:#FFFFFF;--surface-2:#EFEDE6;--ink:#2E2E30;--ink-2:#5E5D58;--ink-3:#8C8A83;--line:#E2DFD5;--gold:#E0BC52;--gold-ink:#94761F;--red:#B8402F;--green:#2F7A4B;--amber:#A96B12}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#19191B;--surface:#222224;--surface-2:#2B2B2E;--ink:#EDEBE5;--ink-2:#B5B2AA;--ink-3:#85827B;--line:#34343A;--gold-ink:#E6C665;--red:#E57866;--green:#6CC08C;--amber:#E0A546}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#19191B;--surface:#222224;--surface-2:#2B2B2E;--ink:#EDEBE5;--ink-2:#B5B2AA;--ink-3:#85827B;--line:#34343A;--gold-ink:#E6C665;--red:#E57866;--green:#6CC08C;--amber:#E0A546}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--ink);font:15px/1.5 "Source Sans 3",system-ui,sans-serif;padding:16px}
+.card{width:min(460px,100%);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:26px;display:flex;flex-direction:column;gap:14px}
+h1{font:700 21px Montserrat,system-ui,sans-serif;margin:0}
+.brand{font:600 12px Montserrat,system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
+p{margin:0;color:var(--ink-2)}#msg.err{color:var(--red)}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--ink-2)}
+input,select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 10px}
+.btn{font:700 14px Montserrat,system-ui,sans-serif;border:0;border-radius:8px;padding:11px 16px;cursor:pointer;background:var(--gold);color:#2E2E30}
+.btn.ghost{background:var(--surface-2);color:var(--ink)}.btn:disabled{opacity:.5;cursor:default}
+.status{background:var(--surface-2);border-radius:8px;padding:12px;font-size:14px}
+.ok{color:var(--green);font-weight:600}.warn{color:var(--amber);font-weight:600}
+a{color:var(--gold-ink);font-weight:600}
+form{display:flex;flex-direction:column;gap:10px}
+.small{font-size:13px;color:var(--ink-3)}
+</style>
+<title>PKB Ops — QuickBooks</title>
+</head>
+<body>
+<main class="card">
+  <div class="brand">PKB Ops · Finance</div>
+  <h1>Connect QuickBooks</h1>
+  <p>PKB Ops reads QuickBooks (read-only) to follow payments, open invoices and bills. Owners only.</p>
+  <p id="msg">Loading…</p>
+  <form id="login" hidden>
+    <label>E-mail<input type="email" id="lemail" autocomplete="email" required></label>
+    <label>Password<input type="password" id="lpass" autocomplete="current-password" required></label>
+    <button class="btn" type="submit" id="lbtn">Sign in</button>
+  </form>
+  <div id="main" hidden>
+    <div class="status" id="status"></div>
+    <label style="margin-top:12px">Company<select id="env"><option value="production">Production — PKB's QuickBooks</option><option value="sandbox">Sandbox — Intuit test company</option></select></label>
+    <button class="btn" type="button" id="go" style="margin-top:12px">Connect QuickBooks</button>
+    <p class="small" style="margin-top:10px">You will sign in at Intuit and choose the company. Reconnecting replaces the current connection. <a href="/ops/#finance">Back to Finance</a></p>
+  </div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="qb.js"></script>
+<script>
+// /ops/quickbooks/ — starts (or restarts) the QuickBooks OAuth. ?env=production|sandbox starts it at once
+// (the "Connect / Launch URL" registered in the Intuit app).
+(async () => {
+  const { $, esc } = QB;
+  const me = await QB.owner(); if (!me) return;
+  const { data } = await QB.sb.rpc('ops_finance_overview');
+  const c = data && data.connection;
+  $('status').innerHTML = c && c.connected
+    ? `<span class="ok">Connected</span> — ${esc(c.company || 'QuickBooks')} (${c.environment === 'production' ? 'production' : 'sandbox'}), by ${esc(String(c.connected_by || '').split('@')[0])}`
+    : c && c.disconnected_at ? `<span class="warn">Disconnected</span> on ${esc(String(c.disconnected_at).slice(0, 10))}` : '<span class="warn">Not connected</span>';
+  if (c && c.environment) $('env').value = c.environment;
+  $('go').textContent = c && c.connected ? 'Reconnect QuickBooks' : 'Connect QuickBooks';
+  QB.msg(`Signed in as ${me.email}.`); $('main').hidden = false;
+  const start = async (env) => {
+    $('go').disabled = true; QB.msg('Opening Intuit…');
+    try { location.href = (await QB.fn({ action: 'connect', environment: env })).url; }
+    catch (e) { QB.msg('Could not start: ' + e.message, true); $('go').disabled = false; }
+  };
+  $('go').onclick = () => start($('env').value);
+  const auto = new URLSearchParams(location.search).get('env');
+  if (auto === 'production' || auto === 'sandbox') { $('env').value = auto; start(auto); }
+})().catch((e) => QB.msg('Could not load: ' + e.message, true));
+</script>
+</body>
+</html>

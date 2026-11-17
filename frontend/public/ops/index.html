@@ -301,7 +301,7 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
       <label>Password<input type="password" id="gpass" autocomplete="current-password" required></label>
       <button class="btn" type="submit" id="gbtn">Sign in</button>
     </form>
-    <p class="small" id="gfirst" hidden>First time? <a href="/">Create your account</a> with your company e-mail and confirm it from the link you receive; then come back to this page.</p>
+    <p class="small" id="gfirst" hidden>First time? Ask the admin for your access link (PKB Ops → Users → “Send first access”). Accounts are created by invitation only.</p>
   </div>
 </div>
 
@@ -319,7 +319,7 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
     </div>
     <div class="meta">
       <span>Updated <b id="asof"></b></span>
-      <span class="who"><a href="/ops/field/" style="color:var(--gold-ink);font-weight:600;text-decoration:none;margin-right:10px">Field ↗</a><span id="whoami"></span><button type="button" id="signout">Sign out</button></span>
+      <span class="who"><a href="/ops/field/" style="color:var(--gold-ink);font-weight:600;text-decoration:none;margin-right:10px">Field ↗</a><a href="/ops/quickbooks/" id="qbLink" hidden style="color:var(--gold-ink);font-weight:600;text-decoration:none;margin-right:10px">QuickBooks ↗</a><span id="whoami"></span><button type="button" id="signout">Sign out</button></span>
       <span class="seg" role="group" aria-label="Company"><button data-co="PKB" aria-pressed="true">PKB</button><button data-co="all" aria-pressed="false">+ Prime history</button></span>
     </div>
   </div>
@@ -578,14 +578,20 @@ async function renderFinance(){
   const { data, error } = await window.OPS.sb.rpc('ops_finance_overview');
   if (error) { $('#finConn').innerHTML = `<div class="empty">Could not load: ${esc(error.message)}</div>`; return; }
   const c = data.connection;
-  $('#finConn').innerHTML = `${c ? `<div class="row" style="cursor:default;grid-template-columns:1fr auto"><div><div class="t">${esc(c.company || 'QuickBooks company')} <span class="pill ${c.environment === 'production' ? 'p-grn' : 'p-amb'}">${c.environment === 'production' ? 'Production' : 'Sandbox (test)'}</span></div>
+  const on = c && c.connected !== false;
+  $('#finConn').innerHTML = `${c ? `<div class="row" style="cursor:default;grid-template-columns:1fr auto"><div><div class="t">${esc(c.company || 'QuickBooks company')} <span class="pill ${c.environment === 'production' ? 'p-grn' : 'p-amb'}">${c.environment === 'production' ? 'Production' : 'Sandbox (test)'}</span>${on ? '' : ` <span class="pill p-red">Disconnected ${fmt(c.disconnected_at)}</span>`}</div>
       <div class="m">Connected by ${esc(String(c.connected_by || '').split('@')[0])} · ${fmt(c.connected_at)} · last sync ${c.last_sync_at ? fmtT(String(c.last_sync_at).slice(0, 16).replace('T', ' ')) + ' UTC' : 'not yet'}${c.last_webhook_at ? ' · last QuickBooks notice ' + fmtT(String(c.last_webhook_at).slice(0, 16).replace('T', ' ')) + ' UTC' : ''}</div>
       ${c.last_sync_error ? `<span class="why">${esc(c.last_sync_error)}</span>` : ''}</div><div class="r"></div></div>` : '<div class="empty">Not connected yet.</div>'}
     <div class="tools" style="margin-top:8px"><select id="finEnv"><option value="sandbox">Sandbox (test company)</option><option value="production">Production (PKB's QuickBooks)</option></select>
-    <button class="btn" type="button" id="finConnect">${c ? 'Reconnect' : 'Connect QuickBooks'}</button>${c ? '<button class="btn ghost" type="button" id="finSync">Sync now</button>' : ''}<span class="note" id="finOut"></span></div>`;
+    <button class="btn" type="button" id="finConnect">${on ? 'Reconnect' : 'Connect QuickBooks'}</button>${on ? '<button class="btn ghost" type="button" id="finSync">Sync now</button><button class="btn ghost" type="button" id="finDisc">Disconnect</button>' : ''}<span class="note" id="finOut"></span></div>`;
   if (c) $('#finEnv').value = c.environment;
   $('#finConnect').onclick = async () => { $('#finOut').textContent = 'Opening Intuit…'; try { const r = await window.OPS.fn('ops-qbo', {action:'connect', environment: $('#finEnv').value}); location.href = r.url; } catch(e) { $('#finOut').textContent = 'Error: ' + e.message; } };
-  if (c) $('#finSync').onclick = async () => { $('#finOut').textContent = 'Syncing…'; try { const r = await window.OPS.fn('ops-qbo', {action:'sync'}); $('#finOut').textContent = `✓ ${r.records ?? 0} record(s)${r.backfill ? ' (full load)' : ''}`; renderFinance(); } catch(e) { $('#finOut').textContent = 'Error: ' + e.message; } };
+  if (on) $('#finDisc').onclick = async () => {
+    if (!confirm('Disconnect QuickBooks? PKB Ops stops reading it; what was read stays as history. You can connect again at any time.')) return;
+    $('#finOut').textContent = 'Disconnecting…';
+    try { await window.OPS.fn('ops-qbo', {action:'disconnect'}); location.href = '/ops/quickbooks/disconnected/?by=portal'; } catch(e) { $('#finOut').textContent = 'Error: ' + e.message; }
+  };
+  if (on) $('#finSync').onclick = async () => { $('#finOut').textContent = 'Syncing…'; try { const r = await window.OPS.fn('ops-qbo', {action:'sync'}); $('#finOut').textContent = `✓ ${r.records ?? 0} record(s)${r.backfill ? ' (full load)' : ''}`; renderFinance(); } catch(e) { $('#finOut').textContent = 'Error: ' + e.message; } };
   const open = data.open_invoices || [], paid = data.payments || [];
   const owed = open.reduce((a, i) => a + Number(i.balance || 0), 0), late = open.filter(i => i.days_overdue > 0), late30 = open.filter(i => i.days_overdue > 30);
   const kpi = (l, v, sub) => `<div class="panel" style="gap:4px"><div class="note">${l}</div><div style="font:700 22px var(--f-brand)">${v}</div><div class="note">${sub}</div></div>`;
@@ -1310,7 +1316,7 @@ else show(VIEWS.includes(h0) ? h0 : VIEWS.includes(t0) ? t0 : 'today');
     window.OPS.state = res.data;
     g('whoami').textContent = res.data.me.name || res.data.me.email;
     if (res.data.me.role === 'admin') g('usersTab').hidden = false;
-    if (res.data.me.finance) g('financeTab').hidden = false;
+    if (res.data.me.finance) { g('financeTab').hidden = false; g('qbLink').hidden = false; }
     g('gate').hidden = true;
     boot(Object.assign({}, res.data.board, { geo }));
   }

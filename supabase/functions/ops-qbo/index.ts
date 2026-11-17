@@ -3,12 +3,14 @@
 // permission only.
 //   POST { action: 'connect', environment: 'sandbox' | 'production' } → { url } (Intuit consent page)
 //   POST { action: 'sync' }                                             → { records, backfill }
+//   POST { action: 'disconnect' }   revokes the tokens at Intuit, clears them → { was_connected, revoked }
+//   POST { action: 'disconnected' } Intuit already disconnected (from /ops/quickbooks/disconnected): clears only
 // Read-only towards QuickBooks. See _shared/qbo.mjs.
 // =============================================================================
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { publishableKey } from '../_shared/keys.ts';
 import { REDIRECT, rpc, secret, store, svc } from '../_shared/qbo_store.ts';
-import { authorizeUrl, sync } from '../_shared/qbo.mjs';
+import { authorizeUrl, revokeToken, sync } from '../_shared/qbo.mjs';
 
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type', 'Access-Control-Allow-Methods': 'POST, OPTIONS' };
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
@@ -29,6 +31,15 @@ Deno.serve(async (req) => {
       return json({ url: authorizeUrl({ clientId, redirectUri: REDIRECT, state }) });
     }
     if (body.action === 'sync') return json(await sync(store(sb)));
+    if (body.action === 'disconnect' || body.action === 'disconnected') {
+      let revoked = false;
+      if (body.action === 'disconnect') {
+        const t = await rpc(sb, 'ops_qbo_tokens_svc');
+        if (t?.refresh_token) revoked = await revokeToken(t.client_id, t.client_secret, t.refresh_token).catch(() => false);
+      }
+      const r = await rpc(sb, 'ops_qbo_disconnect_svc', { p_email: me.email });
+      return json({ ...r, revoked });
+    }
     return json({ error: 'unknown action' }, 400);
   } catch (e) {
     return json({ error: String((e as Error).message || e) }, 500);
