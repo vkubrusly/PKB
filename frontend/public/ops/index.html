@@ -468,6 +468,7 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
     <div class="tools"><button class="btn ghost" type="button" id="usersReload">&#x21bb; Reload</button><span class="count" id="usersCnt"></span></div>
     <div class="tbl" id="usersTbl"></div>
     <div class="panel"><div class="hd"><h3>Access levels</h3></div><div class="list" id="usersLevels"></div></div>
+    <div class="panel"><div class="hd"><h3>Integrations</h3><span class="note">Typed here, stored in the Supabase vault — nobody can read a value back, not even here. Never send these by chat or e-mail.</span></div><div class="list" id="secList"></div></div>
   </section>
 
   <section class="view" id="v-outbox" hidden>
@@ -569,7 +570,28 @@ async function renderUsers(){
   const login = u => !u.has_login ? '<span class="pill p-amb">No login yet</span>' : !u.confirmed ? '<span class="pill p-amb">Not confirmed</span>' : '<span class="pill p-grn">Active</span>';
   $('#usersTbl').innerHTML = `<table><thead><tr><th>Name</th><th>E-mail</th><th>Access level</th><th>Buildertrend name</th><th>Login</th><th>Last sign-in</th><th>Added</th><th>Access link</th></tr></thead><tbody>${data.map(u => `<tr><td>${esc(u.name || '—')}</td><td>${esc(u.email)}</td><td><span class="pill ${LEVELS[u.role]?.[1] || 'p-gry'}">${esc(LEVELS[u.role]?.[0] || u.role)}</span></td><td>${esc(u.bt_name || '—')}</td><td>${login(u)}</td><td>${u.last_sign_in ? fmtT(u.last_sign_in) : 'never'}</td><td>${fmt(u.added)}</td><td><button class="btn ghost" type="button" data-access="${esc(u.email)}">${u.has_login ? 'Reset password' : 'Send first access'}</button><div class="note" data-access-out="${esc(u.email)}"></div></td></tr>`).join('')}</tbody></table>`;
   document.querySelectorAll('[data-access]').forEach(b => b.onclick = () => sendAccess(b));
+  renderSecrets();
   $('#usersLevels').innerHTML = Object.entries(LEVELS).map(([k, [l, c, d]]) => `<div class="row" style="cursor:default"><span class="jn"><span class="pill ${c}">${l}</span></span><div><div class="t">${esc(d)}</div><div class="m">${data.filter(u => u.role === k).map(u => esc(u.name)).join(', ') || '—'}</div></div><div class="r"></div></div>`).join('');
+}
+
+// Integration secrets (0044): write-only fields; the status shows only when and by whom each was set.
+const SECRETS = {qbo_client_id:'QuickBooks — Client ID', qbo_client_secret:'QuickBooks — Client Secret', qbo_webhook_verifier:'QuickBooks — Webhook Verifier Token'};
+async function renderSecrets(){
+  const box = $('#secList');
+  const { data, error } = await window.OPS.sb.rpc('ops_secret_status');
+  if (error) { box.innerHTML = `<div class="empty">Could not load: ${esc(error.message)}</div>`; return; }
+  box.innerHTML = data.map(x => `<div class="row" style="cursor:default;grid-template-columns:1fr auto"><div><div class="t">${esc(SECRETS[x.name] || x.name)}</div><div class="m">${x.set ? `Set ${fmtT(String(x.at).slice(0, 16).replace('T', ' '))}${x.by ? ' by ' + esc(String(x.by).split('@')[0]) : ''}` : 'Not set'}</div>
+    <div class="tools" style="margin-top:6px"><input type="password" autocomplete="new-password" spellcheck="false" data-sec="${esc(x.name)}" placeholder="${x.set ? 'Type a new value to replace it' : 'Paste the value'}" style="flex:1 1 260px"><button class="btn" type="button" data-sec-save="${esc(x.name)}">Save</button><span class="note" data-sec-out="${esc(x.name)}"></span></div></div>
+    <div class="r">${x.set ? '<span class="pill p-grn">Set</span>' : '<span class="pill p-amb">Missing</span>'}</div></div>`).join('');
+  box.querySelectorAll('[data-sec-save]').forEach(b => b.onclick = async () => {
+    const name = b.dataset.secSave, input = box.querySelector(`[data-sec="${CSS.escape(name)}"]`), out = box.querySelector(`[data-sec-out="${CSS.escape(name)}"]`);
+    const v = input.value.trim(); if (!v) { out.textContent = 'Type the value first.'; return; }
+    b.disabled = true; out.textContent = 'Saving…';
+    const { error } = await window.OPS.sb.rpc('ops_secret_set', { p_name: name, p_value: v });
+    input.value = '';   // never kept on the page
+    if (error) { out.textContent = 'Error: ' + error.message; b.disabled = false; return; }
+    renderSecrets();
+  });
 }
 
 /* shared bits */
