@@ -568,8 +568,17 @@ async function renderUsers(){
   const n = r => data.filter(u => u.role === r).length;
   $('#usersCnt').textContent = `${data.length} users · ${Object.keys(LEVELS).map(r => `${n(r)} ${LEVELS[r][0].toLowerCase()}`).join(' · ')}`;
   const login = u => !u.has_login ? '<span class="pill p-amb">No login yet</span>' : !u.confirmed ? '<span class="pill p-amb">Not confirmed</span>' : '<span class="pill p-grn">Active</span>';
-  $('#usersTbl').innerHTML = `<table><thead><tr><th>Name</th><th>E-mail</th><th>Access level</th><th>Buildertrend name</th><th>Login</th><th>Last sign-in</th><th>Added</th><th>Access link</th></tr></thead><tbody>${data.map(u => `<tr><td>${esc(u.name || '—')}</td><td>${esc(u.email)}</td><td><span class="pill ${LEVELS[u.role]?.[1] || 'p-gry'}">${esc(LEVELS[u.role]?.[0] || u.role)}</span></td><td>${esc(u.bt_name || '—')}</td><td>${login(u)}</td><td>${u.last_sign_in ? fmtT(u.last_sign_in) : 'never'}</td><td>${fmt(u.added)}</td><td><button class="btn ghost" type="button" data-access="${esc(u.email)}">${u.has_login ? 'Reset password' : 'Send first access'}</button><div class="note" data-access-out="${esc(u.email)}"></div></td></tr>`).join('')}</tbody></table>`;
+  $('#usersTbl').innerHTML = `<table><thead><tr><th>Name</th><th>E-mail</th><th>Access level</th><th>Finance</th><th>Buildertrend name</th><th>Login</th><th>Last sign-in</th><th>Added</th><th>Access link</th></tr></thead><tbody>${data.map(u => `<tr><td>${esc(u.name || '—')}</td><td>${esc(u.email)}</td><td><span class="pill ${LEVELS[u.role]?.[1] || 'p-gry'}">${esc(LEVELS[u.role]?.[0] || u.role)}</span></td><td><label style="display:inline-flex;gap:6px;align-items:center;cursor:pointer"><input type="checkbox" data-fin="${esc(u.email)}" ${u.finance ? 'checked' : ''}> <span class="note">${u.finance ? 'Owner' : '—'}</span></label></td><td>${esc(u.bt_name || '—')}</td><td>${login(u)}</td><td>${u.last_sign_in ? fmtT(u.last_sign_in) : 'never'}</td><td>${fmt(u.added)}</td><td><button class="btn ghost" type="button" data-access="${esc(u.email)}">${u.has_login ? 'Reset password' : 'Send first access'}</button><div class="note" data-access-out="${esc(u.email)}"></div></td></tr>`).join('')}</tbody></table>`;
   document.querySelectorAll('[data-access]').forEach(b => b.onclick = () => sendAccess(b));
+  // Finance permission (owners only see the Finance tab and the QuickBooks data)
+  document.querySelectorAll('[data-fin]').forEach(c => c.onchange = async () => {
+    const on = c.checked, email = c.dataset.fin;
+    if (!confirm(`${on ? 'Give' : 'Remove'} Finance access ${on ? 'to' : 'from'} ${email}?`)) { c.checked = !on; return; }
+    c.disabled = true;
+    const { error } = await window.OPS.sb.rpc('ops_user_set_finance', { p_email: email, p_on: on });
+    if (error) { alert('Could not change: ' + error.message); c.checked = !on; c.disabled = false; return; }
+    renderUsers();
+  });
   renderSecrets();
   $('#usersLevels').innerHTML = Object.entries(LEVELS).map(([k, [l, c, d]]) => `<div class="row" style="cursor:default"><span class="jn"><span class="pill ${c}">${l}</span></span><div><div class="t">${esc(d)}</div><div class="m">${data.filter(u => u.role === k).map(u => esc(u.name)).join(', ') || '—'}</div></div><div class="r"></div></div>`).join('');
 }
