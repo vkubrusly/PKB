@@ -81,3 +81,6 @@ Em até uma semana: o que aconteceu, por que a vigilância pegou (ou não), o qu
   - robô de segurança e este plano criados;
   - a chave JWT antiga (HS256) apareceu no histórico de uma sessão de trabalho: as funções e o
     robô passaram para as chaves novas; em seguida as chaves antigas são desligadas e a HS256 revogada.
+- **17/11/2026, 20:16 UTC** — Chaves legadas `anon` / `service_role` desligadas e chave de assinatura HS256
+  revogada (confirmado pelo Victor), depois do uso real do Ask com as chaves novas. Logins seguem com a
+  ES256. Conferido em seguida: funções, robô de fotos e portal funcionando.
