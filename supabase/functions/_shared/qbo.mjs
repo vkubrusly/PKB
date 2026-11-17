@@ -27,6 +27,16 @@ async function tokenRequest(clientId, clientSecret, form) {
 }
 export const exchangeCode = (clientId, clientSecret, code, redirectUri) => tokenRequest(clientId, clientSecret, { grant_type: 'authorization_code', code, redirect_uri: redirectUri });
 export const refreshTokens = (clientId, clientSecret, refreshToken) => tokenRequest(clientId, clientSecret, { grant_type: 'refresh_token', refresh_token: refreshToken });
+// Disconnect: Intuit revokes the refresh token (and the access tokens issued from it). Best-effort.
+export async function revokeToken(clientId, clientSecret, token) {
+  if (!token) return false;
+  const r = await fetch('https://developer.api.intuit.com/v2/oauth2/tokens/revoke', {
+    method: 'POST',
+    headers: { Authorization: 'Basic ' + btoa(`${clientId}:${clientSecret}`), Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token }),
+  });
+  return r.ok;
+}
 
 async function get(env, realm, token, path, params = {}) {
   const u = new URL(`${apiBase(env)}/v3/company/${realm}/${path}`);
