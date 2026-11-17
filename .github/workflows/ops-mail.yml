@@ -50,3 +50,13 @@ jobs:
           node rules/septic_mail.mjs || echo "::warning::rules/septic_mail.mjs failed"
           node rules/send_approved.mjs || echo "::warning::rules/send_approved.mjs failed"
           node rules/warranty.mjs || echo "::warning::rules/warranty.mjs failed"
+
+      # Security robot (rules/security_watch.mjs): attack attempts and doors left open, every hour.
+      # Critical / high findings e-mail Victor at once (even with sending off); weekly report on Mondays.
+      - name: Security watch
+        continue-on-error: true
+        env:
+          BOT_EMAIL: ${{ secrets.BOT_EMAIL || 'botpkbhomes@gmail.com' }}
+          BOT_EMAIL_PASSWORD: ${{ secrets.BOT_EMAIL_PASSWORD }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: node rules/security_watch.mjs

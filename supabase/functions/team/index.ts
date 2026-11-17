@@ -12,13 +12,14 @@
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { cors, json } from '../_shared/cors.ts';
+import { secretKey, publishableKey } from '../_shared/keys.ts';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   try {
     const url = Deno.env.get('SUPABASE_URL')!;
-    const anon = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const svcKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const anon = publishableKey();
+    const svcKey = secretKey();
 
     // Identify the caller from their JWT.
     const authHeader = req.headers.get('Authorization') ?? '';

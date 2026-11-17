@@ -14,6 +14,7 @@
 import Anthropic from 'npm:@anthropic-ai/sdk@0.68.0';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { cors, json, parseJson } from '../_shared/cors.ts';
+import { secretKey } from '../_shared/keys.ts';
 
 interface DetailResult {
   memorial: string;
@@ -39,7 +40,7 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      secretKey(),
     );
 
     const { material_id, language = 'pt' } = await req.json();

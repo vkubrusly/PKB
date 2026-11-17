@@ -18,6 +18,7 @@ import Anthropic from 'npm:@anthropic-ai/sdk@0.68.0';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { encodeBase64 } from 'jsr:@std/encoding@1/base64';
 import { cors, json } from '../_shared/cors.ts';
+import { secretKey } from '../_shared/keys.ts';
 
 const WBS = `
 1 Planning & Preconstruction (1.1 General Conditions, 1.2 Architect/Engineering, 1.3 Recurring Fixed Costs)
@@ -80,7 +81,7 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      secretKey(),
     );
 
     // Download the plans from Storage and base64-encode for the document block.
