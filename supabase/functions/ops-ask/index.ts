@@ -16,6 +16,7 @@
 import Anthropic from 'npm:@anthropic-ai/sdk@0.68.0';
 import { createClient, type SupabaseClient } from 'jsr:@supabase/supabase-js@2';
 import { cors, json } from '../_shared/cors.ts';
+import { publishableKey } from '../_shared/keys.ts';
 
 // deno-lint-ignore no-explicit-any
 type Any = any;
@@ -205,7 +206,7 @@ async function create(anthropic: Anthropic, model: string, params: Any): Promise
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   try {
-    const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
+    const sb = createClient(Deno.env.get('SUPABASE_URL')!, publishableKey(), {
       global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } },
     });
     const body = await req.json().catch(() => ({}));

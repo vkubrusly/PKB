@@ -35,7 +35,8 @@ export async function sql(query, attempt = 0) {
   return body;
 }
 
-// Service-role key of the project, read through the Management API (same access token), for
+// Secret API key of the project (the new sb_secret_ key; the legacy service_role JWT only as a fallback),
+// read through the Management API (same access token), for
 // server-side jobs that need Storage (e.g. downloading field photos to attach in Buildertrend).
 let svcKey = null;
 // SUPABASE_SERVICE_ROLE_KEY (env) wins; otherwise the Management API, retried (it sometimes answers 500).
@@ -46,7 +47,8 @@ export async function serviceKey() {
   for (let attempt = 0; attempt < 5; attempt++) {
     const r = await fetch(`https://api.supabase.com/v1/projects/${REF}/api-keys?reveal=true`, { headers: { Authorization: `Bearer ${token()}` } });
     const keys = await r.json().catch(() => null);
-    svcKey = (Array.isArray(keys) ? keys : []).find((k) => k.name === 'service_role' || k.type === 'secret')?.api_key;
+    const list = Array.isArray(keys) ? keys : [];
+    svcKey = (list.find((k) => k.type === 'secret') || list.find((k) => k.name === 'service_role'))?.api_key;
     if (svcKey) return svcKey;
     last = `${r.status}`;
     await new Promise((res) => setTimeout(res, 3000 * 2 ** attempt));
@@ -56,7 +58,7 @@ export async function serviceKey() {
 
 export async function downloadObject(bucket, path) {
   const key = await serviceKey();
-  const r = await fetch(`https://${REF}.supabase.co/storage/v1/object/${bucket}/${path.split('/').map(encodeURIComponent).join('/')}`, { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+  const r = await fetch(`https://${REF}.supabase.co/storage/v1/object/${bucket}/${path.split('/').map(encodeURIComponent).join('/')}`, { headers: { apikey: key, ...(key.startsWith('eyJ') ? { Authorization: `Bearer ${key}` } : {}) } });   // new keys go in apikey only
   if (!r.ok) throw new Error(`storage ${r.status} ${path}`);
   return Buffer.from(await r.arrayBuffer());
 }
