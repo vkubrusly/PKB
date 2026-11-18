@@ -470,6 +470,8 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
     <div class="kpis" id="finKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px"></div>
     <div class="panel"><div class="hd"><h3>Open invoices</h3><span class="note">balance due, most overdue first</span></div><div class="tbl" id="finOpen"></div></div>
     <div class="panel"><div class="hd"><h3>Payments received · last 120 days</h3></div><div class="tbl" id="finPaid"></div></div>
+    <div class="panel"><div class="hd"><h3>QuickBooks errors</h3><span class="note">last 15 · intuit_tid identifies the call for Intuit support</span></div><div class="tbl" id="finErr"></div></div>
+    <p class="note">Support: <a href="mailto:victor@pkbhomes.com?subject=PKB%20Ops%20QuickBooks">victor@pkbhomes.com</a> · Connection page: <a href="/ops/quickbooks/">/ops/quickbooks</a></p>
   </section>
 
   <section class="view" id="v-users" hidden>
@@ -579,19 +581,26 @@ async function renderFinance(){
   if (error) { $('#finConn').innerHTML = `<div class="empty">Could not load: ${esc(error.message)}</div>`; return; }
   const c = data.connection;
   const on = c && c.connected !== false;
+  const feat = c && c.features ? Object.entries({classes:'Classes', locations:'Locations', multicurrency:'Multicurrency', projects:'Projects'}).map(([k, l]) => `<span class="pill ${c.features[k] ? 'p-grn' : 'p-gry'}">${l} ${c.features[k] ? 'on' : 'off'}</span>`).join(' ') : '';
+  const warn = c && (c.warnings || []).length ? `<div class="m" style="margin-top:6px">Skipped this sync (not in this company's plan or refused): ${c.warnings.map(w => `<b>${esc(w.entity)}</b>`).join(', ')}</div>` : '';
   $('#finConn').innerHTML = `${c ? `<div class="row" style="cursor:default;grid-template-columns:1fr auto"><div><div class="t">${esc(c.company || 'QuickBooks company')} <span class="pill ${c.environment === 'production' ? 'p-grn' : 'p-amb'}">${c.environment === 'production' ? 'Production' : 'Sandbox (test)'}</span>${on ? '' : ` <span class="pill p-red">Disconnected ${fmt(c.disconnected_at)}</span>`}</div>
       <div class="m">Connected by ${esc(String(c.connected_by || '').split('@')[0])} · ${fmt(c.connected_at)} · last sync ${c.last_sync_at ? fmtT(String(c.last_sync_at).slice(0, 16).replace('T', ' ')) + ' UTC' : 'not yet'}${c.last_webhook_at ? ' · last QuickBooks notice ' + fmtT(String(c.last_webhook_at).slice(0, 16).replace('T', ' ')) + ' UTC' : ''}</div>
-      ${c.last_sync_error ? `<span class="why">${esc(c.last_sync_error)}</span>` : ''}</div><div class="r"></div></div>` : '<div class="empty">Not connected yet.</div>'}
+      ${c.needs_reconnect ? `<div class="why" style="-webkit-line-clamp:unset">⚠ QuickBooks needs to be reconnected — ${esc(c.needs_reconnect_reason || '')} The owners were e-mailed.</div>` : c.last_sync_error ? `<span class="why">${esc(c.last_sync_error)}</span>` : ''}
+      ${feat ? `<div class="m" style="margin-top:6px">Plan features: ${feat}${c.features.home_currency ? ` · home currency ${esc(c.features.home_currency)}` : ''}</div>` : ''}${warn}
+      <div class="m" style="margin-top:6px">API minor version <input id="finMinor" value="${esc(c.minor_version || '75')}" style="width:58px;font:inherit;padding:2px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)"> <a href="#" id="finMinorSave">save</a></div></div><div class="r"></div></div>` : '<div class="empty">Not connected yet.</div>'}
     <div class="tools" style="margin-top:8px"><select id="finEnv"><option value="sandbox">Sandbox (test company)</option><option value="production">Production (PKB's QuickBooks)</option></select>
-    <button class="btn" type="button" id="finConnect">${on ? 'Reconnect' : 'Connect QuickBooks'}</button>${on ? '<button class="btn ghost" type="button" id="finSync">Sync now</button><button class="btn ghost" type="button" id="finDisc">Disconnect</button>' : ''}<span class="note" id="finOut"></span></div>`;
+    <button class="btn" type="button" id="finConnect">${on && !c.needs_reconnect ? 'Reconnect' : on ? 'Reconnect now' : 'Connect QuickBooks'}</button>${on ? '<button class="btn ghost" type="button" id="finSync">Sync now</button><button class="btn ghost" type="button" id="finDisc">Disconnect</button>' : ''}<span class="note" id="finOut"></span></div>`;
   if (c) $('#finEnv').value = c.environment;
+  if (c && $('#finMinorSave')) $('#finMinorSave').onclick = async (e) => { e.preventDefault(); const { error } = await window.OPS.sb.rpc('ops_qbo_set_minor_version', { p_version: $('#finMinor').value.trim() }); $('#finOut').textContent = error ? 'Error: ' + error.message : '✓ minor version saved'; };
+  const errs = data.errors || [];
+  $('#finErr').innerHTML = errs.length ? `<table><thead><tr><th>When (UTC)</th><th>Kind</th><th>Where</th><th>Message</th><th>intuit_tid</th></tr></thead><tbody>${errs.map(e => `<tr><td>${fmtT(String(e.at).slice(0, 16).replace('T', ' '))}</td><td><span class="pill ${e.code === 'skipped' ? 'p-gry' : e.kind === 'invalid_grant' ? 'p-red' : 'p-amb'}">${esc(e.code === 'skipped' ? 'skipped (' + e.kind + ')' : e.kind)}</span></td><td class="mono">${esc(e.endpoint || '—')}</td><td>${esc(String(e.message || '').slice(0, 220))}</td><td class="mono">${esc(e.intuit_tid || '—')}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">No errors.</div>';
   $('#finConnect').onclick = async () => { $('#finOut').textContent = 'Opening Intuit…'; try { const r = await window.OPS.fn('ops-qbo', {action:'connect', environment: $('#finEnv').value}); location.href = r.url; } catch(e) { $('#finOut').textContent = 'Error: ' + e.message; } };
   if (on) $('#finDisc').onclick = async () => {
     if (!confirm('Disconnect QuickBooks? PKB Ops stops reading it; what was read stays as history. You can connect again at any time.')) return;
     $('#finOut').textContent = 'Disconnecting…';
     try { await window.OPS.fn('ops-qbo', {action:'disconnect'}); location.href = '/ops/quickbooks/disconnected/?by=portal'; } catch(e) { $('#finOut').textContent = 'Error: ' + e.message; }
   };
-  if (on) $('#finSync').onclick = async () => { $('#finOut').textContent = 'Syncing…'; try { const r = await window.OPS.fn('ops-qbo', {action:'sync'}); $('#finOut').textContent = `✓ ${r.records ?? 0} record(s)${r.backfill ? ' (full load)' : ''}`; renderFinance(); } catch(e) { $('#finOut').textContent = 'Error: ' + e.message; } };
+  if (on) $('#finSync').onclick = async () => { $('#finOut').textContent = 'Syncing…'; try { const r = await window.OPS.fn('ops-qbo', {action:'sync'}); $('#finOut').textContent = typeof r.skipped === 'string' ? `Not synced: ${r.skipped}` : `✓ ${r.records ?? 0} record(s)${r.backfill ? ' (full load)' : ''}${(r.skipped || []).length ? ' · skipped ' + r.skipped.join(', ') : ''}`; renderFinance(); } catch(e) { $('#finOut').textContent = 'Error: ' + e.message; renderFinance(); } };
   const open = data.open_invoices || [], paid = data.payments || [];
   const owed = open.reduce((a, i) => a + Number(i.balance || 0), 0), late = open.filter(i => i.days_overdue > 0), late30 = open.filter(i => i.days_overdue > 30);
   const kpi = (l, v, sub) => `<div class="panel" style="gap:4px"><div class="note">${l}</div><div style="font:700 22px var(--f-brand)">${v}</div><div class="note">${sub}</div></div>`;
