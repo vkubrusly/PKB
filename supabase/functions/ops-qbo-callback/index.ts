@@ -5,7 +5,7 @@
 // (backfill) and sends the owner back to the Finance tab.
 // =============================================================================
 import { PORTAL, REDIRECT, later, rpc, secret, store, svc } from '../_shared/qbo_store.ts';
-import { companyName, exchangeCode, sync } from '../_shared/qbo.mjs';
+import { companyName, errorRow, exchangeCode, sync } from '../_shared/qbo.mjs';
 
 const back = (result: string) => new Response(null, { status: 302, headers: { Location: `${PORTAL}?qbo=${result}#finance` } });
 
@@ -19,8 +19,8 @@ Deno.serve(async (req) => {
     const st = await rpc(sb, 'ops_qbo_state_take_svc', { p_state: state });
     if (!st) return back('expired');
     const id = await secret(sb, 'qbo_client_id'), sec = await secret(sb, 'qbo_client_secret');
-    const t = await exchangeCode(id!, sec!, code, REDIRECT);
-    const company = await companyName(st.environment, realm, t.access).catch(() => null);
+    const t = await exchangeCode(st.environment, id!, sec!, code, REDIRECT).catch(async (e) => { await store(sb).error(errorRow(e)).catch(() => {}); throw e; });
+    const company = await companyName({ env: st.environment, realm, token: t.access }).catch(() => null);
     await rpc(sb, 'ops_qbo_save_tokens_svc', { p_access: t.access, p_refresh: t.refresh, p_access_exp: t.accessExp, p_refresh_exp: t.refreshExp,
       p_realm: realm, p_env: st.environment, p_company: company, p_email: st.email });
     await later(sync(store(sb)).catch((e) => console.error('qbo first sync:', e.message)));

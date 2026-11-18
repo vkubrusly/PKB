@@ -14,6 +14,7 @@
 //   accounts        new logins created, new members of a real company (not the demo org)
 //   attacks         failed sign-ins (bursts per IP / overall), sign-up attempts
 //   abuse           AI calls per hour (cost abuse of the Anthropic key), e-mails sent per hour
+//   quickbooks      connection lost (e-mails every owner once with the reconnect link), repeated errors
 //   node rules/security_watch.mjs [--dry-run]
 // =============================================================================
 import { createHash } from 'node:crypto';
@@ -102,6 +103,15 @@ await check('abuse', async () => {
   if (em.n >= LIMITS.emailsPerHour) add({ key: `email_spike:${new Date().toISOString().slice(0, 13)}`, severity: 'high', title: `${em.n} e-mails sent in the last hour (normal peak 10)`, detail: 'Check the Outbox: a rule may be looping, or the mailbox is being misused.' });
 });
 
+// --- QuickBooks (0048): connection lost / repeated failures --------------------------------
+let qboReconnect = null;
+await check('quickbooks', async () => {
+  const [c] = await sql(`select needs_reconnect, needs_reconnect_reason, needs_reconnect_at::text at, owners_alerted_at, environment from ops.qbo_connection where id = 1 and realm_id is not null`);
+  if (c?.needs_reconnect) { qboReconnect = c; add({ key: `qbo_reconnect:${c.at}`, severity: 'high', title: 'QuickBooks needs to be reconnected', detail: `${c.needs_reconnect_reason || ''} — an owner reconnects at https://budget.pkbhomes.com/ops/quickbooks/`, state: true }); }
+  const [e] = await sql(`select count(*)::int n, string_agg(distinct kind, ', ') kinds, max(intuit_tid) tid from ops.qbo_errors where at > now() - interval '24 hours' and code is distinct from 'skipped'`);
+  if (e.n >= 5) add({ key: `qbo_errors:${new Date().toISOString().slice(0, 10)}`, severity: 'medium', title: `${e.n} QuickBooks errors in 24 h (${e.kinds})`, detail: `See Finance → QuickBooks errors (last intuit_tid ${e.tid || '—'}).` });
+});
+
 if (errors.length) add({ key: `watch_error:${new Date().toISOString().slice(0, 10)}`, severity: 'medium', title: 'The security robot could not run every check', detail: errors.join(' · ') });
 
 // --- store, alert, resolve ------------------------------------------------------------------
@@ -139,6 +149,16 @@ if (urgent.length) {
   const st = await send(`🚨 PKB Ops security: ${urgent.length} alert(s) — ${urgent[0].title}`.slice(0, 140),
     `${urgent.map(line).join('\n\n')}\n\nWhat to do: ops/SECURITY.md (response plan). Critical = act now; high = today.\n\n— PKB Ops security robot`);
   if (st === 'sent' && !DRY) for (const f of urgent) await sql(`update ops.security_findings set alerted_at = now() where key = ${q(f.key)}`);
+}
+
+// QuickBooks lost: every owner is told once (the Finance permission holders), with the reconnect link.
+if (qboReconnect && !qboReconnect.owners_alerted_at && !DRY) {
+  const owners = (await sql(`select email from ops.portal_users where finance`)).map((o) => o.email);
+  let res = { error: 'no owners' };
+  try { res = await sendEmail({ to: owners, subject: 'PKB Ops — reconnect QuickBooks', alwaysCc: false, force: true,
+    text: `PKB Ops lost access to QuickBooks (${qboReconnect.environment}): ${qboReconnect.needs_reconnect_reason || 'authorization expired or revoked'}.\n\nAny owner can reconnect in one minute:\nhttps://budget.pkbhomes.com/ops/quickbooks/\n\nUntil then the Finance tab shows the data read before this.\nSupport: victor@pkbhomes.com\n\n— PKB Ops` }); } catch (e) { res = { error: e.message }; }
+  if (!res.error) await sql(`update ops.qbo_connection set owners_alerted_at = now() where id = 1`);
+  console.log(`${res.error ? 'FAILED' : 'SENT'} QuickBooks reconnect notice → ${owners.join(', ')}`);
 }
 
 // weekly report: Mondays, once

@@ -44,8 +44,19 @@ form{display:flex;flex-direction:column;gap:10px}
     <div class="status" id="status"></div>
     <label style="margin-top:12px">Company<select id="env"><option value="production">Production — PKB's QuickBooks</option><option value="sandbox">Sandbox — Intuit test company</option></select></label>
     <button class="btn" type="button" id="go" style="margin-top:12px">Connect QuickBooks</button>
+    <div id="actions" hidden style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn ghost" type="button" id="sync">Sync now</button><button class="btn ghost" type="button" id="disc">Disconnect</button></div>
+    <p class="small" id="out" style="margin-top:8px"></p>
+    <div id="tests" hidden style="margin-top:12px;border-top:1px solid var(--line);padding-top:12px">
+      <p class="small"><b>Sandbox tests</b> (only on a sandbox connection) — each one breaks the token on purpose, then syncs:</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+        <button class="btn ghost" type="button" data-test="expire_access">Expired access token</button>
+        <button class="btn ghost" type="button" data-test="revoke_access">Access token rejected (401)</button>
+        <button class="btn ghost" type="button" data-test="break_refresh">invalid_grant</button>
+      </div>
+    </div>
     <p class="small" style="margin-top:10px">You will sign in at Intuit and choose the company. Reconnecting replaces the current connection. <a href="/ops/#finance">Back to Finance</a></p>
   </div>
+  <p class="small">Support: <a href="mailto:victor@pkbhomes.com?subject=PKB%20Ops%20QuickBooks">victor@pkbhomes.com</a></p>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="qb.js"></script>
@@ -57,11 +68,28 @@ form{display:flex;flex-direction:column;gap:10px}
   const me = await QB.owner(); if (!me) return;
   const { data } = await QB.sb.rpc('ops_finance_overview');
   const c = data && data.connection;
-  $('status').innerHTML = c && c.connected
-    ? `<span class="ok">Connected</span> — ${esc(c.company || 'QuickBooks')} (${c.environment === 'production' ? 'production' : 'sandbox'}), by ${esc(String(c.connected_by || '').split('@')[0])}`
+  const on = c && c.connected;
+  $('status').innerHTML = on && c.needs_reconnect ? `<span class="err" style="color:var(--red);font-weight:600">Needs to be reconnected</span> — ${esc(c.needs_reconnect_reason || '')}`
+    : on ? `<span class="ok">Connected</span> — ${esc(c.company || 'QuickBooks')} (${c.environment === 'production' ? 'production' : 'sandbox'}), by ${esc(String(c.connected_by || '').split('@')[0])}${c.last_sync_at ? `<br><span class="small">Last sync ${esc(String(c.last_sync_at).slice(0, 16).replace('T', ' '))} UTC${c.last_sync_error ? ' · error: ' + esc(c.last_sync_error) : ''}</span>` : ''}`
     : c && c.disconnected_at ? `<span class="warn">Disconnected</span> on ${esc(String(c.disconnected_at).slice(0, 10))}` : '<span class="warn">Not connected</span>';
+  if (on) { $('actions').hidden = false; $('actions').style.display = 'flex'; }
+  if (on && c.environment === 'sandbox') $('tests').hidden = false;
+  const out = (t) => { $('out').textContent = t; };
+  $('sync').onclick = async () => { out('Syncing…'); try { const r = await QB.fn({ action: 'sync' }); out(typeof r.skipped === 'string' ? 'Not synced: ' + r.skipped : `✓ ${r.records} record(s)${r.backfill ? ' (full load)' : ''}${(r.skipped || []).length ? ' · skipped ' + r.skipped.join(', ') : ''}`); } catch (e) { out('Error: ' + e.message); } };
+  $('disc').onclick = async () => {
+    if (!confirm('Disconnect QuickBooks? Access is revoked at Intuit and PKB Ops stops reading it.')) return;
+    out('Disconnecting…');
+    try { await QB.fn({ action: 'disconnect' }); location.href = '/ops/quickbooks/disconnected/?by=portal'; } catch (e) { out('Error: ' + e.message); }
+  };
+  document.querySelectorAll('[data-test]').forEach((b) => b.onclick = async () => {
+    out(`Test ${b.dataset.test}…`);
+    try { const r = await QB.fn({ action: 'test', test: b.dataset.test });
+      out(r.failed ? `Test ${r.test}: sync stopped (${r.kind}${r.intuit_tid ? ', intuit_tid ' + r.intuit_tid : ''})${r.needs_reconnect ? ' → marked "needs reconnect"; the owners will be e-mailed within the hour' : ': ' + r.message}. Reload to see the status.`
+        : `Test ${r.test}: ✓ recovered — ${r.result.records} record(s) synced${(r.result.skipped || []).length ? ' · skipped ' + r.result.skipped.join(', ') : ''}.`);
+    } catch (e) { out('Error: ' + e.message); }
+  });
   if (c && c.environment) $('env').value = c.environment;
-  $('go').textContent = c && c.connected ? 'Reconnect QuickBooks' : 'Connect QuickBooks';
+  $('go').textContent = on ? 'Reconnect QuickBooks' : 'Connect QuickBooks';
   QB.msg(`Signed in as ${me.email}.`); $('main').hidden = false;
   const start = async (env) => {
     $('go').disabled = true; QB.msg('Opening Intuit…');

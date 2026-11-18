@@ -19,7 +19,13 @@ export const store = (sb: SupabaseClient) => ({
   saveTokens: (n: any) => rpc(sb, 'ops_qbo_save_tokens_svc', { p_access: n.access, p_refresh: n.refresh, p_access_exp: n.accessExp, p_refresh_exp: n.refreshExp }),
   // deno-lint-ignore no-explicit-any
   upsert: (records: any[]) => rpc(sb, 'ops_qbo_upsert_svc', { p_records: records }),
-  synced: (since: string | null, error: string | null, backfilled: boolean) => rpc(sb, 'ops_qbo_synced_svc', { p_since: since, p_error: error, p_backfilled: backfilled }),
+  // deno-lint-ignore no-explicit-any
+  synced: (since: string | null, error: string | null, backfilled: boolean, warnings: any = null) => rpc(sb, 'ops_qbo_synced_svc', { p_since: since, p_error: error, p_backfilled: backfilled, p_warnings: warnings }),
+  // deno-lint-ignore no-explicit-any
+  error: (e: any) => rpc(sb, 'ops_qbo_error_svc', { p_kind: e.kind, p_status: e.status ?? null, p_tid: e.intuit_tid ?? null, p_endpoint: e.endpoint ?? null, p_code: e.code ?? null, p_message: e.message ?? null }),
+  needsReconnect: (reason: string) => rpc(sb, 'ops_qbo_needs_reconnect_svc', { p_reason: reason }),
+  // deno-lint-ignore no-explicit-any
+  features: (f: any) => rpc(sb, 'ops_qbo_features_svc', { p_features: f }),
 });
 // Work that must finish after the response (Supabase Edge Runtime keeps the worker alive for it).
 export function later(p: Promise<unknown>) {
