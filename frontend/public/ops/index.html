@@ -577,10 +577,20 @@ async function renderFinance(){
   if (!window.OPS?.state?.me?.finance) return;
   const qs = new URLSearchParams(location.search).get('qbo');
   if (qs) { $('#finMsg').textContent = {connected:'Connected — the first sync is running; reload in a minute.', denied:'Connection cancelled at Intuit.', expired:'The link expired — try again.', error:'Could not connect — try again.', invalid:'Invalid return from Intuit.'}[qs] || ''; history.replaceState(null, '', location.pathname + location.hash); }
-  const { data, error } = await window.OPS.sb.rpc('ops_finance_overview');
-  if (error) { $('#finConn').innerHTML = `<div class="empty">Could not load: ${esc(error.message)}</div>`; return; }
+  // A request can stall in the browser (seen right after the return from Intuit): give up after 15 s, try once
+  // more, then say so with a Reload link instead of leaving the cards blank.
+  const load = () => Promise.race([window.OPS.sb.rpc('ops_finance_overview'), new Promise(r => setTimeout(() => r({ error: { message: 'timed out' } }), 15000))]);
+  if (!$('#finConn').innerHTML) $('#finConn').innerHTML = '<div class="empty">Loading…</div>';
+  let { data, error } = await load();
+  if (error && error.message === 'timed out') ({ data, error } = await load());
+  if (error) { $('#finConn').innerHTML = `<div class="empty">Could not load: ${esc(error.message)} — <a href="#" onclick="location.reload();return false">reload</a></div>`; return; }
   const c = data.connection;
   const on = c && c.connected !== false;
+  // Just connected: refresh every 20 s until the first full load has finished, then clear the banner.
+  const loading = on && (!c.backfilled_at || c.backfilled_at < c.connected_at);
+  clearTimeout(renderFinance.t);
+  if (loading) renderFinance.t = setTimeout(() => { if (!$('#v-finance').hidden) renderFinance(); }, 20000);
+  else if (/first sync is running/.test($('#finMsg').textContent)) $('#finMsg').textContent = '✓ Connected — data loaded.';
   const feat = c && c.features ? Object.entries({classes:'Classes', locations:'Locations', multicurrency:'Multicurrency', projects:'Projects'}).map(([k, l]) => `<span class="pill ${c.features[k] ? 'p-grn' : 'p-gry'}">${l} ${c.features[k] ? 'on' : 'off'}</span>`).join(' ') : '';
   const warn = c && (c.warnings || []).length ? `<div class="m" style="margin-top:6px">Skipped this sync (not in this company's plan or refused): ${c.warnings.map(w => `<b>${esc(w.entity)}</b>`).join(', ')}</div>` : '';
   $('#finConn').innerHTML = `${c ? `<div class="row" style="cursor:default;grid-template-columns:1fr auto"><div><div class="t">${esc(c.company || 'QuickBooks company')} <span class="pill ${c.environment === 'production' ? 'p-grn' : 'p-amb'}">${c.environment === 'production' ? 'Production' : 'Sandbox (test)'}</span>${on ? '' : ` <span class="pill p-red">Disconnected ${fmt(c.disconnected_at)}</span>`}</div>

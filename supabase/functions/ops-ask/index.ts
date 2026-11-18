@@ -59,11 +59,14 @@ ACTIONS: when the partner asks you to DO something, draft it completely and call
 - propose_pause_job / propose_resume_job, propose_set_contact (supervisor or PM), propose_job_note.
 - propose_set_office: change which office coordinates a house's permit (sovereign or pkb); corrections e-mails follow it.
 - propose_change_request: a change to the system itself (new rule, report, screen, data fix) — it goes to Claude, the system's developer.
+QUICKBOOKS (finance): only the owners (Finance access) get the get_quickbooks tool — read-only data synced from PKB's QuickBooks Online (bills, bill payments, invoices, customer payments, deposits, customers, vendors). If it is not in your tools, the person asking has no Finance access: say QuickBooks data is limited to the owners. With it: quote document numbers, vendors/customers, dates and amounts; matches/by_entity are totals over ALL matches, rows only the newest ones shown; for one job's costs use job_number and read job_lines (only the lines charged to that job — a bill can be split across jobs); items like "04.00.00 M.P.E. System:04.10.01 HVAC - labor" are PKB's cost codes; say the data is as of the last sync. Never invent or estimate amounts.
 A proposal does NOT run anything: it shows a Confirm button to the partner. Never say an action was done; say it is waiting for confirmation. If the request is ambiguous (which job? who receives?), ask before proposing. If the data can't answer, say so and what would be needed.`;
 
 const S = (props: Record<string, Any>, required: string[]) => ({ type: 'object', properties: props, required, additionalProperties: false });
 const str = (description: string) => ({ type: 'string', description });
 const strs = (description: string) => ({ type: 'array', items: { type: 'string' }, description });
+
+const QBO_TOOL = { name: 'get_quickbooks', description: 'Owners only. Search PKB\'s QuickBooks Online data (read-only): Bill (vendor bills / accounts payable), BillPayment, Invoice (to clients/investors), Payment (received from clients), Deposit, Customer, Vendor. Returns totals over all matches (count, total, open balance per entity), the newest rows with their lines (amount, description, cost code / account, job), and with job_number the amounts of the lines charged to that job grouped by cost code.', input_schema: S({ entity: { type: 'string', enum: ['Bill', 'BillPayment', 'Invoice', 'Payment', 'Deposit', 'Customer', 'Vendor'], description: 'Optional: one kind of record' }, text: str('Optional: vendor/customer name, document number, or a word in the line descriptions / cost codes / accounts'), job_number: str('Optional: job number, e.g. "0028" or "28"'), open_only: { type: 'boolean', description: 'Optional: only records with an open balance (unpaid bills, open invoices)' }, from: str('Optional: from date YYYY-MM-DD (transaction date)'), to: str('Optional: to date YYYY-MM-DD'), limit: { type: 'integer', description: 'Rows to return (default 60, max 200); totals always cover all matches' } }, []) };
 
 const TOOLS: Any[] = [
   { name: 'get_job_file', description: 'Full file for one job: permits with every review round (department, status, reviewer, date, full county comments), holds, all inspections, pauses, inspection progress, construction clock, site photos, invoices.', input_schema: S({ job_number: str('Job number, e.g. "0034" or "S049"') }, ['job_number']) },
@@ -164,6 +167,12 @@ async function runTool(name: string, input: Any, D: Any, sb: SupabaseClient, pro
     const f = (m: Any) => !input.job_number || String(m.job_number || '').toLowerCase().endsWith(String(input.job_number).toLowerCase());
     return { outbox: (data.outbox || []).filter(f).slice(0, 30).map((m: Any) => ({ ...m, body: String(m.body || '').slice(0, 400) })), actions: (data.actions || []).slice(0, 15) };
   }
+  if (name === 'get_quickbooks') {
+    const { data, error } = await sb.rpc('ops_qbo_query', { p_entity: input.entity || null, p_text: input.text || null, p_job: input.job_number || null,
+      p_open: !!input.open_only, p_from: input.from || null, p_to: input.to || null, p_limit: input.limit || 60 });
+    if (error) throw new Error(error.code === '42501' ? 'QuickBooks data is limited to the owners (Finance access).' : error.message);
+    return data;
+  }
   // propose_*
   const action = { propose_daily_log: 'daily_log', propose_email: 'email', propose_pause_job: 'pause_job', propose_resume_job: 'resume_job', propose_set_contact: 'set_contact', propose_job_note: 'job_note', propose_change_request: 'change_request', propose_set_office: 'set_office' }[name];
   if (!action) throw new Error(`Unknown tool ${name}`);
@@ -246,11 +255,13 @@ Deno.serve(async (req) => {
     }
     messages.push({ role: 'user', content: `${question}\n\n(asked by ${me?.name || me?.email}, ${new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })} Florida time)` });
 
+    // QuickBooks only for the owners (the RPC refuses anyone else too).
+    const tools = me?.finance ? [...TOOLS, QBO_TOOL] : TOOLS;
     const used = new Set<string>();
     const proposals: Any[] = [];
     let model = MODELS[0], resp: Any = null;
     for (let turn = 0; turn < 10; turn++) {
-      const params = { max_tokens: 16000, system, tools: TOOLS, messages, output_config: { effort: 'medium' } };
+      const params = { max_tokens: 16000, system, tools, messages, output_config: { effort: 'medium' } };
       if (turn === 0) {
         // pick the first model this API key can use, then stay on it for the whole loop
         for (let m = 0; m < MODELS.length; m++) {
