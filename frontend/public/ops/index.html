@@ -576,7 +576,7 @@ const usd = n => n == null ? '—' : Number(n).toLocaleString('en-US', {style:'c
 async function renderFinance(){
   if (!window.OPS?.state?.me?.finance) return;
   const qs = new URLSearchParams(location.search).get('qbo');
-  if (qs) { $('#finMsg').textContent = {connected:'Connected — the first sync is running; reload in a minute.', denied:'Connection cancelled at Intuit.', expired:'The link expired — try again.', error:'Could not connect — try again.', invalid:'Invalid return from Intuit.'}[qs] || ''; history.replaceState(null, '', location.pathname + location.hash); }
+  if (qs) { $('#finMsg').textContent = {connected:'Connected — the first sync is running; reload in a minute.', denied:'Connection cancelled at Intuit.', expired:'The link expired — try again.', error:'Could not connect — try again.', invalid:'Invalid return from Intuit.'}[qs] || ''; window.history.replaceState(null, '', location.pathname + location.hash); }
   // A request can stall in the browser (seen right after the return from Intuit): give up after 15 s, try once
   // more, then say so with a Reload link instead of leaving the cards blank.
   const load = () => Promise.race([window.OPS.sb.rpc('ops_finance_overview'), new Promise(r => setTimeout(() => r({ error: { message: 'timed out' } }), 15000))]);
