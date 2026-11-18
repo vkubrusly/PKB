@@ -75,6 +75,12 @@ for (const it of items) {
   const rule = MAP.find((r) => r.itemRe.test(String(it.title || '').trim())); if (!rule) continue;
   const why = proof(e, rule); if (why) todo.push({ it, e, why });
 }
+if (!POST) {
+  // Dry run: also show which open items no rule covers (to extend config/bt_schedule_map.json).
+  const uncovered = {};
+  for (const it of items) if (!it.completed && ev[it.jobId] && !MAP.some((r) => r.itemRe.test(String(it.title || '').trim()))) { const t = String(it.title || '').trim(); uncovered[t] = (uncovered[t] || 0) + 1; }
+  console.log('open items without a rule:', Object.entries(uncovered).sort((a, b) => b[1] - a[1]).map(([t, n]) => `${t} (${n})`).join(' · '));
+}
 const list = LIMIT ? todo.slice(0, LIMIT) : todo;
 console.log(`${todo.length} item(s) to mark complete${LIMIT ? ` (limited to ${list.length})` : ''}${POST ? '' : ' · DRY RUN (no change)'}`);
 
