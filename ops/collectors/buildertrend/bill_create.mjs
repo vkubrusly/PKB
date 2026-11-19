@@ -28,7 +28,11 @@ async function pick(selector, text, optionText = text) {
   await box.click({ force: true }); await box.fill(text); await page.waitForTimeout(2500);
   const opt = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option', { hasText: optionText }).filter({ hasNotText: /^\s*Create\b/ }).first();
   if (!(await opt.count())) { await page.keyboard.press('Escape'); return false; }
-  await opt.click(); await page.waitForTimeout(1000);
+  await opt.click(); await page.waitForTimeout(1500);
+  // A vendor not assigned to the job: Buildertrend asks "Add assignee to job?" — answer "Do Not Add to Job"
+  // (the bill still goes to that vendor; the job's team and notifications are not changed).
+  const keep = page.getByRole('button', { name: /^Do Not Add to Job$/ }).first();
+  if (await keep.count()) { await keep.click(); await page.waitForTimeout(1200); }
   return true;
 }
 // Pay to: the vendor when it exists in Buildertrend; otherwise "Misc" with the vendor's name typed in.
