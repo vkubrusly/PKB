@@ -206,6 +206,16 @@
       "inspection": "rough electrical|electrical rough"
     },
     {
+      "item": "^windows and exterior doors$",
+      "inspection": "wire lath|lath nailing",
+      "_comment": "windows and doors are set before the stucco lath is inspected"
+    },
+    {
+      "item": "^stucco - grading$",
+      "inspection": "wire lath|lath nailing",
+      "_comment": "item 29, before the lath (item 30) and its inspection"
+    },
+    {
       "item": "^stucco - lath$",
       "inspection": "wire lath|lath nailing"
     },
