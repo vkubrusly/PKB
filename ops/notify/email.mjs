@@ -7,6 +7,20 @@
 // OPS_SEND_ENABLED=false turns every send into a logged dry run.
 // =============================================================================
 import nodemailer from 'nodemailer';
+import { fileURLToPath } from 'node:url';
+
+// Every e-mail carries the PKB Homes logo (Victor, 11/19/26): an HTML version of the text with the logo on top,
+// embedded inline (cid) so it shows without loading remote images. The plain text stays as the fallback.
+const LOGO = fileURLToPath(new URL('./logo-email.png', import.meta.url));
+const LOGO_CID = 'pkb-logo@pkbhomes.com';
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const linkify = (t) => t.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1">$1</a>');
+export function brandHtml(text, html) {
+  const body = html || `<div style="white-space:pre-wrap">${linkify(esc(text || ''))}</div>`;
+  return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#2e2e30;max-width:640px">`
+    + `<div style="margin:0 0 18px"><img src="cid:${LOGO_CID}" alt="PKB Homes" width="90" style="display:block;width:90px;height:auto;border:0"></div>`
+    + body + `</div>`;
+}
 
 export const COPY_WITH = { 'guilherme@pkbhomes.com': ['stefano@pkbhomes.com'] };
 // The Cc list with the companions of every address on the message (to or cc) added.
@@ -34,7 +48,8 @@ function getTransport() {
 export async function sendEmail({ to, cc = [], subject, text, html, attachments = [], alwaysCc = true, force = false }) {
   const always = alwaysCc ? (process.env.OPS_ALWAYS_CC || '').split(',').map(s => s.trim()).filter(Boolean) : [];
   const ccAll = withCompanions(to, [...new Set([...cc, ...always])].filter(a => ![].concat(to).includes(a)));
-  const msg = { from: `PKB Ops <${process.env.BOT_EMAIL}>`, to, cc: ccAll, subject, text, html, attachments };
+  const msg = { from: `PKB Ops <${process.env.BOT_EMAIL}>`, to, cc: ccAll, subject, text, html: brandHtml(text, html),
+    attachments: [...attachments, { filename: 'pkb-homes.png', path: LOGO, cid: LOGO_CID }] };
   if ((process.env.OPS_SEND_ENABLED === 'false' && !force) || !process.env.BOT_EMAIL_PASSWORD) {
     console.log('[email dry-run]', JSON.stringify({ to, cc: ccAll, subject }));
     return { dryRun: true, cc: ccAll };
