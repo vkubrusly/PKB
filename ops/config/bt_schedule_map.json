@@ -126,6 +126,11 @@
       "inspection": "water service"
     },
     {
+      "item": "^water connection$",
+      "inspection": "water service",
+      "_comment": "Victor 11/19/26: after the Water Service inspection"
+    },
+    {
       "item": "^inspection - final plumbing",
       "inspection": "final plumbing|plumbing final"
     },

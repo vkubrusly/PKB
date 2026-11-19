@@ -37,6 +37,13 @@ if (MAP.some((r) => r.evidence === 'draw_invoiced')) {
   if (ok) for (const h of (await sql(`select ops.qbo_draws_core() j`))[0].j.houses || [])
     billed[h.job] = Object.fromEntries((h.draws || []).flatMap((d) => d.stages.map((n) => [n, d])));
 }
+// Daily Logs: items the supervisors' logs say are done (rules/dailylog_done.mjs, config/bt_schedule_dailylog.json).
+const { doneFromLogs, itemsFor } = await import('./dailylog_done.mjs');
+const logDone = {};
+{ const logs = await sql(`select l.job_number, l.log_date::text date, l.author by, l.title, l.notes from ops.daily_logs l where l.job_number is not null`);
+  const byJob = {}; for (const l of logs) (byJob[l.job_number] ??= []).push(l);
+  for (const [job, ls] of Object.entries(byJob)) logDone[job] = doneFromLogs(ls); }
+const fromLog = (e, title) => { for (const it of itemsFor(title)) { const d = logDone[e.job]?.get(it.item); if (d) return `Daily Log ${usDate(d.date)}${d.by ? ` (${d.by})` : ''}: "${d.text}"`; } return null; };
 const jobIds = Object.keys(ev).map(Number);
 if (!jobIds.length) { console.log('no jobs with a Buildertrend id and a building permit'); process.exit(0); }
 const proof = (e, rule) => {
@@ -113,13 +120,14 @@ const todo = [];
 for (const it of items) {
   if (it.completed) continue;
   const e = ev[it.jobId]; if (!e) continue;
-  const rule = MAP.find((r) => r.itemRe.test(String(it.title || '').trim())); if (!rule) continue;
-  const why = proof(e, { ...rule, title: String(it.title || '').trim() }); if (why) todo.push({ it, e, why });
+  const title = String(it.title || '').trim();
+  const rule = MAP.find((r) => r.itemRe.test(title));
+  const why = (rule && proof(e, { ...rule, title })) || fromLog(e, title); if (!why) continue; if (why) todo.push({ it, e, why });
 }
 if (!POST) {
   // Dry run: also show which open items no rule covers (to extend config/bt_schedule_map.json).
   const uncovered = {};
-  for (const it of items) if (!it.completed && ev[it.jobId] && !MAP.some((r) => r.itemRe.test(String(it.title || '').trim()))) { const t = String(it.title || '').trim(); uncovered[t] = (uncovered[t] || 0) + 1; }
+  for (const it of items) if (!it.completed && ev[it.jobId] && !MAP.some((r) => r.itemRe.test(String(it.title || '').trim())) && !itemsFor(it.title).length) { const t = String(it.title || '').trim(); uncovered[t] = (uncovered[t] || 0) + 1; }
   console.log('open items without a rule:', Object.entries(uncovered).sort((a, b) => b[1] - a[1]).map(([t, n]) => `${t} (${n})`).join(' · '));
 }
 const list = LIMIT ? todo.slice(0, LIMIT) : todo;
