@@ -17,7 +17,7 @@ export const REVIEW_FAILED = /revisions? required|disapprov|denied|fail|incomple
 
 export const contacts = JSON.parse(readFileSync(new URL('../config/contacts.json', import.meta.url), 'utf8'));
 const people = [...(contacts.internal.supervisors || []), ...(contacts.internal.project_managers || []), contacts.internal.contractor_of_record, contacts.internal.permits_owner].filter(Boolean);
-export const person = (n) => people.find((p) => [p.name, p.bt_name].some((x) => x && norm(x) === norm(n)));
+export const person = (n) => people.find((p) => [p.name, p.bt_name, ...(p.aliases || [])].some((x) => x && norm(x) === norm(n)));
 export const EMAIL = {
   cristiano: contacts.internal.contractor_of_record?.email,
   guilherme: contacts.internal.permits_owner?.email,
@@ -34,8 +34,10 @@ export async function orgId() {
 }
 
 // Supervisors and PMs of a job (names from Buildertrend) → e-mails; names without e-mail reported.
-export async function team(jobId) {
-  const rows = await sql(`select role, name from ops.job_contacts where job_id = ${q(jobId)} and role in ('supervisor', 'pm')`);
+// pmFieldOnly: only the people in the job's Buildertrend Project Manager field (Victor, 11/19/26: supervisors and
+// PMs are both kept there now; the old Supervisor custom field is ignored).
+export async function team(jobId, { pmFieldOnly = false } = {}) {
+  const rows = await sql(`select role, name from ops.job_contacts where job_id = ${q(jobId)} and role in (${pmFieldOnly ? `'pm'` : `'supervisor', 'pm'`})`);
   const emails = new Set(), missing = [], names = [];
   for (const r of rows) { names.push(r.name); const p = person(r.name); if (p?.email) emails.add(p.email); else missing.push(r.name); }
   return { emails: [...emails], missing: [...new Set(missing)], names: [...new Set(names)], btNames: [...new Set(names.map((n) => person(n)?.bt_name || n))] };
