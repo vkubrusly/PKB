@@ -106,12 +106,18 @@
       {
         "name": "Gustavo",
         "bt_name": "Gustavo Supervisor",
-        "email": "gustavo@pkbhomes.com"
+        "email": "gustavo@pkbhomes.com",
+        "aliases": [
+          "Gustavo Pelucio"
+        ]
       },
       {
         "name": "Denis",
         "bt_name": "Denis PKB",
-        "email": "denis@pkbhomes.com"
+        "email": "denis@pkbhomes.com",
+        "aliases": [
+          "Denis Renno"
+        ]
       }
     ],
     "partners": [
