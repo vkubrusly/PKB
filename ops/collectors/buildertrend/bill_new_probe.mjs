@@ -32,5 +32,19 @@ for (const [label, text] of [['Pay to', payTo], ['Cost code', code]]) {
   console.log(`===== ${label} options for "${text}" =====\n${opts.slice(0, 20).join('\n')}`);
   await page.keyboard.press('Escape');
 }
+// The cost line: open item 1 and print its controls; then the Attachments "Add" menu.
+const dump = async (title) => console.log(`===== ${title} =====\n` + (await page.evaluate(() => [...document.querySelectorAll('input, textarea, button, [role="combobox"], [role="menuitem"], li')].filter((e) => e.offsetParent !== null).map((e) => `${e.tagName.toLowerCase()} id=${e.id || ''} role=${e.getAttribute('role') || ''} ph=${e.getAttribute('placeholder') || ''} label=${(e.getAttribute('aria-label') || '').trim()} text=${(e.innerText || e.value || '').trim().slice(0, 50)}`).slice(-90))).join('\n'));
+await page.locator('button[aria-label="Open untitled item 1"]').first().click().catch((e) => console.log('open item:', e.message));
+await page.waitForTimeout(4000);
+await dump('after Open item 1');
+console.log(`----- item dialog text -----\n${(await page.locator('.ant-modal-content, [role="dialog"]').last().innerText().catch(() => '')).slice(0, 2000)}`);
+const cc = page.locator('[id*="costCode" i]').first();
+if (await cc.count()) { await cc.click({ force: true }).catch(() => {}); await cc.fill(code).catch(() => {}); await page.waitForTimeout(2500);
+  console.log(`----- cost code options for "${code}" -----\n${(await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option, .ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-tree-treenode').allInnerTexts().catch(() => [])).slice(0, 15).join('\n')}`);
+  await page.keyboard.press('Escape'); }
+await page.keyboard.press('Escape'); await page.waitForTimeout(1500);
+await page.getByRole('button', { name: /^Add$/ }).last().click().catch((e) => console.log('Add:', e.message));
+await page.waitForTimeout(2500);
+console.log(`----- Attachments Add menu -----\n${(await page.locator('.ant-dropdown:not(.ant-dropdown-hidden), [role="menu"]').allInnerTexts().catch(() => [])).join(' | ')}`);
 console.log(`===== JSON calls while the form loaded =====\n${calls.slice(0, 20).join('\n')}`);
 await browser.close();
