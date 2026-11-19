@@ -4,7 +4,7 @@
 //   POST { file_base64, media_type, file_name, email_subject?, email_from? }
 //   → { is_invoice, vendor, invoice_number, invoice_date, due_date, total, sites[], invoice_fees[], notes }
 //   POST { mode: 'answer', answer_text, invoice: {vendor, invoice_number, total, issues[], lines[]}, jobs: [{job_number, address}] }
-//   → { decision, assignments[], exclude[], cost_code, summary }   (Camila's / Victor's e-mail answer, read)
+//   → { decision, assignments[], exclude[], no_job[], cost_code, summary }   (Camila's / Victor's e-mail answer, read)
 import Anthropic from 'npm:@anthropic-ai/sdk@0.68.0';
 import { cors, json } from '../_shared/cors.ts';
 
@@ -42,14 +42,16 @@ const ANSWER_INSTRUCTIONS = `PKB Ops (an automated system) asked Camila (PKB Hom
 - decision: "create" when the answer says to go ahead (e.g. "pode criar", "ok", "segue"), also when it only fixes addresses/jobs and implies going ahead; "ignore" when it says not to create the bills (already billed, wrong invoice, cancel, "não lançar"); "duplicate" when it says this invoice was already entered; "wait" when it asks to wait or the answer is unclear.
 - assignments: for each invoice line whose house the answer names: line_address (the address as in the line), job_number (4 digits like "0063", as in the jobs list).
 - exclude: addresses of lines the answer says to leave out (e.g. "não é nossa", "tira essa").
+- no_job: addresses of lines the answer says to bill without a house / job (e.g. "crie uma bill sem associar a casa", "lança no geral").
 - cost_code: the cost code text the answer asks for, or null.
 - summary: one short sentence in Brazilian Portuguese of what you understood.`;
 const ANSWER_SCHEMA = {
-  type: 'object', additionalProperties: false, required: ['decision', 'assignments', 'exclude', 'cost_code', 'summary'],
+  type: 'object', additionalProperties: false, required: ['decision', 'assignments', 'exclude', 'no_job', 'cost_code', 'summary'],
   properties: {
     decision: { type: 'string', enum: ['create', 'ignore', 'duplicate', 'wait'] },
     assignments: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['line_address', 'job_number'], properties: { line_address: { type: 'string' }, job_number: { type: 'string' } } } },
     exclude: { type: 'array', items: { type: 'string' } },
+    no_job: { type: 'array', items: { type: 'string' } },
     cost_code: { type: ['string', 'null'] },
     summary: { type: 'string' },
   },
