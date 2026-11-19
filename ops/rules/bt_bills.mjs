@@ -26,11 +26,14 @@ const money = (n) => `$${Number(n).toLocaleString('en-US', { minimumFractionDigi
 const mdy = (d) => (d ? `${String(d).slice(5, 7)}/${String(d).slice(8, 10)}/${String(d).slice(0, 4)}` : null);
 
 const org = await orgId();
+// A line left 'filling' by a run that died before Save was never saved: free it (runs do not overlap — the
+// ops-bt-post concurrency group).
+if (POST) await sql(`update ops.vendor_invoice_lines set bt_status = null where bt_status = 'filling'`);
 const lines = await sql(`select l.*, v.vendor, v.invoice_number, v.invoice_date, v.due_date, v.total, v.file_path, v.file_name, v.cost_code inv_cost_code,
     j.bt_job_id, (select count(*) from ops.vendor_invoice_lines x where x.invoice_id = v.id and not x.excluded) n_lines
   from ops.vendor_invoice_lines l join ops.vendor_invoices v on v.id = l.invoice_id left join ops.jobs j on j.id = l.job_id
   where v.org_id = ${q(org)} and v.status in ('ready', 'creating') and not l.excluded and l.bt_bill_id is null
-    and coalesce(l.bt_status, '') not in ('creating', 'unknown', 'created')
+    and l.bt_status is null
     ${ONLY_INV ? `and v.invoice_number = ${q(ONLY_INV)}` : ''} ${ONLY_JOB ? `and l.job_number = ${q(ONLY_JOB)}` : ''}
   order by v.received_at, l.job_number nulls last limit ${LIMIT}`);
 if (!lines.length) { console.log('bt_bills: nothing ready'); process.exit(0); }
@@ -66,6 +69,8 @@ for (const l of lines) {
   const fail = async (msg) => { failed++; console.error(`FAILED ${tag}: ${msg}`); if (POST) await sql(`update ops.vendor_invoice_lines set bt_status = 'error', bt_error = ${q(msg.slice(0, 500))} where id = ${q(l.id)}`); };
   if (!btJob) { await fail('no Buildertrend job'); continue; }
   if (!code) { await fail(`no cost code for vendor "${l.vendor}" (config/vendor_bills.json or Camila's answer)`); continue; }
+  // Reserve the line (only one run fills a given line; ops-bt-post runs one at a time).
+  if (POST && !(await sql(`update ops.vendor_invoice_lines set bt_status = 'filling' where id = ${q(l.id)} and bt_status is null returning id`)).length) { console.log(`skip ${tag}: taken by another run`); continue; }
   try {
     if (!files.has(l.file_path)) { const p = join(dir, l.file_name || 'invoice.pdf'); writeFileSync(p, await downloadObject('ops-invoices', l.file_path)); files.set(l.file_path, p); }
     await page.goto(`https://buildertrend.net/app/Bills?jobId=${btJob}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
