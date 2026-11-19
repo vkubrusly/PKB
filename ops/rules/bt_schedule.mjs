@@ -21,7 +21,7 @@ const q = (v) => (v == null ? 'null' : `'${String(v).replace(/'/g, "''")}'`);
 const MAP = JSON.parse(readFileSync(new URL('../config/bt_schedule_map.json', import.meta.url), 'utf8')).rules.map((r) => ({ ...r, itemRe: new RegExp(r.item, 'i'), inspRe: r.inspection ? new RegExp(r.inspection, 'i') : null }));
 
 // Evidence per job: building permit issued, CO, passed inspections (type + date).
-const rows = await sql(`select j.job_number, j.bt_job_id, j.co_at, c.issued_at, i.type, coalesce(i.actual_at, i.scheduled_at) at
+const rows = await sql(`select j.job_number, j.bt_job_id, j.co_at, c.issued_at, i.type, coalesce(i.actual_at, i.scheduled_at, i.requested_at) at
   from ops.jobs j join ops.permit_cases c on c.job_id = j.id and c.kind = 'building'
   left join ops.inspections i on i.permit_case_id = c.id and i.passed
   where j.bt_job_id is not null ${ONLY ? `and j.job_number = ${q(ONLY)}` : ''}`);
