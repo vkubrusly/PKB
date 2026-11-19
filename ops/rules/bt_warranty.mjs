@@ -8,6 +8,7 @@
 //    leak or flood, Medium otherwise. Up to 5 attempts; the error is kept on the row.
 // 2. Follow: every claim's status from the job's Warranty list (POST /api/Warranty/Grid, a read). A class
 //    "(closed)" = resolved (Service Completed / Meets Warranty Standards) or closed (Non-Warranty).
+//    The list shows open claims only, so a claim no longer in a list that loaded is closed there too.
 // Writes only with OPS_BT_POST=true or --post; otherwise lists what it would create. Never edits or
 // deletes a claim.
 //   BT_COOKIES_FILE=… node rules/bt_warranty.mjs [--post]
@@ -45,7 +46,9 @@ const api = async (method, url, body) => {
   let json = null; try { json = JSON.parse(text); } catch {}
   return { ok: res.ok() && json?.success !== false, status: res.status(), json, text };
 };
-const grid = async (jobId) => (await api('POST', '/api/Warranty/Grid', { gridRequest: { hasFooter: true }, pagingData: { pageNumber: 1, pageSize: 200 }, filters: '{}', jobIds: [Number(jobId)] })).json?.data?.data || [];
+// The job's Warranty list; null when the call failed (so an empty list is told apart from a failed read).
+const gridOrNull = async (jobId) => { const r = await api('POST', '/api/Warranty/Grid', { gridRequest: { hasFooter: true }, pagingData: { pageNumber: 1, pageSize: 200 }, filters: '{}', jobIds: [Number(jobId)] }); return r.ok && Array.isArray(r.json?.data?.data) ? r.json.data.data : null; };
+const grid = async (jobId) => (await gridOrNull(jobId)) || [];
 const rowId = (r) => Number(r.id ?? r.warrantyId ?? r.warrantyLink?.id ?? r.warrantyLink?.warrantyId) || null;
 const rowTitle = (r) => String(r.warrantyLink?.title ?? r.warrantyLink?.text ?? r.warrantyLink ?? r.title ?? '');
 
@@ -101,10 +104,18 @@ let resolved = 0;
 const byJob = Object.groupBy(await sql(`select w.id, w.bt_claim_id, w.status, j.bt_job_id from ops.warranty_claims w join ops.jobs j on j.id = w.job_id
   where w.org_id = ${q(org)} and w.bt_claim_id is not null and w.status not in ('resolved', 'closed')`), (w) => w.bt_job_id);
 for (const [jobId, claims] of Object.entries(byJob)) {
-  const rows = await grid(jobId);
+  const rows = await gridOrNull(jobId);
+  if (!rows) { console.log(`warranty: job ${jobId} list did not load — nothing decided`); continue; }
   for (const w of claims) {
     const r = rows.find((x) => rowId(x) === Number(w.bt_claim_id));
-    if (!r) continue;
+    // The job's Warranty list shows open claims only: a finished claim drops out of it (0001's two claims,
+    // closed in Buildertrend, stayed "open" here from 11/07 to 11/15). Gone from a list that loaded = closed there.
+    if (!r) {
+      resolved++;
+      await sql(`update ops.warranty_claims set status = 'resolved', resolved_at = coalesce(resolved_at, now()),
+        bt_status = 'Closed in Buildertrend (no longer in the open list)', last_synced_at = now(), updated_at = now() where id = ${q(w.id)}`);
+      continue;
+    }
     const cls = String(r.class ?? r.classification ?? ''), st = String(r.claimStatus ?? '');
     const status = /non-warranty/i.test(cls) ? 'closed' : /\(closed\)|service completed|meets warranty/i.test(cls) ? 'resolved'
       : (r.warrantyScheduleList?.appointmentsCount > 0 || r.warrantyScheduleList?.appointment) ? 'scheduled' : 'open';   // a service appointment set

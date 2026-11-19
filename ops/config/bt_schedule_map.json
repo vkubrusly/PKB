@@ -1,18 +1,284 @@
 {
-  "_comment": "Buildertrend Schedule items marked complete from county evidence (approved by Victor, 2026-10-19). An item is marked complete only when the evidence exists: a PASSED county inspection matching 'inspection' (regex on the inspection type), the permit issued ('permit_issued'), or the CO recorded ('co'). Never un-marks, never changes dates, never touches items without a rule here (Windows, Doors, Stucco, Drywall, Shingles, Finishes, Painting, Cabinetry, Appliances, Irrigation, Landscaping, Final Cleaning, the draws). 'item' is a regex on the schedule item title (titles are the PKB template, typos included).",
+  "_comment": "Buildertrend Schedule items marked complete from county evidence (approved by Victor, 2026-10-19). An item is marked complete only when the evidence exists: a PASSED county inspection matching 'inspection' (regex on the inspection type), the permit issued ('permit_issued'), or the CO recorded ('co'). Never un-marks, never changes dates, never touches items without a rule here (Windows, Doors, Stucco, Drywall, Shingles, Finishes, Painting, Cabinetry, Appliances, Irrigation, Landscaping, Final Cleaning). 'item' is a regex on the schedule item title (titles are the PKB template, typos included).",
   "rules": [
-    { "item": "^permit approval$", "evidence": "permit_issued" },
-    { "item": "^clearing land", "inspection": "foundation pre-?pour|mono ?/ ?slab|^res slab|^footing" },
-    { "item": "^f[ou]+ndation conc?rete pouring", "inspection": "lintel|tie beam" },
-    { "item": "^exterior walls$", "inspection": "lintel|tie beam" },
-    { "item": "^framing$", "inspection": "roof assembly|roof sheathing|roofing deck|structural frame" },
-    { "item": "^trusses$", "inspection": "roof assembly|roof sheathing|roofing deck|structural frame" },
-    { "item": "^roofing$", "inspection": "dry-?in" },
-    { "item": "^electrical \\(infraestrutura\\)$", "inspection": "rough electrical|electrical rough" },
-    { "item": "^plumbing \\(infraestrutura\\)$", "inspection": "second rough plumbing|plumbing rough ii" },
-    { "item": "^hvac$", "inspection": "rough mechanical|mechanical rough" },
-    { "item": "^insulation$", "inspection": "insulation" },
-    { "item": "^septic system$", "inspection": "sewer|septic" },
-    { "item": "^co issued$", "evidence": "co" }
-  ]
+    {
+      "item": "^permit approval$",
+      "evidence": "permit_issued"
+    },
+    {
+      "item": "^clearing land",
+      "inspection": "foundation pre-?pour|mono ?/ ?slab|^res slab|^footing"
+    },
+    {
+      "item": "^f[ou]+ndation conc?rete pouring",
+      "inspection": "lintel|tie beam"
+    },
+    {
+      "item": "^exterior walls$",
+      "inspection": "lintel|tie beam"
+    },
+    {
+      "item": "^framing$",
+      "inspection": "roof assembly|roof sheathing|roofing deck|structural frame"
+    },
+    {
+      "item": "^trusses$",
+      "inspection": "roof assembly|roof sheathing|roofing deck|structural frame"
+    },
+    {
+      "item": "^roofing$",
+      "inspection": "dry-?in"
+    },
+    {
+      "item": "^electrical \\(infraestrutura\\)$",
+      "inspection": "rough electrical|electrical rough"
+    },
+    {
+      "item": "^plumbing \\(infraestrutura\\)$",
+      "inspection": "second rough plumbing|plumbing rough ii"
+    },
+    {
+      "item": "^hvac$",
+      "inspection": "rough mechanical|mechanical rough"
+    },
+    {
+      "item": "^insulation$",
+      "inspection": "insulation"
+    },
+    {
+      "item": "^septic system$",
+      "inspection": "sewer|septic"
+    },
+    {
+      "item": "^inspection - rough plumbing$",
+      "inspection": "^rough plumbing$|plumbing rough i$"
+    },
+    {
+      "item": "^inspection - foundation pre-?pour",
+      "inspection": "foundation pre-?pour|mono|^res slab|^slab$|^footing|110 footing"
+    },
+    {
+      "item": "^inspection - lintel",
+      "inspection": "lintel|tie beam"
+    },
+    {
+      "item": "^inspection - roof assembly",
+      "inspection": "roof assembly|roof sheathing|roofing deck"
+    },
+    {
+      "item": "^inspection - roofing dry-?in",
+      "inspection": "dry-?in"
+    },
+    {
+      "item": "^inspection - rough mechanical",
+      "inspection": "rough mechanical|mechanical rough"
+    },
+    {
+      "item": "^inspection - second rough plumbing",
+      "inspection": "second rough plumbing|plumbing rough ii"
+    },
+    {
+      "item": "^inspection - electrical underground",
+      "inspection": "electrical underground"
+    },
+    {
+      "item": "^inspection - rough electrical",
+      "inspection": "rough electrical|electrical rough"
+    },
+    {
+      "item": "^inspection - sub-?siding",
+      "inspection": "sub-?siding|wall sheathing"
+    },
+    {
+      "item": "^inspection - wire lath",
+      "inspection": "wire lath|lath nailing"
+    },
+    {
+      "item": "^inspection - \\(?tug\\)? ?preliminary power",
+      "inspection": "tug|preliminary power|t-pole"
+    },
+    {
+      "item": "^inspection - framing$",
+      "inspection": "^framing$|^frame$"
+    },
+    {
+      "item": "^inspection - wall (&|and) vault insulation",
+      "inspection": "insulation"
+    },
+    {
+      "item": "^inspection - flatwork pre-?pour",
+      "inspection": "flatwork pre-?pour|driveway pre-?pour"
+    },
+    {
+      "item": "^inspection - oce driveway form",
+      "inspection": "driveway form"
+    },
+    {
+      "item": "^inspection - power release$",
+      "inspection": "^power release$|^pre power$"
+    },
+    {
+      "item": "^inspection - sewer ?/ ?septic hook",
+      "inspection": "sewer|septic hook"
+    },
+    {
+      "item": "^inspection - water service",
+      "inspection": "water service"
+    },
+    {
+      "item": "^water connection$",
+      "inspection": "water service",
+      "_comment": "Victor 11/19/26: after the Water Service inspection"
+    },
+    {
+      "item": "^inspection - final plumbing",
+      "inspection": "final plumbing|plumbing final"
+    },
+    {
+      "item": "^inspection - final electrical",
+      "inspection": "final electrical|electrical final"
+    },
+    {
+      "item": "^inspection - final mechanical",
+      "inspection": "final mechanical|mechanical final"
+    },
+    {
+      "item": "^inspection - oce driveway final",
+      "inspection": "driveway final"
+    },
+    {
+      "item": "^inspection - final structural",
+      "inspection": "final structural|building final"
+    },
+    {
+      "item": "^kick-?off meeting$",
+      "inspection": "foundation pre-?pour|mono|^res slab|^slab$|^footing"
+    },
+    {
+      "item": "^grading$",
+      "inspection": "foundation pre-?pour|mono|^res slab|^slab$|^footing"
+    },
+    {
+      "item": "^rough stake out$",
+      "inspection": "foundation pre-?pour|mono|^res slab|^slab$|^footing"
+    },
+    {
+      "item": "^silt fence$",
+      "inspection": "foundation pre-?pour|mono|^res slab|^slab$|^footing"
+    },
+    {
+      "item": "^foundation pad$",
+      "inspection": "foundation pre-?pour|mono|^res slab|^slab$|^footing"
+    },
+    {
+      "item": "^foundation - formwork$",
+      "inspection": "foundation pre-?pour|mono|^res slab|^slab$|^footing"
+    },
+    {
+      "item": "^foundation - plumbing rough",
+      "inspection": "^rough plumbing$|plumbing rough i$"
+    },
+    {
+      "item": "^foundation - rebars",
+      "inspection": "foundation pre-?pour|mono|^res slab|^slab$|^footing"
+    },
+    {
+      "item": "^foundation - concrete pouring$",
+      "inspection": "lintel|tie beam"
+    },
+    {
+      "item": "^block and lintel$",
+      "inspection": "lintel|tie beam"
+    },
+    {
+      "item": "^block and lintel - concrete pouring$",
+      "inspection": "roof assembly|roof sheathing|roofing deck"
+    },
+    {
+      "item": "^roofing underlay",
+      "inspection": "dry-?in"
+    },
+    {
+      "item": "^hvac - rough-?in$",
+      "inspection": "rough mechanical|mechanical rough"
+    },
+    {
+      "item": "^plumbing - rough-?in$",
+      "inspection": "second rough plumbing|plumbing rough ii"
+    },
+    {
+      "item": "^electrical - rough-?in$",
+      "inspection": "rough electrical|electrical rough"
+    },
+    {
+      "item": "^windows and exterior doors$",
+      "inspection": "^framing$|^frame$"
+    },
+    {
+      "item": "^stucco - grading$",
+      "inspection": "wire lath|lath nailing"
+    },
+    {
+      "item": "^stucco - lath$",
+      "inspection": "wire lath|lath nailing"
+    },
+    {
+      "item": "^driveway formwork$",
+      "inspection": "driveway form"
+    },
+    {
+      "item": "^driveway pouring$",
+      "inspection": "driveway final"
+    },
+    {
+      "item": "^septic install$",
+      "inspection": "sewer|septic"
+    },
+    {
+      "item": "^co$",
+      "evidence": "co"
+    },
+    {
+      "item": "^co issued$",
+      "evidence": "co"
+    },
+    {
+      "item": "^1st draw$",
+      "evidence": "draw_invoiced",
+      "stage": 1
+    },
+    {
+      "item": "^2nd draw$",
+      "evidence": "draw_invoiced",
+      "stage": 2
+    },
+    {
+      "item": "^3rd draw$",
+      "evidence": "draw_invoiced",
+      "stage": 3
+    },
+    {
+      "item": "^4th draw$",
+      "evidence": "draw_invoiced",
+      "stage": 4
+    },
+    {
+      "item": "^5th draw$",
+      "evidence": "draw_invoiced",
+      "stage": 5
+    },
+    {
+      "item": "^6th draw$",
+      "evidence": "draw_invoiced",
+      "stage": 6
+    },
+    {
+      "item": "^inspection - ",
+      "evidence": "same_inspection",
+      "_comment": "fallback: any other 'Inspection - X' item (e.g. the Citrus template: 'Inspection - Pre Power', 'Inspection - Building Final') is marked when a county inspection with the same name passed (text before ' - 1 & 2…', case and punctuation ignored)"
+    }
+  ],
+  "_comment_2026_11_18": "New 85-item PKB template (Victor, 11/18/26): every 'Inspection - X' item is marked from the matching PASSED county inspection; a work item is marked only when a later inspection proves it was done (e.g. the formwork, rebars and pad by the foundation pre-pour). Not marked: the draws (2nd–6th Draw), windows/doors, roofing (shingles), stucco, drywall, painting, finishes, upgrades, connections, clean-up, landscaping, DEP letter.",
+  "_comment_draws": "Draw items (Victor, 11/19/26): 'Nth Draw' is marked complete when the QuickBooks invoice for that stage exists (ops.qbo_draws_core billed_stages: the installment named in the invoice message; a 1st with only the address and a two-stage invoice are recognised).",
+  "_comment_not_marked": "Victor, 11/19/26: Windows and exterior doors ← Framing inspection (Citrus: Frame); Stucco - Grading and Stucco - Lath ← Wire Lath (Citrus: Building Lath Nailing)."
 }

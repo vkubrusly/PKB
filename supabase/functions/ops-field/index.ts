@@ -17,35 +17,47 @@ import Anthropic from 'npm:@anthropic-ai/sdk@0.68.0';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { cors, json } from '../_shared/cors.ts';
 import manual from '../_shared/field_manual.json' with { type: 'json' };
+import { publishableKey } from '../_shared/keys.ts';
 
 // deno-lint-ignore no-explicit-any
 type Any = any;
 
 // Sonnet 5.5: Victor's choice for cost (2026-09-30); Opus stays as the fallback.
 const MODELS = [Deno.env.get('OPS_FIELD_MODEL') || 'claude-sonnet-5-5', 'claude-sonnet-5', 'claude-opus-5-5'].filter((v, i, a) => a.indexOf(v) === i);
-const MAX_PHOTOS = 8, MAX_FRAMES = 4;   // what the assistant sees; Buildertrend still gets every photo
+const MAX_PHOTOS = 8;   // what the assistant sees; Buildertrend still gets every photo (and every video)
 
 const STEPS = (manual as Any).phases.flatMap((ph: Any) => ph.steps.map((s: Any) => ({ ...s, phase: `${ph.n}. ${ph.name}` })));
 const MANUAL_TEXT = STEPS.map((s: Any) => `${s.n} | ${s.phase} | ${s.name} (${s.en})${s.type === 'inspection' ? ' [inspection]' : ''}`).join('\n');
 
 // House numbers: "casa 1", "house 01", "obra 001", "#0001", "job 1" → 0001; "S49"/"S049" → S049.
-// Addresses: street number + a word of the street ("8188 Hale", "13304 SW 42nd").
+// Addresses: street number + a word of the street ("8188 Hale", "13304 SW 42nd" = "42"); a street number
+// alone ("6321") when only one house has it. Any number of leading zeros is fine ("0000067"), and a
+// message that is only a number is the house number ("67" = 0067).
 const padJob = (raw: string) => { const m = String(raw).trim().match(/^(s)?\s*0*(\d{1,4})$/i); if (!m) return null; return m[1] ? 'S' + m[2].padStart(3, '0') : m[2].padStart(4, '0'); };
 function houseCandidates(text: string, jobs: Any[]): { job: string; why: string }[] {
   const out = new Map<string, string>();
   const byNum = new Map(jobs.map((j: Any) => [String(j.job_number).toUpperCase(), j]));
   const t = ' ' + String(text || '').replace(/[\n\r]+/g, ' ') + ' ';
-  for (const m of t.matchAll(/(?:casa|house|home|obra|job|n[ºo°]|numero|número|#)\s*(?:n[ºo°.]?\s*)?(?:do|da|de|number|no\.?)?\s*#?\s*(s\s*\d{1,3}|\d{1,4})\b/gi)) {
+  for (const m of t.matchAll(/(?:casa|house|home|obra|job|n[ºo°]|numero|número|#)\s*(?:n[ºo°.]?\s*)?(?:do|da|de|number|no\.?)?\s*#?\s*(s\s*0*\d{1,3}|0*\d{1,4})\b/gi)) {
     const k = padJob(m[1].replace(/\s+/g, '')); if (k && byNum.has(k)) out.set(k, m[0].trim());
   }
-  for (const m of t.matchAll(/\b(0\d{3}|S\s?\d{1,3})\b/gi)) { const k = padJob(m[1].replace(/\s+/g, '')); if (k && byNum.has(k)) out.set(k, m[1]); }
-  const words = (s: string) => String(s || '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').split(/\s+/).filter(Boolean);
+  // any number written with leading zeros is a house number: 0067, 0000067 = 0067
+  for (const m of t.matchAll(/\b(0+\d{1,4}|S\s?0*\d{1,3})\b/gi)) { const k = padJob(m[1].replace(/\s+/g, '')); if (k && byNum.has(k)) out.set(k, m[1]); }
+  // a message that is only a number answers "which house?": 67 = 0067
+  const only = String(text || '').trim().match(/^#?\s*(s\s*\d{1,3}|\d{1,7})\.?$/i);
+  if (only) { const k = padJob(only[1].replace(/\s+/g, '')); if (k && byNum.has(k)) out.set(k, only[1]); }
+  // "155th" and "155" are the same street (the sheet and Buildertrend write it both ways)
+  const words = (s: string) => String(s || '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\b(\d+)(st|nd|rd|th)\b/g, '$1').split(/\s+/).filter(Boolean);
   for (const m of t.matchAll(/\b(\d{3,6})\s+([A-Za-z0-9 .]{2,40})/g)) {
     const said = words(m[2]).filter((w) => !['sw', 'se', 'ne', 'nw', 'n', 's', 'e', 'w', 'st', 'rd', 'ave', 'dr', 'ln', 'ct', 'cir', 'pl', 'ter', 'way', 'blvd'].includes(w));
     for (const j of jobs) {
       const a = words(String(j.address || '').split(',')[0]);
       if (a[0] === m[1] && said.some((w) => a.slice(1).includes(w))) out.set(String(j.job_number), `${m[1]} ${m[2].trim()}`);
     }
+  }
+  if (!out.size) for (const m of t.matchAll(/\b(\d{3,6})\b/g)) {
+    const hits = jobs.filter((j: Any) => words(String(j.address || '').split(',')[0])[0] === m[1]);
+    if (hits.length === 1) out.set(String(hits[0].job_number), m[1]);
   }
   return [...out].map(([job, why]) => ({ job, why }));
 }
@@ -77,7 +89,7 @@ const INSTRUCTIONS = `You are PKB Ops, the field assistant of PKB Homes (Florida
 DATES: always write dates in US format, MM/DD/YY (e.g. 07/30/26), in the Daily Log and everywhere else.
 Your job for each report:
 1. Identify the house. The author must say the house number or the street address. House numbers are the Buildertrend job numbers with leading zeros: "casa 1", "house 01", "obra 001" and "0001" all mean job 0001; "S49" means S049. A street address (e.g. "8188 Hale") also identifies the house. DETECTED HOUSE CANDIDATES lists what the system matched in the text — use it. Match against JOBS. If the report covers more than one house, ask the author to send one report per house (a Daily Log belongs to one job). If the report does not identify the house, or it matches more than one job, set job_number null and ask in "question" which house it is (list the likely options if you have them). Never guess the house from the photos alone.
-2. Understand the report: the text, the audio transcripts and the photos (frames marked as video frames come from a video the author filmed). The author's statements about the work are the primary source: include what they report even if the photos don't show it — a photo shows only part of the site, so something missing from a photo is not evidence against the report. Use the photos to add detail and to spot problems; flag a contradiction only when a photo clearly shows the opposite of what was said.
+2. Understand the report: the text, the audio transcripts and the photos. Videos are only attached to the Buildertrend Daily Log: you do not see them and must never describe or guess their content; when a report has nothing but videos (and the house), write the title "Vídeo de campo" and the notes "Vídeo(s) do campo em anexo." in the author's language, with no steps and no issues. The author's statements about the work are the primary source: include what they report even if the photos don't show it — a photo shows only part of the site, so something missing from a photo is not evidence against the report. Use the photos to add detail and to spot problems; flag a contradiction only when a photo clearly shows the opposite of what was said.
 3. Write the Buildertrend Daily Log as a SUMMARY a manager can read in 20 seconds — never paste or paraphrase the transcript line by line, never narrate the photos. Title: max 50 characters, the main work of the day. Notes, in the author's language, plain text, short lines, with these labels translated to that language (Portuguese: "Feito hoje:", "Em andamento:", "Próximo:", "Problemas:"):
    Done today: …
    In progress: …
@@ -96,7 +108,7 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   let savedId: Any = null;
   try {
-    const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
+    const sb = createClient(Deno.env.get('SUPABASE_URL')!, publishableKey(), {
       global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } },
     });
     const body = await req.json().catch(() => ({}));
@@ -158,7 +170,8 @@ Deno.serve(async (req) => {
 
     // Photos of the whole report (latest first, capped) as signed URLs Claude can fetch.
     const allPhotos = messages.flatMap((m: Any) => (m.media || []).filter((x: Any) => x.kind === 'photo'));
-    const photos = [...allPhotos.filter((x: Any) => !x.from_video).slice(-MAX_PHOTOS), ...allPhotos.filter((x: Any) => x.from_video).slice(-MAX_FRAMES)];
+    // Videos go to Buildertrend only (Victor, 11/16): frames of older reports are not sent to the assistant.
+    const photos = allPhotos.filter((x: Any) => !x.from_video).slice(-MAX_PHOTOS);
     let urls: string[] = [];
     if (photos.length) {
       const { data, error } = await sb.storage.from('field-media').createSignedUrls(photos.map((p: Any) => p.ai_path || p.path), 900);
@@ -170,10 +183,10 @@ Deno.serve(async (req) => {
     const jobsText = `${j.job_number} | ${j.bt_job_name || ''} | ${j.address} | ${j.status} | supervisor ${j.supervisor || '—'} | PM ${j.pms || '—'} | done steps: ${Object.entries(j.checklist || {}).filter(([, st]) => st === 'done').map(([n]) => n).join(',') || '—'}`;
     const convo = messages.map((m: Any) => m.from === 'assistant'
       ? `PKB Ops: ${m.text}`
-      : `${me.name || me.email}: ${[m.text, m.transcript ? `[audio transcript] ${m.transcript}` : '', (m.media || []).some((x: Any) => x.kind === 'audio') && !m.transcript ? '[audio sent without transcript]' : '', (m.media || []).filter((x: Any) => x.kind === 'photo' && !x.from_video).length ? `[${(m.media || []).filter((x: Any) => x.kind === 'photo' && !x.from_video).length} photo(s)]` : '', (m.media || []).filter((x: Any) => x.from_video).length ? `[video: ${(m.media || []).filter((x: Any) => x.from_video).length} frames${(m.media || []).some((x: Any) => x.kind === 'video') ? '' : ', video file too large to keep'}; the sound of the video is not available]` : ''].filter(Boolean).join(' ')}`).join('\n');
+      : `${me.name || me.email}: ${[m.text, m.transcript ? `[audio transcript] ${m.transcript}` : '', (m.media || []).some((x: Any) => x.kind === 'audio') && !m.transcript ? '[audio sent without transcript]' : '', (m.media || []).filter((x: Any) => x.kind === 'photo' && !x.from_video).length ? `[${(m.media || []).filter((x: Any) => x.kind === 'photo' && !x.from_video).length} photo(s)]` : '', (m.media || []).filter((x: Any) => x.kind === 'video').length ? `[${(m.media || []).filter((x: Any) => x.kind === 'video').length} video(s) attached to the Daily Log — not analyzed]` : ''].filter(Boolean).join(' ')}`).join('\n');
 
     const content: Any[] = [
-      ...urls.flatMap((u, i) => [{ type: 'text', text: photos[i]?.from_video ? `Video frame (${photos[i].name || ''})` : `Photo ${i + 1}` }, { type: 'image', source: { type: 'url', url: u } }]),
+      ...urls.flatMap((u, i) => [{ type: 'text', text: `Photo ${i + 1}` }, { type: 'image', source: { type: 'url', url: u } }]),
       { type: 'text', text: `THE HOUSE (identified by the system from "${known[0].why}"; use this job_number): job | Buildertrend name | address | status | team | manual steps already done\n${jobsText}\n\nAUTHOR: ${me.name || me.email} (${me.role})\nNOW: ${new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })} Florida time\n\nREPORT CONVERSATION:\n${convo}` },
     ];
 

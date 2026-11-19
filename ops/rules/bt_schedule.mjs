@@ -5,7 +5,7 @@
 // with a Buildertrend id, an item that the rules cover, that is not complete yet, and whose evidence exists
 // is marked complete — the same call the Schedule page makes (POST /apix/v2/Schedules/mark-complete,
 // {scheduleItemId, markComplete: true}); the item is re-read to confirm. Never un-marks, never changes
-// dates, never touches items without a rule. Each marking is recorded as an event (bt.schedule_complete).
+// dates, never touches items without a rule. Draw items: when the QuickBooks invoice for that stage exists. Each marking is recorded as an event (bt.schedule_complete).
 // Writes only with OPS_BT_POST=true or --post; otherwise lists what it would mark.
 //   BT_COOKIES_FILE=… node rules/bt_schedule.mjs [--post] [--job 0031] [--limit 1]
 // =============================================================================
@@ -21,7 +21,7 @@ const q = (v) => (v == null ? 'null' : `'${String(v).replace(/'/g, "''")}'`);
 const MAP = JSON.parse(readFileSync(new URL('../config/bt_schedule_map.json', import.meta.url), 'utf8')).rules.map((r) => ({ ...r, itemRe: new RegExp(r.item, 'i'), inspRe: r.inspection ? new RegExp(r.inspection, 'i') : null }));
 
 // Evidence per job: building permit issued, CO, passed inspections (type + date).
-const rows = await sql(`select j.job_number, j.bt_job_id, j.co_at, c.issued_at, i.type, coalesce(i.actual_at, i.scheduled_at) at
+const rows = await sql(`select j.job_number, j.bt_job_id, j.co_at, c.issued_at, i.type, coalesce(i.actual_at, i.scheduled_at, i.requested_at) at
   from ops.jobs j join ops.permit_cases c on c.job_id = j.id and c.kind = 'building'
   left join ops.inspections i on i.permit_case_id = c.id and i.passed
   where j.bt_job_id is not null ${ONLY ? `and j.job_number = ${q(ONLY)}` : ''}`);
@@ -30,12 +30,35 @@ for (const r of rows) {
   const e = (ev[r.bt_job_id] ??= { job: r.job_number, issued: r.issued_at, co: r.co_at, passed: [] });
   if (r.type) e.passed.push({ type: r.type, at: r.at });
 }
+// Draws invoiced in QuickBooks (stages per job) — only when QuickBooks is connected.
+const billed = {};
+if (MAP.some((r) => r.evidence === 'draw_invoiced')) {
+  const ok = (await sql(`select disconnected_at is null as ok from ops.qbo_connection where id = 1`).catch(() => []))[0]?.ok;
+  if (ok) for (const h of (await sql(`select ops.qbo_draws_core() j`))[0].j.houses || [])
+    billed[h.job] = Object.fromEntries((h.draws || []).flatMap((d) => d.stages.map((n) => [n, d])));
+}
+// Daily Logs: items the supervisors' logs say are done (rules/dailylog_done.mjs, config/bt_schedule_dailylog.json).
+const { doneFromLogs, itemsFor } = await import('./dailylog_done.mjs');
+const logDone = {};
+{ const logs = await sql(`select l.job_number, l.log_date::text date, l.author by, l.title, l.notes from ops.daily_logs l where l.job_number is not null`);
+  const byJob = {}; for (const l of logs) (byJob[l.job_number] ??= []).push(l);
+  for (const [job, ls] of Object.entries(byJob)) logDone[job] = doneFromLogs(ls); }
+const fromLog = (e, title) => { for (const it of itemsFor(title)) { const d = logDone[e.job]?.get(it.item); if (d) return `Daily Log ${usDate(d.date)}${d.by ? ` (${d.by})` : ''}: "${d.text}"`; } return null; };
 const jobIds = Object.keys(ev).map(Number);
 if (!jobIds.length) { console.log('no jobs with a Buildertrend id and a building permit'); process.exit(0); }
 const proof = (e, rule) => {
   if (rule.evidence === 'permit_issued') return e.issued ? `permit issued ${usDate(e.issued)}` : null;
   if (rule.evidence === 'co') return e.co ? `CO ${usDate(e.co)}` : null;
-  const p = e.passed.filter((x) => rule.inspRe.test(x.type)).sort((a, b) => String(a.at).localeCompare(String(b.at)))[0];
+  if (rule.evidence === 'same_inspection') {
+    const n = (t) => String(t || '').replace(/^\s*\(tug\)\s*/i, '').split(/ - 1 ?&| - res|\(/i)[0].toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    const want = n(String(rule.title || '').replace(/^inspection - /i, ''));
+    const p = want && e.passed.filter((x) => n(x.type) === want).sort((a, b) => String(a.at).localeCompare(String(b.at)))[0];
+    return p ? `${p.type.replace(/ - 1 ?& ?2.*$/, '')} passed ${usDate(p.at)}` : null;
+  }
+  if (rule.evidence === 'draw_invoiced') { const d = billed[e.job]?.[rule.stage]; return d ? `QuickBooks invoice ${d.invoice || ''} billed ${usDate(d.billed_on)}`.replace('  ', ' ') : null; }
+  // Match on the inspection name without the county's suffix (Marion: 'Rough Plumbing - 1 & 2 Residential Family').
+  const base = (t) => String(t || '').replace(/\s+-\s+(1\s*&\s*2|res\b).*$/i, '').trim();
+  const p = e.passed.filter((x) => rule.inspRe.test(base(x.type)) || rule.inspRe.test(x.type)).sort((a, b) => String(a.at).localeCompare(String(b.at)))[0];
   return p ? `${p.type.replace(/ - 1 ?& ?2.*$/, '')} passed ${usDate(p.at)}` : null;
 };
 
@@ -65,6 +88,31 @@ async function listItems(ids) {
   }
   return [...items.values()];
 }
+// --undo "<title regex>" --since <ISO>: un-mark items THIS robot marked (events bt.schedule_complete), e.g. after a
+// rule turned out wrong. Only items whose event matches; each is re-read to confirm, then its event is removed so a
+// corrected rule can mark it again later.
+const UNDO = arg('--undo'), SINCE = arg('--since');
+if (UNDO) {
+  const evs = await sql(`select e.id, e.payload->>'item' item, (e.payload->>'item_id')::bigint item_id, j.job_number, j.bt_job_id from ops.events e join ops.jobs j on j.id = e.job_id
+    where e.kind = 'bt.schedule_complete' and e.payload->>'item' ~* ${q(UNDO)} ${SINCE ? `and e.created_at >= ${q(SINCE)}::timestamptz` : ''} order by e.id`);
+  console.log(`undo: ${evs.length} item(s) matching /${UNDO}/${SINCE ? ` since ${SINCE}` : ''}${POST ? '' : ' · DRY RUN'}`);
+  let ok = 0, bad = 0;
+  for (const ev of evs) {
+    const label = `${ev.job_number} · ${ev.item} (item ${ev.item_id})`;
+    if (!POST) { console.log(`[dry run] unmark ${label}`); continue; }
+    try {
+      let res = await page.request.post('https://buildertrend.net/apix/v2/Schedules/mark-complete', { headers: xHeaders, data: JSON.stringify({ scheduleItemId: Number(ev.item_id), markComplete: false }) });
+      if (res.status() === 404 || res.status() === 405) res = await page.request.put('https://buildertrend.net/apix/v2/Schedules/mark-complete', { headers: xHeaders, data: JSON.stringify({ scheduleItemId: Number(ev.item_id), markComplete: false }) });
+      if (!res.ok()) throw new Error(`HTTP ${res.status()} ${(await res.text()).slice(0, 200)}`);
+      const after = (await listItems([Number(ev.bt_job_id)])).find((x) => String(x.id) === String(ev.item_id));
+      if (after?.completed) throw new Error('Buildertrend answered OK but the item is still complete');
+      await sql(`delete from ops.events where id = ${Number(ev.id)}`);
+      ok++; console.log(`UNMARKED ${label}`);
+    } catch (err) { bad++; console.error(`FAILED unmark ${label}: ${err.message}`); }
+  }
+  console.log(`undo: ${ok} unmarked · ${bad} failed`);
+  await browser.close(); process.exit(bad && !ok ? 1 : 0);
+}
 const items = await listItems(jobIds);
 console.log(`${items.length} schedule items in ${jobIds.length} job(s)`);
 
@@ -72,8 +120,15 @@ const todo = [];
 for (const it of items) {
   if (it.completed) continue;
   const e = ev[it.jobId]; if (!e) continue;
-  const rule = MAP.find((r) => r.itemRe.test(String(it.title || '').trim())); if (!rule) continue;
-  const why = proof(e, rule); if (why) todo.push({ it, e, why });
+  const title = String(it.title || '').trim();
+  const rule = MAP.find((r) => r.itemRe.test(title));
+  const why = (rule && proof(e, { ...rule, title })) || fromLog(e, title); if (!why) continue; if (why) todo.push({ it, e, why });
+}
+if (!POST) {
+  // Dry run: also show which open items no rule covers (to extend config/bt_schedule_map.json).
+  const uncovered = {};
+  for (const it of items) if (!it.completed && ev[it.jobId] && !MAP.some((r) => r.itemRe.test(String(it.title || '').trim())) && !itemsFor(it.title).length) { const t = String(it.title || '').trim(); uncovered[t] = (uncovered[t] || 0) + 1; }
+  console.log('open items without a rule:', Object.entries(uncovered).sort((a, b) => b[1] - a[1]).map(([t, n]) => `${t} (${n})`).join(' · '));
 }
 const list = LIMIT ? todo.slice(0, LIMIT) : todo;
 console.log(`${todo.length} item(s) to mark complete${LIMIT ? ` (limited to ${list.length})` : ''}${POST ? '' : ' · DRY RUN (no change)'}`);

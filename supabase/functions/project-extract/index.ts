@@ -12,6 +12,7 @@ import Anthropic from 'npm:@anthropic-ai/sdk@0.68.0';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { cors, json } from '../_shared/cors.ts';
 import { aiErrorMessage, createViaTool, FILES_BETA, uploadPdf } from '../_shared/ai.ts';
+import { secretKey } from '../_shared/keys.ts';
 
 const N = { type: ['number', 'null'] };
 const I = { type: ['integer', 'null'] };
@@ -71,7 +72,7 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      secretKey(),
     );
     const { data: file, error: dlErr } = await supabase.storage.from('plantas').download(plan_path);
     if (dlErr || !file) return json({ error: `Falha ao baixar plantas: ${dlErr?.message}` }, 400);

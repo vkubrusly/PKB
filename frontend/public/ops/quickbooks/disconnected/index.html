@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" sizes="32x32" href="/ops/icon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+:root{--bg:#F6F5F1;--surface:#FFFFFF;--surface-2:#EFEDE6;--ink:#2E2E30;--ink-2:#5E5D58;--ink-3:#8C8A83;--line:#E2DFD5;--gold:#E0BC52;--gold-ink:#94761F;--red:#B8402F;--green:#2F7A4B;--amber:#A96B12}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#19191B;--surface:#222224;--surface-2:#2B2B2E;--ink:#EDEBE5;--ink-2:#B5B2AA;--ink-3:#85827B;--line:#34343A;--gold-ink:#E6C665;--red:#E57866;--green:#6CC08C;--amber:#E0A546}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#19191B;--surface:#222224;--surface-2:#2B2B2E;--ink:#EDEBE5;--ink-2:#B5B2AA;--ink-3:#85827B;--line:#34343A;--gold-ink:#E6C665;--red:#E57866;--green:#6CC08C;--amber:#E0A546}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--ink);font:15px/1.5 "Source Sans 3",system-ui,sans-serif;padding:16px}
+.card{width:min(460px,100%);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:26px;display:flex;flex-direction:column;gap:14px}
+h1{font:700 21px Montserrat,system-ui,sans-serif;margin:0}
+.brand{font:600 12px Montserrat,system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
+p{margin:0;color:var(--ink-2)}#msg.err{color:var(--red)}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--ink-2)}
+input,select{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 10px}
+.btn{font:700 14px Montserrat,system-ui,sans-serif;border:0;border-radius:8px;padding:11px 16px;cursor:pointer;background:var(--gold);color:#2E2E30}
+.btn.ghost{background:var(--surface-2);color:var(--ink)}.btn:disabled{opacity:.5;cursor:default}
+.status{background:var(--surface-2);border-radius:8px;padding:12px;font-size:14px}
+.ok{color:var(--green);font-weight:600}.warn{color:var(--amber);font-weight:600}
+a{color:var(--gold-ink);font-weight:600}
+form{display:flex;flex-direction:column;gap:10px}
+.small{font-size:13px;color:var(--ink-3)}
+</style>
+<title>PKB Ops — QuickBooks disconnected</title>
+</head>
+<body>
+<main class="card">
+  <div class="brand">PKB Ops · Finance</div>
+  <h1>QuickBooks disconnected</h1>
+  <p>PKB Ops no longer has access to QuickBooks and stopped reading it. What was already read stays in PKB Ops as history; nothing in QuickBooks was changed.</p>
+  <p id="msg">Checking…</p>
+  <form id="login" hidden>
+    <label>E-mail<input type="email" id="lemail" autocomplete="email" required></label>
+    <label>Password<input type="password" id="lpass" autocomplete="current-password" required></label>
+    <button class="btn" type="submit" id="lbtn">Sign in to finish</button>
+  </form>
+  <div id="done" hidden><div class="status" id="status"></div>
+    <p class="small" style="margin-top:12px"><a href="/ops/quickbooks/">Connect again</a> · <a href="/ops/#finance">Back to Finance</a></p></div>
+  <p class="small">Support: <a href="mailto:victor@pkbhomes.com?subject=PKB%20Ops%20QuickBooks">victor@pkbhomes.com</a></p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="../qb.js"></script>
+<script>
+// /ops/quickbooks/disconnected/ — the "Disconnect URL" of the Intuit app (Intuit sends the person here
+// after the app is disconnected in QuickBooks), and where the Finance tab's Disconnect lands. An owner
+// signed in here also clears PKB Ops' side (tokens out of the vault, connection marked disconnected).
+(async () => {
+  const { $ } = QB;
+  const fromPortal = new URLSearchParams(location.search).get('by') === 'portal';
+  const me = await QB.owner(); if (!me) return;
+  try {
+    if (!fromPortal) await QB.fn({ action: 'disconnected' });
+    $('status').innerHTML = '<span class="ok">Done</span> — the QuickBooks connection is removed from PKB Ops.';
+    QB.msg(`Signed in as ${me.email}.`);
+  } catch (e) { $('status').textContent = 'Could not finish: ' + e.message; }
+  $('done').hidden = false;
+})().catch((e) => QB.msg('Could not load: ' + e.message, true));
+</script>
+</body>
+</html>

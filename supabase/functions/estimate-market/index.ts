@@ -20,6 +20,7 @@ import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { cors, json } from '../_shared/cors.ts';
 import { aiErrorMessage, createViaTool } from '../_shared/ai.ts';
 import { PKB_COSTBOOK } from '../_shared/costbook.ts';
+import { secretKey } from '../_shared/keys.ts';
 
 interface Line {
   line_code: string | null;
@@ -78,7 +79,7 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      secretKey(),
     );
 
     // ---- WBS line list (what to estimate) ----

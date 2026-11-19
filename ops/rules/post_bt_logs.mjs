@@ -5,8 +5,10 @@
 //
 // Opens the job's Daily Logs by its Buildertrend id, fills title and notes,
 // notifies exactly the people listed in to_addresses (Buildertrend display names;
-// names that are not Buildertrend users on the job are skipped and reported),
+// names that are not Buildertrend users on the job are skipped and kept in payload.not_notified
+// — a note, not an error: the log was posted),
 // checks the form is on the right job, then publishes.
+// Videos also go to a second log, shared with the client (owner), with nothing but the videos.
 // Enabled by OPS_BT_POST=true (repository variable); otherwise lists what it would post.
 //   BT_COOKIES_FILE=… node rules/post_bt_logs.mjs [--post | --dry-run]
 // =============================================================================
@@ -57,19 +59,33 @@ for (const d of drafts) {
   const dir = join(tmpdir(), `btlog_${d.id}`);
   try {
     // photos and videos sent from the field channel (Supabase Storage 'field-media') → local files to attach
-    const attachments = [];
+    const attachments = [], videos = [];
     for (const [i, m] of (d.media || []).filter((x) => x.kind === 'video' || (x.kind === 'photo' && !x.from_video)).entries()) {
       mkdirSync(dir, { recursive: true });
       const ext = (m.path.match(/\.(\w+)$/)?.[1] || 'jpg').toLowerCase();
       const f = join(dir, `${d.job_number}_${String(i + 1).padStart(2, '0')}.${ext}`);
       writeFileSync(f, await downloadObject('field-media', m.path));
       attachments.push(f);
+      if (m.kind === 'video') videos.push(f);
     }
     const r = await createDailyLog(page, { jobId: d.bt_job_id, jobName: d.bt_job_name, title: d.subject.slice(0, 50), notes: `${d.body.trim().slice(0, 3850)}\n\n${signature(d)}`.slice(0, 4000), notify: d.to_addresses, attachments });
-    await sql(`update ops.outbound_messages set status = 'sent', sent_at = now(), external_id = ${q(r.logId ? String(r.logId) : r.url)},
-      error = ${q(r.skipped?.length ? `not notified (not Buildertrend users on the job): ${r.skipped.join(', ')}` : null)} where id = ${q(d.id)}`);
+    await sql(`update ops.outbound_messages set status = 'sent', sent_at = now(), external_id = ${q(r.logId ? String(r.logId) : r.url)}, error = null,
+      payload = ${r.skipped?.length ? `coalesce(payload, '{}'::jsonb) || jsonb_build_object('not_notified', ${q(JSON.stringify(r.skipped))}::jsonb)` : 'payload'} where id = ${q(d.id)}`);
     console.log(`POSTED ${d.job_number} "${d.subject}" log ${r.logId} · notified ${r.notified.join(', ')}${r.attached ? ` · ${r.attached} photo(s)` : ''}${r.skipped.length ? ` · skipped ${r.skipped.join(', ')}` : ''}`);
     ok++;
+    // Videos for the client (Victor, 11/16): a second log with only the videos, shared with the owner. The
+    // report itself stays internal (its notes and issues are not for the client). Tried once; a failure is a note.
+    if (videos.length) {
+      const day = new Date().toLocaleDateString('en-US', { timeZone: 'America/New_York', month: '2-digit', day: '2-digit', year: '2-digit' });
+      try {
+        const c = await createDailyLog(page, { jobId: d.bt_job_id, jobName: d.bt_job_name, title: `Vídeo da obra / Site video — ${day}`, notes: 'Vídeo da obra. / Site video.', shareWithClient: true, notify: [], attachments: videos });
+        await sql(`update ops.outbound_messages set payload = coalesce(payload, '{}'::jsonb) || jsonb_build_object('client_video_log', ${q(c.logId ? String(c.logId) : c.url)}) where id = ${q(d.id)}`);
+        console.log(`  client video log ${c.logId} · ${videos.length} video(s) shared with the owner`);
+      } catch (e) {
+        await sql(`update ops.outbound_messages set payload = coalesce(payload, '{}'::jsonb) || jsonb_build_object('client_video_error', ${q(e.message.split('\n')[0].slice(0, 300))}) where id = ${q(d.id)}`);
+        console.error(`  client video log FAILED ${d.job_number}: ${e.message.split('\n')[0]}`);
+      }
+    }
   } catch (e) {
     await page.screenshot({ path: new URL(`../data/buildertrend/probe/post_fail_${d.job_number}.png`, import.meta.url).pathname }).catch(() => {}); // gitignored
     await sql(`update ops.outbound_messages set error = ${q(e.message.slice(0, 500))} where id = ${q(d.id)}`); // releases the claim

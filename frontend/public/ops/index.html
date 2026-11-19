@@ -132,6 +132,29 @@ td .sub{display:block;font-size:12.5px;color:var(--ink-3)}
 .kpi .cap{font-size:13px;color:var(--ink-3)}
 .callout{font-size:13.5px;color:var(--ink-2);background:var(--gold-soft);border-radius:8px;padding:10px 12px}
 .empty{color:var(--ink-3);font-size:14px;padding:6px 0}
+/* board (phase columns) */
+.kb{display:flex;gap:12px;overflow-x:auto;padding-bottom:10px;align-items:flex-start}
+.kcol{flex:0 0 250px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;max-height:78vh}
+.kcol.over{outline:2px dashed var(--gold);outline-offset:-2px}
+.khd{display:flex;justify-content:space-between;align-items:center;gap:8px;font:700 13.5px var(--f-brand)}
+.kn{font:500 12px var(--f-mono);color:var(--ink-3)}
+.kavg{font-size:12px;color:var(--ink-3);margin-top:-6px}
+.kbody{display:flex;flex-direction:column;gap:8px;overflow-y:auto;min-height:44px}
+.kempty{color:var(--ink-3);font-size:13px;text-align:center;padding:8px 0}
+.kcard{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 10px;cursor:pointer;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:2px}
+.kcard:hover{border-color:var(--gold)}
+.kcard.dragging{opacity:.45}
+.ktop{display:flex;align-items:center;gap:8px}
+.lt{width:11px;height:11px;border-radius:50%;flex:none;border:1px solid var(--line)}
+.kd{margin-left:auto;font:600 12.5px var(--f-mono);font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.kt{font-weight:600;font-size:14px;line-height:1.3}
+.km{font-size:12.5px;color:var(--ink-3)}
+.kw{font-size:12.5px;color:var(--red)}
+.kmv{font-size:12px;color:var(--blue)}
+.kmove{font:inherit;font-size:12px;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:3px 6px;margin-top:5px;max-width:100%}
+.klegend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--ink-3)}
+.klegend span{display:inline-flex;align-items:center;gap:6px}
+@media (max-width:640px){.kcol{flex-basis:82vw}}
 /* drawer */
 .scrim{position:fixed;inset:0;background:var(--scrim);z-index:20}
 .drawer{position:fixed;top:0;right:0;bottom:0;width:min(760px,100%);background:var(--bg);z-index:21;display:flex;flex-direction:column;box-shadow:-8px 0 30px rgba(0,0,0,.18);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -278,7 +301,7 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
       <label>Password<input type="password" id="gpass" autocomplete="current-password" required></label>
       <button class="btn" type="submit" id="gbtn">Sign in</button>
     </form>
-    <p class="small" id="gfirst" hidden>First time? <a href="/">Create your account</a> with your company e-mail and confirm it from the link you receive; then come back to this page.</p>
+    <p class="small" id="gfirst" hidden>First time? Ask the admin for your access link (PKB Ops → Users → “Send first access”). Accounts are created by invitation only.</p>
   </div>
 </div>
 
@@ -296,12 +319,13 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
     </div>
     <div class="meta">
       <span>Updated <b id="asof"></b></span>
-      <span class="who"><a href="/ops/field/" style="color:var(--gold-ink);font-weight:600;text-decoration:none;margin-right:10px">Field ↗</a><span id="whoami"></span><button type="button" id="signout">Sign out</button></span>
+      <span class="who"><a href="/ops/field/" style="color:var(--gold-ink);font-weight:600;text-decoration:none;margin-right:10px">Field ↗</a><a href="/ops/quickbooks/" id="qbLink" hidden style="color:var(--gold-ink);font-weight:600;text-decoration:none;margin-right:10px">QuickBooks ↗</a><span id="whoami"></span><button type="button" id="signout">Sign out</button></span>
       <span class="seg" role="group" aria-label="Company"><button data-co="PKB" aria-pressed="true">PKB</button><button data-co="all" aria-pressed="false">+ Prime history</button></span>
     </div>
   </div>
   <nav class="tabs" role="tablist">
     <button role="tab" data-v="today" aria-selected="true">Today</button>
+    <button role="tab" data-v="board" aria-selected="false">Board</button>
     <button role="tab" data-v="permits" aria-selected="false">Permits</button>
     <button role="tab" data-v="inspections" aria-selected="false">Inspections</button>
     <button role="tab" data-v="dlogs" aria-selected="false">Daily logs</button>
@@ -310,6 +334,7 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
     <button role="tab" data-v="ideas" aria-selected="false">Suggestions</button>
     <button role="tab" data-v="ask" aria-selected="false">Ask</button>
     <button role="tab" data-v="outbox" aria-selected="false">Outbox</button>
+    <button role="tab" data-v="finance" aria-selected="false" hidden id="financeTab">Finance</button>
     <button role="tab" data-v="users" aria-selected="false" hidden id="usersTab">Users</button>
   </nav>
 </div></header>
@@ -328,6 +353,17 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
   </section>
 
   <!-- PERMITS -->
+  <section class="view" id="v-board" hidden>
+    <div><h2>Board</h2><p class="lead">Each job in its phase, from the permit, the construction start, the inspections and the CO. Drag a card or use “Move to” to correct it; the correction holds until the data shows a newer phase.</p></div>
+    <div class="tools">
+      <input id="bq" type="search" placeholder="Search job, address, model…">
+      <select id="bSup"><option value="">All supervisors</option></select>
+      <span class="klegend"><span><i class="lt" style="background:var(--green)"></i>Up to the average</span><span><i class="lt" style="background:var(--amber)"></i>Up to 1.5×</span><span><i class="lt" style="background:var(--red)"></i>Over 1.5×</span></span>
+    </div>
+    <div class="kb" id="kb"></div>
+    <p class="note">Construction phases follow the field manual: Walls starts at the slab pre-pour inspection, Roof &amp; frame at the lintel, MEP at roof sheathing, Close-in at framing, Finishes at wire lath, Final stretch at pre-power. Averages count PKB jobs with both dates; a light shows only with 3 or more jobs of history.</p>
+  </section>
+
   <section class="view" id="v-permits" hidden>
     <div><h2>Permits</h2><p class="lead">Licensing only: from contract to permit issued. Click a row for the job file with every review round, department and comment.</p></div>
     <div class="tools">
@@ -428,11 +464,26 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
 
   <!-- OUTBOX -->
   <!-- USERS (admin only) -->
+  <section class="view" id="v-finance" hidden>
+    <div><h2>Finance</h2><p class="lead">QuickBooks, read-only. Updated when QuickBooks reports a change (webhook) and once a day. Owners only.</p></div>
+    <div class="panel"><div class="hd"><h3>QuickBooks connection</h3><span class="note" id="finMsg"></span></div><div id="finConn"></div></div>
+    <div class="kpis" id="finKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px"></div>
+    <div class="panel" id="finLate"><div class="hd"><h3>Late invoices</h3><span class="note">QuickBooks invoices past their due date with a balance open</span></div>
+      <div id="finLateKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px"></div>
+      <div id="finLateChart" style="position:relative;margin-top:14px"></div>
+      <div class="tbl" id="finLateTbl" style="margin-top:10px"></div></div>
+    <div class="panel"><div class="hd"><h3>Open invoices</h3><span class="note">balance due, most overdue first</span></div><div class="tbl" id="finOpen"></div></div>
+    <div class="panel"><div class="hd"><h3>Payments received · last 120 days</h3></div><div class="tbl" id="finPaid"></div></div>
+    <div class="panel"><div class="hd"><h3>QuickBooks errors</h3><span class="note">last 15 · intuit_tid identifies the call for Intuit support</span></div><div class="tbl" id="finErr"></div></div>
+    <p class="note">Support: <a href="mailto:victor@pkbhomes.com?subject=PKB%20Ops%20QuickBooks">victor@pkbhomes.com</a> · Connection page: <a href="/ops/quickbooks/">/ops/quickbooks</a></p>
+  </section>
+
   <section class="view" id="v-users" hidden>
     <div><h2>Users</h2><p class="lead">Everyone with access to PKB Ops and their access level. Visible to the admin only. “Reset password” / “Send first access” e-mails the person a link to choose their password.</p></div>
     <div class="tools"><button class="btn ghost" type="button" id="usersReload">&#x21bb; Reload</button><span class="count" id="usersCnt"></span></div>
     <div class="tbl" id="usersTbl"></div>
     <div class="panel"><div class="hd"><h3>Access levels</h3></div><div class="list" id="usersLevels"></div></div>
+    <div class="panel"><div class="hd"><h3>Integrations</h3><span class="note">Typed here, stored in the Supabase vault — nobody can read a value back, not even here. Never send these by chat or e-mail.</span></div><div class="list" id="secList"></div></div>
   </section>
 
   <section class="view" id="v-outbox" hidden>
@@ -487,13 +538,14 @@ const permitState = j => {
 const PSTATE = {pre:['Pre-permit','p-gry'], requested:['Requested','p-gry'], review:['In county review','p-amb'], corr:['Corrections requested','p-red'], issued:['Issued','p-grn']};
 
 /* tabs */
-const VIEWS = ['today','permits','inspections','dlogs','map','kpis','ideas','ask','outbox','users'];
+const VIEWS = ['today','board','finance','permits','inspections','dlogs','map','kpis','ideas','ask','outbox','users'];
 function show(v){
   document.querySelectorAll('nav.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.v === v));
   document.querySelectorAll('section.view').forEach(s => s.hidden = s.id !== 'v-' + v);
   try { localStorage.setItem('pkbops.tab', v) } catch(e) {}
   if (v === 'outbox') refreshOutbox();
   if (v === 'users') renderUsers();
+  if (v === 'finance') renderFinance();
   if (v === 'map') { if (!mapState) initMap(); if (mapState && !mapState.ready) { mapState.ready = true; mapState.fit(); } }
 }
 document.querySelectorAll('nav.tabs button').forEach(b => b.onclick = () => show(b.dataset.v));
@@ -523,6 +575,95 @@ async function sendAccess(b){
   } catch (e) { out.textContent = 'Error: ' + e.message; }
   b.disabled = false;
 }
+/* finance (owners only; ops_finance_overview refuses anyone else) */
+const usd = n => n == null ? '—' : Number(n).toLocaleString('en-US', {style:'currency', currency:'USD', maximumFractionDigits: 0});
+async function renderFinance(){
+  if (!window.OPS?.state?.me?.finance) return;
+  const qs = new URLSearchParams(location.search).get('qbo');
+  if (qs) { $('#finMsg').textContent = {connected:'Connected — the first sync is running; reload in a minute.', denied:'Connection cancelled at Intuit.', expired:'The link expired — try again.', error:'Could not connect — try again.', invalid:'Invalid return from Intuit.'}[qs] || ''; window.history.replaceState(null, '', location.pathname + location.hash); }
+  // A request can stall in the browser (seen right after the return from Intuit): give up after 15 s, try once
+  // more, then say so with a Reload link instead of leaving the cards blank.
+  const load = () => Promise.race([window.OPS.sb.rpc('ops_finance_overview'), new Promise(r => setTimeout(() => r({ error: { message: 'timed out' } }), 15000))]);
+  if (!$('#finConn').innerHTML) $('#finConn').innerHTML = '<div class="empty">Loading…</div>';
+  let { data, error } = await load();
+  if (error && error.message === 'timed out') ({ data, error } = await load());
+  if (error) { $('#finConn').innerHTML = `<div class="empty">Could not load: ${esc(error.message)} — <a href="#" onclick="location.reload();return false">reload</a></div>`; return; }
+  const c = data.connection;
+  const on = c && c.connected !== false;
+  // Just connected: refresh every 20 s until the first full load has finished, then clear the banner.
+  const loading = on && (!c.backfilled_at || c.backfilled_at < c.connected_at);
+  clearTimeout(renderFinance.t);
+  if (loading) renderFinance.t = setTimeout(() => { if (!$('#v-finance').hidden) renderFinance(); }, 20000);
+  else if (/first sync is running/.test($('#finMsg').textContent)) $('#finMsg').textContent = '✓ Connected — data loaded.';
+  const feat = c && c.features ? Object.entries({classes:'Classes', locations:'Locations', multicurrency:'Multicurrency', projects:'Projects'}).map(([k, l]) => `<span class="pill ${c.features[k] ? 'p-grn' : 'p-gry'}">${l} ${c.features[k] ? 'on' : 'off'}</span>`).join(' ') : '';
+  const warn = c && (c.warnings || []).length ? `<div class="m" style="margin-top:6px">Skipped this sync (not in this company's plan or refused): ${c.warnings.map(w => `<b>${esc(w.entity)}</b>`).join(', ')}</div>` : '';
+  $('#finConn').innerHTML = `${c ? `<div class="row" style="cursor:default;grid-template-columns:1fr auto"><div><div class="t">${esc(c.company || 'QuickBooks company')} <span class="pill ${c.environment === 'production' ? 'p-grn' : 'p-amb'}">${c.environment === 'production' ? 'Production' : 'Sandbox (test)'}</span>${on ? '' : ` <span class="pill p-red">Disconnected ${fmt(c.disconnected_at)}</span>`}</div>
+      <div class="m">Connected by ${esc(String(c.connected_by || '').split('@')[0])} · ${fmt(c.connected_at)} · last sync ${c.last_sync_at ? fmtT(String(c.last_sync_at).slice(0, 16).replace('T', ' ')) + ' UTC' : 'not yet'}${c.last_webhook_at ? ' · last QuickBooks notice ' + fmtT(String(c.last_webhook_at).slice(0, 16).replace('T', ' ')) + ' UTC' : ''}</div>
+      ${c.needs_reconnect ? `<div class="why" style="-webkit-line-clamp:unset">⚠ QuickBooks needs to be reconnected — ${esc(c.needs_reconnect_reason || '')} The owners were e-mailed.</div>` : c.last_sync_error ? `<span class="why">${esc(c.last_sync_error)}</span>` : ''}
+      ${feat ? `<div class="m" style="margin-top:6px">Plan features: ${feat}${c.features.home_currency ? ` · home currency ${esc(c.features.home_currency)}` : ''}</div>` : ''}${warn}
+      <div class="m" style="margin-top:6px">API minor version <input id="finMinor" value="${esc(c.minor_version || '75')}" style="width:58px;font:inherit;padding:2px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)"> <a href="#" id="finMinorSave">save</a></div></div><div class="r"></div></div>` : '<div class="empty">Not connected yet.</div>'}
+    <div class="tools" style="margin-top:8px"><select id="finEnv"><option value="sandbox">Sandbox (test company)</option><option value="production">Production (PKB's QuickBooks)</option></select>
+    <button class="btn" type="button" id="finConnect">${on && !c.needs_reconnect ? 'Reconnect' : on ? 'Reconnect now' : 'Connect QuickBooks'}</button>${on ? '<button class="btn ghost" type="button" id="finSync">Sync now</button><button class="btn ghost" type="button" id="finDisc">Disconnect</button>' : ''}<span class="note" id="finOut"></span></div>`;
+  if (c) $('#finEnv').value = c.environment;
+  if (c && $('#finMinorSave')) $('#finMinorSave').onclick = async (e) => { e.preventDefault(); const { error } = await window.OPS.sb.rpc('ops_qbo_set_minor_version', { p_version: $('#finMinor').value.trim() }); $('#finOut').textContent = error ? 'Error: ' + error.message : '✓ minor version saved'; };
+  const errs = data.errors || [];
+  $('#finErr').innerHTML = errs.length ? `<table><thead><tr><th>When (UTC)</th><th>Kind</th><th>Where</th><th>Message</th><th>intuit_tid</th></tr></thead><tbody>${errs.map(e => `<tr><td>${fmtT(String(e.at).slice(0, 16).replace('T', ' '))}</td><td><span class="pill ${e.code === 'skipped' ? 'p-gry' : e.kind === 'invalid_grant' ? 'p-red' : 'p-amb'}">${esc(e.code === 'skipped' ? 'skipped (' + e.kind + ')' : e.kind)}</span></td><td class="mono">${esc(e.endpoint || '—')}</td><td>${esc(String(e.message || '').slice(0, 220))}</td><td class="mono">${esc(e.intuit_tid || '—')}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">No errors.</div>';
+  $('#finConnect').onclick = async () => { $('#finOut').textContent = 'Opening Intuit…'; try { const r = await window.OPS.fn('ops-qbo', {action:'connect', environment: $('#finEnv').value}); location.href = r.url; } catch(e) { $('#finOut').textContent = 'Error: ' + e.message; } };
+  if (on) $('#finDisc').onclick = async () => {
+    if (!confirm('Disconnect QuickBooks? PKB Ops stops reading it; what was read stays as history. You can connect again at any time.')) return;
+    $('#finOut').textContent = 'Disconnecting…';
+    try { await window.OPS.fn('ops-qbo', {action:'disconnect'}); location.href = '/ops/quickbooks/disconnected/?by=portal'; } catch(e) { $('#finOut').textContent = 'Error: ' + e.message; }
+  };
+  if (on) $('#finSync').onclick = async () => { $('#finOut').textContent = 'Syncing…'; try { const r = await window.OPS.fn('ops-qbo', {action:'sync'}); $('#finOut').textContent = typeof r.skipped === 'string' ? `Not synced: ${r.skipped}` : `✓ ${r.records ?? 0} record(s)${r.backfill ? ' (full load)' : ''}${(r.skipped || []).length ? ' · skipped ' + r.skipped.join(', ') : ''}`; renderFinance(); } catch(e) { $('#finOut').textContent = 'Error: ' + e.message; renderFinance(); } };
+  renderLateKpi();
+  const open = data.open_invoices || [], paid = data.payments || [];
+  const owed = open.reduce((a, i) => a + Number(i.balance || 0), 0), late = open.filter(i => i.days_overdue > 0), late30 = open.filter(i => i.days_overdue > 30);
+  const kpi = (l, v, sub) => `<div class="panel" style="gap:4px"><div class="note">${l}</div><div style="font:700 22px var(--f-brand)">${v}</div><div class="note">${sub}</div></div>`;
+  $('#finKpis').innerHTML = kpi('Received · last 30 days', usd(data.received_30d), `${paid.filter(p => p.txn_date >= new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10)).length} payment(s)`)
+    + kpi('Open receivables', usd(owed), `${open.length} invoice(s)`) + kpi('Overdue', usd(late.reduce((a, i) => a + Number(i.balance || 0), 0)), `${late.length} invoice(s) · ${late30.length} over 30 days`);
+  const age = d => d == null ? '<span class="pill p-gry">no due date</span>' : d <= 0 ? '<span class="pill p-grn">current</span>' : d <= 30 ? `<span class="pill p-amb">${d} d late</span>` : `<span class="pill p-red">${d} d late</span>`;
+  $('#finOpen').innerHTML = open.length ? `<table><thead><tr><th>Customer</th><th>Invoice</th><th>Date</th><th>Due</th><th class="num">Total</th><th class="num">Balance</th><th>Status</th></tr></thead><tbody>${open.map(i => `<tr><td>${esc(i.party || '—')}</td><td class="mono">${esc(i.doc_number || '—')}</td><td>${fmt(i.txn_date)}</td><td>${fmt(i.due_date)}</td><td class="num">${usd(i.total)}</td><td class="num"><b>${usd(i.balance)}</b></td><td>${age(i.days_overdue)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">No open invoices.</div>';
+  $('#finPaid').innerHTML = paid.length ? `<table><thead><tr><th>Date</th><th>Customer</th><th class="num">Amount</th><th>Applied to invoice(s)</th></tr></thead><tbody>${paid.map(p => `<tr><td>${fmt(p.txn_date)}</td><td>${esc(p.party || '—')}</td><td class="num">${usd(p.total)}</td><td>${(p.invoices || []).filter(Boolean).map(esc).join(', ') || (Number(p.unapplied) ? '<span class="pill p-amb">not applied</span>' : '—')}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">No payments in the last 120 days.</div>';
+}
+
+// KPI: late invoices = QuickBooks invoices past due with a balance open (ops_finance_kpis, 0054).
+async function renderLateKpi(){
+  const { data: k, error } = await window.OPS.sb.rpc('ops_finance_kpis');
+  if (error) { $('#finLateKpis').innerHTML = `<div class="empty">Could not load: ${esc(error.message)}</div>`; return; }
+  const tile = (l, v, sub) => `<div class="panel" style="gap:4px;box-shadow:none;border:1px solid var(--line)"><div class="note">${l}</div><div style="font:700 22px var(--f-brand)">${v}</div><div class="note">${sub}</div></div>`;
+  const pd = k.paid_90d || {}, ag = k.aging || [];
+  $('#finLateKpis').innerHTML = tile('Late invoices now', `${k.late_count}`, `${usd(k.late_amount)} past due · of ${k.open_count} open`)
+    + tile('Average days late', k.avg_days_late == null ? '—' : `${k.avg_days_late} d`, k.oldest ? `oldest: ${esc(k.oldest.invoice)} · ${k.oldest.days_late} d` : 'none late')
+    + tile('Paid on time', pd.on_time_pct == null ? '—' : `${pd.on_time_pct}%`, `of ${pd.count || 0} invoices paid in the last 90 days`)
+    + tile('Aging (late invoices)', ag.map(b => b.count).join(' · '), `${ag.map(b => b.bucket).join(' · ')} days past due`)
+    + (k.not_issued?.count ? tile('Draws not issued', `${k.not_issued.count}`, `trigger passed, no invoice · ≈ ${usd(k.not_issued.expected_amount)}`) : '');
+  // Trend: one series (number of late invoices), every 7 days over 26 weeks; hover shows the point.
+  const t = k.trend || [], box = $('#finLateChart');
+  if (t.length > 1) {
+    const W = Math.max(320, box.clientWidth || 700), H = 180, L = 40, R = 12, T = 12, B = 26;
+    const max = Math.max(...t.map(p => +p.count), 1), top = Math.max(4, Math.ceil(max / 4) * 4);
+    const x = i => L + (W - L - R) * i / (t.length - 1), y = v => T + (H - T - B) * (1 - v / top);
+    const grid = [0, .5, 1].map(f => `<line x1="${L}" x2="${W - R}" y1="${y(top * f)}" y2="${y(top * f)}" stroke="var(--line)" stroke-width="1"/><text x="${L - 6}" y="${y(top * f) + 4}" text-anchor="end" font-size="11" fill="var(--ink-3)">${top * f}</text>`).join('');
+    const months = t.map((p, i) => [p, i]).filter(([p, i]) => i > 0 && p.date.slice(5, 7) !== t[i - 1].date.slice(5, 7)).map(([p, i]) => `<text x="${x(i)}" y="${H - 6}" font-size="11" fill="var(--ink-3)" text-anchor="middle">${new Date(p.date + 'T12:00:00').toLocaleDateString('en-US', {month:'short'})}</text>`).join('');
+    const path = t.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(+p.count).toFixed(1)}`).join('');
+    const area = `${path}L${x(t.length - 1)},${y(0)}L${x(0)},${y(0)}Z`;
+    box.innerHTML = `<svg width="${W}" height="${H}" role="img" aria-label="Late invoices, last 26 weeks" style="display:block;max-width:100%">
+      ${grid}${months}<path d="${area}" fill="var(--gold-soft)" opacity=".7"/><path d="${path}" fill="none" stroke="var(--gold-ink)" stroke-width="2" stroke-linejoin="round"/>
+      <line id="flX" y1="${T}" y2="${H - B}" stroke="var(--ink-3)" stroke-width="1" visibility="hidden"/><circle id="flP" r="4" fill="var(--gold-ink)" stroke="var(--surface)" stroke-width="2" visibility="hidden"/>
+      <rect x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}" fill="transparent" id="flHit"/></svg>
+      <div id="flTip" class="note" style="position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:4px 8px;display:none;white-space:nowrap;box-shadow:var(--shadow)"></div>
+      <div class="note" style="margin-top:2px">Late invoices counted every 7 days over the last 26 weeks (hover for the amount).</div>`;
+    const hit = box.querySelector('#flHit'), tip = box.querySelector('#flTip'), lx = box.querySelector('#flX'), pt = box.querySelector('#flP');
+    const show = ev => { const r = hit.getBoundingClientRect(), i = Math.max(0, Math.min(t.length - 1, Math.round((ev.clientX - r.left) / r.width * (t.length - 1)))), p = t[i];
+      lx.setAttribute('x1', x(i)); lx.setAttribute('x2', x(i)); pt.setAttribute('cx', x(i)); pt.setAttribute('cy', y(+p.count)); lx.setAttribute('visibility', 'visible'); pt.setAttribute('visibility', 'visible');
+      tip.innerHTML = `<b>${fmt(p.date)}</b> · ${p.count} late invoice(s) · ${usd(p.amount)}`; tip.style.display = 'block';
+      tip.style.left = Math.min(x(i) + 10, W - tip.offsetWidth - 4) + 'px'; tip.style.top = '0px'; };
+    hit.onmousemove = show; hit.onmouseleave = () => { tip.style.display = 'none'; lx.setAttribute('visibility', 'hidden'); pt.setAttribute('visibility', 'hidden'); };
+  } else box.innerHTML = '';
+  const late = k.late || [];
+  $('#finLateTbl').innerHTML = late.length ? `<table><thead><tr><th>Customer</th><th>Invoice</th><th>Billed</th><th>Due</th><th class="num">Balance</th><th class="num">Late</th></tr></thead><tbody>${late.map(d => `<tr><td>${esc(d.party || '—')}</td><td class="mono">${esc(d.invoice || '—')}</td><td>${fmt(d.billed)}</td><td>${fmt(d.due)}</td><td class="num"><b>${usd(d.balance)}</b></td><td class="num"><span class="pill ${d.days_late > 30 ? 'p-red' : d.days_late > 7 ? 'p-amb' : 'p-gry'}">${d.days_late} d</span></td></tr>`).join('')}</tbody></table>` : '<div class="empty">No invoice past due.</div>';
+}
+
 async function renderUsers(){
   if (window.OPS?.state?.me?.role !== 'admin') return;
   $('#usersReload').onclick = renderUsers;
@@ -532,9 +673,39 @@ async function renderUsers(){
   const n = r => data.filter(u => u.role === r).length;
   $('#usersCnt').textContent = `${data.length} users · ${Object.keys(LEVELS).map(r => `${n(r)} ${LEVELS[r][0].toLowerCase()}`).join(' · ')}`;
   const login = u => !u.has_login ? '<span class="pill p-amb">No login yet</span>' : !u.confirmed ? '<span class="pill p-amb">Not confirmed</span>' : '<span class="pill p-grn">Active</span>';
-  $('#usersTbl').innerHTML = `<table><thead><tr><th>Name</th><th>E-mail</th><th>Access level</th><th>Buildertrend name</th><th>Login</th><th>Last sign-in</th><th>Added</th><th>Access link</th></tr></thead><tbody>${data.map(u => `<tr><td>${esc(u.name || '—')}</td><td>${esc(u.email)}</td><td><span class="pill ${LEVELS[u.role]?.[1] || 'p-gry'}">${esc(LEVELS[u.role]?.[0] || u.role)}</span></td><td>${esc(u.bt_name || '—')}</td><td>${login(u)}</td><td>${u.last_sign_in ? fmtT(u.last_sign_in) : 'never'}</td><td>${fmt(u.added)}</td><td><button class="btn ghost" type="button" data-access="${esc(u.email)}">${u.has_login ? 'Reset password' : 'Send first access'}</button><div class="note" data-access-out="${esc(u.email)}"></div></td></tr>`).join('')}</tbody></table>`;
+  $('#usersTbl').innerHTML = `<table><thead><tr><th>Name</th><th>E-mail</th><th>Access level</th><th>Finance</th><th>Buildertrend name</th><th>Login</th><th>Last sign-in</th><th>Added</th><th>Access link</th></tr></thead><tbody>${data.map(u => `<tr><td>${esc(u.name || '—')}</td><td>${esc(u.email)}</td><td><span class="pill ${LEVELS[u.role]?.[1] || 'p-gry'}">${esc(LEVELS[u.role]?.[0] || u.role)}</span></td><td><label style="display:inline-flex;gap:6px;align-items:center;cursor:pointer"><input type="checkbox" data-fin="${esc(u.email)}" ${u.finance ? 'checked' : ''}> <span class="note">${u.finance ? 'Owner' : '—'}</span></label></td><td>${esc(u.bt_name || '—')}</td><td>${login(u)}</td><td>${u.last_sign_in ? fmtT(u.last_sign_in) : 'never'}</td><td>${fmt(u.added)}</td><td><button class="btn ghost" type="button" data-access="${esc(u.email)}">${u.has_login ? 'Reset password' : 'Send first access'}</button><div class="note" data-access-out="${esc(u.email)}"></div></td></tr>`).join('')}</tbody></table>`;
   document.querySelectorAll('[data-access]').forEach(b => b.onclick = () => sendAccess(b));
+  // Finance permission (owners only see the Finance tab and the QuickBooks data)
+  document.querySelectorAll('[data-fin]').forEach(c => c.onchange = async () => {
+    const on = c.checked, email = c.dataset.fin;
+    if (!confirm(`${on ? 'Give' : 'Remove'} Finance access ${on ? 'to' : 'from'} ${email}?`)) { c.checked = !on; return; }
+    c.disabled = true;
+    const { error } = await window.OPS.sb.rpc('ops_user_set_finance', { p_email: email, p_on: on });
+    if (error) { alert('Could not change: ' + error.message); c.checked = !on; c.disabled = false; return; }
+    renderUsers();
+  });
+  renderSecrets();
   $('#usersLevels').innerHTML = Object.entries(LEVELS).map(([k, [l, c, d]]) => `<div class="row" style="cursor:default"><span class="jn"><span class="pill ${c}">${l}</span></span><div><div class="t">${esc(d)}</div><div class="m">${data.filter(u => u.role === k).map(u => esc(u.name)).join(', ') || '—'}</div></div><div class="r"></div></div>`).join('');
+}
+
+// Integration secrets (0044): write-only fields; the status shows only when and by whom each was set.
+const SECRETS = {qbo_client_id:'QuickBooks — Client ID', qbo_client_secret:'QuickBooks — Client Secret', qbo_webhook_verifier:'QuickBooks — Webhook Verifier Token'};
+async function renderSecrets(){
+  const box = $('#secList');
+  const { data, error } = await window.OPS.sb.rpc('ops_secret_status');
+  if (error) { box.innerHTML = `<div class="empty">Could not load: ${esc(error.message)}</div>`; return; }
+  box.innerHTML = data.map(x => `<div class="row" style="cursor:default;grid-template-columns:1fr auto"><div><div class="t">${esc(SECRETS[x.name] || x.name)}</div><div class="m">${x.set ? `Set ${fmtT(String(x.at).slice(0, 16).replace('T', ' '))}${x.by ? ' by ' + esc(String(x.by).split('@')[0]) : ''}` : 'Not set'}</div>
+    <div class="tools" style="margin-top:6px"><input type="password" autocomplete="new-password" spellcheck="false" data-sec="${esc(x.name)}" placeholder="${x.set ? 'Type a new value to replace it' : 'Paste the value'}" style="flex:1 1 260px"><button class="btn" type="button" data-sec-save="${esc(x.name)}">Save</button><span class="note" data-sec-out="${esc(x.name)}"></span></div></div>
+    <div class="r">${x.set ? '<span class="pill p-grn">Set</span>' : '<span class="pill p-amb">Missing</span>'}</div></div>`).join('');
+  box.querySelectorAll('[data-sec-save]').forEach(b => b.onclick = async () => {
+    const name = b.dataset.secSave, input = box.querySelector(`[data-sec="${CSS.escape(name)}"]`), out = box.querySelector(`[data-sec-out="${CSS.escape(name)}"]`);
+    const v = input.value.trim(); if (!v) { out.textContent = 'Type the value first.'; return; }
+    b.disabled = true; out.textContent = 'Saving…';
+    const { error } = await window.OPS.sb.rpc('ops_secret_set', { p_name: name, p_value: v });
+    input.value = '';   // never kept on the page
+    if (error) { out.textContent = 'Error: ' + error.message; b.disabled = false; return; }
+    renderSecrets();
+  });
 }
 
 /* shared bits */
@@ -937,7 +1108,7 @@ function renderOutbox(){
   const ch = $('#oChan').value, st = $('#oStat').value;
   const rows = (L.outbox || []).filter(m => (!ch || m.channel === ch) && (!st || m.status === st));
   $('#oCnt').textContent = `${rows.length} messages`;
-  $('#oTb').innerHTML = rows.map(m => `<tr class="ob-x"><td class="mono">${when(m.created_at)}</td><td>${m.channel === 'bt_daily_log' ? 'Daily Log' : m.channel === 'email' ? 'E-mail' : esc(m.channel)}</td><td class="mono">${esc(m.rule || '')}</td><td class="mono">${esc(m.job_number || '')}</td><td><div><b>${esc(m.subject || '')}</b></div><div class="m" style="font-size:12.5px;color:var(--ink-3)">${esc((m.to_addresses || []).join(', '))}${(m.cc_addresses || []).length ? ' · cc ' + esc(m.cc_addresses.join(', ')) : ''}</div><div class="ob-body">${esc(m.body || '')}${(m.body || '').length >= 1500 ? '\n… (text continues — open it in Buildertrend / the mailbox)' : ''}</div>${m.body ? '<span class="more"></span>' : ''}${m.error ? `<div class="why">${esc(m.error)}</div>` : ''}</td><td>${pill(m.status)}${m.sent_at ? `<br><span class="note">${when(m.sent_at)}</span>` : ''}</td><td>${['draft','approved'].includes(m.status) ? `<button class="btn ghost" type="button" data-cancel="${m.id}">Cancel</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="7" class="empty">Nothing here.</td></tr>';
+  $('#oTb').innerHTML = rows.map(m => `<tr class="ob-x"><td class="mono">${when(m.created_at)}</td><td>${m.channel === 'bt_daily_log' ? 'Daily Log' : m.channel === 'email' ? 'E-mail' : esc(m.channel)}</td><td class="mono">${esc(m.rule || '')}</td><td class="mono">${esc(m.job_number || '')}</td><td><div><b>${esc(m.subject || '')}</b></div><div class="m" style="font-size:12.5px;color:var(--ink-3)">${esc((m.to_addresses || []).join(', '))}${(m.cc_addresses || []).length ? ' · cc ' + esc(m.cc_addresses.join(', ')) : ''}</div><div class="ob-body">${esc(m.body || '')}${(m.body || '').length >= 1500 ? '\n… (text continues — open it in Buildertrend / the mailbox)' : ''}</div>${m.body ? '<span class="more"></span>' : ''}${m.error ? `<div class="why">${esc(m.error)}</div>` : ''}${(m.not_notified || []).length ? `<div class="note" style="display:block;margin-top:3px">Not notified (not on this job in Buildertrend): ${esc(m.not_notified.join(', '))}</div>` : ''}</td><td>${pill(m.status)}${m.sent_at ? `<br><span class="note">${when(m.sent_at)}</span>` : ''}</td><td>${['draft','approved'].includes(m.status) ? `<button class="btn ghost" type="button" data-cancel="${m.id}">Cancel</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="7" class="empty">Nothing here.</td></tr>';
   document.querySelectorAll('#v-outbox .ob-x').forEach(el => el.onclick = e => { if (e.target.closest('button, a') || getSelection().toString()) return; el.classList.toggle('open'); });
   document.querySelectorAll('[data-cancel]').forEach(b => b.onclick = async () => { b.disabled = true; const { error } = await window.OPS.sb.rpc('ops_outbox_cancel', {p_id: b.dataset.cancel}); if (error) { b.disabled = false; b.textContent = 'Error'; } else refreshOutbox(); });
 }
@@ -1073,10 +1244,78 @@ function initMap(){
 
 /* init */
 [...new Set(D.jobs.map(j => j.county).filter(Boolean))].sort().forEach(c => $('#pCounty').insertAdjacentHTML('beforeend', `<option>${esc(c)}</option>`));
+[...new Set(D.jobs.map(j => j.supervisor).filter(Boolean))].sort().forEach(c => $('#bSup').insertAdjacentHTML('beforeend', `<option>${esc(c)}</option>`));
 [...new Set(D.jobs.map(j => j.supervisor).filter(Boolean))].sort().forEach(c => { $('#iSup').insertAdjacentHTML('beforeend', `<option>${esc(c)}</option>`); $('#dSup').insertAdjacentHTML('beforeend', `<option value="${esc(c)}">${esc(c)}</option>`); });
+/* board (phase columns; ops/analysis/phase_board.mjs) */
+const PH = D.phases || null;
+const todayFL = () => new Date().toLocaleDateString('en-CA', {timeZone:'America/New_York'});
+const daysIn = since => since ? Math.max(0, Math.round((new Date(todayFL() + 'T12:00:00') - new Date(String(since).slice(0, 10) + 'T12:00:00')) / 864e5)) : null;
+const LIGHT = {g:['var(--green)','On or under the average'], y:['var(--amber)','Over the average, up to 1.5×'], r:['var(--red)','More than 1.5× the average']};
+// A partner's move holds until the data shows a newer phase change (computed phase starting after the move).
+function boardCards(){
+  const moves = new Map(((window.OPS && window.OPS.state) || {}).moves?.map(m => [m.job_number, m]) || []);
+  return J().map(j => {
+    let col = j.standby ? 'standby' : j.phase, since = j.standby ? j.standby_since : j.phase_since, moved = null;
+    const mv = moves.get(j.job_number), mvAt = mv ? String(mv.moved_at).slice(0, 10) : null;
+    if (mv && !(j.phase_since && j.phase_since > mvAt && j.phase !== mv.phase)) { col = mv.phase; since = mvAt; moved = mv; }
+    const n = daysIn(since), a = PH.avg[col];
+    let light = null;
+    if (n != null && a && a.avg != null && a.n >= 3 && !['done', 'standby'].includes(col)) light = n <= a.avg ? 'g' : n <= a.avg * 1.5 ? 'y' : 'r';
+    return {j, col, since, days: n, light, moved};
+  }).filter(c => c.col);
+}
+function boardCard(c){
+  const j = c.j, L = c.light ? LIGHT[c.light] : null;
+  const PERMIT_ST = {in_review:'In county review', corrections:'Corrections requested', fees_due:'Fees due', requested:'Requested', issued:'Issued'};
+  const extra = c.col === 'licensing' ? (j.permit ? `${esc(PERMIT_ST[j.ops_status] || 'Permit')} · ${esc(j.permit)}` : 'No permit number yet')
+    : c.col === 'waiting' ? `Permit issued ${fmt(j.issued_at)}`
+    : c.col === 'standby' ? esc(PAUSE[j.pause] || j.pause || 'Stand-by')
+    : c.col === 'awaiting_co' ? `Finished ${fmt(j.finished_at)}`
+    : j.last_passed ? `Last passed: ${esc(j.last_passed.replace(/ \(\d{4}-\d\d-\d\d\)$/, ''))}` : '';
+  return `<div class="kcard" draggable="true" data-job="${esc(j.job_number)}">
+    <div class="ktop"><span class="jn">${esc(j.job_number)}</span>${L ? `<i class="lt" style="background:${L[0]}" title="${L[1]}"></i>` : ''}<span class="kd" title="Days in this phase since ${fmt(c.since)}">${c.days != null ? c.days + ' d' : '—'}</span></div>
+    <div class="kt">${esc(street(j.address))}</div>
+    <div class="km">${esc([j.model, j.supervisor].filter(Boolean).join(' · '))}</div>
+    ${extra ? `<div class="km">${extra}</div>` : ''}
+    ${(j.insp_failed_open || []).length ? `<div class="kw">Open failure: ${esc(j.insp_failed_open.join(', '))}</div>` : ''}
+    ${c.moved ? `<div class="kmv">Moved by ${esc(String(c.moved.moved_by).split('@')[0])} · ${fmt(c.moved.moved_at)}</div>` : ''}
+    <select class="kmove" aria-label="Move ${esc(j.job_number)} to"><option value="">Move to…</option>${PH.order.filter(p => p.key !== c.col).map(p => `<option value="${p.key}">${esc(p.label)}</option>`).join('')}${c.moved ? '<option value="auto">Back to automatic</option>' : ''}</select>
+  </div>`;
+}
+async function boardMove(jn, phase){
+  const { error } = await window.OPS.sb.rpc('ops_board_move', {p_job: jn, p_phase: phase === 'auto' ? null : phase});
+  if (error) { alert('Could not move ' + jn + ': ' + error.message); return; }
+  try { window.OPS.state = await window.OPS.live(); } catch(e) {}
+  renderBoard();
+}
+function renderBoard(){
+  const box = $('#kb');
+  if (!PH) { box.innerHTML = '<div class="empty">The board is built with the next daily round.</div>'; return; }
+  const q = $('#bq').value.trim().toLowerCase(), sup = $('#bSup').value;
+  const cards = boardCards().filter(c => (!sup || c.j.supervisor === sup) && (!q || `${c.j.job_number} ${c.j.address} ${c.j.model || ''} ${c.j.supervisor || ''}`.toLowerCase().includes(q)));
+  box.innerHTML = PH.order.map(p => {
+    const list = cards.filter(c => c.col === p.key).sort((a, b) => p.key === 'done' ? (a.days ?? 1e9) - (b.days ?? 1e9) : (b.days ?? -1) - (a.days ?? -1));
+    const a = PH.avg[p.key];
+    const avg = ['done', 'standby'].includes(p.key) ? '' : a && a.avg != null && a.n >= 3 ? `avg ${a.avg} d · ${a.n} jobs` : 'avg — (not enough history)';
+    return `<div class="kcol" data-col="${p.key}"><div class="khd"><span>${esc(p.label)}</span><span class="kn">${list.length}</span></div>${avg ? `<div class="kavg">${avg}</div>` : ''}<div class="kbody">${list.map(boardCard).join('') || '<div class="kempty">—</div>'}</div></div>`;
+  }).join('');
+  box.querySelectorAll('.kcard').forEach(el => {
+    el.onclick = e => { if (!e.target.closest('select')) openJob(el.dataset.job); };
+    el.querySelector('select').onchange = e => { if (e.target.value) boardMove(el.dataset.job, e.target.value); };
+    el.ondragstart = e => { e.dataTransfer.setData('text/plain', el.dataset.job); el.classList.add('dragging'); };
+    el.ondragend = () => el.classList.remove('dragging');
+  });
+  box.querySelectorAll('.kcol').forEach(col => {
+    col.ondragover = e => { e.preventDefault(); col.classList.add('over'); };
+    col.ondragleave = () => col.classList.remove('over');
+    col.ondrop = e => { e.preventDefault(); col.classList.remove('over'); const jn = e.dataTransfer.getData('text/plain'); const c = boardCards().find(x => x.j.job_number === jn); if (jn && c && c.col !== col.dataset.col) boardMove(jn, col.dataset.col); };
+  });
+}
+$('#bq').oninput = renderBoard; $('#bSup').onchange = renderBoard;
+
 function renderAll(){
   document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.co === CO));
-  renderToday(); renderPermits(); renderInsp(); renderDlogs(); renderKpis(); renderClock();
+  renderToday(); renderBoard(); renderPermits(); renderInsp(); renderDlogs(); renderKpis(); renderClock();
   if (mapState) mapState.draw();
 }
 renderCharts(); renderAll(); renderIdeas();
@@ -1106,6 +1345,15 @@ else show(VIEWS.includes(h0) ? h0 : VIEWS.includes(t0) ? t0 : 'today');
       return j;
     },
     async live(){ const { data, error } = await sb.rpc('ops_board', { p_with_board: false }); if (error) throw error; return data; },
+    // Any PKB Ops Edge Function with the signed-in user's token (e.g. ops-qbo).
+    async fn(name, body){
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) throw new Error('signed out');
+      const r = await fetch(SB_URL + '/functions/v1/' + name, { method: 'POST', headers: { 'content-type': 'application/json', apikey: SB_KEY, Authorization: 'Bearer ' + session.access_token }, body: JSON.stringify(body) });
+      const j = await r.json().catch(() => ({ error: 'HTTP ' + r.status }));
+      if (!r.ok || j.error) throw new Error(j.error || ('HTTP ' + r.status));
+      return j;
+    },
   };
   function login(){ msg('Sign in with your PKB account.'); g('glogin').hidden = false; g('gfirst').hidden = false; g('gemail').focus(); }
   g('glogin').addEventListener('submit', async e => {
@@ -1130,6 +1378,7 @@ else show(VIEWS.includes(h0) ? h0 : VIEWS.includes(t0) ? t0 : 'today');
     window.OPS.state = res.data;
     g('whoami').textContent = res.data.me.name || res.data.me.email;
     if (res.data.me.role === 'admin') g('usersTab').hidden = false;
+    if (res.data.me.finance) { g('financeTab').hidden = false; g('qbLink').hidden = false; }
     g('gate').hidden = true;
     boot(Object.assign({}, res.data.board, { geo }));
   }

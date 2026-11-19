@@ -1,0 +1,124 @@
+{
+  "_comment": "Buildertrend Schedule items marked complete from the Daily Logs (Victor, 11/19/26: 'stucco pronto, stucco ready, stucco feito… no Daily Log → marcar o Stucco concluído'). Each log is split into its bullet points; a point marks an item when it names the item ('item' regex on the item title, 'words' regex on the text) AND says it is done ('done') AND does not say it is partial, in progress, scheduled, waiting, failed or a repair ('not'). The more specific entries come first and the text they match is removed, so 'stucco grading concluído' never marks Stucco. Evidence date = the earliest Daily Log that says it.",
+  "done": "\\b(pront[oa]s?|feit[oa]s?|conclu[ií]d[oa]s?|conclus[aã]o|finalizad[oa]s?|terminad[oa]s?|termin(ou|amos)|finaliz(ou|amos)|instalad[oa]s?|concretad[oa]s?|aplicad[oa]s?|done|ready|finished|completed?|installed|poured|passed)\\b",
+  "not": "\\b(parcial|parcialmente|partial(ly)?|falta|faltando|missing|sendo|being|em andamento|andamento|in progress|iniciad[oa]|inici(ou|o)|started|start(s|ing)?|programad[oa]|scheduled|agendad[oa]|aguard\\w*|waiting|reparo|repair\\w*|consert\\w*|touch-?up|deve|devem|vai|v[aã]o|will|amanh[aã]|tomorrow|reprovad[oa]s?|failed|n[aã]o|not|cobr\\w*|pedi|solicit\\w*|ask(ed)?|request(ed)?|previs[aã]o|expected|pedir|pe[cç]a|assim que|quando|when|once|after|ap[oó]s|acompanhar|follow\\w*|marca[cç][aã]o|escava\\w*|excavat\\w*|sem as|sem o|without|mas sem|entreg\\w*|delivered|delivery|chamar|call|reparos?|must|subject to|fbc\\w*|ser[aá]|ser feit[oa]|ser concluid[oa]|hasn|haven|isn|n[’']t|verificar|verify|confirmar|confirm|check\\w*|ligar e|ready for|pront[oa]s? para|trincheira|abertura|abert[oa]|trench\\w*|awaiting|staged|by (mon|tues|wednes|thurs|fri|satur|sun)day|at[eé] (segunda|ter[cç]a|quarta|quinta|sexta|s[aá]bado|domingo)|almost|quase|nearly|mostly)\\b",
+  "items": [
+    {
+      "item": "^stucco - grading$",
+      "words": "stucco\\s*-?\\s*grading"
+    },
+    {
+      "item": "^stucco - lath$",
+      "words": "(wire\\s*)?lath\\b|tela do stucco"
+    },
+    {
+      "item": "^stucco$",
+      "words": "\\bstucc?o\\b|\\breboco\\b"
+    },
+    {
+      "item": "^insulation$",
+      "words": "\\binsulation\\b|\\bisolamento\\b"
+    },
+    {
+      "item": "^drywall$",
+      "words": "\\bdrywall\\b"
+    },
+    {
+      "item": "^painting - exterior$",
+      "words": "pintura (da )?(parte |[aá]rea )?extern[ao]|exterior paint(ing)?|paint(ing)? exterior|pintou (a )?([aá]rea |parte )?extern[ao]"
+    },
+    {
+      "item": "^painting - interior$",
+      "words": "pintura (da )?(parte |[aá]rea )?intern[ao]|pintura e textura|interior paint(ing)?|paint(ing)? interior"
+    },
+    {
+      "item": "^tile$",
+      "words": "\\btiles?\\b|porcelanato|cer[aâ]mica"
+    },
+    {
+      "item": "^vinyl$",
+      "words": "\\bvin[iy]l\\b"
+    },
+    {
+      "item": "^cabinets$",
+      "words": "\\bcabinets?\\b|\\barm[aá]rios\\b"
+    },
+    {
+      "item": "^garage door$",
+      "words": "garage door|port[aã]o da garagem|porta da garagem",
+      "not": "paint|pintura|pintad"
+    },
+    {
+      "item": "^garage epoxy$",
+      "words": "\\bep[oó]x[iy]\\b|\\bepoxy\\b"
+    },
+    {
+      "item": "^soffit and fascia$",
+      "words": "\\bsoffit\\b|\\bfascia\\b"
+    },
+    {
+      "item": "^roofing$",
+      "words": "\\bshingles?\\b|\\btelhas\\b"
+    },
+    {
+      "item": "^driveway cut$",
+      "words": "driveway cut|corte do driveway"
+    },
+    {
+      "item": "^driveway pouring$",
+      "words": "driveway (concretad[oa]|poured|pour)|concretagem do driveway"
+    },
+    {
+      "item": "^interior doors and trims$",
+      "words": "interior doors|portas internas|baseboards?|rodap[eé]s?"
+    },
+    {
+      "item": "^electrical - trims$",
+      "words": "electrical trims?|trim el[eé]tric[oa]"
+    },
+    {
+      "item": "^plumbing - trims$",
+      "words": "plumbing trims?|trim hidr[aá]ulic[oa]"
+    },
+    {
+      "item": "^hvac - trims$",
+      "words": "hvac (final )?trims?"
+    },
+    {
+      "item": "^hvac - start-?up$",
+      "words": "start-?up"
+    },
+    {
+      "item": "^appliances$",
+      "words": "\\bappliances?\\b|eletrodom[eé]sticos"
+    },
+    {
+      "item": "^septic install$",
+      "words": "\\bseptic\\b|\\bfossa\\b"
+    },
+    {
+      "item": "^water connection$",
+      "words": "water connection|liga[cç][aã]o (de |da )?[aá]gua|water box"
+    },
+    {
+      "item": "^power connection$",
+      "words": "power connection|energia ligada|liga[cç][aã]o (de |da )?energia"
+    },
+    {
+      "item": "^final grading$",
+      "words": "final grading"
+    },
+    {
+      "item": "^landscaping / sod$",
+      "words": "\\bsod\\b|\\bgrama\\b|landscap\\w*"
+    },
+    {
+      "item": "^irrigation$",
+      "words": "\\birrigation\\b|\\bsprinklers?\\b|irriga[cç][aã]o"
+    },
+    {
+      "item": "^final clean ?up$",
+      "words": "final clean(ing|-?up)?|limpeza final"
+    }
+  ]
+}

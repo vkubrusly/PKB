@@ -1,5 +1,5 @@
 -- =============================================================================
--- 0040 — Vendor invoices → Buildertrend bills (Victor, 2026-11-19). invoice@pkbhomes.com forwards to the bot
+-- 0055 — Vendor invoices → Buildertrend bills (Victor, 2026-11-19). invoice@pkbhomes.com forwards to the bot
 -- mailbox; each invoice file is read (Edge Function ops-invoice), split by job (the amount the invoice shows for
 -- each address; invoice-wide fees proportionally) and checked (every address on a job, the sum = the total, no
 -- duplicate). Problems go by e-mail to Camila, Cc Victor. Bills are created as drafts in Buildertrend.
