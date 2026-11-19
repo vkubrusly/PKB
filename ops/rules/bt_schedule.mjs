@@ -13,6 +13,7 @@ import { readFileSync } from 'node:fs';
 import { sql } from '../scripts/sb.mjs';
 import { usDate } from './lib.mjs';
 import { openBuildertrend } from '../collectors/buildertrend/session.mjs';
+import { noNotify } from '../collectors/buildertrend/no_notify.mjs';
 import { pickShiftReason } from '../collectors/buildertrend/shift_reason.mjs';
 const SHIFT_REASON = 'Data real (inspeção/fatura/Daily Log) – PKB Ops';
 
@@ -128,12 +129,14 @@ if (process.argv.includes('--dates')) {
 // Start) that is off is changed first the way a person does it (open the item, Start Date, Save); Buildertrend
 // then shifts the linked chain; the job is re-read and the next item off is fixed, until all match.
 if (process.argv.includes('--fix-dates')) {
+  await noNotify(page, (m) => console.log('  ' + m));
   const fmtBt = (iso) => new Date(iso + 'T12:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric' });
   const exactFor = (e, it) => { const title = String(it.title || '').trim(); const rule = MAP.find((r) => r.itemRe.test(title)); EXACT = null;
     let why = rule ? proof(e, { ...rule, title }) : null; if (!why || !EXACT) why = fromLog(e, title); return why && EXACT ? { date: EXACT, why } : null; };
   let changed = 0, failed = 0;
   for (const bt of jobIds) {
     const e = ev[bt]; if (!e) continue;
+    if (LIMIT && changed >= LIMIT) break;
     const tried = new Set();
     for (let round = 0; round < 200; round++) {
       const items = (await listItems([bt])).filter((it) => it.completed).sort((a, b) => String(a.startDate).localeCompare(String(b.startDate)) || String(a.id).localeCompare(String(b.id)));
@@ -157,6 +160,7 @@ if (process.argv.includes('--fix-dates')) {
           select j.org_id, j.id, 'bt.schedule_date', 'rule', now(), ${q(JSON.stringify({ item: String(it.title).trim(), item_id: it.id, from: String(it.startDate).slice(0, 10), to: x.date, evidence: x.why }))}::jsonb, ${q(`bt.schedule_date:${it.id}:${x.date}`)}
           from ops.jobs j where j.job_number = ${q(e.job)} on conflict (org_id, dedupe_key) do nothing`);
         changed++; console.log(`DATED ${label}`);
+        if (LIMIT && changed >= LIMIT) break;
       } catch (err) { failed++; console.error(`FAILED date ${label}: ${err.message}`); }
     }
   }

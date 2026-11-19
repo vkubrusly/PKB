@@ -4,6 +4,7 @@
 // Without --save it only opens the editor and lists its fields/buttons (no change).
 //   BT_COOKIES_FILE=… node collectors/buildertrend/schedule_date_test.mjs <job id> <item id> <MM/DD/YYYY> [--save]
 import { openBuildertrend } from './session.mjs';
+import { noNotify } from './no_notify.mjs';
 import { pickShiftReason } from './shift_reason.mjs';
 const REASON = 'Data real (inspeção/fatura/Daily Log) – PKB Ops';
 
@@ -28,6 +29,7 @@ async function snapshot() {
   }
   return items;
 }
+await noNotify(page, (m) => console.log('  ' + m));
 const before = await snapshot();
 const target = before.get(String(itemId));
 console.log(`job ${jobId}: ${before.size} items · target ${itemId} "${target?.title}" start ${String(target?.startDate).slice(0, 10)} end ${String(target?.endDate).slice(0, 10)} completed=${target?.completed}`);
