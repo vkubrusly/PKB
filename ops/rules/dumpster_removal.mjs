@@ -27,7 +27,7 @@ for (const [jobId, ls] of byJob) {
     recorded++; continue;
   }
   const t = await team(jobId);
-  const text = `Hello Rob,
+  const text = `Hello,
 
 The appliances are now installed at the house below (per our Daily Log of ${usDate(hit.date)}), so the dumpster is no longer needed on site. Please schedule its removal:
 
