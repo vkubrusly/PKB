@@ -83,6 +83,9 @@ writes in Portuguese; UI text in English. State as of 2026-10-12.
 - invoice@pkbhomes.com (Microsoft 365 via GoDaddy) forwards to botpkbhomes@gmail.com (Victor, 11/19). The system will
   read each invoice, split it by job (address → job), and create the Buildertrend bills itself as **draft** — not
   Buildertrend's AI Bill Capture, which put the whole of invoice I2426 ($3,808.22, 35 sites) on job 0016.
+- Amounts: each job gets exactly the amount the invoice shows for its address (not proportional). Only a fee
+  charged on the whole invoice (delivery, fuel…) is split proportionally to each job's amount, rounding so the
+  bills add up to the invoice total to the cent (Victor, 11/19).
 - Errors or questions about a bill: e-mail **camila@pkbhomes.com, Cc victor@pkbhomes.com**; they answer by e-mail
   (read from the bot mailbox) (Victor, 11/19).
 
