@@ -17,7 +17,7 @@ Return only what the document shows. Never invent a number, an address or a date
 - invoice_number, invoice_date and due_date (YYYY-MM-DD) of the document as a whole; total: the amount due for the whole document.
 - sites: one entry per house / job / property / service address the invoice charges, with the amount for that site INCLUDING its own tax. Use the site's own subtotal or total line when the invoice gives one; otherwise add up its lines. label: the site's name or code as printed (e.g. "S319"); address: the street address exactly as printed; amount: number. If the whole invoice is for one site, return one entry with the invoice total minus any invoice-wide fees.
 - invoice_fees: charges on the whole invoice that belong to no site (delivery, fuel, environmental, service fee…), each with description and amount. Taxes already inside a site amount are not fees.
-- notes: anything a person must check (credits, partial payments, a site without an address, figures that do not add up), in one or two short sentences; null when there is nothing.`;
+- notes: in Brazilian Portuguese; anything a person must check (credits, partial payments, a site without an address, figures that do not add up), in one or two short sentences; null when there is nothing.`;
 
 const SCHEMA = {
   type: 'object',
