@@ -21,7 +21,7 @@ const q = (v) => (v == null ? 'null' : `'${String(v).replace(/'/g, "''")}'`);
 const MAP = JSON.parse(readFileSync(new URL('../config/bt_schedule_map.json', import.meta.url), 'utf8')).rules.map((r) => ({ ...r, itemRe: new RegExp(r.item, 'i'), inspRe: r.inspection ? new RegExp(r.inspection, 'i') : null }));
 
 // Evidence per job: building permit issued, CO, passed inspections (type + date).
-const rows = await sql(`select j.job_number, j.bt_job_id, j.co_at, c.issued_at, i.type, coalesce(i.actual_at, i.scheduled_at) at
+const rows = await sql(`select j.job_number, j.bt_job_id, j.co_at, c.issued_at, i.type, coalesce(i.actual_at, i.scheduled_at, i.requested_at) at
   from ops.jobs j join ops.permit_cases c on c.job_id = j.id and c.kind = 'building'
   left join ops.inspections i on i.permit_case_id = c.id and i.passed
   where j.bt_job_id is not null ${ONLY ? `and j.job_number = ${q(ONLY)}` : ''}`);
@@ -74,6 +74,12 @@ for (const it of items) {
   const e = ev[it.jobId]; if (!e) continue;
   const rule = MAP.find((r) => r.itemRe.test(String(it.title || '').trim())); if (!rule) continue;
   const why = proof(e, rule); if (why) todo.push({ it, e, why });
+}
+if (!POST) {
+  // Dry run: also show which open items no rule covers (to extend config/bt_schedule_map.json).
+  const uncovered = {};
+  for (const it of items) if (!it.completed && ev[it.jobId] && !MAP.some((r) => r.itemRe.test(String(it.title || '').trim()))) { const t = String(it.title || '').trim(); uncovered[t] = (uncovered[t] || 0) + 1; }
+  console.log('open items without a rule:', Object.entries(uncovered).sort((a, b) => b[1] - a[1]).map(([t, n]) => `${t} (${n})`).join(' · '));
 }
 const list = LIMIT ? todo.slice(0, LIMIT) : todo;
 console.log(`${todo.length} item(s) to mark complete${LIMIT ? ` (limited to ${list.length})` : ''}${POST ? '' : ' · DRY RUN (no change)'}`);
