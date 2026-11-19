@@ -14,6 +14,11 @@ page.on('request', (r) => { if (!apiHeaders && /\/api\/calendar\//i.test(r.url()
 await page.goto(`https://buildertrend.net/app/Schedules/List?jobId=${jobId}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await page.waitForTimeout(15000);
 for (const u of scripts) {
+  if (/LinkToScheduleItem|ScheduleItemPopover|linkToScheduleItem|routes|router/i.test(u)) {
+    const js0 = await (await page.request.get(u)).text();
+    const hits = [...new Set([...js0.matchAll(/["'`][^"'`\n]{0,60}[Ss]chedul[^"'`\n]{0,80}["'`]/g)].map((m) => m[0]))].slice(0, 120);
+    console.log(`ROUTES ${u.split('/').pop()} B64:${Buffer.from(hits.join('\n')).toString('base64')}`);
+  }
   if (!/Schedule\.api\.handler|ScheduleItem|schedule-item|ScheduleDetails/i.test(u)) continue;
   const js = await (await page.request.get(u)).text();
   console.log(`\n===== ${u.split('/').pop()} (${js.length} chars) =====`);
@@ -22,6 +27,10 @@ for (const u of scripts) {
     const i = m.index; console.log(`--- ${m[0]}\n${js.slice(Math.max(0, i - 260), i + 360).replace(/\s+/g, ' ')}\n`);
   }
 }
+for (const u of scripts) { if (!/\/index-[^/]+\.js/.test(u)) continue;
+  const js = await (await page.request.get(u)).text();
+  const hits = [...new Set([...js.matchAll(/["'`][^"'`\n]{0,40}(?:Schedules?\/[^"'`\n]{0,80}(?::id|:scheduleId|:itemId|\$\{)[^"'`\n]{0,40})["'`]/g)].map((m) => m[0]))].slice(0, 150);
+  console.log(`INDEXROUTES ${u.split('/').pop()} B64:${Buffer.from(hits.join('\n')).toString('base64')}`); }
 const clean = (h) => Object.fromEntries(Object.entries(h || {}).filter(([k]) => !/^(content-length|cookie|host|:)/i.test(k)));
 for (const path of [`/api/calendar/${itemId}`, `/api/calendar/${itemId}/LinkList`]) {
   const res = await page.request.get(`https://buildertrend.net${path}`, { headers: clean(apiHeaders) });
