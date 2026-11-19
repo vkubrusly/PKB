@@ -81,6 +81,31 @@ async function listItems(ids) {
   }
   return [...items.values()];
 }
+// --undo "<title regex>" --since <ISO>: un-mark items THIS robot marked (events bt.schedule_complete), e.g. after a
+// rule turned out wrong. Only items whose event matches; each is re-read to confirm, then its event is removed so a
+// corrected rule can mark it again later.
+const UNDO = arg('--undo'), SINCE = arg('--since');
+if (UNDO) {
+  const evs = await sql(`select e.id, e.payload->>'item' item, (e.payload->>'item_id')::bigint item_id, j.job_number, j.bt_job_id from ops.events e join ops.jobs j on j.id = e.job_id
+    where e.kind = 'bt.schedule_complete' and e.payload->>'item' ~* ${q(UNDO)} ${SINCE ? `and e.created_at >= ${q(SINCE)}::timestamptz` : ''} order by e.id`);
+  console.log(`undo: ${evs.length} item(s) matching /${UNDO}/${SINCE ? ` since ${SINCE}` : ''}${POST ? '' : ' · DRY RUN'}`);
+  let ok = 0, bad = 0;
+  for (const ev of evs) {
+    const label = `${ev.job_number} · ${ev.item} (item ${ev.item_id})`;
+    if (!POST) { console.log(`[dry run] unmark ${label}`); continue; }
+    try {
+      let res = await page.request.post('https://buildertrend.net/apix/v2/Schedules/mark-complete', { headers: xHeaders, data: JSON.stringify({ scheduleItemId: Number(ev.item_id), markComplete: false }) });
+      if (res.status() === 404 || res.status() === 405) res = await page.request.put('https://buildertrend.net/apix/v2/Schedules/mark-complete', { headers: xHeaders, data: JSON.stringify({ scheduleItemId: Number(ev.item_id), markComplete: false }) });
+      if (!res.ok()) throw new Error(`HTTP ${res.status()} ${(await res.text()).slice(0, 200)}`);
+      const after = (await listItems([Number(ev.bt_job_id)])).find((x) => String(x.id) === String(ev.item_id));
+      if (after?.completed) throw new Error('Buildertrend answered OK but the item is still complete');
+      await sql(`delete from ops.events where id = ${Number(ev.id)}`);
+      ok++; console.log(`UNMARKED ${label}`);
+    } catch (err) { bad++; console.error(`FAILED unmark ${label}: ${err.message}`); }
+  }
+  console.log(`undo: ${ok} unmarked · ${bad} failed`);
+  await browser.close(); process.exit(bad && !ok ? 1 : 0);
+}
 const items = await listItems(jobIds);
 console.log(`${items.length} schedule items in ${jobIds.length} job(s)`);
 

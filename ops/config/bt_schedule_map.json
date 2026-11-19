@@ -206,16 +206,6 @@
       "inspection": "rough electrical|electrical rough"
     },
     {
-      "item": "^windows and exterior doors$",
-      "inspection": "wire lath|lath nailing",
-      "_comment": "windows and doors are set before the stucco lath is inspected"
-    },
-    {
-      "item": "^stucco - grading$",
-      "inspection": "wire lath|lath nailing",
-      "_comment": "item 29, before the lath (item 30) and its inspection"
-    },
-    {
       "item": "^stucco - lath$",
       "inspection": "wire lath|lath nailing"
     },
@@ -276,5 +266,6 @@
     }
   ],
   "_comment_2026_11_18": "New 85-item PKB template (Victor, 11/18/26): every 'Inspection - X' item is marked from the matching PASSED county inspection; a work item is marked only when a later inspection proves it was done (e.g. the formwork, rebars and pad by the foundation pre-pour). Not marked: the draws (2nd–6th Draw), windows/doors, roofing (shingles), stucco, drywall, painting, finishes, upgrades, connections, clean-up, landscaping, DEP letter.",
-  "_comment_draws": "Draw items (Victor, 11/19/26): 'Nth Draw' is marked complete when the QuickBooks invoice for that stage exists (ops.qbo_draws_core billed_stages: the installment named in the invoice message; a 1st with only the address and a two-stage invoice are recognised)."
+  "_comment_draws": "Draw items (Victor, 11/19/26): 'Nth Draw' is marked complete when the QuickBooks invoice for that stage exists (ops.qbo_draws_core billed_stages: the installment named in the invoice message; a 1st with only the address and a two-stage invoice are recognised).",
+  "_comment_not_marked": "Windows and exterior doors and Stucco - Grading are NOT marked from the Wire Lath inspection (Victor, 11/19/26)."
 }
