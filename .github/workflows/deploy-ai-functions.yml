@@ -59,3 +59,4 @@ jobs:
           $SB functions deploy ops-ask --project-ref "$PROJECT_REF" --yes
           $SB functions deploy ops-field --project-ref "$PROJECT_REF" --yes
           $SB functions deploy ops-users --project-ref "$PROJECT_REF" --yes
+          $SB functions deploy ops-invoice --project-ref "$PROJECT_REF" --yes
