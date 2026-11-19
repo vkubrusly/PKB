@@ -79,6 +79,16 @@ writes in Portuguese; UI text in English. State as of 2026-10-12.
   Buildertrend claim and follows its class/status; "(closed)" classes = resolved/closed. Board panel "Warranty claims".
 - No e-mail notification: everyone already gets Buildertrend's own notices (Victor).
 
+## Bills from invoices (in design, since 2026-11-19)
+- invoice@pkbhomes.com (Microsoft 365 via GoDaddy) forwards to botpkbhomes@gmail.com (Victor, 11/19). The system will
+  read each invoice, split it by job (address → job), and create the Buildertrend bills itself as **draft** — not
+  Buildertrend's AI Bill Capture, which put the whole of invoice I2426 ($3,808.22, 35 sites) on job 0016.
+- Amounts: each job gets exactly the amount the invoice shows for its address (not proportional). Only a fee
+  charged on the whole invoice (delivery, fuel…) is split proportionally to each job's amount, rounding so the
+  bills add up to the invoice total to the cent (Victor, 11/19).
+- Errors or questions about a bill: e-mail **camila@pkbhomes.com, Cc victor@pkbhomes.com**; they answer by e-mail
+  (read from the bot mailbox) (Victor, 11/19).
+
 ## Open items
 - Orange (FastTrack): collected every round since 2026-10-14 with both contractor logins (GitHub secrets
   `ORANGE_PORTAL_USER/PASS`, `ORANGE_PORTAL_USER_2/PASS_2`; which permit is on which login:

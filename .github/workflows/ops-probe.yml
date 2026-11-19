@@ -8,7 +8,7 @@ on:
       probe:
         description: 'Probe to run'
         type: choice
-        options: [fasttrack, fasttrack-collect, fasttrack-reports, lake, buildertrend, buildertrend-schedule, buildertrend-schedule-api, bt-schedule-rule, buildertrend-warranty, buildertrend-warranty-api, bt-warranty-rule, buildertrend-lead-find, buildertrend-jobs-find, buildertrend-dailylog-check, projectdox]
+        options: [fasttrack, fasttrack-collect, fasttrack-reports, lake, buildertrend, buildertrend-schedule, buildertrend-schedule-api, bt-schedule-rule, buildertrend-warranty, buildertrend-warranty-api, bt-warranty-rule, buildertrend-lead-find, buildertrend-jobs-find, buildertrend-dailylog-check, buildertrend-bills, buildertrend-bill-form, buildertrend-bill-split, buildertrend-bill-api, projectdox]
         default: fasttrack
       arg:
         description: 'Optional argument (e.g. permit number)'
@@ -53,6 +53,14 @@ jobs:
             node rules/bt_schedule.mjs ${{ inputs.arg }}
           elif [ "${{ inputs.probe }}" = buildertrend-schedule-api ]; then
             node collectors/buildertrend/schedule_api_probe.mjs ${{ inputs.arg }}
+          elif [ "${{ inputs.probe }}" = buildertrend-bill-api ]; then
+            node collectors/buildertrend/bill_api_code.mjs ${{ inputs.arg }}
+          elif [ "${{ inputs.probe }}" = buildertrend-bill-split ]; then
+            node collectors/buildertrend/bill_split_read.mjs ${{ inputs.arg }}
+          elif [ "${{ inputs.probe }}" = buildertrend-bill-form ]; then
+            node collectors/buildertrend/bill_form_probe.mjs ${{ inputs.arg }}
+          elif [ "${{ inputs.probe }}" = buildertrend-bills ]; then
+            node collectors/buildertrend/bills_probe.mjs ${{ inputs.arg }}
           elif [ "${{ inputs.probe }}" = buildertrend-dailylog-check ]; then
             node collectors/buildertrend/daily_log_check.mjs 46506095 "PRIME - CT - Florida - 9370 N Jourden Dr" 43923049 "0003 - OC - Sunny Farm - 13107 SW 70TH LN"
           elif [ "${{ inputs.probe }}" = buildertrend-jobs-find ]; then
