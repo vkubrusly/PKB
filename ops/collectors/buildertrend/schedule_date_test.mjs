@@ -30,7 +30,25 @@ const before = await snapshot();
 const target = before.get(String(itemId));
 console.log(`job ${jobId}: ${before.size} items · target ${itemId} "${target?.title}" start ${String(target?.startDate).slice(0, 10)} end ${String(target?.endDate).slice(0, 10)} completed=${target?.completed}`);
 await page.waitForTimeout(3000);
-await page.getByText(String(target?.title || '').trim(), { exact: true }).first().click({ timeout: 30000 });
+// Open the item editor: the route the app uses (found in its bundles), else click the title in the list.
+const routes = new Set();
+for (const u of await page.evaluate(() => performance.getEntriesByType('resource').map((r) => r.name).filter((n) => /\.js(\?|$)/.test(n)))) {
+  const js = await (await page.request.get(u).catch(() => null))?.text().catch(() => '') || '';
+  for (const m of js.matchAll(/["'`](\/?(?:app\/)?Schedules?\/[A-Za-z]*(?:Item|Details|Edit)[A-Za-z/:${}._-]*)["'`]/g)) routes.add(m[1]);
+}
+console.log('item routes in bundles:', [...routes].slice(0, 40).join(' | '));
+const hrefs = await page.evaluate(() => [...document.querySelectorAll('a[href]')].map((a) => a.getAttribute('href')).filter((h) => /chedul/i.test(h)).slice(0, 20));
+console.log('schedule links on the page:', hrefs.join(' | '));
+const rowTitles = await page.evaluate(() => [...document.querySelectorAll('[role=row], tr')].slice(0, 12).map((r) => r.innerText.replace(/\s+/g, ' ').slice(0, 120)));
+console.log('first rows:', rowTitles.join(' || '));
+let opened = false;
+for (const r of [...routes].filter((x) => /:id|\$\{|:scheduleId|:itemId/i.test(x)).slice(0, 6)) {
+  const url = 'https://buildertrend.net/' + r.replace(/^\//, '').replace(/:jobId|\$\{[^}]*job[^}]*\}/i, jobId).replace(/:id|:scheduleId|:itemId|\$\{[^}]*\}/i, itemId);
+  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 }).catch(() => {}); await page.waitForTimeout(6000);
+  const ok = await page.evaluate((t) => document.body.innerText.includes(t), String(target?.title || '').trim());
+  console.log(`try ${url} → title on page: ${ok}`); if (ok) { opened = true; break; }
+}
+if (!opened) await page.getByText(String(target?.title || '').trim(), { exact: true }).first().click({ timeout: 30000 });
 await page.waitForTimeout(6000);
 const fields = await page.evaluate(() => [...document.querySelectorAll('input, button, [role=button], label')].filter((e) => e.offsetParent !== null)
   .map((e) => `${e.tagName.toLowerCase()}${e.id ? '#' + e.id : ''}${e.name ? '[name=' + e.name + ']' : ''}${e.getAttribute('data-testid') ? '[testid=' + e.getAttribute('data-testid') + ']' : ''} ${e.placeholder ? 'ph=' + e.placeholder : ''} ${e.value ? 'val=' + String(e.value).slice(0, 30) : ''} ${String(e.innerText || '').trim().slice(0, 40)}`));
