@@ -127,8 +127,18 @@ for (const l of lines) {
     }
     if (!fc) throw new Error('attachment: no file chooser after Attachments → Add');
     if (fc !== true) await fc.setFiles(files.get(l.file_path));
-    await page.waitForTimeout(6000);
-    const attached = await page.getByText(l.file_name || 'invoice.pdf', { exact: false }).count();
+    await page.waitForTimeout(3000);
+    // The "Upload Files" dialog: press its Upload button, then the file must be listed on the form itself
+    // (Attachments), with the dialog closed.
+    const dlg = page.locator('.ant-modal-content:has-text("Upload Files")').last();
+    if (await dlg.count()) {
+      await dlg.getByRole('button', { name: /^Upload$/ }).first().click();
+      await dlg.waitFor({ state: 'hidden', timeout: 60000 }).catch(() => {});
+    }
+    await page.waitForTimeout(3000);
+    if (await page.locator('.ant-modal-content:has-text("Upload Files")').count()) throw new Error('attachment: the Upload Files dialog did not close');
+    const base = String(l.file_name || 'invoice.pdf').replace(/\.[^.]+$/, '');
+    const attached = await page.locator('.ant-modal-content:not(:has-text("Upload Files")), body').first().getByText(base, { exact: false }).count();
     if (!attached) throw new Error('attachment did not show on the form');
 
     const total = (await page.locator('text=/Total:/').locator('xpath=..').innerText().catch(() => '')).replace(/\s+/g, ' ');
