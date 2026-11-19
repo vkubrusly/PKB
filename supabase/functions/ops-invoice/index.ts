@@ -3,6 +3,8 @@
 // no one else may call it.
 //   POST { file_base64, media_type, file_name, email_subject?, email_from? }
 //   → { is_invoice, vendor, invoice_number, invoice_date, due_date, total, sites[], invoice_fees[], notes }
+//   POST { mode: 'answer', answer_text, invoice: {vendor, invoice_number, total, issues[], lines[]}, jobs: [{job_number, address}] }
+//   → { decision, assignments[], exclude[], cost_code, summary }   (Camila's / Victor's e-mail answer, read)
 import Anthropic from 'npm:@anthropic-ai/sdk@0.68.0';
 import { cors, json } from '../_shared/cors.ts';
 
@@ -36,12 +38,51 @@ const SCHEMA = {
   },
 };
 
+const ANSWER_INSTRUCTIONS = `PKB Ops (an automated system) asked Camila (PKB Homes accounts) by e-mail what to do with a vendor invoice before creating its bills in Buildertrend, one bill per house (job). You read her answer (or Victor's, the owner) and turn it into actions. Read only the newest reply at the top; ignore quoted older text and signatures. Never invent a job number: use only job numbers from the list given, or ones the answer writes explicitly.
+- decision: "create" when the answer says to go ahead (e.g. "pode criar", "ok", "segue"), also when it only fixes addresses/jobs and implies going ahead; "ignore" when it says not to create the bills (already billed, wrong invoice, cancel, "não lançar"); "duplicate" when it says this invoice was already entered; "wait" when it asks to wait or the answer is unclear.
+- assignments: for each invoice line whose house the answer names: line_address (the address as in the line), job_number (4 digits like "0063", as in the jobs list).
+- exclude: addresses of lines the answer says to leave out (e.g. "não é nossa", "tira essa").
+- cost_code: the cost code text the answer asks for, or null.
+- summary: one short sentence in Brazilian Portuguese of what you understood.`;
+const ANSWER_SCHEMA = {
+  type: 'object', additionalProperties: false, required: ['decision', 'assignments', 'exclude', 'cost_code', 'summary'],
+  properties: {
+    decision: { type: 'string', enum: ['create', 'ignore', 'duplicate', 'wait'] },
+    assignments: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['line_address', 'job_number'], properties: { line_address: { type: 'string' }, job_number: { type: 'string' } } } },
+    exclude: { type: 'array', items: { type: 'string' } },
+    cost_code: { type: ['string', 'null'] },
+    summary: { type: 'string' },
+  },
+};
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   try {
     const svc = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     if (!svc || req.headers.get('Authorization') !== `Bearer ${svc}`) return json({ error: 'not allowed' }, 403);
     const body = await req.json().catch(() => ({}));
+    const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
+    if (!apiKey) return json({ error: 'ANTHROPIC_API_KEY not set' }, 500);
+    const anthropic = new Anthropic({ apiKey });
+    const ask = async (params: Any) => {
+      let resp: Any;
+      try { resp = await anthropic.messages.create({ ...params, fallbacks: 'default' } as Any, { headers: { 'anthropic-beta': 'server-side-fallback-2026-07-01' } }); }
+      catch (e) {
+        if ((e as Any)?.status === 400 && /fallback/i.test(String((e as Any)?.message || ''))) resp = await anthropic.messages.create(params);
+        else throw e;
+      }
+      return resp;
+    };
+    if (body.mode === 'answer') {
+      const resp = await ask({
+        model: MODEL, max_tokens: 4000, system: ANSWER_INSTRUCTIONS,
+        messages: [{ role: 'user', content: `Invoice: ${JSON.stringify(body.invoice || {})}\n\nJobs (job_number, address): ${JSON.stringify(body.jobs || [])}\n\nThe answer e-mail:\n${String(body.answer_text || '').slice(0, 12000)}` }],
+        output_config: { effort: 'medium', format: { type: 'json_schema', schema: ANSWER_SCHEMA } },
+      });
+      if (resp.stop_reason === 'refusal') return json({ error: 'the model declined' }, 422);
+      try { return json({ ...JSON.parse((resp.content || []).find((b: Any) => b.type === 'text')?.text || ''), model: resp.model }); }
+      catch { return json({ error: 'no JSON in the answer' }, 502); }
+    }
     const data = String(body.file_base64 || ''), mt = String(body.media_type || 'application/pdf');
     if (!data) return json({ error: 'file_base64 missing' }, 400);
     const file = mt === 'application/pdf'
@@ -49,9 +90,6 @@ Deno.serve(async (req) => {
       : /^image\/(png|jpeg|gif|webp)$/.test(mt) ? { type: 'image', source: { type: 'base64', media_type: mt, data } } : null;
     if (!file) return json({ error: `unsupported file type ${mt}` }, 400);
 
-    const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
-    if (!apiKey) return json({ error: 'ANTHROPIC_API_KEY not set' }, 500);
-    const anthropic = new Anthropic({ apiKey });
     const params: Any = {
       model: MODEL,
       max_tokens: 16000,
@@ -59,12 +97,7 @@ Deno.serve(async (req) => {
       messages: [{ role: 'user', content: [file, { type: 'text', text: `File: ${body.file_name || '—'}\nE-mail from: ${body.email_from || '—'}\nE-mail subject: ${body.email_subject || '—'}` }] }],
       output_config: { effort: 'medium', format: { type: 'json_schema', schema: SCHEMA } },
     };
-    let resp: Any;
-    try { resp = await anthropic.messages.create({ ...params, fallbacks: 'default' } as Any, { headers: { 'anthropic-beta': 'server-side-fallback-2026-07-01' } }); }
-    catch (e) {
-      if ((e as Any)?.status === 400 && /fallback/i.test(String((e as Any)?.message || ''))) resp = await anthropic.messages.create(params);
-      else throw e;
-    }
+    const resp = await ask(params);
     if (resp.stop_reason === 'refusal') return json({ error: 'the model declined to read this file' }, 422);
     const text = (resp.content || []).find((b: Any) => b.type === 'text')?.text || '';
     let out: Any;
