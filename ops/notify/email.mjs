@@ -9,17 +9,21 @@
 import nodemailer from 'nodemailer';
 import { fileURLToPath } from 'node:url';
 
-// Every e-mail carries the PKB Homes logo (Victor, 11/19/26): an HTML version of the text with the logo on top,
+// Every e-mail carries the PKB Homes logo (Victor, 11/19/26): an HTML version of the text with the logo at the end (signature),
 // embedded inline (cid) so it shows without loading remote images. The plain text stays as the fallback.
 const LOGO = fileURLToPath(new URL('./logo-email.png', import.meta.url));
 const LOGO_CID = 'pkb-logo@pkbhomes.com';
 const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const linkify = (t) => t.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1">$1</a>');
+// Paragraphs (blank line) → <p>, line breaks → <br> (Outlook ignores white-space:pre-wrap); logo at the end,
+// as a signature (Victor, 11/19/26).
+export const textToHtml = (text) => String(text || '').replace(/\r/g, '').split(/\n{2,}/)
+  .map((p) => `<p style="margin:0 0 12px">${linkify(esc(p)).replace(/\n/g, '<br>')}</p>`).join('');
 export function brandHtml(text, html) {
-  const body = html || `<div style="white-space:pre-wrap">${linkify(esc(text || ''))}</div>`;
+  const body = html || textToHtml(text);
   return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#2e2e30;max-width:640px">`
-    + `<div style="margin:0 0 18px"><img src="cid:${LOGO_CID}" alt="PKB Homes" width="90" style="display:block;width:90px;height:auto;border:0"></div>`
-    + body + `</div>`;
+    + body
+    + `<p style="margin:18px 0 0"><img src="cid:${LOGO_CID}" alt="PKB Homes" width="70" style="display:block;width:70px;height:auto;border:0"></p></div>`;
 }
 
 export const COPY_WITH = { 'guilherme@pkbhomes.com': ['stefano@pkbhomes.com'] };
