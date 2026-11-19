@@ -8,7 +8,7 @@ on:
       probe:
         description: 'Probe to run'
         type: choice
-        options: [fasttrack, fasttrack-collect, fasttrack-reports, lake, buildertrend, buildertrend-schedule, buildertrend-schedule-api, buildertrend-schedule-item, buildertrend-schedule-date-test, bt-schedule-rule, buildertrend-warranty, buildertrend-warranty-api, bt-warranty-rule, buildertrend-lead-find, buildertrend-jobs-find, buildertrend-dailylog-check, buildertrend-bills, buildertrend-bill-form, buildertrend-bill-split, buildertrend-bill-api, buildertrend-bill-new, projectdox]
+        options: [fasttrack, fasttrack-collect, fasttrack-reports, lake, buildertrend, buildertrend-schedule, buildertrend-schedule-api, buildertrend-schedule-item, buildertrend-schedule-date-test, bt-schedule-rule, buildertrend-warranty, buildertrend-warranty-api, bt-warranty-rule, buildertrend-lead-find, buildertrend-jobs-find, buildertrend-dailylog-check, buildertrend-bills, buildertrend-bill-form, buildertrend-bill-split, buildertrend-bill-api, buildertrend-bill-new, bt-bill-create, projectdox]
         default: fasttrack
       arg:
         description: 'Optional argument (e.g. permit number)'
