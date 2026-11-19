@@ -34,8 +34,10 @@ export async function orgId() {
 }
 
 // Supervisors and PMs of a job (names from Buildertrend) → e-mails; names without e-mail reported.
-export async function team(jobId) {
-  const rows = await sql(`select role, name from ops.job_contacts where job_id = ${q(jobId)} and role in ('supervisor', 'pm')`);
+// pmFieldOnly: only the people in the job's Buildertrend Project Manager field (Victor, 11/19/26: supervisors and
+// PMs are both kept there now; the old Supervisor custom field is ignored).
+export async function team(jobId, { pmFieldOnly = false } = {}) {
+  const rows = await sql(`select role, name from ops.job_contacts where job_id = ${q(jobId)} and role in (${pmFieldOnly ? `'pm'` : `'supervisor', 'pm'`})`);
   const emails = new Set(), missing = [], names = [];
   for (const r of rows) { names.push(r.name); const p = person(r.name); if (p?.email) emails.add(p.email); else missing.push(r.name); }
   return { emails: [...emails], missing: [...new Set(missing)], names: [...new Set(names)], btNames: [...new Set(names.map((n) => person(n)?.bt_name || n))] };

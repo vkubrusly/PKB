@@ -3,8 +3,7 @@
 // dumpster_removal.mjs — dumpster pickup (Victor, 11/19/26). When a Buildertrend Daily Log says the house's
 // appliances are installed ("Appliances instalados", "appliances installed", "instalação de appliances
 // concluída"… — the same reading as the schedule robot, rules/dailylog_done.mjs), e-mail GFL
-// (rsutter@gflenv.com) in English to remove the dumpster, with the job number and address; Cc the job's
-// Project Managers and supervisor. Once per job; logs older than RECENT_DAYS are only recorded (no e-mail).
+// (rsutter@gflenv.com) in English to remove the dumpster, with the job number and address; Cc ONLY the people in the job's Buildertrend Project Manager field. Once per job; logs older than RECENT_DAYS are only recorded (no e-mail).
 //   node rules/dumpster_removal.mjs [--dry-run]
 // =============================================================================
 import { sql, q, DRY, RECENT_DAYS, usDate, daysAgo, orgId, team, seenPrefix, seen, recordEvent, mail } from './lib.mjs';
@@ -26,7 +25,7 @@ for (const [jobId, ls] of byJob) {
     if (!DRY) await recordEvent({ jobId, kind: 'dumpster.removal_skipped', payload: { log_date: hit.date, text: hit.text, reason: 'logged before this rule' }, key });
     recorded++; continue;
   }
-  const t = await team(jobId);
+  const t = await team(jobId, { pmFieldOnly: true });
   const text = `Hello,
 
 The appliances are now installed at the house below (per our Daily Log of ${usDate(hit.date)}), so the dumpster is no longer needed on site. Please schedule its removal:
@@ -38,7 +37,7 @@ Please reply to this e-mail with the pickup date. Thank you!
 
 PKB Homes
 — PKB Ops`;
-  const st = await mail({ rule: 'dumpster_removal', jobId, to: [TO], cc: t.emails, subject: `Dumpster removal — Job ${job_number} · ${String(address || '').split(',')[0]}`, text, external: true });
+  const st = await mail({ rule: 'dumpster_removal', jobId, to: [TO], cc: t.emails, subject: `Dumpster removal — Job ${job_number} · ${String(address || '').split(',')[0]}`, text });   // Cc only the job's Project Manager field (no standing external Cc)
   if (t.missing.length) console.log(`  (no e-mail on file for: ${t.missing.join(', ')})`);
   if (st === 'sent' || st === 'draft') { await recordEvent({ jobId, kind: 'dumpster.removal_requested', payload: { log_date: hit.date, text: hit.text, to: TO, cc: t.emails, status: st }, key }); sent++; }
 }

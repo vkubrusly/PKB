@@ -10,6 +10,14 @@ on:
         description: 'Send the test e-mail to'
         required: true
         default: 'victor@pkbhomes.com'
+      rule:
+        description: 'Optional: preview a rule e-mail to that address only (toilet)'
+        required: false
+        default: ''
+      job:
+        description: 'Job number for the rule preview'
+        required: false
+        default: ''
 
 jobs:
   send:
@@ -26,4 +34,7 @@ jobs:
           BOT_EMAIL: ${{ secrets.BOT_EMAIL || 'botpkbhomes@gmail.com' }}
           BOT_EMAIL_PASSWORD: ${{ secrets.BOT_EMAIL_PASSWORD }}
           OPS_SEND_ENABLED: ${{ vars.OPS_SEND_ENABLED || 'false' }}
-        run: node notify/test_email.mjs "${{ inputs.to }}"
+          SUPABASE_ACCESS_TOKEN: ${{ inputs.rule != '' && secrets.SUPABASE_ACCESS_TOKEN || '' }}
+        run: |
+          if [ "${{ inputs.rule }}" = toilet ]; then node rules/toilet_removal.mjs --test-to "${{ inputs.to }}" ${{ inputs.job && format('--job {0}', inputs.job) || '' }}
+          else node notify/test_email.mjs "${{ inputs.to }}"; fi
