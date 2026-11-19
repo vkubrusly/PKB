@@ -19,10 +19,11 @@ for (const u of scripts) {
   if (!res || !res.ok()) continue;
   const js = await res.text();
   for (const m of js.matchAll(/["'`]((?:\/?apix?\/)[A-Za-z0-9_\-/{}$.?=&]*?(?:schedul|calendar)[A-Za-z0-9_\-/{}$.?=&]*)["'`]/gi)) paths.set(m[1], u.split('/').pop());
+  for (const m of js.matchAll(/.{0,200}(?:Schedules\/(?:\$\{[^}]*\}|\d+)?|ScheduleItem|predecessor|Predecessor|shiftLinked|updateLinked|LinkedItems|rescheduleLinked|ShiftReason|shiftReason)[^;]{0,260}/g)) near.set('[edit] ' + m[0].replace(/\s+/g, ' ').slice(0, 460), u.split('/').pop());
   for (const m of js.matchAll(/.{0,160}(?:markComplete|MarkComplete|markAsComplete|toggleComplete|CompleteScheduleItem|setComplete|isComplete\s*:)[^;]{0,200}/g)) near.set(m[0].replace(/\s+/g, ' ').slice(0, 360), u.split('/').pop());
 }
 console.log('\n===== schedule/calendar API paths =====');
 for (const [p, f] of paths) console.log(`${p}   (${f})`);
 console.log('\n===== code near "complete" =====');
-let n = 0; for (const [c, f] of near) { if (n++ > 60) break; console.log(`[${f}] ${c}\n`); }
+let n = 0; for (const [c, f] of near) { if (n++ > 400) break; console.log(`[${f}] ${c}\n`); }
 await browser.close();
