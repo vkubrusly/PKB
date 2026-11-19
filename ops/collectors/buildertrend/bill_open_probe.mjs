@@ -29,11 +29,9 @@ if (process.argv.includes('--pay')) {
     const lw = page.locator('#sendLienWaiverWithPayment');
     if (await lw.count() && await lw.isChecked()) await lw.uncheck({ force: true });
     payForm += `lien waiver checked after uncheck: ${await lw.isChecked().catch(() => 'n/a')}\n`;
-    const type = page.locator('#offlinePaymentMethod'); await type.click({ force: true }).catch(() => {}); await page.waitForTimeout(1200);
-    payForm += `payment types: ${(await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').allInnerTexts().catch(() => [])).join(' | ')}\n`;
-    await page.keyboard.press('Escape'); await page.waitForTimeout(500);
     if (!(await lw.isChecked().catch(() => false))) {
-      await page.getByRole('button', { name: /^Record$/ }).last().click(); await page.waitForTimeout(6000);
+      const pd = page.locator('.ant-modal-content, [role="dialog"]').filter({ hasText: 'Record payment' }).last();
+      await pd.locator('button').filter({ hasText: /^\s*Record\b/ }).filter({ hasNotText: /Record Payment/ }).last().click(); await page.waitForTimeout(6000);
       payForm += 'RECORDED\n';
     } else payForm += 'lien waiver still checked: NOT recorded\n';
   }
