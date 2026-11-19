@@ -22,12 +22,24 @@ if (!loggedIn) { console.error('session expired'); await browser.close(); proces
 const log = (...a) => console.log(...a);
 const total = (spec) => Math.round(spec.lines.reduce((a, l) => a + Number(l.amount), 0) * 100) / 100;
 
+// Never picks "Create Sub/Vendor …" (that would register a new vendor).
 async function pick(selector, text, optionText = text) {
   const box = page.locator(selector).first();
   await box.click({ force: true }); await box.fill(text); await page.waitForTimeout(2500);
-  const opt = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option', { hasText: optionText }).first();
-  if (!(await opt.count())) throw new Error(`no option "${optionText}" for ${selector}`);
+  const opt = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option', { hasText: optionText }).filter({ hasNotText: /^\s*Create\b/ }).first();
+  if (!(await opt.count())) { await page.keyboard.press('Escape'); return false; }
   await opt.click(); await page.waitForTimeout(1000);
+  return true;
+}
+// Pay to: the vendor when it exists in Buildertrend; otherwise "Misc" with the vendor's name typed in.
+async function payTo(spec) {
+  if (await pick('#performingUserId', spec.payTo)) return;
+  const box = page.locator('#performingUserId').first();
+  await box.click({ force: true }); await box.fill('Misc'); await page.waitForTimeout(2500);
+  const misc = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').filter({ hasText: /^\s*(M\s*)?Misc\s*$/ }).first();
+  if (!(await misc.count())) throw new Error(`vendor "${spec.payTo}" not in Buildertrend and no Misc option`);
+  await misc.click(); await page.waitForTimeout(1200);
+  await page.locator('#miscPaidToName').fill(spec.vendorName || spec.payTo);
 }
 async function date(selector, value) {
   const box = page.locator(selector).first();
@@ -55,7 +67,7 @@ async function createOne(spec) {
   await page.locator('#billTitle').waitFor({ timeout: 60000 }); await page.waitForTimeout(3000);
   await page.locator('#billTitle').fill(spec.title);
   if (spec.billNo) await page.locator('#billNumber').fill(spec.billNo);
-  await pick('#performingUserId', spec.payTo);
+  await payTo(spec);
   if (spec.invoiceDate) await date('#invoiceDate', spec.invoiceDate);
   if (spec.paidDate) await date('#paymentDate', spec.paidDate);
   // Cost lines: each line has an "Open untitled item N" button that opens the line editor.
