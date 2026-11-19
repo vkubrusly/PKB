@@ -3,9 +3,9 @@
 // creating it first with the field's "Add" button when it does not exist yet (Victor, 11/19/26: option 1).
 // Returns true when the field is absent (no reason needed) or the reason is selected.
 export async function pickShiftReason(page, name, log = () => {}) {
-  const label = page.locator('label', { hasText: /^Shift Reason/ }).first();
+  const label = page.locator('text=Shift Reason').first();
   if (!(await label.count()) || !(await label.isVisible().catch(() => false))) return true;
-  const item = label.locator('xpath=ancestor::*[contains(@class,"ant-form-item") or contains(@class,"ant-row")][1]');
+  const item = label.locator('xpath=ancestor::*[.//*[contains(@class,"ant-select")]][1]');
   const select = item.locator('.ant-select').first();
   const openList = async () => { await select.click(); await page.waitForTimeout(800); };
   const options = async () => page.locator('.ant-select-dropdown:visible .ant-select-item-option').allInnerTexts();

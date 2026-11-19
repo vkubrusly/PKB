@@ -71,12 +71,17 @@ const start = page.locator('#startDate, input[name="startDate"], [data-testid="s
 await start.click({ clickCount: 3 }); await start.fill(newDate); await start.press('Tab'); await page.waitForTimeout(1500);
 const dialogText = async () => 'B64:' + Buffer.from(await page.evaluate(() => [...document.querySelectorAll('.ant-modal, [role=dialog], .ant-popover, .ant-popconfirm')].map((d, i) => `#${i} ${d.className} :: ${d.innerText.replace(/\s+/g, ' ').slice(-700)} :: BUTTONS ${[...d.querySelectorAll('button')].filter((b) => b.offsetParent !== null).map((b) => (b.innerText || b.getAttribute('data-testid') || '').trim()).join(' | ')}`).join('\n'))).toString('base64');
 console.log('dialog after typing:', await dialogText());
+await page.getByRole('button', { name: /^save$/i }).first().click({ timeout: 20000 });
+await page.waitForTimeout(4000);
 const srHtml = await page.evaluate(() => { const el = [...document.querySelectorAll('*')].filter((e) => e.children.length === 0 && /Shift Reason/.test(e.textContent || '')).pop();
   if (!el) return 'NO SHIFT REASON TEXT'; let p = el; for (let i = 0; i < 4 && p.parentElement; i++) p = p.parentElement; return p.outerHTML.slice(0, 3500); });
 console.log('SR B64:' + Buffer.from(srHtml).toString('base64'));
-console.log('shift reason ok:', await pickShiftReason(page, REASON, (m) => console.log('  ' + m)));
-await page.getByRole('button', { name: /^save$/i }).first().click({ timeout: 20000 });
-await page.waitForTimeout(6000);
+const needed = await page.locator('text=Shift Reason').first().isVisible().catch(() => false);
+if (needed) {
+  console.log('shift reason ok:', await pickShiftReason(page, REASON, (m) => console.log('  ' + m)));
+  await page.getByRole('button', { name: /^save$/i }).first().click({ timeout: 20000 });
+  await page.waitForTimeout(6000);
+}
 console.log('dialog after save:', await dialogText());
 const after = await snapshot();
 console.log('--- writes sent ---\n' + writes.join('\n'));

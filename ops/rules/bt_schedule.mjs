@@ -146,8 +146,11 @@ if (process.argv.includes('--fix-dates')) {
         await page.goto(`https://buildertrend.net/app/Schedules/List/Schedule/${it.id}/${bt}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
         const start = page.locator('#startDate'); await start.waitFor({ timeout: 45000 }); await page.waitForTimeout(1500);
         await start.click({ clickCount: 3 }); await start.fill(fmtBt(x.date)); await start.press('Tab'); await page.waitForTimeout(1500);
-        if (!(await pickShiftReason(page, SHIFT_REASON, (m) => console.log('  ' + m)))) throw new Error('could not select the Shift Reason');
-        await page.getByRole('button', { name: /^save$/i }).first().click({ timeout: 20000 }); await page.waitForTimeout(5000);
+        await page.getByRole('button', { name: /^save$/i }).first().click({ timeout: 20000 }); await page.waitForTimeout(4000);
+        if (await page.locator('text=Shift Reason').first().isVisible().catch(() => false)) {   // moving later: Buildertrend asks why
+          if (!(await pickShiftReason(page, SHIFT_REASON, (m) => console.log('  ' + m)))) throw new Error('could not select the Shift Reason');
+          await page.getByRole('button', { name: /^save$/i }).first().click({ timeout: 20000 }); await page.waitForTimeout(5000);
+        }
         const after = (await listItems([bt])).find((y) => String(y.id) === String(it.id));
         if (String(after?.startDate).slice(0, 10) !== x.date) throw new Error(`Start is ${String(after?.startDate).slice(0, 10)} after saving`);
         await sql(`insert into ops.events (org_id, job_id, kind, source, occurred_at, payload, dedupe_key)
