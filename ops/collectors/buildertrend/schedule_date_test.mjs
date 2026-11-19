@@ -42,7 +42,14 @@ console.log('schedule links on the page:', hrefs.join(' | '));
 const rowTitles = await page.evaluate(() => [...document.querySelectorAll('[role=row], tr')].slice(0, 12).map((r) => r.innerText.replace(/\s+/g, ' ').slice(0, 120)));
 console.log('first rows:', rowTitles.join(' || '));
 let opened = false;
-for (const r of [...routes].filter((x) => /:id|\$\{|:scheduleId|:itemId/i.test(x)).slice(0, 6)) {
+for (const path of [`Schedules/List/Schedule/${itemId}/${jobId}`, `Schedules/List/Schedule/${itemId}`, `Schedules/List/ScheduleItem/${itemId}`, `Schedules/List/ScheduleItem/${itemId}/${jobId}`, `Schedules/List/Schedules/${itemId}/${jobId}`]) {
+  if (opened) break;
+  await page.goto(`https://buildertrend.net/app/${path}`, { waitUntil: 'domcontentloaded', timeout: 60000 }).catch(() => {}); await page.waitForTimeout(8000);
+  const ok = await page.evaluate(() => !!document.querySelector('.ant-modal, [role=dialog]') && /start/i.test(document.body.innerText));
+  const title = await page.evaluate((t) => document.body.innerText.includes(t), String(target?.title || '').trim());
+  console.log(`try /app/${path} → dialog with Start: ${ok} · title: ${title}`); if (ok && title) opened = true;
+}
+for (const r of opened ? [] : [...routes].filter((x) => /:id|\$\{|:scheduleId|:itemId/i.test(x)).slice(0, 6)) {
   const url = 'https://buildertrend.net/' + r.replace(/^\//, '').replace(/:jobId|\$\{[^}]*job[^}]*\}/i, jobId).replace(/:id|:scheduleId|:itemId|\$\{[^}]*\}/i, itemId);
   await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 }).catch(() => {}); await page.waitForTimeout(6000);
   const ok = await page.evaluate((t) => document.body.innerText.includes(t), String(target?.title || '').trim());
