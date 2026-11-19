@@ -26,6 +26,6 @@ const clean = (h) => Object.fromEntries(Object.entries(h || {}).filter(([k]) => 
 for (const path of [`/api/calendar/${itemId}`, `/api/calendar/${itemId}/LinkList`]) {
   const res = await page.request.get(`https://buildertrend.net${path}`, { headers: clean(apiHeaders) });
   const t = await res.text();
-  console.log(`\n===== GET ${path} → ${res.status()} =====\n${t.slice(0, 40000)}`);
+  console.log(`\n===== GET ${path} → ${res.status()} (base64) =====\nB64:${Buffer.from(t).toString('base64')}`);
 }
 await browser.close();
