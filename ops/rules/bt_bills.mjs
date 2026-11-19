@@ -114,8 +114,19 @@ for (const l of lines) {
       await item.click().catch(() => {});
       fc = await chooser;
     }
+    if (!fc) {
+      // Fallback: the file input of the Attachments section (not the "drop a file to fill this form" one at the top).
+      const inputs = await page.evaluate(() => [...document.querySelectorAll('input[type="file"]')].map((e, i) => {
+        let a = e, txt = ''; for (let k = 0; k < 6 && a; k++) { a = a.parentElement; txt = (a?.innerText || '').slice(0, 80).replace(/\s+/g, ' '); if (txt) break; }
+        return { i, accept: e.accept, multiple: e.multiple, near: txt };
+      }));
+      const menus = await page.locator('.ant-dropdown:not(.ant-dropdown-hidden), .ant-popover:not(.ant-popover-hidden), .ant-modal-content').allInnerTexts().catch(() => []);
+      console.log(`attachment diagnostics: file inputs ${JSON.stringify(inputs)} · open menus/dialogs: ${menus.map((t) => t.slice(0, 300).replace(/\s+/g, ' ')).join(' || ')}`);
+      const k = inputs.findIndex((x) => !/fill this form/i.test(x.near) && /attach|add|upload|browse/i.test(x.near));
+      if (k >= 0) { await page.locator('input[type="file"]').nth(inputs[k].i).setInputFiles(files.get(l.file_path)); fc = true; }
+    }
     if (!fc) throw new Error('attachment: no file chooser after Attachments → Add');
-    await fc.setFiles(files.get(l.file_path));
+    if (fc !== true) await fc.setFiles(files.get(l.file_path));
     await page.waitForTimeout(6000);
     const attached = await page.getByText(l.file_name || 'invoice.pdf', { exact: false }).count();
     if (!attached) throw new Error('attachment did not show on the form');
