@@ -310,7 +310,10 @@ def main():
             received = None
         category, parsed = classify(addr, subject, body)
         to_cc = {a.lower() for _, a in getaddresses(msg.get_all('To', []) + msg.get_all('Cc', []) + msg.get_all('X-Forwarded-To', [])) if a}
-        if to_cc & INVOICE_BOXES and category not in ('bt_invoice', 'bt_invoice_paid', 'bt_daily_log', 'bt_bill', 'bt_other'):
+        if re.search(r'invoice para revisar', subject or '', re.I) and not addr.lower().startswith('botpkb'):
+            # Camila's / Victor's answer to an "Invoice para revisar" question (rules/vendor_invoices.mjs reads it).
+            category, parsed = 'invoice_answer', {}
+        elif to_cc & INVOICE_BOXES and category not in ('bt_invoice', 'bt_invoice_paid', 'bt_daily_log', 'bt_bill', 'bt_other'):
             # A vendor's invoice: keep its files (the bill is built from them) and the links of the body
             # (invoices sent as a link only).
             category = 'vendor_invoice'

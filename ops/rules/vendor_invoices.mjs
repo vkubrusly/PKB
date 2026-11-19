@@ -149,6 +149,47 @@ for (const v of todo) {
   }
 }
 
+// 3b. Answers from Camila / Victor (category 'invoice_answer', subject "Re: Invoice para revisar — … #<n> …"):
+// read by ops-invoice (mode answer) and applied. An address assigned to a job, a line left out, "pode criar" →
+// ready (the bills follow); "não lançar" / already entered → ignored; unclear → stays, nothing done. When lines
+// are still without a job after the answer, the question goes out again with what is left.
+const answers = await sql(`select e.id, e.received_at, e.from_addr, e.subject, e.body_text from ops.inbound_emails e
+  where e.org_id = ${q(org)} and e.category = 'invoice_answer' and e.received_at > now() - interval '30 days'
+    and not exists (select 1 from ops.vendor_invoices v where v.answer_email_id = e.id) order by e.received_at`);
+for (const e of answers) {
+  const open = await sql(`select v.*, coalesce((select json_agg(l order by l.job_number) from ops.vendor_invoice_lines l where l.invoice_id = v.id), '[]') lines
+    from ops.vendor_invoices v where v.org_id = ${q(org)} and v.question_sent_at is not null and v.question_sent_at < ${q(e.received_at)}
+      and v.status in ('needs_review', 'duplicate', 'error') order by v.question_sent_at desc`);
+  const v = open.find((x) => x.invoice_number && String(e.subject || '').includes(`#${x.invoice_number}`));
+  if (!v) { console.log(`answer not matched to an open invoice: ${e.subject}`); continue; }
+  const key = await serviceKey();
+  const r = await fetch(`https://${REF}.supabase.co/functions/v1/ops-invoice`, {
+    method: 'POST', headers: { 'content-type': 'application/json', Authorization: `Bearer ${key}`, apikey: key },
+    body: JSON.stringify({ mode: 'answer', answer_text: e.body_text || '', jobs: jobs.filter((j) => j.bt_job_id).map((j) => ({ job_number: j.job_number, address: j.address })),
+      invoice: { vendor: v.vendor, invoice_number: v.invoice_number, total: v.total, issues: v.issues, lines: v.lines.map((l) => ({ address: l.address, label: l.label, job_number: l.job_number, amount: l.bill_amount })) } }),
+  });
+  const a = await r.json().catch(() => ({ error: `HTTP ${r.status}` }));
+  if (!r.ok || a.error) { console.error(`answer ${e.subject}: ${a.error || r.status}`); continue; }
+  console.log(`ANSWER ${v.vendor} #${v.invoice_number} (${e.from_addr}): ${a.decision} — ${a.summary}`);
+  if (DRY) continue;
+  const stmts = [`update ops.vendor_invoices set answer_email_id = ${q(e.id)}, answered_at = now(), answer = ${q(`${e.from_addr}: ${a.summary}`)},
+    cost_code = coalesce(${q(a.cost_code || null)}, cost_code), updated_at = now() where id = ${q(v.id)}`];
+  const same = (x, y) => addrKey(x) && addrKey(x) === addrKey(y);
+  for (const s of a.assignments || []) {
+    const j = jobs.find((x) => x.job_number === String(s.job_number).padStart(4, '0') && x.bt_job_id);
+    const l = v.lines.find((x) => same(x.address, s.line_address));
+    if (j && l) stmts.push(`update ops.vendor_invoice_lines set job_id = ${q(j.id)}, job_number = ${q(j.job_number)}, excluded = false where id = ${q(l.id)}`);
+  }
+  for (const ad of a.exclude || []) { const l = v.lines.find((x) => same(x.address, ad)); if (l) stmts.push(`update ops.vendor_invoice_lines set excluded = true where id = ${q(l.id)}`); }
+  await sql(stmts.join(';\n'));
+  if (a.decision === 'ignore' || a.decision === 'duplicate') { await sql(`update ops.vendor_invoices set status = 'ignored' where id = ${q(v.id)}`); continue; }
+  if (a.decision !== 'create') continue;
+  const left = await sql(`select address, bill_amount from ops.vendor_invoice_lines where invoice_id = ${q(v.id)} and not excluded and job_id is null`);
+  if (left.length) await sql(`update ops.vendor_invoices set status = 'needs_review', question_sent_at = null,
+      issues = array[${left.map((l) => q(`${l.address}: ainda sem obra (${money(l.bill_amount)}) — diga a obra ou "tira essa"`)).join(',')}] where id = ${q(v.id)}`);
+  else await sql(`update ops.vendor_invoices set status = 'ready', issues = '{}' where id = ${q(v.id)}`);
+}
+
 // 4. One e-mail per invoice that needs a person (Camila, Cc Victor), with the file attached.
 const ask = await sql(`select v.*, coalesce((select json_agg(l order by l.job_number) from ops.vendor_invoice_lines l where l.invoice_id = v.id), '[]') lines
   from ops.vendor_invoices v where v.org_id = ${q(org)} and v.status in ('needs_review', 'duplicate', 'error') and v.question_sent_at is null order by v.received_at`);
