@@ -1,5 +1,5 @@
 {
-  "_comment": "Buildertrend Schedule items marked complete from county evidence (approved by Victor, 2026-10-19). An item is marked complete only when the evidence exists: a PASSED county inspection matching 'inspection' (regex on the inspection type), the permit issued ('permit_issued'), or the CO recorded ('co'). Never un-marks, never changes dates, never touches items without a rule here (Windows, Doors, Stucco, Drywall, Shingles, Finishes, Painting, Cabinetry, Appliances, Irrigation, Landscaping, Final Cleaning, the draws). 'item' is a regex on the schedule item title (titles are the PKB template, typos included).",
+  "_comment": "Buildertrend Schedule items marked complete from county evidence (approved by Victor, 2026-10-19). An item is marked complete only when the evidence exists: a PASSED county inspection matching 'inspection' (regex on the inspection type), the permit issued ('permit_issued'), or the CO recorded ('co'). Never un-marks, never changes dates, never touches items without a rule here (Windows, Doors, Stucco, Drywall, Shingles, Finishes, Painting, Cabinetry, Appliances, Irrigation, Landscaping, Final Cleaning). 'item' is a regex on the schedule item title (titles are the PKB template, typos included).",
   "rules": [
     {
       "item": "^permit approval$",
@@ -228,7 +228,43 @@
     {
       "item": "^co issued$",
       "evidence": "co"
+    },
+    {
+      "item": "^1st draw$",
+      "evidence": "draw_invoiced",
+      "stage": 1
+    },
+    {
+      "item": "^2nd draw$",
+      "evidence": "draw_invoiced",
+      "stage": 2
+    },
+    {
+      "item": "^3rd draw$",
+      "evidence": "draw_invoiced",
+      "stage": 3
+    },
+    {
+      "item": "^4th draw$",
+      "evidence": "draw_invoiced",
+      "stage": 4
+    },
+    {
+      "item": "^5th draw$",
+      "evidence": "draw_invoiced",
+      "stage": 5
+    },
+    {
+      "item": "^6th draw$",
+      "evidence": "draw_invoiced",
+      "stage": 6
+    },
+    {
+      "item": "^inspection - ",
+      "evidence": "same_inspection",
+      "_comment": "fallback: any other 'Inspection - X' item (e.g. the Citrus template: 'Inspection - Pre Power', 'Inspection - Building Final') is marked when a county inspection with the same name passed (text before ' - 1 & 2…', case and punctuation ignored)"
     }
   ],
-  "_comment_2026_11_18": "New 85-item PKB template (Victor, 11/18/26): every 'Inspection - X' item is marked from the matching PASSED county inspection; a work item is marked only when a later inspection proves it was done (e.g. the formwork, rebars and pad by the foundation pre-pour). Not marked: the draws (2nd–6th Draw), windows/doors, roofing (shingles), stucco, drywall, painting, finishes, upgrades, connections, clean-up, landscaping, DEP letter."
+  "_comment_2026_11_18": "New 85-item PKB template (Victor, 11/18/26): every 'Inspection - X' item is marked from the matching PASSED county inspection; a work item is marked only when a later inspection proves it was done (e.g. the formwork, rebars and pad by the foundation pre-pour). Not marked: the draws (2nd–6th Draw), windows/doors, roofing (shingles), stucco, drywall, painting, finishes, upgrades, connections, clean-up, landscaping, DEP letter.",
+  "_comment_draws": "Draw items (Victor, 11/19/26): 'Nth Draw' is marked complete when the QuickBooks invoice for that stage exists (ops.qbo_draws_core billed_stages: the installment named in the invoice message; a 1st with only the address and a two-stage invoice are recognised)."
 }

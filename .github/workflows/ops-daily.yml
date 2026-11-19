@@ -201,6 +201,7 @@ jobs:
           node rules/holds.mjs || echo "::warning::rules/holds.mjs failed"
           node rules/job_idle.mjs || echo "::warning::rules/job_idle.mjs failed"
           node rules/weekly_digest.mjs || echo "::warning::rules/weekly_digest.mjs failed"
+          node rules/draws_due.mjs || echo "::warning::rules/draws_due.mjs failed"
 
       # R1/R2: corrections e-mail to Sovereign (Guilherme in Cc) and follow-ups after
       # 2 business days per failed item. Leaves PKB, so it runs only when the repository
