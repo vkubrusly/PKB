@@ -5,13 +5,14 @@
 // pay day; the paying account goes in the description) and NOT sent to QuickBooks ("Send to QuickBooks
 // immediately upon save" unchecked). Without --save it fills the form, prints what is in it and closes
 // (nothing is created).
-//   BT_COOKIES_FILE=… node collectors/buildertrend/bill_create.mjs '<json spec>' [--save]
+//   BT_COOKIES_FILE=… node collectors/buildertrend/bill_create.mjs '<json spec | base64 of it>' [--save]
 //   spec: { jobId, title, billNo, payTo, invoiceDate:'MM/DD/YYYY', paidDate:'MM/DD/YYYY', description,
 //           lines: [{ title, costCode, amount }] }
 // =============================================================================
 import { openBuildertrend } from './session.mjs';
 
-const spec = JSON.parse(process.argv[2]);
+// The spec may come base64-encoded (no quotes to escape in the Actions shell).
+const rawSpec = process.argv[2]; const spec = JSON.parse(/^\s*\{/.test(rawSpec) ? rawSpec : Buffer.from(rawSpec, 'base64').toString('utf8'));
 const SAVE = process.argv.includes('--save');
 const { browser, page, loggedIn } = await openBuildertrend();
 if (!loggedIn) { console.error('session expired'); await browser.close(); process.exit(1); }
