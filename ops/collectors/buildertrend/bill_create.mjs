@@ -43,26 +43,30 @@ if (spec.description) {
   const ed = page.locator('[contenteditable="true"]').first();
   if (await ed.count()) { await ed.click(); await page.keyboard.type(spec.description); }
 }
-// Cost lines (ag-grid): row 1 exists; more rows with "Item".
+// Cost lines: each line has an "Open untitled item N" button that opens the line editor.
 for (let i = 0; i < spec.lines.length; i++) {
   const L = spec.lines[i];
-  if (i > 0) { await page.getByRole('button', { name: /^Item$/ }).first().click(); await page.waitForTimeout(1200); }
-  const row = page.locator('.ag-center-cols-container .ag-row').nth(i);
-  const cell = async (colId, value, pickText) => {
-    const c = row.locator(`[col-id="${colId}"]`).first();
-    await c.dblclick({ force: true }); await page.waitForTimeout(700);
-    await page.keyboard.press('Control+A'); await page.keyboard.type(String(value)); await page.waitForTimeout(1800);
-    if (pickText) { const o = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option, .ag-popup [role="option"]', { hasText: pickText }).first();
-      if (await o.count()) await o.click(); else await page.keyboard.press('Enter'); }
-    else await page.keyboard.press('Enter');
-    await page.waitForTimeout(800);
-  };
-  const cols = await row.locator('[col-id]').evaluateAll((els) => els.map((e) => e.getAttribute('col-id')));
-  if (i === 0) log('grid columns:', cols.join(', '));
-  const colTitle = cols.find((c) => /title/i.test(c)), colCode = cols.find((c) => /cost.?code/i.test(c)), colCost = cols.find((c) => /builder.?cost|cost$|amount|extended/i.test(c) && !/code/i.test(c));
-  if (colTitle && L.title) await cell(colTitle, L.title);
-  if (colCode) await cell(colCode, L.costCode.slice(0, 8), L.costCode);
-  if (colCost) await cell(colCost, L.amount);
+  if (i > 0) { await page.getByRole('button', { name: /^Item$/ }).first().click(); await page.waitForTimeout(1500); }
+  const open = page.locator(`button[aria-label^="Open untitled item"]`).last();
+  await open.click(); await page.waitForTimeout(2500);
+  const dlg = page.locator('.ant-modal-content, .ant-drawer-content, [role="dialog"]').last();
+  const ctl = await dlg.evaluate((d) => [...d.querySelectorAll('input, textarea, button, [role="combobox"]')].filter((e) => e.offsetParent !== null).map((e) => {
+    const lab = e.id ? document.querySelector(`label[for="${e.id}"]`)?.innerText : '';
+    return `${e.tagName.toLowerCase()} id=${e.id || ''} name=${e.getAttribute('name') || ''} type=${e.getAttribute('type') || ''} label=${(lab || e.getAttribute('aria-label') || '').trim()} text=${(e.innerText || e.value || '').trim().slice(0, 30)}`; }));
+  log('LINE EDITOR B64:' + Buffer.from(ctl.join('\n') + '\n---\n' + (await dlg.innerText()).slice(0, 3000)).toString('base64'));
+  const byLabel = async (re) => { for (const c of await dlg.locator('input, textarea').all()) { const id = await c.getAttribute('id'); const lab = id ? await page.locator(`label[for="${id}"]`).first().innerText().catch(() => '') : ''; if (re.test(lab) || re.test(id || '')) return c; } return null; };
+  const t = await byLabel(/^title$/i); if (t && L.title) await t.fill(L.title);
+  const cc = await byLabel(/cost ?code/i);
+  if (cc) { await cc.click({ force: true }); await cc.fill(L.costCode.slice(0, 8)); await page.waitForTimeout(2500);
+    const o = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option, .ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-tree-treenode', { hasText: L.costCode.slice(9) }).first();
+    if (await o.count()) await o.click(); else log('cost code option not found:', L.costCode); await page.waitForTimeout(800); }
+  const amt = await byLabel(/builder ?cost|unit ?cost|^cost$|amount/i);
+  if (amt) { await amt.click({ clickCount: 3 }); await amt.fill(String(L.amount)); await amt.press('Tab'); }
+  await page.waitForTimeout(800);
+  const values = await dlg.evaluate((d) => [...d.querySelectorAll('input')].filter((e) => e.offsetParent !== null).map((e) => `${e.id}=${e.value}${e.closest('.ant-select') ? ' [' + (e.closest('.ant-select').querySelector('.ant-select-selection-item')?.textContent || '') + ']' : ''}`));
+  log('LINE VALUES B64:' + Buffer.from(values.join('\n')).toString('base64'));
+  const done = dlg.getByRole('button', { name: /^(save|done|ok|apply|save and close)$/i }).first();
+  if (await done.count()) { await done.click(); await page.waitForTimeout(1500); } else log('no save button in the line editor');
 }
 // QuickBooks: do NOT send.
 const qb = page.locator('#sendToAccounting');
