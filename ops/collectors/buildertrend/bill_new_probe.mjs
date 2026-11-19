@@ -13,12 +13,8 @@ page.on('response', async (r) => { const u = r.url(); if (/buildertrend\.net\/ap
 await page.goto(`https://buildertrend.net/app/Bills?jobId=${jobId}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await page.waitForTimeout(10000);
 calls.length = 0;
-// "New" → "Bill"
-await page.getByRole('button', { name: /^\s*New\s*$/ }).first().click().catch((e) => console.log('New:', e.message));
-await page.waitForTimeout(1500);
-const menu = (await page.locator('.ant-dropdown:not(.ant-dropdown-hidden), [role="menu"]').allInnerTexts().catch(() => [])).join(' | ');
-console.log(`menu after New: ${menu}`);
-await page.locator('.ant-dropdown:not(.ant-dropdown-hidden) li, [role="menuitem"]').filter({ hasText: /^\s*Bill\s*$/ }).first().click().catch((e) => console.log('Bill item:', e.message));
+// "Bill" button (aria-label "Create new Bill") on the job's Bills page.
+await page.locator('button[aria-label="Create new Bill"]').first().click().catch((e) => console.log('Create new Bill:', e.message));
 await page.waitForTimeout(12000);
 console.log(`url: ${page.url()}`);
 const controls = await page.evaluate(() => [...document.querySelectorAll('input, textarea, select, button, [role="combobox"]')].filter((e) => e.offsetParent !== null).map((e) => {
@@ -27,8 +23,9 @@ const controls = await page.evaluate(() => [...document.querySelectorAll('input,
 }));
 console.log(`===== form controls =====\n${controls.join('\n')}`);
 // Pickers: type in Pay to and Cost code, print the options (Escape afterwards).
+console.log(`===== form text =====\n${(await page.locator('.ant-modal-content, .ant-drawer-content, [role="dialog"]').last().innerText().catch(() => '')).slice(0, 3000)}`);
 for (const [label, text] of [['Pay to', payTo], ['Cost code', code]]) {
-  const box = page.locator(`input[id*="${label === 'Pay to' ? 'payTo' : 'costCode'}" i], input[aria-label*="${label}" i]`).first();
+  const box = page.locator(`input[id*="${label === 'Pay to' ? 'payTo' : 'costCode'}" i], input[aria-label*="${label}" i], .ant-form-item:has(label:text-is("${label}")) input`).first();
   if (!(await box.count())) { console.log(`${label}: input not found by id/aria`); continue; }
   await box.click({ force: true }).catch(() => {}); await box.fill(text).catch(() => {}); await page.waitForTimeout(2500);
   const opts = await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option, .ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-tree-treenode').allInnerTexts().catch(() => []);
