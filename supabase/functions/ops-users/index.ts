@@ -43,7 +43,10 @@ Deno.serve(async (req) => {
     if (pass) {
       try {
         await nodemailer.createTransport({ host: 'smtp.gmail.com', port: 465, secure: true, auth: { user: from, pass } })
-          .sendMail({ from: `PKB Ops <${from}>`, to: String(u.email), subject, text });
+          .sendMail({ from: `PKB Ops <${from}>`, to: String(u.email), subject, text,
+            // PKB Homes logo on every e-mail (Victor, 11/19/26), inline from the site.
+            html: `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#2e2e30;max-width:640px">${text.replace(/\r/g, '').split(/\n{2,}/).map((p) => `<p style="margin:0 0 12px">${p.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] as string)).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1">$1</a>').replace(/\n/g, '<br>')}</p>`).join('')}<p style="margin:18px 0 0"><img src="cid:pkb-logo@pkbhomes.com" alt="PKB Homes" width="70" style="display:block;width:70px;height:auto;border:0"></p></div>`,
+            attachments: [{ filename: 'pkb-homes.png', path: 'https://budget.pkbhomes.com/logo-email.png', cid: 'pkb-logo@pkbhomes.com' }] });
         sent = true;
       } catch (e) { mailError = String((e as Error).message || e).slice(0, 300); }
     } else mailError = 'bot mailbox not configured in Supabase';
