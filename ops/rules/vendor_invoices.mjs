@@ -174,17 +174,21 @@ for (const e of answers) {
   if (DRY) continue;
   const stmts = [`update ops.vendor_invoices set answer_email_id = ${q(e.id)}, answered_at = now(), answer = ${q(`${e.from_addr}: ${a.summary}`)},
     cost_code = coalesce(${q(a.cost_code || null)}, cost_code), updated_at = now() where id = ${q(v.id)}`];
-  const same = (x, y) => addrKey(x) && addrKey(x) === addrKey(y);
+  // Same line: same house number + street word, or (an answer that names only the number, "a 6320") the same
+  // house number when one line has it.
+  const num = (x) => (/^\s*(\d+)/.exec(String(x || '')) || [])[1];
+  const same = (x, y) => (addrKey(x) && addrKey(x) === addrKey(y)) || (num(y) && num(x) === num(y) && v.lines.filter((l) => num(l.address) === num(y)).length === 1);
   for (const s of a.assignments || []) {
     const j = jobs.find((x) => x.job_number === String(s.job_number).padStart(4, '0') && x.bt_job_id);
     const l = v.lines.find((x) => same(x.address, s.line_address));
     if (j && l) stmts.push(`update ops.vendor_invoice_lines set job_id = ${q(j.id)}, job_number = ${q(j.job_number)}, excluded = false where id = ${q(l.id)}`);
   }
+  for (const ad of a.no_job || []) { const l = v.lines.find((x) => same(x.address, ad)); if (l) stmts.push(`update ops.vendor_invoice_lines set general = true, job_id = null, job_number = null, excluded = false where id = ${q(l.id)}`); }
   for (const ad of a.exclude || []) { const l = v.lines.find((x) => same(x.address, ad)); if (l) stmts.push(`update ops.vendor_invoice_lines set excluded = true where id = ${q(l.id)}`); }
   await sql(stmts.join(';\n'));
   if (a.decision === 'ignore' || a.decision === 'duplicate') { await sql(`update ops.vendor_invoices set status = 'ignored' where id = ${q(v.id)}`); continue; }
   if (a.decision !== 'create') continue;
-  const left = await sql(`select address, bill_amount from ops.vendor_invoice_lines where invoice_id = ${q(v.id)} and not excluded and job_id is null`);
+  const left = await sql(`select address, bill_amount from ops.vendor_invoice_lines where invoice_id = ${q(v.id)} and not excluded and not general and job_id is null`);
   if (left.length) await sql(`update ops.vendor_invoices set status = 'needs_review', question_sent_at = null,
       issues = array[${left.map((l) => q(`${l.address}: ainda sem obra (${money(l.bill_amount)}) — diga a obra ou "tira essa"`)).join(',')}] where id = ${q(v.id)}`);
   else await sql(`update ops.vendor_invoices set status = 'ready', issues = '{}' where id = ${q(v.id)}`);
