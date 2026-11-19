@@ -8,7 +8,7 @@ on:
       probe:
         description: 'Probe to run'
         type: choice
-        options: [fasttrack, fasttrack-collect, fasttrack-reports, lake, buildertrend, buildertrend-schedule, buildertrend-schedule-api, buildertrend-schedule-item, buildertrend-schedule-date-test, bt-schedule-rule, buildertrend-warranty, buildertrend-warranty-api, bt-warranty-rule, buildertrend-lead-find, buildertrend-jobs-find, buildertrend-dailylog-check, buildertrend-bills, buildertrend-bill-form, buildertrend-bill-split, buildertrend-bill-api, buildertrend-bill-new, bt-bill-create, buildertrend-page-calls, projectdox]
+        options: [fasttrack, fasttrack-collect, fasttrack-reports, lake, buildertrend, buildertrend-schedule, buildertrend-schedule-api, buildertrend-schedule-item, buildertrend-schedule-date-test, bt-schedule-rule, buildertrend-warranty, buildertrend-warranty-api, bt-warranty-rule, buildertrend-lead-find, buildertrend-jobs-find, buildertrend-dailylog-check, buildertrend-bills, buildertrend-bill-form, buildertrend-bill-split, buildertrend-bill-api, buildertrend-bill-new, bt-bill-create, buildertrend-page-calls, buildertrend-bills-list, projectdox]
         default: fasttrack
       arg:
         description: 'Optional argument (e.g. permit number)'
@@ -59,6 +59,8 @@ jobs:
             node collectors/buildertrend/schedule_api_probe.mjs ${{ inputs.arg }}
           elif [ "${{ inputs.probe }}" = buildertrend-page-calls ]; then
             node collectors/buildertrend/page_calls_probe.mjs ${{ inputs.arg }}
+          elif [ "${{ inputs.probe }}" = buildertrend-bills-list ]; then
+            node collectors/buildertrend/bills_list.mjs ${{ inputs.arg }}
           elif [ "${{ inputs.probe }}" = bt-bill-create ]; then
             node collectors/buildertrend/bill_create.mjs ${{ inputs.arg }}
           elif [ "${{ inputs.probe }}" = buildertrend-bill-new ]; then
