@@ -121,6 +121,42 @@ if (process.argv.includes('--dates')) {
   console.log(`dates: ${ok} already on the exact date · ${diff} different · ${noExact} complete without an exact date`);
   await browser.close(); process.exit(0);
 }
+// --fix-dates [--job 0010] [--post]: put every COMPLETE item with an exact evidence date on that date, keeping the
+// links (Victor, 11/19/26: "ir ajustando a cadeia com as datas certas"). Per job, the earliest item (current
+// Start) that is off is changed first the way a person does it (open the item, Start Date, Save); Buildertrend
+// then shifts the linked chain; the job is re-read and the next item off is fixed, until all match.
+if (process.argv.includes('--fix-dates')) {
+  const fmtBt = (iso) => new Date(iso + 'T12:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric' });
+  const exactFor = (e, it) => { const title = String(it.title || '').trim(); const rule = MAP.find((r) => r.itemRe.test(title)); EXACT = null;
+    let why = rule ? proof(e, { ...rule, title }) : null; if (!why || !EXACT) why = fromLog(e, title); return why && EXACT ? { date: EXACT, why } : null; };
+  let changed = 0, failed = 0;
+  for (const bt of jobIds) {
+    const e = ev[bt]; if (!e) continue;
+    const tried = new Set();
+    for (let round = 0; round < 200; round++) {
+      const items = (await listItems([bt])).filter((it) => it.completed).sort((a, b) => String(a.startDate).localeCompare(String(b.startDate)) || String(a.id).localeCompare(String(b.id)));
+      const next = items.map((it) => ({ it, x: exactFor(e, it) })).find(({ it, x }) => x && String(it.startDate).slice(0, 10) !== x.date && !tried.has(String(it.id)));
+      if (!next) break;
+      const { it, x } = next; tried.add(String(it.id));
+      const label = `${e.job} · ${String(it.title).trim()} (item ${it.id}) ${String(it.startDate).slice(0, 10)} → ${x.date} ← ${x.why}`;
+      if (!POST) { console.log(`[dry run] date ${label}`); continue; }
+      try {
+        await page.goto(`https://buildertrend.net/app/Schedules/List/Schedule/${it.id}/${bt}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+        const start = page.locator('#startDate'); await start.waitFor({ timeout: 45000 }); await page.waitForTimeout(1500);
+        await start.click({ clickCount: 3 }); await start.fill(fmtBt(x.date)); await start.press('Tab'); await page.waitForTimeout(1500);
+        await page.getByRole('button', { name: /^save$/i }).first().click({ timeout: 20000 }); await page.waitForTimeout(5000);
+        const after = (await listItems([bt])).find((y) => String(y.id) === String(it.id));
+        if (String(after?.startDate).slice(0, 10) !== x.date) throw new Error(`Start is ${String(after?.startDate).slice(0, 10)} after saving`);
+        await sql(`insert into ops.events (org_id, job_id, kind, source, occurred_at, payload, dedupe_key)
+          select j.org_id, j.id, 'bt.schedule_date', 'rule', now(), ${q(JSON.stringify({ item: String(it.title).trim(), item_id: it.id, from: String(it.startDate).slice(0, 10), to: x.date, evidence: x.why }))}::jsonb, ${q(`bt.schedule_date:${it.id}:${x.date}`)}
+          from ops.jobs j where j.job_number = ${q(e.job)} on conflict (org_id, dedupe_key) do nothing`);
+        changed++; console.log(`DATED ${label}`);
+      } catch (err) { failed++; console.error(`FAILED date ${label}: ${err.message}`); }
+    }
+  }
+  console.log(`fix-dates: ${changed} changed · ${failed} failed${POST ? '' : ' · dry run (the chain moves after each real change, so the real run can differ)'}`);
+  await browser.close(); process.exit(failed && !changed ? 1 : 0);
+}
 const UNDO = arg('--undo'), SINCE = arg('--since');
 if (UNDO) {
   const evs = await sql(`select e.id, e.payload->>'item' item, (e.payload->>'item_id')::bigint item_id, j.job_number, j.bt_job_id from ops.events e join ops.jobs j on j.id = e.job_id
