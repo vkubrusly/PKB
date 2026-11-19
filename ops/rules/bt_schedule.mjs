@@ -21,14 +21,14 @@ const q = (v) => (v == null ? 'null' : `'${String(v).replace(/'/g, "''")}'`);
 const MAP = JSON.parse(readFileSync(new URL('../config/bt_schedule_map.json', import.meta.url), 'utf8')).rules.map((r) => ({ ...r, itemRe: new RegExp(r.item, 'i'), inspRe: r.inspection ? new RegExp(r.inspection, 'i') : null }));
 
 // Evidence per job: building permit issued, CO, passed inspections (type + date).
-const rows = await sql(`select j.job_number, j.bt_job_id, j.co_at, c.issued_at, i.type, coalesce(i.actual_at, i.scheduled_at, i.requested_at) at
+const rows = await sql(`select j.job_number, j.bt_job_id, j.co_at, c.issued_at, i.type, coalesce(i.actual_at, i.scheduled_at, i.requested_at) at, coalesce(i.actual_at, i.scheduled_at)::date::text exact
   from ops.jobs j join ops.permit_cases c on c.job_id = j.id and c.kind = 'building'
   left join ops.inspections i on i.permit_case_id = c.id and i.passed
   where j.bt_job_id is not null ${ONLY ? `and j.job_number = ${q(ONLY)}` : ''}`);
 const ev = {};
 for (const r of rows) {
   const e = (ev[r.bt_job_id] ??= { job: r.job_number, issued: r.issued_at, co: r.co_at, passed: [] });
-  if (r.type) e.passed.push({ type: r.type, at: r.at });
+  if (r.type) e.passed.push({ type: r.type, at: r.at, exact: r.exact });
 }
 // Draws invoiced in QuickBooks (stages per job) — only when QuickBooks is connected.
 const billed = {};
@@ -43,22 +43,29 @@ const logDone = {};
 { const logs = await sql(`select l.job_number, l.log_date::text date, l.author by, l.title, l.notes from ops.daily_logs l where l.job_number is not null`);
   const byJob = {}; for (const l of logs) (byJob[l.job_number] ??= []).push(l);
   for (const [job, ls] of Object.entries(byJob)) logDone[job] = doneFromLogs(ls); }
-const fromLog = (e, title) => { for (const it of itemsFor(title)) { const d = logDone[e.job]?.get(it.item); if (d) return `Daily Log ${usDate(d.date)}${d.by ? ` (${d.by})` : ''}: "${d.text}"`; } return null; };
+// EXACT: the date the evidence itself proves (set by proof/fromLog): an inspection item → the day it was inspected;
+// a draw → the invoice date; the permit/CO → their dates; a Daily Log → the log date. Work items proven only by a
+// LATER inspection have no exact date (the work was done before it) → null.
+let EXACT = null;
+const fromLog = (e, title) => { for (const it of itemsFor(title)) { const d = logDone[e.job]?.get(it.item); if (d) { EXACT = String(d.date).slice(0, 10); return `Daily Log ${usDate(d.date)}${d.by ? ` (${d.by})` : ''}: "${d.text}"`; } } return null; };
 const jobIds = Object.keys(ev).map(Number);
 if (!jobIds.length) { console.log('no jobs with a Buildertrend id and a building permit'); process.exit(0); }
 const proof = (e, rule) => {
-  if (rule.evidence === 'permit_issued') return e.issued ? `permit issued ${usDate(e.issued)}` : null;
-  if (rule.evidence === 'co') return e.co ? `CO ${usDate(e.co)}` : null;
+  EXACT = null;
+  if (rule.evidence === 'permit_issued') { EXACT = e.issued ? String(e.issued).slice(0, 10) : null; return e.issued ? `permit issued ${usDate(e.issued)}` : null; }
+  if (rule.evidence === 'co') { EXACT = e.co ? String(e.co).slice(0, 10) : null; return e.co ? `CO ${usDate(e.co)}` : null; }
   if (rule.evidence === 'same_inspection') {
     const n = (t) => String(t || '').replace(/^\s*\(tug\)\s*/i, '').split(/ - 1 ?&| - res|\(/i)[0].toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
     const want = n(String(rule.title || '').replace(/^inspection - /i, ''));
     const p = want && e.passed.filter((x) => n(x.type) === want).sort((a, b) => String(a.at).localeCompare(String(b.at)))[0];
+    EXACT = p?.exact || null;
     return p ? `${p.type.replace(/ - 1 ?& ?2.*$/, '')} passed ${usDate(p.at)}` : null;
   }
-  if (rule.evidence === 'draw_invoiced') { const d = billed[e.job]?.[rule.stage]; return d ? `QuickBooks invoice ${d.invoice || ''} billed ${usDate(d.billed_on)}`.replace('  ', ' ') : null; }
+  if (rule.evidence === 'draw_invoiced') { const d = billed[e.job]?.[rule.stage]; EXACT = d ? String(d.billed_on).slice(0, 10) : null; return d ? `QuickBooks invoice ${d.invoice || ''} billed ${usDate(d.billed_on)}`.replace('  ', ' ') : null; }
   // Match on the inspection name without the county's suffix (Marion: 'Rough Plumbing - 1 & 2 Residential Family').
   const base = (t) => String(t || '').replace(/\s+-\s+(1\s*&\s*2|res\b).*$/i, '').trim();
   const p = e.passed.filter((x) => rule.inspRe.test(base(x.type)) || rule.inspRe.test(x.type)).sort((a, b) => String(a.at).localeCompare(String(b.at)))[0];
+  EXACT = p && /^inspection - /i.test(String(rule.title || '')) ? p.exact || null : null;
   return p ? `${p.type.replace(/ - 1 ?& ?2.*$/, '')} passed ${usDate(p.at)}` : null;
 };
 
@@ -91,6 +98,29 @@ async function listItems(ids) {
 // --undo "<title regex>" --since <ISO>: un-mark items THIS robot marked (events bt.schedule_complete), e.g. after a
 // rule turned out wrong. Only items whose event matches; each is re-read to confirm, then its event is removed so a
 // corrected rule can mark it again later.
+// --dates: READ-ONLY report — for every COMPLETE item with an exact evidence date, compare it with the item's
+// Start / End in Buildertrend and list the differences (nothing is changed).
+if (process.argv.includes('--dates')) {
+  const all = await listItems(jobIds);
+  let ok = 0, diff = 0, noExact = 0;
+  const lines = [];
+  for (const it of all) {
+    if (!it.completed) continue;
+    const e = ev[it.jobId]; if (!e) continue;
+    const title = String(it.title || '').trim();
+    const rule = MAP.find((r) => r.itemRe.test(title));
+    EXACT = null;
+    let why = rule ? proof(e, { ...rule, title }) : null;
+    if (!why || !EXACT) why = fromLog(e, title);
+    if (!why || !EXACT) { noExact++; continue; }
+    const st = String(it.startDate || '').slice(0, 10), en = String(it.endDate || '').slice(0, 10);
+    if (st === EXACT) { ok++; continue; }
+    diff++; lines.push(`DATE ${e.job} · ${title} (item ${it.id}) · Buildertrend start ${usDate(st)} end ${usDate(en)} → exact ${usDate(EXACT)} · ${why}`);
+  }
+  lines.sort().forEach((l) => console.log(l));
+  console.log(`dates: ${ok} already on the exact date · ${diff} different · ${noExact} complete without an exact date`);
+  await browser.close(); process.exit(0);
+}
 const UNDO = arg('--undo'), SINCE = arg('--since');
 if (UNDO) {
   const evs = await sql(`select e.id, e.payload->>'item' item, (e.payload->>'item_id')::bigint item_id, j.job_number, j.bt_job_id from ops.events e join ops.jobs j on j.id = e.job_id
