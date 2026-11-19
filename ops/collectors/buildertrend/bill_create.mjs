@@ -131,7 +131,16 @@ for (const spec of specs) {
     if (PAY) await pay(spec.jobId, made.id);
     const after = await findBill(spec.jobId, spec.billNo);
     results.push(`OK id ${made.id} ${tag} · paid ${after?.amountPaid?.value ?? after?.amountPaid} on ${String(after?.datePaid).slice(0, 10)} · ${(after?.costCodes || []).join(', ')}`);
-  } catch (e) { results.push(`FAILED ${tag}: ${e.message}`); }
+  } catch (e) {
+    results.push(`FAILED ${tag}: ${String(e.message).split('\n')[0]}`);
+    const snap = await page.evaluate(() => {
+      const sel = (id) => document.getElementById(id)?.closest('.ant-select')?.querySelector('.ant-select-selection-item')?.textContent ?? null;
+      return { payTo: sel('performingUserId'), misc: document.getElementById('miscPaidToName')?.value ?? null,
+        dialogs: [...document.querySelectorAll('.ant-modal-content, [role="dialog"]')].map((d) => d.innerText.replace(/\s+/g, ' ').slice(0, 400)),
+        dropdown: [...document.querySelectorAll('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option')].map((o) => o.innerText.trim()).slice(0, 15) };
+    }).catch(() => ({}));
+    log('FAIL STATE B64:' + Buffer.from(JSON.stringify(snap, null, 1)).toString('base64'));
+  }
 }
 log('RESULTS B64:' + Buffer.from(results.join('\n')).toString('base64'));
 log(results.map((r) => r.split(' ')[0]).join(' '));
