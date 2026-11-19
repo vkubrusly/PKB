@@ -2,6 +2,7 @@
 // bill_open_probe.mjs — READ-ONLY: open an existing bill and list its buttons, menus and the JSON it loads, to
 // find how a bill is marked paid. Opens menus only (no click on an action); nothing is saved.
 //   BT_COOKIES_FILE=… node collectors/buildertrend/bill_open_probe.mjs <jobId> <billId> [--ready]
+// --pay: on a bill already Ready for Payment, Record Payment with the lien waiver NOT sent (Victor's test bill).
 // --ready: clicks "Mark Ready for Payment" (a status change on that bill), then opens the pay form WITHOUT confirming.
 import { openBuildertrend } from './session.mjs';
 
@@ -20,6 +21,23 @@ for (const name of [/^More$/i, /more actions/i]) {
   if (await m.count()) { await m.click().catch(() => {}); await page.waitForTimeout(1500); menu += (await page.locator('.ant-dropdown:not(.ant-dropdown-hidden)').allInnerTexts().catch(() => [])).join(' / '); await page.keyboard.press('Escape'); }
 }
 let payForm = '';
+if (process.argv.includes('--pay')) {
+  const rec = page.getByRole('button', { name: /^Record Payment$/ }).first();
+  if (!(await rec.count())) payForm += 'no Record Payment button\n';
+  else {
+    await rec.click(); await page.waitForTimeout(4000);
+    const lw = page.locator('#sendLienWaiverWithPayment');
+    if (await lw.count() && await lw.isChecked()) await lw.uncheck({ force: true });
+    payForm += `lien waiver checked after uncheck: ${await lw.isChecked().catch(() => 'n/a')}\n`;
+    const type = page.locator('#offlinePaymentMethod'); await type.click({ force: true }).catch(() => {}); await page.waitForTimeout(1200);
+    payForm += `payment types: ${(await page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option').allInnerTexts().catch(() => [])).join(' | ')}\n`;
+    await page.keyboard.press('Escape'); await page.waitForTimeout(500);
+    if (!(await lw.isChecked().catch(() => false))) {
+      await page.getByRole('button', { name: /^Record$/ }).last().click(); await page.waitForTimeout(6000);
+      payForm += 'RECORDED\n';
+    } else payForm += 'lien waiver still checked: NOT recorded\n';
+  }
+}
 if (process.argv.includes('--ready')) {
   const ready = dlg.getByRole('button', { name: /^Mark Ready for Payment$/ }).first();
   if (await ready.count()) { await ready.click(); await page.waitForTimeout(6000); }
