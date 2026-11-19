@@ -55,19 +55,20 @@ for (let i = 0; i < spec.lines.length; i++) {
     return `${e.tagName.toLowerCase()} id=${e.id || ''} name=${e.getAttribute('name') || ''} type=${e.getAttribute('type') || ''} label=${(lab || e.getAttribute('aria-label') || '').trim()} text=${(e.innerText || e.value || '').trim().slice(0, 30)}`; }));
   log('LINE EDITOR B64:' + Buffer.from(ctl.join('\n') + '\n---\n' + (await dlg.innerText()).slice(0, 3000)).toString('base64'));
   const byLabel = async (re) => { for (const c of await dlg.locator('input, textarea').all()) { const id = await c.getAttribute('id'); const lab = id ? await page.locator(`label[for="${id}"]`).first().innerText().catch(() => '') : ''; if (re.test(lab) || re.test(id || '')) return c; } return null; };
-  const t = await byLabel(/^title$/i); if (t && L.title) await t.fill(L.title);
-  const cc = await byLabel(/cost ?code/i);
+  if (L.title) await page.locator('#itemTitle').fill(L.title);
+  const cc = page.locator('#costCodeId');
   if (cc) { await cc.click({ force: true }); await cc.fill(L.costCode.slice(0, 8)); await page.waitForTimeout(2500);
     const o = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option, .ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-tree-treenode', { hasText: L.costCode.slice(9) }).first();
     if (await o.count()) await o.click(); else log('cost code option not found:', L.costCode); await page.waitForTimeout(800); }
-  const amt = await byLabel(/builder ?cost|unit ?cost|^cost$|amount/i);
+  const amt = page.locator('#unitCost');
   if (amt) { await amt.click({ clickCount: 3 }); await amt.fill(String(L.amount)); await amt.press('Tab'); }
   await page.waitForTimeout(800);
   const values = await dlg.evaluate((d) => [...d.querySelectorAll('input')].filter((e) => e.offsetParent !== null).map((e) => `${e.id}=${e.value}${e.closest('.ant-select') ? ' [' + (e.closest('.ant-select').querySelector('.ant-select-selection-item')?.textContent || '') + ']' : ''}`));
   log('LINE VALUES B64:' + Buffer.from(values.join('\n')).toString('base64'));
-  const done = dlg.getByRole('button', { name: /^(save|done|ok|apply|save and close)$/i }).first();
-  if (await done.count()) { await done.click(); await page.waitForTimeout(1500); } else log('no save button in the line editor');
+  const close = page.getByRole('button', { name: 'Close line item' }).first();
+  if (await close.count()) { await close.click(); await page.waitForTimeout(1200); }
 }
+if ((await page.locator('#billTitle').inputValue()) !== spec.title) await page.locator('#billTitle').fill(spec.title);
 // QuickBooks: do NOT send.
 const qb = page.locator('#sendToAccounting');
 if (await qb.count() && await qb.isChecked()) { await qb.uncheck({ force: true }); }
