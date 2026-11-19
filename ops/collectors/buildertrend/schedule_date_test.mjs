@@ -46,7 +46,7 @@ for (const path of [`Schedules/List/Schedule/${itemId}/${jobId}`, `Schedules/Lis
   if (opened) break;
   await page.goto(`https://buildertrend.net/app/${path}`, { waitUntil: 'domcontentloaded', timeout: 60000 }).catch(() => {}); await page.waitForTimeout(8000);
   const ok = await page.evaluate(() => /start/i.test(document.body.innerText) && document.querySelectorAll('input').length > 3);
-  const title = await page.evaluate((t) => document.body.innerText.includes(t), String(target?.title || '').trim());
+  const title = await page.evaluate((t) => document.body.innerText.includes(t) || [...document.querySelectorAll('input')].some((i) => String(i.value).trim() === t), String(target?.title || '').trim());
   console.log(`try /app/${path} → dialog with Start: ${ok} · title: ${title}`); if (ok && title) opened = true;
 }
 for (const r of opened ? [] : [...routes].filter((x) => /:id|\$\{|:scheduleId|:itemId/i.test(x)).slice(0, 6)) {
