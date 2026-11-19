@@ -10,7 +10,7 @@ if (!loggedIn) { console.error('session expired'); await browser.close(); proces
 let calls = [];
 page.on('response', async (r) => { const u = r.url();
   if (!/buildertrend\.net\/apix?\//i.test(u) || !/json/.test(r.headers()['content-type'] || '') || /datadog|sentry|menu\/|GlobalInfo|context\/init|Notifications|WhatsNew|GridViews|jobpicker|jobsites\/|tab-counts|Filters\//i.test(u)) return;
-  calls.push(`${r.request().method()} ${r.status()} ${u}\n  req: ${(r.request().postData() || '').slice(0, 1500)}\n  res: ${(await r.text().catch(() => '')).slice(0, 60000)}`); });
+  calls.push(`${r.request().method()} ${r.status()} ${u}\n  req: ${(r.request().postData() || '').slice(0, 1500)}\n  res: ${(await r.text().catch(() => '')).slice(0, 600000)}`); });
 for (const p of paths) {
   calls = [];
   await page.goto(`https://buildertrend.net${p}`, { waitUntil: 'domcontentloaded', timeout: 120000 }).catch((e) => console.log('goto', e.message));
