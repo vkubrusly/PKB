@@ -20,6 +20,7 @@ import re
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from email.header import decode_header, make_header
 from email.utils import getaddresses, parseaddr, parsedate_to_datetime
@@ -55,6 +56,58 @@ def sql(query):
             if k == 3:
                 raise
         time.sleep(5 * (k + 1))
+
+
+# ---- Vendor invoices (invoice@pkbhomes.com forwards here, Victor 2026-11-19) ----
+INVOICE_BOXES = {'invoice@pkbhomes.com', 'invoices@pkbhomes.com'}
+INVOICE_BUCKET = 'ops-invoices'
+INVOICE_TYPES = ('.pdf', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.heic', '.docx', '.doc', '.xlsx', '.xls', '.csv', '.txt')
+_svc = None
+
+
+def service_key():
+    """Service-role key through the Management API (same token as sql())."""
+    global _svc
+    if _svc:
+        return _svc
+    token = (os.environ.get('SUPABASE_ACCESS_TOKEN') or '').strip()
+    if token.startswith('ssbp_'):
+        token = token[1:]
+    req = urllib.request.Request(f'https://api.supabase.com/v1/projects/{REF}/api-keys?reveal=true',
+                                 headers={'Authorization': f'Bearer {token}', 'User-Agent': 'pkb-ops-mail'})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        keys = json.loads(r.read())
+    _svc = next((k['api_key'] for k in keys if k.get('name') == 'service_role' or k.get('type') == 'secret'), None)
+    return _svc
+
+
+def upload(path, data, ctype):
+    key = service_key()
+    req = urllib.request.Request(f'https://{REF}.supabase.co/storage/v1/object/{INVOICE_BUCKET}/{urllib.parse.quote(path)}', data=data, method='POST',
+                                 headers={'apikey': key, 'Authorization': f'Bearer {key}', 'Content-Type': ctype or 'application/octet-stream', 'x-upsert': 'true'})
+    with urllib.request.urlopen(req, timeout=120) as r:
+        r.read()
+
+
+def invoice_files(msg, message_id):
+    """Store the attachments of a vendor-invoice e-mail in Storage; return [{name, path, type, size}]."""
+    out = []
+    folder = re.sub(r'[^A-Za-z0-9]+', '_', message_id)[:80]
+    for part in msg.walk():
+        name = part.get_filename()
+        if not name:
+            continue
+        name = hdr(name)
+        if not name.lower().endswith(INVOICE_TYPES):
+            continue
+        data = part.get_payload(decode=True) or b''
+        if not data or len(data) > 30_000_000:
+            continue
+        path = f"{folder}/{re.sub(r'[^A-Za-z0-9._-]+', '_', name)}"
+        if not DRY:
+            upload(path, data, part.get_content_type())
+        out.append({'name': name, 'path': path, 'type': part.get_content_type(), 'size': len(data)})
+    return out
 
 
 def q(v):
@@ -256,6 +309,13 @@ def main():
         except Exception:
             received = None
         category, parsed = classify(addr, subject, body)
+        to_cc = {a.lower() for _, a in getaddresses(msg.get_all('To', []) + msg.get_all('Cc', []) + msg.get_all('X-Forwarded-To', [])) if a}
+        if to_cc & INVOICE_BOXES and category not in ('bt_invoice', 'bt_invoice_paid', 'bt_daily_log', 'bt_bill', 'bt_other'):
+            # A vendor's invoice: keep its files (the bill is built from them) and the links of the body
+            # (invoices sent as a link only).
+            category = 'vendor_invoice'
+            mid = (msg.get('Message-ID') or f"no-id:{subject}")[:500]
+            parsed = {'files': invoice_files(msg, mid), 'links': re.findall(r'https?://[^\s<>"\')]+', body)[:20]}
         jm = JOB_RE.search(subject) or JOB_RE.search(body[:400])
         row = {
             'uid': num.decode(), 'message_id': (msg.get('Message-ID') or f"no-id:{received}:{subject}")[:500],
