@@ -8,7 +8,7 @@ on:
       probe:
         description: 'Probe to run'
         type: choice
-        options: [fasttrack, fasttrack-collect, fasttrack-reports, lake, buildertrend, buildertrend-schedule, buildertrend-schedule-api, buildertrend-schedule-item, buildertrend-schedule-date-test, bt-schedule-rule, buildertrend-warranty, buildertrend-warranty-api, bt-warranty-rule, buildertrend-lead-find, buildertrend-jobs-find, buildertrend-dailylog-check, buildertrend-bills, buildertrend-bill-form, buildertrend-bill-split, buildertrend-bill-api, buildertrend-bill-new, projectdox]
+        options: [fasttrack, fasttrack-collect, fasttrack-reports, lake, buildertrend, buildertrend-schedule, buildertrend-schedule-api, buildertrend-schedule-item, buildertrend-schedule-date-test, bt-schedule-rule, buildertrend-warranty, buildertrend-warranty-api, bt-warranty-rule, bt-bills-rule, buildertrend-lead-find, buildertrend-jobs-find, buildertrend-dailylog-check, buildertrend-bills, buildertrend-bill-form, buildertrend-bill-split, buildertrend-bill-api, buildertrend-bill-new, projectdox]
         default: fasttrack
       arg:
         description: 'Optional argument (e.g. permit number)'
@@ -35,7 +35,7 @@ jobs:
       - name: Run probe
         env:
           BT_COOKIES_FILE: ${{ github.workspace }}/bt_cookies.json
-          SUPABASE_ACCESS_TOKEN: ${{ (inputs.probe == 'bt-schedule-rule' || inputs.probe == 'bt-warranty-rule') && secrets.SUPABASE_ACCESS_TOKEN || '' }}
+          SUPABASE_ACCESS_TOKEN: ${{ (inputs.probe == 'bt-schedule-rule' || inputs.probe == 'bt-warranty-rule' || inputs.probe == 'bt-bills-rule') && secrets.SUPABASE_ACCESS_TOKEN || '' }}
           ORANGE_PORTAL_USER: ${{ secrets.ORANGE_PORTAL_USER }}
           ORANGE_PORTAL_PASS: ${{ secrets.ORANGE_PORTAL_PASS }}
           ORANGE_PORTAL_USER_2: ${{ secrets.ORANGE_PORTAL_USER_2 }}
@@ -51,6 +51,9 @@ jobs:
           elif [ "${{ inputs.probe }}" = bt-schedule-rule ]; then
             # rules/bt_schedule.mjs — dry run unless the argument has --post (e.g. "--job 0031 --limit 1 --post")
             node rules/bt_schedule.mjs ${{ inputs.arg }}
+          elif [ "${{ inputs.probe }}" = bt-bills-rule ]; then
+            # rules/bt_bills.mjs — dry run (fills one bill form, does not save) unless the argument has --post
+            node rules/bt_bills.mjs ${{ inputs.arg }}
           elif [ "${{ inputs.probe }}" = buildertrend-schedule-date-test ]; then
             node collectors/buildertrend/schedule_date_test.mjs ${{ inputs.arg }}
           elif [ "${{ inputs.probe }}" = buildertrend-schedule-item ]; then

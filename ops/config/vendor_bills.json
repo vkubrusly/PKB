@@ -1,0 +1,7 @@
+{
+  "_note": "Vendor invoice → Buildertrend bills (rules/bt_bills.mjs). general_bt_job: the job where bills without a house go (Camila, 11/19/26). cost_codes: vendor (lower case, as the invoice names it) → cost code text as Buildertrend lists it. A vendor not here → the bills are not created and Camila is asked.",
+  "general_bt_job": 41763140,
+  "cost_codes": {
+    "rc site services": "10.20.02 Portable toilets"
+  }
+}
