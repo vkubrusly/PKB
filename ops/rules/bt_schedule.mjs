@@ -13,6 +13,8 @@ import { readFileSync } from 'node:fs';
 import { sql } from '../scripts/sb.mjs';
 import { usDate } from './lib.mjs';
 import { openBuildertrend } from '../collectors/buildertrend/session.mjs';
+import { pickShiftReason } from '../collectors/buildertrend/shift_reason.mjs';
+const SHIFT_REASON = 'Data real (inspeção/fatura/Daily Log) – PKB Ops';
 
 const arg = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
 const POST = process.env.OPS_BT_POST === 'true' || process.argv.includes('--post');
@@ -144,6 +146,7 @@ if (process.argv.includes('--fix-dates')) {
         await page.goto(`https://buildertrend.net/app/Schedules/List/Schedule/${it.id}/${bt}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
         const start = page.locator('#startDate'); await start.waitFor({ timeout: 45000 }); await page.waitForTimeout(1500);
         await start.click({ clickCount: 3 }); await start.fill(fmtBt(x.date)); await start.press('Tab'); await page.waitForTimeout(1500);
+        if (!(await pickShiftReason(page, SHIFT_REASON, (m) => console.log('  ' + m)))) throw new Error('could not select the Shift Reason');
         await page.getByRole('button', { name: /^save$/i }).first().click({ timeout: 20000 }); await page.waitForTimeout(5000);
         const after = (await listItems([bt])).find((y) => String(y.id) === String(it.id));
         if (String(after?.startDate).slice(0, 10) !== x.date) throw new Error(`Start is ${String(after?.startDate).slice(0, 10)} after saving`);
