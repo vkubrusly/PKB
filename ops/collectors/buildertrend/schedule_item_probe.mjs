@@ -17,6 +17,7 @@ for (const u of scripts) {
   if (!/Schedule\.api\.handler|ScheduleItem|schedule-item|ScheduleDetails/i.test(u)) continue;
   const js = await (await page.request.get(u)).text();
   console.log(`\n===== ${u.split('/').pop()} (${js.length} chars) =====`);
+  const li = js.indexOf('l=t=>'); if (li >= 0) console.log(`--- save transform l()\n${js.slice(li, li + 2500)}\n`);
   for (const m of js.matchAll(/\/api\/calendar[^"'`]*/gi)) {
     const i = m.index; console.log(`--- ${m[0]}\n${js.slice(Math.max(0, i - 260), i + 360).replace(/\s+/g, ' ')}\n`);
   }
@@ -25,6 +26,6 @@ const clean = (h) => Object.fromEntries(Object.entries(h || {}).filter(([k]) => 
 for (const path of [`/api/calendar/${itemId}`, `/api/calendar/${itemId}/LinkList`]) {
   const res = await page.request.get(`https://buildertrend.net${path}`, { headers: clean(apiHeaders) });
   const t = await res.text();
-  console.log(`\n===== GET ${path} → ${res.status()} =====\n${t.slice(0, 6000)}`);
+  console.log(`\n===== GET ${path} → ${res.status()} =====\n${t.slice(0, 40000)}`);
 }
 await browser.close();
