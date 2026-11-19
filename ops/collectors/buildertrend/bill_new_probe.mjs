@@ -32,5 +32,9 @@ for (const [label, text] of [['Pay to', payTo], ['Cost code', code]]) {
   console.log(`===== ${label} options for "${text}" =====\n${opts.slice(0, 20).join('\n')}`);
   await page.keyboard.press('Escape');
 }
+const full = await page.locator('.ant-modal-content, .ant-drawer-content, [role="dialog"]').last().innerText().catch(() => '');
+console.log('FORM B64:' + Buffer.from(full.slice(0, 12000)).toString('base64'));
+console.log('CONTROLS B64:' + Buffer.from(controls.join('\n')).toString('base64'));
+console.log('CALLS B64:' + Buffer.from(calls.join('\n\n').slice(0, 60000)).toString('base64'));
 console.log(`===== JSON calls while the form loaded =====\n${calls.slice(0, 20).join('\n')}`);
 await browser.close();

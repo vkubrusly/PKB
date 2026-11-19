@@ -58,7 +58,7 @@ jobs:
           elif [ "${{ inputs.probe }}" = buildertrend-schedule-api ]; then
             node collectors/buildertrend/schedule_api_probe.mjs ${{ inputs.arg }}
           elif [ "${{ inputs.probe }}" = buildertrend-bill-new ]; then
-            node collectors/buildertrend/bill_new_probe.mjs 43923068 "RC Site" "Portable"
+            if [ -n "${{ inputs.arg }}" ]; then node collectors/buildertrend/bill_new_probe.mjs ${{ inputs.arg }}; else node collectors/buildertrend/bill_new_probe.mjs 43923068 "RC Site" "Portable"; fi
           elif [ "${{ inputs.probe }}" = buildertrend-bill-api ]; then
             node collectors/buildertrend/bill_api_code.mjs ${{ inputs.arg }}
           elif [ "${{ inputs.probe }}" = buildertrend-bill-split ]; then
