@@ -5,7 +5,7 @@
 // with a Buildertrend id, an item that the rules cover, that is not complete yet, and whose evidence exists
 // is marked complete — the same call the Schedule page makes (POST /apix/v2/Schedules/mark-complete,
 // {scheduleItemId, markComplete: true}); the item is re-read to confirm. Never un-marks, never changes
-// dates, never touches items without a rule. Each marking is recorded as an event (bt.schedule_complete).
+// dates, never touches items without a rule. Draw items: when the QuickBooks invoice for that stage exists. Each marking is recorded as an event (bt.schedule_complete).
 // Writes only with OPS_BT_POST=true or --post; otherwise lists what it would mark.
 //   BT_COOKIES_FILE=… node rules/bt_schedule.mjs [--post] [--job 0031] [--limit 1]
 // =============================================================================
@@ -30,11 +30,19 @@ for (const r of rows) {
   const e = (ev[r.bt_job_id] ??= { job: r.job_number, issued: r.issued_at, co: r.co_at, passed: [] });
   if (r.type) e.passed.push({ type: r.type, at: r.at });
 }
+// Draws invoiced in QuickBooks (stages per job) — only when QuickBooks is connected.
+const billed = {};
+if (MAP.some((r) => r.evidence === 'draw_invoiced')) {
+  const ok = (await sql(`select disconnected_at is null as ok from ops.qbo_connection where id = 1`).catch(() => []))[0]?.ok;
+  if (ok) for (const h of (await sql(`select ops.qbo_draws_core() j`))[0].j.houses || [])
+    billed[h.job] = Object.fromEntries((h.draws || []).flatMap((d) => d.stages.map((n) => [n, d])));
+}
 const jobIds = Object.keys(ev).map(Number);
 if (!jobIds.length) { console.log('no jobs with a Buildertrend id and a building permit'); process.exit(0); }
 const proof = (e, rule) => {
   if (rule.evidence === 'permit_issued') return e.issued ? `permit issued ${usDate(e.issued)}` : null;
   if (rule.evidence === 'co') return e.co ? `CO ${usDate(e.co)}` : null;
+  if (rule.evidence === 'draw_invoiced') { const d = billed[e.job]?.[rule.stage]; return d ? `QuickBooks invoice ${d.invoice || ''} billed ${usDate(d.billed_on)}`.replace('  ', ' ') : null; }
   const p = e.passed.filter((x) => rule.inspRe.test(x.type)).sort((a, b) => String(a.at).localeCompare(String(b.at)))[0];
   return p ? `${p.type.replace(/ - 1 ?& ?2.*$/, '')} passed ${usDate(p.at)}` : null;
 };
