@@ -45,7 +45,7 @@ let opened = false;
 for (const path of [`Schedules/List/Schedule/${itemId}/${jobId}`, `Schedules/List/Schedule/${itemId}`, `Schedules/List/ScheduleItem/${itemId}`, `Schedules/List/ScheduleItem/${itemId}/${jobId}`, `Schedules/List/Schedules/${itemId}/${jobId}`]) {
   if (opened) break;
   await page.goto(`https://buildertrend.net/app/${path}`, { waitUntil: 'domcontentloaded', timeout: 60000 }).catch(() => {}); await page.waitForTimeout(8000);
-  const ok = await page.evaluate(() => !!document.querySelector('.ant-modal, [role=dialog]') && /start/i.test(document.body.innerText));
+  const ok = await page.evaluate(() => /start/i.test(document.body.innerText) && document.querySelectorAll('input').length > 3);
   const title = await page.evaluate((t) => document.body.innerText.includes(t), String(target?.title || '').trim());
   console.log(`try /app/${path} → dialog with Start: ${ok} · title: ${title}`); if (ok && title) opened = true;
 }
@@ -60,6 +60,9 @@ await page.waitForTimeout(6000);
 const fields = await page.evaluate(() => [...document.querySelectorAll('input, button, [role=button], label')].filter((e) => e.offsetParent !== null)
   .map((e) => `${e.tagName.toLowerCase()}${e.id ? '#' + e.id : ''}${e.name ? '[name=' + e.name + ']' : ''}${e.getAttribute('data-testid') ? '[testid=' + e.getAttribute('data-testid') + ']' : ''} ${e.placeholder ? 'ph=' + e.placeholder : ''} ${e.value ? 'val=' + String(e.value).slice(0, 30) : ''} ${String(e.innerText || '').trim().slice(0, 40)}`));
 console.log('--- visible fields/buttons in the editor ---\n' + fields.slice(0, 160).join('\n'));
+const editorText = await page.evaluate(() => document.body.innerText.replace(/\n{2,}/g, '\n').slice(0, 6000));
+console.log('EDITOR B64:' + Buffer.from(editorText).toString('base64'));
+console.log('FIELDS B64:' + Buffer.from(fields.join('\n')).toString('base64'));
 if (!SAVE) { await browser.close(); process.exit(0); }
 // Start date input: the first visible date input of the editor (label "Start").
 const start = page.locator('#startDate, input[name="startDate"], [data-testid="startDate"] input').first();
