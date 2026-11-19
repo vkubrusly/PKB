@@ -67,7 +67,7 @@ if (!SAVE) { await browser.close(); process.exit(0); }
 // Start date input: the first visible date input of the editor (label "Start").
 const start = page.locator('#startDate, input[name="startDate"], [data-testid="startDate"] input').first();
 await start.click({ clickCount: 3 }); await start.fill(newDate); await start.press('Tab'); await page.waitForTimeout(1500);
-const dialogText = async () => page.evaluate(() => [...document.querySelectorAll('.ant-modal, [role=dialog]')].map((d) => d.innerText.replace(/\s+/g, ' ').slice(0, 600)).join(' || '));
+const dialogText = async () => 'B64:' + Buffer.from(await page.evaluate(() => [...document.querySelectorAll('.ant-modal, [role=dialog], .ant-popover, .ant-popconfirm')].map((d, i) => `#${i} ${d.className} :: ${d.innerText.replace(/\s+/g, ' ').slice(-700)} :: BUTTONS ${[...d.querySelectorAll('button')].filter((b) => b.offsetParent !== null).map((b) => (b.innerText || b.getAttribute('data-testid') || '').trim()).join(' | ')}`).join('\n'))).toString('base64');
 console.log('dialog after typing:', await dialogText());
 await page.getByRole('button', { name: /^save$/i }).first().click({ timeout: 20000 });
 await page.waitForTimeout(6000);
