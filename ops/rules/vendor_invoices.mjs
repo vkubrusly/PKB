@@ -32,7 +32,7 @@ const addrKey = (a) => { const m = /^\s*(\d+)\s+(?:(?:N|S|E|W|NE|NW|SE|SW)\.?\s+
 
 async function readInvoice(buf, fileName, extra = {}) {
   const media = mediaOf(fileName);
-  if (!media) return { error: `file type .${String(fileName).split('.').pop()} is not read automatically yet` };
+  if (!media) return { error: `arquivo .${String(fileName).split('.').pop()} ainda não é lido automaticamente` };
   const key = await serviceKey();
   const r = await fetch(`https://${REF}.supabase.co/functions/v1/ops-invoice`, {
     method: 'POST', headers: { 'content-type': 'application/json', Authorization: `Bearer ${key}`, apikey: key },
@@ -51,8 +51,8 @@ export function allocate(x, jobs) {
     const hits = (byKey.get(addrKey(s.address)) || []);
     const withBt = hits.filter((j) => j.bt_job_id);
     const pick = withBt.length === 1 ? withBt[0] : hits.length === 1 ? hits[0] : null;
-    if (!pick) issues.push(hits.length > 1 ? `${s.address || s.label}: matches more than one house (${hits.map((h) => h.job_number).join(', ')})` : `${s.address || s.label}: no house in the system with this address`);
-    else if (!pick.bt_job_id) issues.push(`${s.address}: house ${pick.job_number} has no Buildertrend job`);
+    if (!pick) issues.push(hits.length > 1 ? `${s.address || s.label}: corresponde a mais de uma obra (${hits.map((h) => h.job_number).join(', ')})` : `${s.address || s.label}: nenhuma obra no sistema com este endereço`);
+    else if (!pick.bt_job_id) issues.push(`${s.address}: a obra ${pick.job_number} não tem job no Buildertrend`);
     return { label: s.label, address: s.address, amount: Number(s.amount), job_id: pick?.id || null, job_number: pick?.job_number || null };
   });
   // Invoice-wide fees: proportional to each site's amount, in cents, the remainder to the largest shares.
@@ -65,15 +65,15 @@ export function allocate(x, jobs) {
     lines.forEach((l, i) => { l.fee_share = floor[i] / 100; });
   } else lines.forEach((l) => { l.fee_share = 0; });
   lines.forEach((l) => { l.bill_amount = (cents(l.amount) + cents(l.fee_share)) / 100; });
-  if (!lines.length) issues.push('no site / house found on the invoice');
-  if (x.total == null) issues.push('invoice total not found');
+  if (!lines.length) issues.push('nenhuma obra / endereço encontrado na invoice');
+  if (x.total == null) issues.push('total da invoice não encontrado');
   else {
     const sum = lines.reduce((t, l) => t + cents(l.bill_amount), 0);
-    if (sum !== cents(x.total)) issues.push(`the houses add up to ${money(sum / 100)} but the invoice total is ${money(x.total)}${fees && !base ? ' (fees with no site to split them over)' : ''}`);
+    if (sum !== cents(x.total)) issues.push(`a soma das obras dá ${money(sum / 100)}, mas o total da invoice é ${money(x.total)}${fees && !base ? ' (taxas sem obra para dividir)' : ''}`);
   }
-  if (!x.vendor) issues.push('vendor (Pay to) not found');
-  if (!x.invoice_number) issues.push('invoice number not found');
-  if (x.notes) issues.push(`note from the reading: ${x.notes}`);
+  if (!x.vendor) issues.push('fornecedor (Pay to) não encontrado');
+  if (!x.invoice_number) issues.push('número da invoice não encontrado');
+  if (x.notes) issues.push(`observação da leitura: ${x.notes}`);
   return { lines, issues, fees: fees / 100 };
 }
 
@@ -91,7 +91,7 @@ if (fi > 0) {
   const a = allocate(x, jobs);
   console.log(`${x.is_invoice ? 'INVOICE' : 'NOT AN INVOICE'} · ${x.vendor} #${x.invoice_number} · ${x.invoice_date} → due ${x.due_date} · total ${money(x.total)} · fees ${money(a.fees)}`);
   for (const l of a.lines) console.log(`  ${(l.job_number || '????').padEnd(5)} ${money(l.bill_amount).padStart(10)}  (site ${money(l.amount)} + fee ${money(l.fee_share)})  ${l.label || ''} ${l.address || ''}`);
-  console.log(a.issues.length ? `ISSUES:\n- ${a.issues.join('\n- ')}` : 'checks: OK — ready to create the bills');
+  console.log(a.issues.length ? `PENDÊNCIAS:\n- ${a.issues.join('\n- ')}` : 'checks: OK — ready to create the bills');
   process.exit(0);
 }
 
@@ -105,7 +105,7 @@ for (const m of mails) {
     if (DRY) { console.log(`[dry run] e-mail without a file: ${m.subject}`); continue; }
     await sql(`insert into ops.vendor_invoices (org_id, inbound_email_id, file_path, file_name, received_at, email_from, email_subject, status, issues)
       values (${q(org)}, ${q(m.id)}, '(no file)', null, ${q(m.received_at)}, ${q(m.from_addr)}, ${q(m.subject)}, 'needs_review',
-        array[${q(`the e-mail has no invoice file${(m.parsed?.links || []).length ? `; links in it: ${m.parsed.links.slice(0, 5).join(' ')}` : ''}`)}])
+        array[${q(`o e-mail não tem arquivo de invoice${(m.parsed?.links || []).length ? `; links no e-mail: ${m.parsed.links.slice(0, 5).join(' ')}` : ''}`)}])
       on conflict (inbound_email_id, file_path) do nothing`);
     continue;
   }
@@ -133,7 +133,7 @@ for (const v of todo) {
     const dup = (await sql(`select id from ops.vendor_invoices where org_id = ${q(org)} and id <> ${q(v.id)} and lower(vendor) = lower(${q(x.vendor)})
       and invoice_number = ${q(x.invoice_number)} and status in ('ready', 'creating', 'created', 'needs_review')`)).length > 0;
     const status = dup ? 'duplicate' : a.issues.length ? 'needs_review' : 'ready';
-    if (dup) a.issues.unshift(`invoice ${x.vendor} #${x.invoice_number} was already received`);
+    if (dup) a.issues.unshift(`a invoice ${x.vendor} #${x.invoice_number} já foi recebida antes`);
     console.log(`${status.toUpperCase()} ${x.vendor} #${x.invoice_number} ${money(x.total)} → ${a.lines.length} house(s)${a.issues.length ? ` · ${a.issues.join(' | ')}` : ''}`);
     if (DRY) continue;
     await sql(`update ops.vendor_invoices set is_invoice = true, vendor = ${q(x.vendor)}, invoice_number = ${q(x.invoice_number)},
