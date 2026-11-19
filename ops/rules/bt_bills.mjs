@@ -4,8 +4,8 @@
 // Buildertrend (Victor, 2026-11-19: "VAMOS MANTER SAVE TO DRAFT").
 // Each bill: Pay to = the vendor (an existing Sub/Vendor; never creates one), Bill # = the invoice number,
 // Title "<vendor> <invoice #>", invoice / due dates, one cost line (cost code by vendor, config/vendor_bills.json,
-// or the one Camila named) with the amount of that job, the invoice file attached, "Send to QuickBooks" OFF
-// (another process handles QuickBooks). Lines Camila said to bill without a house go to the general job.
+// or the one Camila named) with the amount of that job, the invoice file attached; "Send to QuickBooks" left as
+// Buildertrend sets it (a draft is not sent — Victor, 11/19/26). Lines Camila said to bill without a house go to the general job.
 // A line is marked 'creating' before Save; a run that dies after Save leaves it 'unknown' — never retried by
 // itself, so no bill is created twice.
 //   node rules/bt_bills.mjs                          (dry run: fills the first form, does not save)
@@ -99,10 +99,8 @@ for (const l of lines) {
     await page.locator('button[aria-label="Close line item"]').first().click().catch(() => {});
     await page.waitForTimeout(800);
 
-    // QuickBooks: never send on save.
-    const qb = page.locator('#sendToAccounting').first();
-    if (await qb.isChecked().catch(() => false)) await qb.click({ force: true });
-    if (await qb.isChecked().catch(() => false)) throw new Error('could not turn off "Send to QuickBooks"');
+    // QuickBooks: "Send to QuickBooks immediately upon save" stays as Buildertrend sets it — a draft is not sent
+    // (Victor, 11/19/26).
 
     // Attachment: Attachments → Add → (menu) → file chooser.
     const addBtn = page.locator('.ant-form-item:has-text("Attachments"), section:has-text("Attachments"), div:has(> h3:text-is("Attachments"))').getByRole('button', { name: /^Add$/ }).first();
@@ -123,7 +121,7 @@ for (const l of lines) {
     if (!attached) throw new Error('attachment did not show on the form');
 
     const total = (await page.locator('text=/Total:/').locator('xpath=..').innerText().catch(() => '')).replace(/\s+/g, ' ');
-    console.log(`${POST ? 'SAVING' : 'FILLED (dry run, not saved)'} ${tag} · job "${jobName.trim()}" · pay to ${payTo} · cost code ${cc} · ${total} · QuickBooks off · file attached`);
+    console.log(`${POST ? 'SAVING' : 'FILLED (dry run, not saved)'} ${tag} · job "${jobName.trim()}" · pay to ${payTo} · cost code ${cc} · ${total} · file attached`);
     if (!POST) break;
 
     await sql(`update ops.vendor_invoice_lines set bt_status = 'creating', bt_error = null where id = ${q(l.id)}; update ops.vendor_invoices set status = 'creating' where id = ${q(l.invoice_id)}`);
