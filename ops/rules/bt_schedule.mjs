@@ -49,7 +49,9 @@ const proof = (e, rule) => {
     return p ? `${p.type.replace(/ - 1 ?& ?2.*$/, '')} passed ${usDate(p.at)}` : null;
   }
   if (rule.evidence === 'draw_invoiced') { const d = billed[e.job]?.[rule.stage]; return d ? `QuickBooks invoice ${d.invoice || ''} billed ${usDate(d.billed_on)}`.replace('  ', ' ') : null; }
-  const p = e.passed.filter((x) => rule.inspRe.test(x.type)).sort((a, b) => String(a.at).localeCompare(String(b.at)))[0];
+  // Match on the inspection name without the county's suffix (Marion: 'Rough Plumbing - 1 & 2 Residential Family').
+  const base = (t) => String(t || '').replace(/\s+-\s+(1\s*&\s*2|res\b).*$/i, '').trim();
+  const p = e.passed.filter((x) => rule.inspRe.test(base(x.type)) || rule.inspRe.test(x.type)).sort((a, b) => String(a.at).localeCompare(String(b.at)))[0];
   return p ? `${p.type.replace(/ - 1 ?& ?2.*$/, '')} passed ${usDate(p.at)}` : null;
 };
 
