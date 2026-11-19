@@ -11,7 +11,7 @@ on:
         required: true
         default: 'victor@pkbhomes.com'
       rule:
-        description: 'Optional: preview a rule e-mail to that address only (toilet)'
+        description: 'Optional: preview a rule e-mail to that address only (toilet | dumpster)'
         required: false
         default: ''
       job:
@@ -37,4 +37,5 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ inputs.rule != '' && secrets.SUPABASE_ACCESS_TOKEN || '' }}
         run: |
           if [ "${{ inputs.rule }}" = toilet ]; then node rules/toilet_removal.mjs --test-to "${{ inputs.to }}" ${{ inputs.job && format('--job {0}', inputs.job) || '' }}
+          elif [ "${{ inputs.rule }}" = dumpster ]; then node rules/dumpster_removal.mjs --test-to "${{ inputs.to }}" ${{ inputs.job && format('--job {0}', inputs.job) || '' }}
           else node notify/test_email.mjs "${{ inputs.to }}"; fi

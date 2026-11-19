@@ -23,7 +23,7 @@ if (TEST_TO) {
   const r = [...first.values()].find((x) => !TEST_JOB || x.job_number === TEST_JOB);
   if (!r) { console.log('test: no job with a passed Water Service inspection'); process.exit(1); }
   const st = await mail({ rule: 'toilet_removal_test', jobId: r.job_id, to: [TEST_TO], subject: `[TEST] Portable toilet removal — Job ${r.job_number} · ${String(r.address || '').split(',')[0]}`,
-    text: `[TEST — sent only to ${TEST_TO}; RC Site Services did NOT receive this]\n\nHello RC Site Services team,\n\nThe water service inspection for the job below was approved by the county on ${usDate(r.passed_on)}, so the portable toilet is no longer needed on site. Please schedule its removal:\n\nJob: ${r.job_number}\nAddress: ${r.address}\n\nPlease reply to this e-mail with the pickup date. Thank you!\n\nPKB Homes\n— PKB Ops` });
+    text: `[TEST — sent only to ${TEST_TO}; RC Site Services did NOT receive this]\n\nHello RC Site Services team,\n\nPlease schedule the removal of the portable toilet from the job below:\n\nJob: ${r.job_number}\nAddress: ${r.address}\n\nPlease reply to this e-mail with the pickup date. Thank you!\n\nPKB Homes\n— PKB Ops` });
   console.log(`test e-mail: ${st}`); process.exit(st === 'failed' ? 1 : 0);
 }
 await seenPrefix('toilet.removal:');
@@ -39,7 +39,7 @@ for (const r of first.values()) {
   const t = await team(r.job_id, { pmFieldOnly: true });
   const text = `Hello RC Site Services team,
 
-The water service inspection for the job below was approved by the county on ${usDate(r.passed_on)}, so the portable toilet is no longer needed on site. Please schedule its removal:
+Please schedule the removal of the portable toilet from the job below:
 
 Job: ${r.job_number}
 Address: ${r.address}
