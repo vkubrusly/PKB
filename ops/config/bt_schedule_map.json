@@ -258,6 +258,11 @@
       "item": "^6th draw$",
       "evidence": "draw_invoiced",
       "stage": 6
+    },
+    {
+      "item": "^inspection - ",
+      "evidence": "same_inspection",
+      "_comment": "fallback: any other 'Inspection - X' item (e.g. the Citrus template: 'Inspection - Pre Power', 'Inspection - Building Final') is marked when a county inspection with the same name passed (text before ' - 1 & 2…', case and punctuation ignored)"
     }
   ],
   "_comment_2026_11_18": "New 85-item PKB template (Victor, 11/18/26): every 'Inspection - X' item is marked from the matching PASSED county inspection; a work item is marked only when a later inspection proves it was done (e.g. the formwork, rebars and pad by the foundation pre-pour). Not marked: the draws (2nd–6th Draw), windows/doors, roofing (shingles), stucco, drywall, painting, finishes, upgrades, connections, clean-up, landscaping, DEP letter.",

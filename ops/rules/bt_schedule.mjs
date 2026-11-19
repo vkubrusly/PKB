@@ -42,6 +42,12 @@ if (!jobIds.length) { console.log('no jobs with a Buildertrend id and a building
 const proof = (e, rule) => {
   if (rule.evidence === 'permit_issued') return e.issued ? `permit issued ${usDate(e.issued)}` : null;
   if (rule.evidence === 'co') return e.co ? `CO ${usDate(e.co)}` : null;
+  if (rule.evidence === 'same_inspection') {
+    const n = (t) => String(t || '').replace(/^\s*\(tug\)\s*/i, '').split(/ - 1 ?&| - res|\(/i)[0].toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+    const want = n(String(rule.title || '').replace(/^inspection - /i, ''));
+    const p = want && e.passed.filter((x) => n(x.type) === want).sort((a, b) => String(a.at).localeCompare(String(b.at)))[0];
+    return p ? `${p.type.replace(/ - 1 ?& ?2.*$/, '')} passed ${usDate(p.at)}` : null;
+  }
   if (rule.evidence === 'draw_invoiced') { const d = billed[e.job]?.[rule.stage]; return d ? `QuickBooks invoice ${d.invoice || ''} billed ${usDate(d.billed_on)}`.replace('  ', ' ') : null; }
   const p = e.passed.filter((x) => rule.inspRe.test(x.type)).sort((a, b) => String(a.at).localeCompare(String(b.at)))[0];
   return p ? `${p.type.replace(/ - 1 ?& ?2.*$/, '')} passed ${usDate(p.at)}` : null;
@@ -81,7 +87,7 @@ for (const it of items) {
   if (it.completed) continue;
   const e = ev[it.jobId]; if (!e) continue;
   const rule = MAP.find((r) => r.itemRe.test(String(it.title || '').trim())); if (!rule) continue;
-  const why = proof(e, rule); if (why) todo.push({ it, e, why });
+  const why = proof(e, { ...rule, title: String(it.title || '').trim() }); if (why) todo.push({ it, e, why });
 }
 if (!POST) {
   // Dry run: also show which open items no rule covers (to extend config/bt_schedule_map.json).
