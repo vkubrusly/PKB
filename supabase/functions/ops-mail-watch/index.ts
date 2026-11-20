@@ -1,8 +1,8 @@
-// ops-mail-watch — every 5 minutes (pg_cron, migration 0060): is there an unread vendor invoice (from invoice@) or
-// an unread answer to "Invoice para revisar" in the bot mailbox? If so, start ops-mail now instead of waiting for
-// the hourly round (Victor, 11/20/26: "entrou e-mail você processa"). Only LOOKS at the mailbox (EXAMINE =
+// ops-mail-watch — every 5 minutes (pg_cron, migration 0060): is there any unread e-mail in the bot mailbox? If so,
+// start ops-mail now instead of waiting for the hourly round (Victor, 11/20/26: "entrou e-mail você processa";
+// "confira todos os e-mails que chega"). Only LOOKS at the mailbox (EXAMINE =
 // read-only: nothing is marked read); ops-mail does the reading. Called by pg_cron with the shared secret.
-//   POST (header x-watch-secret) → { invoices, answers, dispatched }
+//   POST (header x-watch-secret) → { unread, invoices, dispatched }
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { cors, json } from '../_shared/cors.ts';
 
@@ -33,10 +33,12 @@ async function imapCounts(user: string, pass: string) {
     await cmd('a1', `LOGIN ${q(user)} ${q(pass)}`);
     await cmd('a2', 'EXAMINE INBOX');   // read-only
     const since = new Date(Date.now() - 3 * 864e5).toUTCString().slice(5, 16).replace(/ /g, '-');   // DD-Mon-YYYY
-    const invoices = count(await cmd('a3', `SEARCH UNSEEN SINCE ${since} OR FROM "invoice@pkbhomes.com" OR TO "invoice@pkbhomes.com" CC "invoice@pkbhomes.com"`));
-    const answers = count(await cmd('a4', `SEARCH UNSEEN SINCE ${since} SUBJECT "Invoice para revisar"`));
+    // Any unread e-mail starts ops-mail (Victor, 11/20/26: "confira todos os e-mails que chega"); invoices and
+    // Camila's answers are counted apart for the log.
+    const unread = count(await cmd('a3', `SEARCH UNSEEN SINCE ${since}`));
+    const invoices = unread ? count(await cmd('a4', `SEARCH UNSEEN SINCE ${since} OR FROM "invoice@pkbhomes.com" OR TO "invoice@pkbhomes.com" CC "invoice@pkbhomes.com"`)) : 0;
     await conn.write(enc.encode('a5 LOGOUT\r\n')).catch(() => 0);
-    return { invoices, answers };
+    return { unread, invoices };
   } finally { try { conn.close(); } catch { /* closed */ } }
 }
 
@@ -49,7 +51,7 @@ Deno.serve(async (req) => {
     if (!user || !pass) return json({ error: 'BOT_EMAIL / BOT_EMAIL_PASSWORD not set' }, 500);
     const c = await imapCounts(user, pass);
     let dispatched = false;
-    if (c.invoices + c.answers > 0) {
+    if (c.unread > 0) {
       const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
       const { data, error } = await sb.rpc('ops_dispatch_mail_now');
       if (error) return json({ ...c, error: error.message }, 500);
