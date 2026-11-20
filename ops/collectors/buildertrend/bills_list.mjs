@@ -25,7 +25,14 @@ for (const jobId of jobIds) {
       if (seen.has(id)) continue; seen.add(id);
       console.log(s.slice(0, 700));
     }
-    if (!seen.size) console.log(`(no row with "${text}"; sample) ${g.slice(0, 600)}`);
+    if (!seen.size) {
+      const d = j?.data || j;
+      const keys = d && typeof d === 'object' ? Object.keys(d) : [];
+      console.log(`(no row with "${text}") keys: ${keys.join(',')}`);
+      for (const k of keys) if (Array.isArray(d[k]) && d[k].length && typeof d[k][0] === 'object') console.log(`  array ${k}[${d[k].length}] first: ${JSON.stringify(d[k][0]).slice(0, 1200)}`);
+      const at = g.toLowerCase().indexOf(String(text).toLowerCase());
+      console.log(`  "${text}" in raw answer at ${at}${at >= 0 ? `: …${g.slice(Math.max(0, at - 300), at + 200)}…` : ''}`);
+    }
   }
   const txt = (await page.innerText('body').catch(() => '')).split('\n').filter((l) => l.toLowerCase().includes(String(text).toLowerCase()));
   console.log(`page lines with "${text}": ${txt.length}\n${txt.slice(0, 10).join('\n')}`);

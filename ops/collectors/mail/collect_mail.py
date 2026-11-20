@@ -78,14 +78,15 @@ def service_key():
                                  headers={'Authorization': f'Bearer {token}', 'User-Agent': 'pkb-ops-mail'})
     with urllib.request.urlopen(req, timeout=60) as r:
         keys = json.loads(r.read())
-    _svc = next((k['api_key'] for k in keys if k.get('name') == 'service_role' or k.get('type') == 'secret'), None)
+    # The new secret key first (legacy JWT keys may be disabled), as scripts/sb.mjs does.
+    _svc = next((k['api_key'] for k in keys if k.get('type') == 'secret'), None) or next((k['api_key'] for k in keys if k.get('name') == 'service_role'), None)
     return _svc
 
 
 def upload(path, data, ctype):
     key = service_key()
     req = urllib.request.Request(f'https://{REF}.supabase.co/storage/v1/object/{INVOICE_BUCKET}/{urllib.parse.quote(path)}', data=data, method='POST',
-                                 headers={'apikey': key, 'Authorization': f'Bearer {key}', 'Content-Type': ctype or 'application/octet-stream', 'x-upsert': 'true'})
+                                 headers={'apikey': key, **({'Authorization': f'Bearer {key}'} if key.startswith('eyJ') else {}), 'Content-Type': ctype or 'application/octet-stream', 'x-upsert': 'true'})   # new sb_secret_ keys go in apikey only
     with urllib.request.urlopen(req, timeout=120) as r:
         r.read()
 
