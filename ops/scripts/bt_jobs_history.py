@@ -3,12 +3,20 @@
 # 7 days: ops/data/buildertrend/job_fields.json), for the given job numbers: present or not, status, status
 # updated. Shows when a job left the list the bot sees. Needs GH_TOKEN (actions: read) and GITHUB_REPOSITORY.
 #   python3 scripts/bt_jobs_history.py 0040 0056 …
-import io, json, os, sys, urllib.request, zipfile
+import io, json, os, sys, urllib.error, urllib.request, zipfile
 repo, tok = os.environ['GITHUB_REPOSITORY'], os.environ['GH_TOKEN']
 want = sys.argv[1:]
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *a, **k): return None
+opener = urllib.request.build_opener(NoRedirect)
 def get(url, raw=False):
-    r = urllib.request.urlopen(urllib.request.Request(url, headers={'Authorization': f'Bearer {tok}', 'Accept': 'application/vnd.github+json'}), timeout=120)
-    return r.read() if raw else json.load(r)
+    req = urllib.request.Request(url, headers={'Authorization': f'Bearer {tok}', 'Accept': 'application/vnd.github+json'})
+    if not raw: return json.load(urllib.request.urlopen(req, timeout=120))
+    # The zip download redirects to a signed storage URL that must be fetched WITHOUT the GitHub token.
+    try: r = opener.open(req, timeout=120); return r.read()
+    except urllib.error.HTTPError as e:
+        if e.code in (301, 302, 303, 307, 308): return urllib.request.urlopen(e.headers['Location'], timeout=120).read()
+        raise
 arts = []
 for page in range(1, 6):
     a = get(f'https://api.github.com/repos/{repo}/actions/artifacts?name=ops-snapshots&per_page=100&page={page}')['artifacts']
