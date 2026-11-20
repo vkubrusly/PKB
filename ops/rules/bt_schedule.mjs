@@ -53,7 +53,7 @@ let EXACT = null;
 const fromLog = (e, title) => { for (const it of itemsFor(title)) { const d = logDone[e.job]?.get(it.item); if (d) { EXACT = String(d.date).slice(0, 10); return `Daily Log ${usDate(d.date)}${d.by ? ` (${d.by})` : ''}: "${d.text}"`; } } return null; };
 const jobIds = Object.keys(ev).map(Number);
 if (!jobIds.length) { console.log('no jobs with a Buildertrend id and a building permit'); process.exit(0); }
-const proof = (e, rule) => {
+const proof1 = (e, rule) => {
   EXACT = null;
   if (rule.evidence === 'permit_issued') { EXACT = e.issued ? String(e.issued).slice(0, 10) : null; return e.issued ? `permit issued ${usDate(e.issued)}` : null; }
   if (rule.evidence === 'co') { EXACT = e.co ? String(e.co).slice(0, 10) : null; return e.co ? `CO ${usDate(e.co)}` : null; }
@@ -68,10 +68,13 @@ const proof = (e, rule) => {
   // Match on the inspection name without the county's suffix (Marion: 'Rough Plumbing - 1 & 2 Residential Family').
   const base = (t) => String(t || '').replace(/\s+-\s+(1\s*&\s*2|res\b).*$/i, '').trim();
   const p = e.passed.filter((x) => rule.inspRe.test(base(x.type)) || rule.inspRe.test(x.type)).sort((a, b) => String(a.at).localeCompare(String(b.at)))[0];
-  EXACT = p && /^inspection - /i.test(String(rule.title || '')) ? p.exact || null : null;
+  EXACT = p && (rule.exact || /^inspection - /i.test(String(rule.title || ''))) ? p.exact || null : null;
   return p ? `${p.type.replace(/ - 1 ?& ?2.*$/, '')} passed ${usDate(p.at)}` : null;
 };
 
+// An item may match several rules (e.g. 'HVAC - Trims': rough mechanical, then final mechanical): the first rule
+// whose evidence exists wins (with its exact date).
+const proof = (e, { title }) => { for (const r of MAP.filter((x) => x.itemRe.test(title))) { const w = proof1(e, { ...r, title }); if (w) return w; } EXACT = null; return null; };
 const { browser, page, loggedIn } = await openBuildertrend();
 if (!loggedIn) { console.error('Buildertrend session expired — nothing marked'); await browser.close(); process.exit(0); }
 // The page's own list call (and an /apix/ call for its headers).

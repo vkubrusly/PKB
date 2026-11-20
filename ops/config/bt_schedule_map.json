@@ -106,7 +106,7 @@
       "inspection": "insulation"
     },
     {
-      "item": "^inspection - flatwork pre-?pour",
+      "item": "^inspection - (flatwork pre-?pour|(residential )?driveway pre-?pour)",
       "inspection": "flatwork pre-?pour|driveway pre-?pour"
     },
     {
@@ -131,20 +131,20 @@
       "_comment": "Victor 11/19/26: after the Water Service inspection"
     },
     {
-      "item": "^inspection - final plumbing",
+      "item": "^inspection - (final plumbing|plumbing final)",
       "inspection": "final plumbing|plumbing final"
     },
     {
-      "item": "^inspection - final electrical",
+      "item": "^inspection - (final electrical|electrical final)",
       "inspection": "final electrical|electrical final"
     },
     {
-      "item": "^inspection - final mechanical",
+      "item": "^inspection - (final mechanical|mechanical final)",
       "inspection": "final mechanical|mechanical final"
     },
     {
-      "item": "^inspection - oce driveway final",
-      "inspection": "driveway final"
+      "item": "^inspection - (oce )?(driveway final|final)",
+      "inspection": "driveway final|oce final"
     },
     {
       "item": "^inspection - final structural",
@@ -224,7 +224,8 @@
     },
     {
       "item": "^driveway formwork$",
-      "inspection": "driveway form"
+      "inspection": "driveway form|flatwork pre-?pour|driveway pre-?pour",
+      "_comment": "Victor 11/20/26: OCE form-up / flatwork pre-pour / driveway pre-pour approved → Driveway formwork (planned date kept)"
     },
     {
       "item": "^driveway pouring$",
@@ -236,11 +237,15 @@
     },
     {
       "item": "^co$",
-      "evidence": "co"
+      "inspection": "final structural|building final",
+      "exact": true,
+      "_comment": "Victor 11/20/26: the CO is issued the day the Final Structural passes → complete, Start = that day"
     },
     {
       "item": "^co issued$",
-      "evidence": "co"
+      "inspection": "final structural|building final",
+      "exact": true,
+      "_comment": "Victor 11/20/26: the CO is issued the day the Final Structural passes → complete, Start = that day"
     },
     {
       "item": "^1st draw$",
@@ -273,6 +278,36 @@
       "stage": 6
     },
     {
+      "item": "^hvac",
+      "inspection": "final mechanical|mechanical final",
+      "_comment": "Victor 11/20/26: HVAC items after Final Mechanical (completed on the planned date)"
+    },
+    {
+      "item": "^electrical",
+      "inspection": "final electrical|electrical final",
+      "_comment": "Victor 11/20/26: Electrical items after Final Electrical (completed on the planned date)"
+    },
+    {
+      "item": "^power connection$",
+      "inspection": "final electrical|electrical final",
+      "_comment": "Victor 11/20/26: Electrical items after Final Electrical (completed on the planned date)"
+    },
+    {
+      "item": "^plumbing",
+      "inspection": "final plumbing|plumbing final",
+      "_comment": "Victor 11/20/26: Plumbing items after Final Plumbing (completed on the planned date)"
+    },
+    {
+      "item": "^foundation - plumbing",
+      "inspection": "final plumbing|plumbing final",
+      "_comment": "Victor 11/20/26: Plumbing items after Final Plumbing (completed on the planned date)"
+    },
+    {
+      "item": "^(landscaping|irrigation|painting ?- ?exterior|soffit|final grading|driveway|bollard|stucco|roofing|shingles|install roof|windows|install windows|exterior|garage door|install siding|house wrap|flatwork|fences|gutters?)",
+      "inspection": "driveway final|oce final",
+      "_comment": "Victor 11/20/26: exterior items after the OCE / driveway final (completed on the planned date)"
+    },
+    {
       "item": "^inspection - ",
       "evidence": "same_inspection",
       "_comment": "fallback: any other 'Inspection - X' item (e.g. the Citrus template: 'Inspection - Pre Power', 'Inspection - Building Final') is marked when a county inspection with the same name passed (text before ' - 1 & 2…', case and punctuation ignored)"
@@ -280,5 +315,6 @@
   ],
   "_comment_2026_11_18": "New 85-item PKB template (Victor, 11/18/26): every 'Inspection - X' item is marked from the matching PASSED county inspection; a work item is marked only when a later inspection proves it was done (e.g. the formwork, rebars and pad by the foundation pre-pour). Not marked: the draws (2nd–6th Draw), windows/doors, roofing (shingles), stucco, drywall, painting, finishes, upgrades, connections, clean-up, landscaping, DEP letter.",
   "_comment_draws": "Draw items (Victor, 11/19/26): 'Nth Draw' is marked complete when the QuickBooks invoice for that stage exists (ops.qbo_draws_core billed_stages: the installment named in the invoice message; a 1st with only the address and a two-stage invoice are recognised).",
-  "_comment_not_marked": "Victor, 11/19/26: Windows and exterior doors ← Framing inspection (Citrus: Frame); Stucco - Grading and Stucco - Lath ← Wire Lath (Citrus: Building Lath Nailing)."
+  "_comment_not_marked": "Victor, 11/19/26: Windows and exterior doors ← Framing inspection (Citrus: Frame); Stucco - Grading and Stucco - Lath ← Wire Lath (Citrus: Building Lath Nailing).",
+  "_comment_2026_11_20": "Victor 11/20/26: an item may match several rules; the first one with evidence wins. Inspection items get the inspection day as Start; the CO gets the Final Structural day; every other item is completed keeping its planned date."
 }
