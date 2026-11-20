@@ -167,6 +167,7 @@ jobs:
           node scripts/build_seed.mjs --parts
           node scripts/apply_seed.mjs
           node scripts/permit_office.mjs
+          node rules/county_address.mjs || echo "::warning::county_address failed"   # TBD addresses ← county parcel address
 
       # Buildertrend "Permit number" for jobs whose permit PKB Ops knows but Buildertrend does not
       # (never overwrites a typed number). Writes to Buildertrend: only when OPS_BT_POST is 'true'.

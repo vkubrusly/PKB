@@ -19,6 +19,15 @@ import { sql, q, DRY, orgId, usDate } from './lib.mjs';
 import { serviceKey, downloadObject } from '../scripts/sb.mjs';
 import { sendEmail } from '../notify/email.mjs';
 
+// Cost code of a vendor's bills: config/vendor_bills.json, else the one given in an earlier answer for this vendor.
+const BILLS_CFG = JSON.parse(readFileSync(new URL('../config/vendor_bills.json', import.meta.url), 'utf8'));
+export async function vendorCostCode(org, vendor) {
+  const c = BILLS_CFG.cost_codes[String(vendor || '').toLowerCase()];
+  if (c) return c;
+  const r = await sql(`select cost_code from ops.vendor_invoices where org_id = ${q(org)} and lower(vendor) = lower(${q(vendor)}) and cost_code is not null order by answered_at desc nulls last limit 1`);
+  return r[0]?.cost_code || null;
+}
+
 const REF = process.env.SUPABASE_PROJECT_REF || 'fvjknahpmihueyeasgbx';
 const BUCKET = 'ops-invoices';
 const REVIEW_TO = ['camila@pkbhomes.com'], REVIEW_CC = ['victor@pkbhomes.com'];   // Victor, 11/19
@@ -130,6 +139,7 @@ for (const v of todo) {
       continue;
     }
     const a = allocate(x, jobs);
+    if (!(await vendorCostCode(org, x.vendor))) a.issues.push(`fornecedor ${x.vendor || '?'} ainda não tem cost code definido — qual cost code usar nas bills? (responda com o código, ex.: "10.20.02 Portable toilets")`);
     const dup = (await sql(`select id from ops.vendor_invoices where org_id = ${q(org)} and id <> ${q(v.id)} and lower(vendor) = lower(${q(x.vendor)})
       and invoice_number = ${q(x.invoice_number)} and status in ('ready', 'creating', 'created', 'needs_review')`)).length > 0;
     const status = dup ? 'duplicate' : a.issues.length ? 'needs_review' : 'ready';
@@ -191,6 +201,8 @@ for (const e of answers) {
   const left = await sql(`select address, bill_amount from ops.vendor_invoice_lines where invoice_id = ${q(v.id)} and not excluded and not general and job_id is null`);
   if (left.length) await sql(`update ops.vendor_invoices set status = 'needs_review', question_sent_at = null,
       issues = array[${left.map((l) => q(`${l.address}: ainda sem obra (${money(l.bill_amount)}) — diga a obra ou "tira essa"`)).join(',')}] where id = ${q(v.id)}`);
+  else if (!a.cost_code && !(await vendorCostCode(org, v.vendor))) await sql(`update ops.vendor_invoices set status = 'needs_review', question_sent_at = null,
+      issues = array[${q(`fornecedor ${v.vendor} ainda não tem cost code definido — qual cost code usar nas bills?`)}] where id = ${q(v.id)}`);
   else await sql(`update ops.vendor_invoices set status = 'ready', issues = '{}' where id = ${q(v.id)}`);
 }
 

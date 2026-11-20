@@ -17,6 +17,7 @@ import { join } from 'node:path';
 import { sql, q, orgId } from './lib.mjs';
 import { downloadObject } from '../scripts/sb.mjs';
 import { openBuildertrend } from '../collectors/buildertrend/session.mjs';
+import { vendorCostCode } from './vendor_invoices.mjs';
 
 const POST = process.argv.includes('--post');
 const arg = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
@@ -65,7 +66,7 @@ let made = 0, failed = 0;
 for (const l of lines) {
   const btJob = l.general ? CFG.general_bt_job : l.bt_job_id;
   const tag = `${l.vendor} #${l.invoice_number} · ${l.general ? 'GERAL' : l.job_number} · ${money(l.bill_amount)}`;
-  const code = l.inv_cost_code || CFG.cost_codes[String(l.vendor || '').toLowerCase()];
+  const code = l.inv_cost_code || await vendorCostCode(org, l.vendor);
   const fail = async (msg) => { failed++; console.error(`FAILED ${tag}: ${msg}`); if (POST) await sql(`update ops.vendor_invoice_lines set bt_status = 'error', bt_error = ${q(msg.slice(0, 500))} where id = ${q(l.id)}`); };
   if (!btJob) { await fail('no Buildertrend job'); continue; }
   if (!code) { await fail(`no cost code for vendor "${l.vendor}" (config/vendor_bills.json or Camila's answer)`); continue; }
