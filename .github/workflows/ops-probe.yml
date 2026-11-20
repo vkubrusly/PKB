@@ -18,7 +18,7 @@ jobs:
   probe:
     permissions: { contents: read, actions: read }
     runs-on: ubuntu-24.04   # pinned: ubuntu-latest moves to Ubuntu 26 on 2026-10-19 (Playwright deps)
-    timeout-minutes: 20
+    timeout-minutes: 340
     defaults: { run: { working-directory: ops } }
     steps:
       - uses: actions/checkout@v4

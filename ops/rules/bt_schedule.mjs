@@ -20,6 +20,8 @@ const SHIFT_REASON = 'Data real (inspeção/fatura/Daily Log) – PKB Ops';
 const arg = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
 const POST = process.env.OPS_BT_POST === 'true' || process.argv.includes('--post');
 const ONLY = arg('--job'), LIMIT = Number(arg('--limit') || 0);
+// --jobs 0001,0002: several houses; --no-logs: dates only from inspections / CO / permit / invoices (not Daily Logs).
+const JOBS = (arg('--jobs') || '').split(',').map((x) => x.trim()).filter(Boolean), NO_LOGS = process.argv.includes('--no-logs');
 const q = (v) => (v == null ? 'null' : `'${String(v).replace(/'/g, "''")}'`);
 const MAP = JSON.parse(readFileSync(new URL('../config/bt_schedule_map.json', import.meta.url), 'utf8')).rules.map((r) => ({ ...r, itemRe: new RegExp(r.item, 'i'), inspRe: r.inspection ? new RegExp(r.inspection, 'i') : null }));
 
@@ -27,7 +29,7 @@ const MAP = JSON.parse(readFileSync(new URL('../config/bt_schedule_map.json', im
 const rows = await sql(`select j.job_number, j.bt_job_id, j.co_at, c.issued_at, i.type, coalesce(i.actual_at, i.scheduled_at, i.requested_at) at, coalesce(i.actual_at, i.scheduled_at)::date::text exact
   from ops.jobs j join ops.permit_cases c on c.job_id = j.id and c.kind = 'building'
   left join ops.inspections i on i.permit_case_id = c.id and i.passed
-  where j.bt_job_id is not null ${ONLY ? `and j.job_number = ${q(ONLY)}` : ''}`);
+  where j.bt_job_id is not null ${ONLY ? `and j.job_number = ${q(ONLY)}` : ''} ${JOBS.length ? `and j.job_number in (${JOBS.map(q).join(',')})` : ''}`);
 const ev = {};
 for (const r of rows) {
   const e = (ev[r.bt_job_id] ??= { job: r.job_number, issued: r.issued_at, co: r.co_at, passed: [] });
@@ -135,7 +137,7 @@ if (process.argv.includes('--fix-dates')) {
   await noNotify(page, (m) => console.log('  ' + m));
   const fmtBt = (iso) => new Date(iso + 'T12:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric' });
   const exactFor = (e, it) => { const title = String(it.title || '').trim(); const rule = MAP.find((r) => r.itemRe.test(title)); EXACT = null;
-    let why = rule ? proof(e, { ...rule, title }) : null; if (!why || !EXACT) why = fromLog(e, title); return why && EXACT ? { date: EXACT, why } : null; };
+    let why = rule ? proof(e, { ...rule, title }) : null; if ((!why || !EXACT) && !NO_LOGS) why = fromLog(e, title); return why && EXACT ? { date: EXACT, why } : null; };
   let changed = 0, failed = 0;
   for (const bt of jobIds) {
     const e = ev[bt]; if (!e) continue;
