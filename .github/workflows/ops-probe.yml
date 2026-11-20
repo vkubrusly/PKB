@@ -8,7 +8,7 @@ on:
       probe:
         description: 'Probe to run'
         type: choice
-        options: [fasttrack, fasttrack-collect, fasttrack-reports, lake, buildertrend, buildertrend-schedule, buildertrend-schedule-api, buildertrend-schedule-item, buildertrend-schedule-date-test, bt-schedule-rule, buildertrend-warranty, buildertrend-warranty-api, bt-warranty-rule, bt-bills-rule, buildertrend-bill-read, buildertrend-bill-delete, buildertrend-bills-list, buildertrend-bills-index, bt-jobs-history, buildertrend-lead-find, buildertrend-jobs-find, buildertrend-dailylog-check, buildertrend-bills, buildertrend-bill-form, buildertrend-bill-split, buildertrend-bill-api, buildertrend-bill-new, projectdox]
+        options: [fasttrack, fasttrack-collect, fasttrack-reports, lake, buildertrend, buildertrend-schedule, buildertrend-schedule-api, buildertrend-schedule-item, buildertrend-schedule-date-test, bt-schedule-rule, buildertrend-warranty, buildertrend-warranty-api, bt-warranty-rule, bt-bills-rule, buildertrend-bill-read, buildertrend-bill-delete, buildertrend-bills-list, buildertrend-bills-index, bt-jobs-history, buildertrend-lead-find, buildertrend-jobs-find, buildertrend-dailylog-check, buildertrend-bills, buildertrend-bill-form, buildertrend-bill-split, buildertrend-bill-api, buildertrend-bill-new, projectdox, bt-bill-create, buildertrend-page-calls, buildertrend-bill-open]
         default: fasttrack
       arg:
         description: 'Optional argument (e.g. permit number)'
@@ -71,8 +71,14 @@ jobs:
             node collectors/buildertrend/schedule_item_probe.mjs ${{ inputs.arg }}
           elif [ "${{ inputs.probe }}" = buildertrend-schedule-api ]; then
             node collectors/buildertrend/schedule_api_probe.mjs ${{ inputs.arg }}
+          elif [ "${{ inputs.probe }}" = buildertrend-page-calls ]; then
+            node collectors/buildertrend/page_calls_probe.mjs ${{ inputs.arg }}
+          elif [ "${{ inputs.probe }}" = buildertrend-bill-open ]; then
+            node collectors/buildertrend/bill_open_probe.mjs ${{ inputs.arg }}
+          elif [ "${{ inputs.probe }}" = bt-bill-create ]; then
+            node collectors/buildertrend/bill_create.mjs ${{ inputs.arg }}
           elif [ "${{ inputs.probe }}" = buildertrend-bill-new ]; then
-            node collectors/buildertrend/bill_new_probe.mjs 43923068 "RC Site" "Portable"
+            if [ -n "${{ inputs.arg }}" ]; then node collectors/buildertrend/bill_new_probe.mjs ${{ inputs.arg }}; else node collectors/buildertrend/bill_new_probe.mjs 43923068 "RC Site" "Portable"; fi
           elif [ "${{ inputs.probe }}" = buildertrend-bill-api ]; then
             node collectors/buildertrend/bill_api_code.mjs ${{ inputs.arg }}
           elif [ "${{ inputs.probe }}" = buildertrend-bill-split ]; then
