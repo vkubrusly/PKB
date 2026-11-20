@@ -5,8 +5,8 @@
 //   node collectors/buildertrend/bills_index.mjs [word …]
 import { openBuildertrend } from './session.mjs';
 
-// statuses: values of grid filter "0" (the status tab) to read — see --discover.
-export async function billsIndex(page, { log = () => {}, statuses = (process.env.BT_BILL_STATUSES || '9').split(','), discover = false } = {}) {
+// statuses: values of grid filter "0" (status tab). "" = every bill (2,744 on 11/20/26); 0 draft? 1 ready, 2 paid, 3 other, 9 the default tab — see --discover.
+export async function billsIndex(page, { log = () => {}, statuses = (process.env.BT_BILL_STATUSES ?? '').split(','), discover = false } = {}) {
   let req = null;
   const h = (r) => { if (!req && /\/api\/v1\/bills\/grid/i.test(r.url()) && r.method() !== 'GET') req = { url: r.url(), headers: r.headers(), body: r.postData(), method: r.method() }; };
   page.on('request', h);
@@ -47,7 +47,7 @@ if (process.argv[1]?.endsWith('bills_index.mjs')) {
   const words = process.argv.slice(2).filter((a) => !a.startsWith('--')).map((w) => w.toLowerCase());
   const { browser, page, loggedIn } = await openBuildertrend();
   if (!loggedIn) { console.error('session expired'); await browser.close(); process.exit(1); }
-  const all = await billsIndex(page, { log: console.log, discover: process.argv.includes('--discover'), statuses: (process.argv.find((a) => a.startsWith('--statuses='))?.slice(11) || process.env.BT_BILL_STATUSES || '9').split(',') });
+  const all = await billsIndex(page, { log: console.log, discover: process.argv.includes('--discover'), statuses: (process.argv.find((a) => a.startsWith('--statuses='))?.slice(11) ?? process.env.BT_BILL_STATUSES ?? '').split(',') });
   console.log(`bills: ${all.length} · distinct ids ${new Set(all.map((b) => b.id)).size}`);
   for (const b of all.filter((b) => words.some((w) => `${b.number} ${b.title} ${b.payTo}`.toLowerCase().includes(w)))) console.log(JSON.stringify(b));
   await browser.close();
