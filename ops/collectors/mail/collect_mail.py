@@ -31,6 +31,7 @@ REF = os.environ.get('SUPABASE_PROJECT_REF', 'fvjknahpmihueyeasgbx')
 ORG = os.environ.get('OPS_ORG_NAME', 'PKB Homes')
 DRY = '--dry-run' in sys.argv
 ALL = '--all' in sys.argv
+REFETCH = '--refetch-invoices' in sys.argv
 BODY_MAX = 20000
 BATCH = 40
 
@@ -264,7 +265,12 @@ def main():
             print(f'IMAP connect failed ({e}), retrying')
             time.sleep(10 * (k + 1))
     m.select('INBOX', readonly=DRY)
-    typ, data = m.search(None, 'ALL' if ALL else 'UNSEEN')
+    if REFETCH:
+        # One-off: e-mails forwarded by invoice@ since --since (DD-Mon-YYYY), read or not, to store their files.
+        since = sys.argv[sys.argv.index('--since') + 1] if '--since' in sys.argv else '18-Nov-2026'
+        typ, data = m.search(None, 'FROM', '"invoice@pkbhomes.com"', 'SINCE', since)
+    else:
+        typ, data = m.search(None, 'ALL' if ALL else 'UNSEEN')
     ids = data[0].split() if data and data[0] else []
     print(f"{'all' if ALL else 'unread'} messages: {len(ids)}")
 
@@ -282,7 +288,8 @@ def main():
                 f"(select id from ops.jobs where org_id = {q(org_id)} and job_number = {q(r['job_number'])})" if r['job_number'] else 'null',
                 q(json.dumps(r['parsed'])) + '::jsonb']) + ')')
         stmt = ('insert into ops.inbound_emails (org_id, message_id, received_at, from_addr, from_name, to_addrs, cc_addrs, subject, body_text, category, job_number, job_id, parsed) values '
-                + ','.join(values) + ' on conflict (org_id, message_id) do nothing;')
+                + ','.join(values) + ' on conflict (org_id, message_id) do update set category = excluded.category, parsed = excluded.parsed'
+                ' where ops.inbound_emails.category = \'other\' and excluded.category = \'vendor_invoice\';')   # --refetch-invoices: an invoice stored as "other" before the sender rule
         # Buildertrend activity becomes events (dedupe on the message id).
         ev = [r for r in rows if r['category'] in ('bt_invoice', 'bt_invoice_paid', 'bt_daily_log', 'bt_bill') and r['job_number'] and r['received_at']]
         if ev:
@@ -313,7 +320,8 @@ def main():
         if re.search(r'invoice para revisar', subject or '', re.I) and not addr.lower().startswith('botpkb'):
             # Camila's / Victor's answer to an "Invoice para revisar" question (rules/vendor_invoices.mjs reads it).
             category, parsed = 'invoice_answer', {}
-        elif to_cc & INVOICE_BOXES and category not in ('bt_invoice', 'bt_invoice_paid', 'bt_daily_log', 'bt_bill', 'bt_other'):
+        elif (to_cc & INVOICE_BOXES or addr.lower() in INVOICE_BOXES) and category not in ('bt_invoice', 'bt_invoice_paid', 'bt_daily_log', 'bt_bill', 'bt_other'):
+            # invoice@ forwards to the bot mailbox with itself as the sender (11/20/26), or the vendor wrote to it.
             # A vendor's invoice: keep its files (the bill is built from them) and the links of the body
             # (invoices sent as a link only).
             category = 'vendor_invoice'

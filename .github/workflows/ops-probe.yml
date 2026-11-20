@@ -8,7 +8,7 @@ on:
       probe:
         description: 'Probe to run'
         type: choice
-        options: [fasttrack, fasttrack-collect, fasttrack-reports, lake, buildertrend, buildertrend-schedule, buildertrend-schedule-api, buildertrend-schedule-item, buildertrend-schedule-date-test, bt-schedule-rule, buildertrend-warranty, buildertrend-warranty-api, bt-warranty-rule, buildertrend-lead-find, buildertrend-jobs-find, buildertrend-dailylog-check, buildertrend-bills, buildertrend-bill-form, buildertrend-bill-split, buildertrend-bill-api, buildertrend-bill-new, bt-bill-create, buildertrend-page-calls, buildertrend-bills-list, buildertrend-bill-open, projectdox]
+        options: [fasttrack, fasttrack-collect, fasttrack-reports, lake, buildertrend, buildertrend-schedule, buildertrend-schedule-api, buildertrend-schedule-item, buildertrend-schedule-date-test, bt-schedule-rule, buildertrend-warranty, buildertrend-warranty-api, bt-warranty-rule, bt-bills-rule, buildertrend-bill-read, buildertrend-bill-delete, buildertrend-bills-list, bt-jobs-history, buildertrend-lead-find, buildertrend-jobs-find, buildertrend-dailylog-check, buildertrend-bills, buildertrend-bill-form, buildertrend-bill-split, buildertrend-bill-api, buildertrend-bill-new, bt-bill-create, buildertrend-page-calls, buildertrend-bill-open, projectdox]
         default: fasttrack
       arg:
         description: 'Optional argument (e.g. permit number)'
@@ -16,6 +16,7 @@ on:
 
 jobs:
   probe:
+    permissions: { contents: read, actions: read }
     runs-on: ubuntu-24.04   # pinned: ubuntu-latest moves to Ubuntu 26 on 2026-10-19 (Playwright deps)
     timeout-minutes: 20
     defaults: { run: { working-directory: ops } }
@@ -35,7 +36,7 @@ jobs:
       - name: Run probe
         env:
           BT_COOKIES_FILE: ${{ github.workspace }}/bt_cookies.json
-          SUPABASE_ACCESS_TOKEN: ${{ (inputs.probe == 'bt-schedule-rule' || inputs.probe == 'bt-warranty-rule') && secrets.SUPABASE_ACCESS_TOKEN || '' }}
+          SUPABASE_ACCESS_TOKEN: ${{ (inputs.probe == 'bt-schedule-rule' || inputs.probe == 'bt-warranty-rule' || inputs.probe == 'bt-bills-rule' || inputs.probe == 'buildertrend-bill-delete') && secrets.SUPABASE_ACCESS_TOKEN || '' }}
           ORANGE_PORTAL_USER: ${{ secrets.ORANGE_PORTAL_USER }}
           ORANGE_PORTAL_PASS: ${{ secrets.ORANGE_PORTAL_PASS }}
           ORANGE_PORTAL_USER_2: ${{ secrets.ORANGE_PORTAL_USER_2 }}
@@ -51,6 +52,17 @@ jobs:
           elif [ "${{ inputs.probe }}" = bt-schedule-rule ]; then
             # rules/bt_schedule.mjs — dry run unless the argument has --post (e.g. "--job 0031 --limit 1 --post")
             node rules/bt_schedule.mjs ${{ inputs.arg }}
+          elif [ "${{ inputs.probe }}" = bt-jobs-history ]; then
+            GH_TOKEN=${{ github.token }} python3 scripts/bt_jobs_history.py ${{ inputs.arg }}
+          elif [ "${{ inputs.probe }}" = buildertrend-bills-list ]; then
+            node collectors/buildertrend/bills_list.mjs ${{ inputs.arg }}
+          elif [ "${{ inputs.probe }}" = buildertrend-bill-delete ]; then
+            node collectors/buildertrend/bill_delete.mjs ${{ inputs.arg }}
+          elif [ "${{ inputs.probe }}" = buildertrend-bill-read ]; then
+            node collectors/buildertrend/bill_read.mjs ${{ inputs.arg }}
+          elif [ "${{ inputs.probe }}" = bt-bills-rule ]; then
+            # rules/bt_bills.mjs — dry run (fills one bill form, does not save) unless the argument has --post
+            node rules/bt_bills.mjs ${{ inputs.arg }}
           elif [ "${{ inputs.probe }}" = buildertrend-schedule-date-test ]; then
             node collectors/buildertrend/schedule_date_test.mjs ${{ inputs.arg }}
           elif [ "${{ inputs.probe }}" = buildertrend-schedule-item ]; then
@@ -59,8 +71,6 @@ jobs:
             node collectors/buildertrend/schedule_api_probe.mjs ${{ inputs.arg }}
           elif [ "${{ inputs.probe }}" = buildertrend-page-calls ]; then
             node collectors/buildertrend/page_calls_probe.mjs ${{ inputs.arg }}
-          elif [ "${{ inputs.probe }}" = buildertrend-bills-list ]; then
-            node collectors/buildertrend/bills_list.mjs ${{ inputs.arg }}
           elif [ "${{ inputs.probe }}" = buildertrend-bill-open ]; then
             node collectors/buildertrend/bill_open_probe.mjs ${{ inputs.arg }}
           elif [ "${{ inputs.probe }}" = bt-bill-create ]; then
@@ -78,7 +88,7 @@ jobs:
           elif [ "${{ inputs.probe }}" = buildertrend-dailylog-check ]; then
             node collectors/buildertrend/daily_log_check.mjs 46506095 "PRIME - CT - Florida - 9370 N Jourden Dr" 43923049 "0003 - OC - Sunny Farm - 13107 SW 70TH LN"
           elif [ "${{ inputs.probe }}" = buildertrend-jobs-find ]; then
-            node collectors/buildertrend/jobs_find.mjs Jourden Dandee Overlook Triana Medici Antioch Shorewood "130th Ln" Rosevear "Fort Myers" Galaxie "Spring Dr"
+            node collectors/buildertrend/jobs_find.mjs ${{ inputs.arg || 'Jourden Dandee Overlook Triana Medici Antioch Shorewood' }}
           elif [ "${{ inputs.probe }}" = buildertrend-lead-find ]; then
             node collectors/buildertrend/lead_find.mjs "Ubinha" "Jorge Diaz"
           elif [ "${{ inputs.probe }}" = bt-warranty-rule ]; then

@@ -17,6 +17,10 @@ on:
         description: 'Read every message in the inbox (not only unread)'
         type: boolean
         default: false
+      refetch_invoices:
+        description: 'Read again the e-mails forwarded by invoice@ since 11/18 (invoices stored as "other" before 11/20)'
+        type: boolean
+        default: false
 
 concurrency: { group: ops-mail, cancel-in-progress: false }
 
@@ -34,7 +38,7 @@ jobs:
           BOT_EMAIL: ${{ secrets.BOT_EMAIL || 'botpkbhomes@gmail.com' }}
           BOT_EMAIL_PASSWORD: ${{ secrets.BOT_EMAIL_PASSWORD }}
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        run: node scripts/collector_run.mjs mail -- python3 collectors/mail/collect_mail.py ${{ inputs.backfill && '--all' || '' }}
+        run: node scripts/collector_run.mjs mail -- python3 collectors/mail/collect_mail.py ${{ inputs.backfill && '--all' || '' }} ${{ inputs.refetch_invoices && '--refetch-invoices' || '' }}
 
       - run: npm ci --omit=optional
         env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' }

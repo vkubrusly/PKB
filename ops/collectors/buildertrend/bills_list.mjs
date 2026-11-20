@@ -1,24 +1,33 @@
 #!/usr/bin/env node
-// bills_list.mjs — READ-ONLY: list a job's bills of every status (replays the Bills page grid request with the
-// status filter cleared) and print the ones whose number/title matches a text. Nothing is changed.
-//   BT_COOKIES_FILE=… node collectors/buildertrend/bills_list.mjs <jobId> [match text]
+// bills_list.mjs — READ-ONLY: the bills of a job as Buildertrend's Bills list loads them (grid JSON), filtered by
+// a text (e.g. an invoice number). Prints id, bill #, title, amount, status. Changes nothing.
+//   node collectors/buildertrend/bills_list.mjs <text> <jobId> [jobId…]
 import { openBuildertrend } from './session.mjs';
-
-const [jobId, match = ''] = process.argv.slice(2);
+const [text, ...jobIds] = process.argv.slice(2);
 const { browser, page, loggedIn } = await openBuildertrend();
 if (!loggedIn) { console.error('session expired'); await browser.close(); process.exit(1); }
-let req = null;
-page.on('request', (r) => { if (!req && /\/api\/v1\/bills\/grid/i.test(r.url())) req = { url: r.url(), headers: r.headers(), body: r.postData() }; });
-await page.goto(`https://buildertrend.net/app/Bills?jobId=${jobId}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
-for (let i = 0; i < 90 && !req; i++) await page.waitForTimeout(500);
-if (!req) { console.log('grid request not seen'); await browser.close(); process.exit(1); }
-const body = JSON.parse(req.body); const f = JSON.parse(body.filters); f['0'] = ''; body.filters = JSON.stringify(f);
-body.pagingData = { ...body.pagingData, pageSize: 200, lastRow: 200, totalRowsAllPages: 200 };
-const headers = Object.fromEntries(Object.entries(req.headers).filter(([k]) => !/^(content-length|cookie|host|:)/i.test(k)));
-const res = await page.request.post(req.url, { headers, data: JSON.stringify(body) });
-const rows = (await res.json())?.data?.data || [];
-const out = rows.filter((r) => !match || JSON.stringify([r.billNumberLink?.title, r.billTitleLink?.title]).toLowerCase().includes(match.toLowerCase()))
-  .map((r) => ({ id: r.id, number: r.billNumberLink?.title, title: r.billTitleLink?.title, payTo: r.payTo?.name || r.payTo, amount: r.paymentAmount?.value, paid: r.amountPaid?.value ?? r.amountPaid, datePaid: r.datePaid, invoiced: r.invoicedDate, costCodes: r.costCodes, accounting: r.purchaseOrderPaymentAccountingStatus, source: r.billSource, created: r.createdDate }));
-console.log(`bills of every status: ${rows.length} · matching "${match}": ${out.length}`);
-console.log('ROWS B64:' + Buffer.from(JSON.stringify(out, null, 1)).toString('base64'));
+for (const jobId of jobIds) {
+  const grids = [];
+  const h = async (r) => { if (/bills\/grid|Bills\/grid|bills\/list/i.test(r.url()) && /json/.test(r.headers()['content-type'] || '')) grids.push(await r.text().catch(() => '')); };
+  page.on('response', h);
+  await page.goto(`https://buildertrend.net/app/Bills?jobId=${jobId}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+  await page.waitForTimeout(15000);
+  page.off('response', h);
+  console.log(`===== job ${jobId}: ${grids.length} grid answer(s)`);
+  const seen = new Set();
+  for (const g of grids) {
+    let j; try { j = JSON.parse(g); } catch { continue; }
+    const rows = j?.data?.rows || j?.rows || j?.data?.records || j?.records || j?.data || [];
+    for (const r of Array.isArray(rows) ? rows : []) {
+      const s = JSON.stringify(r);
+      if (!s.toLowerCase().includes(String(text).toLowerCase())) continue;
+      const id = r.id ?? r.billId ?? r.Id;
+      if (seen.has(id)) continue; seen.add(id);
+      console.log(s.slice(0, 700));
+    }
+    if (!seen.size) console.log(`(no row with "${text}"; sample) ${g.slice(0, 600)}`);
+  }
+  const txt = (await page.innerText('body').catch(() => '')).split('\n').filter((l) => l.toLowerCase().includes(String(text).toLowerCase()));
+  console.log(`page lines with "${text}": ${txt.length}\n${txt.slice(0, 10).join('\n')}`);
+}
 await browser.close();
