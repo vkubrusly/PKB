@@ -52,7 +52,7 @@ const logDone = {};
 // a draw → the invoice date; the permit/CO → their dates; a Daily Log → the log date. Work items proven only by a
 // LATER inspection have no exact date (the work was done before it) → null.
 let EXACT = null;
-const fromLog = (e, title) => { for (const it of itemsFor(title)) { const d = logDone[e.job]?.get(it.item); if (d) { EXACT = String(d.date).slice(0, 10); return `Daily Log ${usDate(d.date)}${d.by ? ` (${d.by})` : ''}: "${d.text}"`; } } return null; };
+const fromLog = (e, title) => { for (const it of itemsFor(title)) { const d = logDone[e.job]?.get(it.item); if (d) { EXACT = d.exact || null; return `Daily Log ${usDate(d.date)}${d.by ? ` (${d.by})` : ''}: "${d.text}"`; } } return null; };
 const jobIds = Object.keys(ev).map(Number);
 if (!jobIds.length) { console.log('no jobs with a Buildertrend id and a building permit'); process.exit(0); }
 const proof1 = (e, rule) => {
