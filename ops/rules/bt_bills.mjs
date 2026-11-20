@@ -33,8 +33,8 @@ if (POST) await sql(`update ops.vendor_invoice_lines set bt_status = null where 
 const lines = await sql(`select l.*, v.vendor, v.invoice_number, v.invoice_date, v.due_date, v.total, v.file_path, v.file_name, v.cost_code inv_cost_code,
     j.bt_job_id, (select count(*) from ops.vendor_invoice_lines x where x.invoice_id = v.id and not x.excluded) n_lines
   from ops.vendor_invoice_lines l join ops.vendor_invoices v on v.id = l.invoice_id left join ops.jobs j on j.id = l.job_id
-  where v.org_id = ${q(org)} and v.status in ('ready', 'creating') and not l.excluded and l.bt_bill_id is null
-    and l.bt_status is null
+  where v.org_id = ${q(org)} and not l.excluded
+    ${!POST && ONLY_INV ? '' : `and v.status in ('ready', 'creating') and l.bt_bill_id is null and l.bt_status is null`}   -- dry run of a named invoice: any line (form test, saves nothing)
     ${ONLY_INV ? `and v.invoice_number = ${q(ONLY_INV)}` : ''} ${ONLY_JOB ? `and l.job_number = ${q(ONLY_JOB)}` : ''}
   order by v.received_at, l.job_number nulls last limit ${LIMIT}`);
 if (!lines.length) { console.log('bt_bills: nothing ready'); process.exit(0); }
@@ -56,10 +56,20 @@ async function pick(id, text) {
   await opts.nth(k).click({ force: true }); await page.waitForTimeout(600);
   return all[k].replace(/\s+/g, ' ').trim();
 }
+// Dates: Buildertrend shows them as "Nov 16, 2026"; typed as MM/DD/YYYY they were left empty (bill 127431643,
+// 11/19). Type the displayed format, then check the field holds a date — a bill without its dates is not saved.
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 async function setDate(id, d) {
   if (!d) return;
+  const iso = String(d).slice(0, 10), [y, m, dd] = iso.split('-').map(Number);
   const box = page.locator(`[id="${id}"]`).first();
-  await box.click({ force: true }); await box.fill(mdy(d)); await page.keyboard.press('Enter'); await page.waitForTimeout(400);
+  for (const txt of [`${MON[m - 1]} ${dd}, ${y}`, mdy(iso)]) {
+    await box.click({ force: true }); await box.fill(''); await box.type(txt, { delay: 30 });
+    await page.keyboard.press('Enter'); await page.waitForTimeout(500);
+    const v = await box.inputValue().catch(() => '');
+    if (v && (v.includes(String(y)) || v.includes(String(y).slice(2)))) return;
+  }
+  throw new Error(`date field ${id} stayed empty (${iso})`);
 }
 
 let made = 0, failed = 0;
@@ -149,7 +159,8 @@ for (const l of lines) {
 
     const total = (await page.locator('text=/Total:/').locator('xpath=..').innerText().catch(() => '')).replace(/\s+/g, ' ');
     console.log(`${POST ? 'SAVING' : 'FILLED (dry run, not saved)'} ${tag} · job "${jobName.trim()}" · pay to ${payTo} · cost code ${cc} · ${total} · file attached`);
-    if (!POST) break;
+    const dates = await page.evaluate(() => ['invoiceDate', 'unifiedDeadlineRequest'].map((i) => document.getElementById(i)?.value));
+    if (!POST) { console.log(`dates on the form: invoice ${dates[0]} · due ${dates[1]}`); break; }
 
     await sql(`update ops.vendor_invoice_lines set bt_status = 'creating', bt_error = null where id = ${q(l.id)}; update ops.vendor_invoices set status = 'creating' where id = ${q(l.invoice_id)}`);
     let billId = null;
