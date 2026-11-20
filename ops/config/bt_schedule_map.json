@@ -143,7 +143,7 @@
       "inspection": "final mechanical|mechanical final"
     },
     {
-      "item": "^inspection - (oce )?(driveway final|final)",
+      "item": "^inspection - (oce driveway final|(residential )?driveway final|oce final)",
       "inspection": "driveway final|oce final"
     },
     {
