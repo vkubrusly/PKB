@@ -39,7 +39,8 @@ const numMatch = (n, text) => {
 
 for (const v of todo) {
   const n = alnum(v.invoice_number), vw = vendorWord(v.vendor);
-  if (!n) { console.log(`skip (no invoice number): ${v.vendor}`); continue; }
+  // No number to look for: cannot be checked here — the question to Camila says so.
+  if (!n) { console.log(`no invoice number, cannot look it up: ${v.vendor || '?'}`); if (!DRY) await sql(`update ops.vendor_invoices set bt_checked_at = now(), issues = array_append(issues, 'sem número de invoice: não deu para conferir se já está no Buildertrend') where id = ${q(v.id)}`); continue; }
   const found = bills.filter((b) => {
     if (!numMatch(n, `${b.number} ${b.title}`)) return false;
     // a number without letters (146, 7446) could belong to another vendor: the vendor must match too
