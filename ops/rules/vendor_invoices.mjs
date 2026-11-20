@@ -208,7 +208,8 @@ for (const e of answers) {
 
 // 4. One e-mail per invoice that needs a person (Camila, Cc Victor), with the file attached.
 const ask = await sql(`select v.*, coalesce((select json_agg(l order by l.job_number) from ops.vendor_invoice_lines l where l.invoice_id = v.id), '[]') lines
-  from ops.vendor_invoices v where v.org_id = ${q(org)} and v.status in ('needs_review', 'duplicate', 'error') and v.question_sent_at is null order by v.received_at`);
+  from ops.vendor_invoices v where v.org_id = ${q(org)} and v.status in ('needs_review', 'duplicate', 'error') and v.question_sent_at is null
+    and (v.bt_checked_at is not null or v.status = 'error' or v.is_invoice is not true) order by v.received_at`);   // looked up in Buildertrend first (rules/bt_bill_check.mjs)
 for (const v of ask) {
   const subject = `Invoice para revisar — ${v.vendor || v.email_from || 'fornecedor?'}${v.invoice_number ? ` #${v.invoice_number}` : ''}${v.total != null ? ` · ${money(v.total)}` : ''}`;
   const text = `Camila,

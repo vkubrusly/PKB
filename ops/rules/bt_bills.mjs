@@ -34,7 +34,7 @@ const lines = await sql(`select l.*, v.vendor, v.invoice_number, v.invoice_date,
     j.bt_job_id, (select count(*) from ops.vendor_invoice_lines x where x.invoice_id = v.id and not x.excluded) n_lines
   from ops.vendor_invoice_lines l join ops.vendor_invoices v on v.id = l.invoice_id left join ops.jobs j on j.id = l.job_id
   where v.org_id = ${q(org)} and not l.excluded
-    ${!POST && ONLY_INV ? '' : `and v.status in ('ready', 'creating') and l.bt_bill_id is null and l.bt_status is null`}   -- dry run of a named invoice: any line (form test, saves nothing)
+    ${!POST && ONLY_INV ? '' : `and v.status in ('ready', 'creating') and v.bt_checked_at is not null and l.bt_bill_id is null and l.bt_status is null`}   -- dry run of a named invoice: any line (form test, saves nothing)
     ${ONLY_INV ? `and v.invoice_number = ${q(ONLY_INV)}` : ''} ${ONLY_JOB ? `and l.job_number = ${q(ONLY_JOB)}` : ''}
   order by v.received_at, l.job_number nulls last limit ${LIMIT}`);
 if (!lines.length) { console.log('bt_bills: nothing ready'); process.exit(0); }
