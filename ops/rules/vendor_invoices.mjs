@@ -20,6 +20,7 @@ import { serviceKey, downloadObject } from '../scripts/sb.mjs';
 import { sendEmail } from '../notify/email.mjs';
 
 // Cost code of a vendor's bills: config/vendor_bills.json, else the one given in an earlier answer for this vendor.
+const INVOICE_WORDS = /invoice|\binv[\s#-]?\d|\bbill\b|payment request|fatura|statement/i;
 const BILLS_CFG = JSON.parse(readFileSync(new URL('../config/vendor_bills.json', import.meta.url), 'utf8'));
 export async function vendorCostCode(org, vendor) {
   const c = BILLS_CFG.cost_codes[String(vendor || '').toLowerCase()];
@@ -112,8 +113,12 @@ for (const m of mails) {
   const files = m.parsed?.files || [];
   if (!files.length) {
     if (DRY) { console.log(`[dry run] e-mail without a file: ${m.subject}`); continue; }
-    await sql(`insert into ops.vendor_invoices (org_id, inbound_email_id, file_path, file_name, received_at, email_from, email_subject, status, issues)
-      values (${q(org)}, ${q(m.id)}, '(no file)', null, ${q(m.received_at)}, ${q(m.from_addr)}, ${q(m.subject)}, 'needs_review',
+    const subj = String(m.subject || '').replace(/^\s*(fw|fwd|re)\s*:\s*/gi, '');
+    const num = (/invoice\s*(?:#|no\.?|number)?\s*([A-Z]{0,4}[-#]?\d[\w-]*)/i.exec(subj) || [])[1] || null;
+    const ven = ((/\bfrom\s+(.+?)\s*$/i.exec(subj) || [])[1] || '').trim() || null;
+    const looks = INVOICE_WORDS.test(subj);
+    await sql(`insert into ops.vendor_invoices (org_id, inbound_email_id, file_path, file_name, received_at, email_from, email_subject, status, is_invoice, vendor, invoice_number, issues)
+      values (${q(org)}, ${q(m.id)}, '(no file)', null, ${q(m.received_at)}, ${q(m.from_addr)}, ${q(m.subject)}, ${q(looks ? 'needs_review' : 'not_invoice')}, ${looks ? 'true' : 'false'}, ${q(ven)}, ${q(num)},
         array[${q(`o e-mail não tem arquivo de invoice${(m.parsed?.links || []).length ? `; links no e-mail: ${m.parsed.links.slice(0, 5).join(' ')}` : ''}`)}])
       on conflict (inbound_email_id, file_path) do nothing`);
     continue;
@@ -129,8 +134,9 @@ for (const v of todo) {
   try {
     const x = await readInvoice(await downloadObject(BUCKET, v.file_path), v.file_name, { email_subject: v.email_subject, email_from: v.email_from });
     if (x.error) {
-      console.log(`REVIEW ${tag}: ${x.error}`);
-      if (!DRY) await sql(`update ops.vendor_invoices set status = 'needs_review', issues = array[${q(x.error)}], updated_at = now() where id = ${q(v.id)}`);
+      const looks = INVOICE_WORDS.test(`${v.file_name || ''} ${v.email_subject || ''}`) && !/\.(txt|log)$/i.test(v.file_name || '');
+      console.log(`${looks ? 'REVIEW' : 'not an invoice (unread type)'} ${tag}: ${x.error}`);
+      if (!DRY) await sql(`update ops.vendor_invoices set status = ${q(looks ? 'needs_review' : 'not_invoice')}, is_invoice = ${looks ? 'null' : 'false'}, issues = array[${q(x.error)}], updated_at = now() where id = ${q(v.id)}`);
       continue;
     }
     if (!x.is_invoice) {
@@ -209,7 +215,7 @@ for (const e of answers) {
 // 4. One e-mail per invoice that needs a person (Camila, Cc Victor), with the file attached.
 const ask = await sql(`select v.*, coalesce((select json_agg(l order by l.job_number) from ops.vendor_invoice_lines l where l.invoice_id = v.id), '[]') lines
   from ops.vendor_invoices v where v.org_id = ${q(org)} and v.status in ('needs_review', 'duplicate', 'error') and v.question_sent_at is null
-    and (v.bt_checked_at is not null or v.status = 'error' or v.is_invoice is not true) order by v.received_at`);   // looked up in Buildertrend first (rules/bt_bill_check.mjs)
+    and (v.bt_checked_at is not null or (v.is_invoice is not true and v.status <> 'not_invoice')) order by v.received_at`);   // looked up in Buildertrend first (rules/bt_bill_check.mjs)
 for (const v of ask) {
   const subject = `Invoice para revisar — ${v.vendor || v.email_from || 'fornecedor?'}${v.invoice_number ? ` #${v.invoice_number}` : ''}${v.total != null ? ` · ${money(v.total)}` : ''}`;
   const text = `Camila,
