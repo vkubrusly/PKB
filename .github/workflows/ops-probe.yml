@@ -8,7 +8,7 @@ on:
       probe:
         description: 'Probe to run'
         type: choice
-        options: [fasttrack, fasttrack-collect, fasttrack-reports, lake, buildertrend, buildertrend-schedule, buildertrend-schedule-api, buildertrend-schedule-item, buildertrend-schedule-date-test, bt-schedule-rule, buildertrend-warranty, buildertrend-warranty-api, bt-warranty-rule, bt-bills-rule, buildertrend-bill-read, buildertrend-bill-delete, buildertrend-bills-list, bt-jobs-history, buildertrend-lead-find, buildertrend-jobs-find, buildertrend-dailylog-check, buildertrend-bills, buildertrend-bill-form, buildertrend-bill-split, buildertrend-bill-api, buildertrend-bill-new, projectdox]
+        options: [fasttrack, fasttrack-collect, fasttrack-reports, lake, buildertrend, buildertrend-schedule, buildertrend-schedule-api, buildertrend-schedule-item, buildertrend-schedule-date-test, bt-schedule-rule, buildertrend-warranty, buildertrend-warranty-api, bt-warranty-rule, bt-bills-rule, buildertrend-bill-read, buildertrend-bill-delete, buildertrend-bills-list, buildertrend-bills-index, bt-jobs-history, buildertrend-lead-find, buildertrend-jobs-find, buildertrend-dailylog-check, buildertrend-bills, buildertrend-bill-form, buildertrend-bill-split, buildertrend-bill-api, buildertrend-bill-new, projectdox]
         default: fasttrack
       arg:
         description: 'Optional argument (e.g. permit number)'
@@ -52,6 +52,8 @@ jobs:
           elif [ "${{ inputs.probe }}" = bt-schedule-rule ]; then
             # rules/bt_schedule.mjs — dry run unless the argument has --post (e.g. "--job 0031 --limit 1 --post")
             node rules/bt_schedule.mjs ${{ inputs.arg }}
+          elif [ "${{ inputs.probe }}" = buildertrend-bills-index ]; then
+            node collectors/buildertrend/bills_index.mjs ${{ inputs.arg }}
           elif [ "${{ inputs.probe }}" = bt-jobs-history ]; then
             GH_TOKEN=${{ github.token }} python3 scripts/bt_jobs_history.py ${{ inputs.arg }}
           elif [ "${{ inputs.probe }}" = buildertrend-bills-list ]; then
