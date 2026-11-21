@@ -215,6 +215,14 @@ agg.warranty = {
   houses: new Set(WC.map((w) => w.job_number).filter(Boolean)).size,
   claims: WC.map((w) => ({ ...w, received_at: d(w.received_at), resolved_at: d(w.resolved_at), days_open: w.resolved_at ? null : daysTo(w.received_at, new Date()) })),
 };
+// Vendor invoices (invoice@ → bills): counts only, no amounts (the KPIs are seen by every partner).
+const VI = (await sql(`select count(*) filter (where status in ('needs_review', 'duplicate'))::int waiting,
+    coalesce(max(extract(day from now() - coalesce(question_sent_at, received_at))) filter (where status in ('needs_review', 'duplicate')), 0)::int oldest_days,
+    count(*) filter (where status = 'created' and received_at > now() - interval '30 days')::int created_30d,
+    count(*) filter (where status = 'in_bt' and received_at > now() - interval '30 days')::int in_bt_30d,
+    (count(*) filter (where status = 'error') + (select count(*) from ops.vendor_invoice_lines where bt_status in ('error', 'unknown')))::int errors
+  from ops.vendor_invoices`).catch(() => []))[0];
+if (VI) agg.vendor_invoices = VI;
 const out = { asOf: new Date().toISOString().slice(0, 10), builtAt: new Date().toISOString(), jobs: rows, fails: recentFails.slice(0, 14), ...agg, files };
 const json = JSON.stringify(out);
 const o = process.argv.indexOf('--out');

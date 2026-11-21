@@ -169,14 +169,20 @@ for (const v of todo) {
 // read by ops-invoice (mode answer) and applied. An address assigned to a job, a line left out, "pode criar" →
 // ready (the bills follow); "não lançar" / already entered → ignored; unclear → stays, nothing done. When lines
 // are still without a job after the answer, the question goes out again with what is left.
-const answers = await sql(`select e.id, e.message_id, e.received_at, e.from_addr, e.subject, e.body_text from ops.inbound_emails e
+const answers = await sql(`select e.id, e.message_id, e.received_at, e.from_addr, e.subject, e.body_text, e.parsed from ops.inbound_emails e
   where e.org_id = ${q(org)} and e.category = 'invoice_answer' and e.received_at > now() - interval '30 days'
     and not exists (select 1 from ops.vendor_invoices v where v.answer_email_id = e.id) order by e.received_at`);
 for (const e of answers) {
   const open = await sql(`select v.*, coalesce((select json_agg(l order by l.job_number) from ops.vendor_invoice_lines l where l.invoice_id = v.id), '[]') lines
     from ops.vendor_invoices v where v.org_id = ${q(org)} and v.question_sent_at is not null and v.question_sent_at < ${q(e.received_at)}
       and v.status in ('needs_review', 'duplicate', 'error') order by v.question_sent_at desc`);
-  const v = open.find((x) => x.invoice_number && String(e.subject || '').includes(`#${x.invoice_number}`));
+  // An answer written in the portal (Finance → Vendor invoices) names its invoice; an e-mail answer is matched by
+  // the number in its subject.
+  const viaPortal = e.parsed?.via === 'portal';
+  const v = viaPortal
+    ? (await sql(`select v.*, coalesce((select json_agg(l order by l.job_number) from ops.vendor_invoice_lines l where l.invoice_id = v.id), '[]') lines
+        from ops.vendor_invoices v where v.id = ${q(e.parsed.invoice_id)}`))[0]
+    : open.find((x) => x.invoice_number && String(e.subject || '').includes(`#${x.invoice_number}`));
   if (!v) { console.log(`answer not matched to an open invoice: ${e.subject}`); continue; }
   const key = await serviceKey();
   const r = await fetch(`https://${REF}.supabase.co/functions/v1/ops-invoice`, {
@@ -201,6 +207,8 @@ for (const e of answers) {
   }
   for (const ad of a.no_job || []) { const l = v.lines.find((x) => same(x.address, ad)); if (l) stmts.push(`update ops.vendor_invoice_lines set general = true, job_id = null, job_number = null, excluded = false where id = ${q(l.id)}`); }
   for (const ad of a.exclude || []) { const l = v.lines.find((x) => same(x.address, ad)); if (l) stmts.push(`update ops.vendor_invoice_lines set excluded = true where id = ${q(l.id)}`); }
+  // "pode criar" also retries the lines whose bill failed before
+  if (a.decision === 'create') stmts.push(`update ops.vendor_invoice_lines set bt_status = null, bt_error = null where invoice_id = ${q(v.id)} and bt_status = 'error'`);
   await sql(stmts.join(';\n'));
   let next;
   if (a.decision === 'ignore' || a.decision === 'duplicate') { await sql(`update ops.vendor_invoices set status = 'ignored' where id = ${q(v.id)}`); next = 'Não vou lançar esta invoice.'; }
@@ -219,6 +227,11 @@ for (const e of answers) {
       await sql(`update ops.vendor_invoices set status = 'ready', issues = '{}' where id = ${q(v.id)}`);
       next = 'Vou criar as bills em draft no Buildertrend, com a invoice anexada, nos próximos minutos.';
     }
+  }
+  if (viaPortal) {
+    await sql(`update ops.vendor_invoices set answer = ${q(`${e.from_addr} (portal): ${a.summary} → ${next}`)}, updated_at = now() where id = ${q(v.id)}`);
+    console.log(`portal answer applied: ${next}`);
+    continue;
   }
   // Confirmation in the same thread (Victor, 11/21/26: Camila writes to the bot and gets an answer).
   const first = String(e.from_addr || '').split('@')[0].replace(/^./, (c) => c.toUpperCase());
