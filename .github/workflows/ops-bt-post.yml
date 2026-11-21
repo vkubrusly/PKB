@@ -30,7 +30,7 @@ jobs:
         env: { PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' }
       - name: Anything queued?
         id: q
-        run: echo "n=$(node -e "import('./scripts/sb.mjs').then(async ({sql}) => console.log((await sql(\"select (select count(*)::int from ops.outbound_messages m left join ops.jobs j on j.id = m.job_id where m.status = 'draft' and (m.channel = 'bt_lead' or (m.channel = 'bt_daily_log' and j.bt_job_id is not null))) + (select count(*)::int from ops.warranty_claims w join ops.jobs j on j.id = w.job_id where w.bt_claim_id is null and w.bt_attempts < 5 and j.bt_job_id is not null) + (select count(*)::int from ops.vendor_invoice_lines l join ops.vendor_invoices v on v.id = l.invoice_id where v.status in ('ready', 'creating') and v.bt_checked_at is not null and not l.excluded and l.bt_bill_id is null and l.bt_status is null) + (select count(*)::int from ops.vendor_invoices v where v.is_invoice and v.bt_checked_at is null and v.status in ('needs_review', 'ready', 'duplicate')) n\"))[0].n))")" >> "$GITHUB_OUTPUT"
+        run: echo "n=$(node -e "import('./scripts/sb.mjs').then(async ({sql}) => console.log((await sql(\"select (select count(*)::int from ops.outbound_messages m left join ops.jobs j on j.id = m.job_id where m.status = 'draft' and (m.channel = 'bt_lead' or (m.channel = 'bt_daily_log' and j.bt_job_id is not null))) + (select count(*)::int from ops.warranty_claims w join ops.jobs j on j.id = w.job_id where w.bt_claim_id is null and w.bt_attempts < 5 and j.bt_job_id is not null) + (select count(*)::int from ops.vendor_invoice_lines l join ops.vendor_invoices v on v.id = l.invoice_id where v.status in ('ready', 'creating') and v.bt_checked_at is not null and not l.excluded and l.bt_bill_id is null and l.bt_status is null) + (select count(*)::int from ops.vendor_invoices v where v.is_invoice and v.bt_checked_at is null and v.status in ('needs_review', 'ready', 'duplicate')) + (select count(*)::int from ops.vendor_invoices v where v.fetch_requested_at is not null and v.file_path = '(no file)') n\"))[0].n))")" >> "$GITHUB_OUTPUT"
       - name: Buildertrend session
         if: steps.q.outputs.n != '0'
         env: { BT_COOKIES_JSON: '${{ secrets.BT_COOKIES_JSON }}' }
@@ -50,5 +50,6 @@ jobs:
           node rules/post_bt_leads.mjs || echo "::warning::post_bt_leads failed"
           node rules/bt_warranty.mjs || echo "::warning::bt_warranty failed"
           # vendor invoices: first looked up in Buildertrend (entered by hand?), then → draft bills (15 per run)
+          node rules/invoice_links.mjs || echo "::warning::invoice_links failed"   # "abre o link": fetch the PDF of a link-only invoice
           node rules/bt_bill_check.mjs || echo "::warning::bt_bill_check failed"
           node rules/bt_bills.mjs --post --limit 15 || echo "::warning::bt_bills failed"
