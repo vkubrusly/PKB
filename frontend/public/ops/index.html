@@ -434,6 +434,7 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
       <div class="panel"><div class="hd"><h3>New jobs per month</h3><span class="note" id="newNote"></span></div><div class="cols" id="c-new"></div><div class="legend"><span><i style="background:var(--blue)"></i>Requests (form e-mails)</span><span><i style="background:var(--gold)"></i>Contracts signed</span></div><div class="list" id="t-requests"></div></div>
       <div class="panel"><div class="hd"><h3>Permits issued per month</h3></div><div class="cols" id="c-month"></div></div>
       <div class="panel"><div class="hd"><h3>COs per month</h3><span class="note" id="coNote"></span></div><div class="cols" id="c-co"></div><p class="note" style="margin:0" id="coFinals"></p></div>
+      <div class="panel" id="vinvKpiPanel" hidden><div class="hd"><h3>Vendor invoices</h3><span class="note">invoice@ → Buildertrend bills · last 30 days</span></div><div class="kpis" id="vinvKpi"></div></div>
       <div class="panel"><div class="hd"><h3>Warranty</h3><span class="note" id="warrNote"></span></div><div class="kpis" id="warrKpis"></div><div class="cols" id="c-warr"></div><div class="legend"><span><i style="background:var(--red)"></i>Items received</span><span><i style="background:var(--gold)"></i>Items resolved</span></div><div class="bars" id="c-warrcat"></div></div>
       <div class="panel"><div class="hd"><h3>Applied → issued, median days</h3><span class="note">by county</span></div><div class="bars" id="c-cycle"></div></div>
       <div class="panel"><div class="hd"><h3>Where review time goes</h3><span class="note">sum over all rounds</span></div><div id="c-split"></div></div>
@@ -470,10 +471,32 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
     <div class="kpis" id="finKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px"></div>
     <div class="panel" id="finLate"><div class="hd"><h3>Late invoices</h3><span class="note">QuickBooks invoices past their due date with a balance open</span></div>
       <div id="finLateKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px"></div>
-      <div id="finLateChart" style="position:relative;margin-top:14px"></div>
-      <div class="tbl" id="finLateTbl" style="margin-top:10px"></div></div>
-    <div class="panel"><div class="hd"><h3>Open invoices</h3><span class="note">balance due, most overdue first</span></div><div class="tbl" id="finOpen"></div></div>
-    <div class="panel"><div class="hd"><h3>Payments received · last 120 days</h3></div><div class="tbl" id="finPaid"></div></div>
+    </div>
+    <!-- 26-week trend chart removed (Victor, 11/21/26: not needed). -->
+    <!-- The late-invoice list was the same as "Open invoices" (Victor, 11/21/26): the late ones are there, with their days late. -->
+    <div class="panel"><div class="hd"><h3>Open invoices</h3><span class="note">balance due, most overdue first · late ones show their days late</span></div><div class="tbl" id="finOpen"></div></div>
+    <div class="panel"><div class="hd"><h3>Payments received</h3><span class="note" id="finPaidSum"></span></div>
+      <div class="tools" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        <select id="finPaidPeriod" aria-label="Period">
+          <option value="30">Last 30 days</option><option value="60">Last 60 days</option><option value="90">Last 90 days</option>
+          <option value="120" selected>Last 120 days</option><option value="month">This month</option><option value="lastmonth">Last month</option>
+          <option value="ytd">Year to date</option><option value="365">Last 12 months</option><option value="custom">Custom…</option></select>
+        <span id="finPaidCustom" hidden><input type="date" id="finPaidFrom" aria-label="From"> – <input type="date" id="finPaidTo" aria-label="To"></span>
+      </div>
+      <div class="tbl" id="finPaid" style="margin-top:8px"></div>
+      <div id="finPaidMore" style="margin-top:6px"></div></div>
+    <div class="panel" id="vinv"><div class="hd"><h3>Vendor invoices · invoice@</h3><span class="note" id="vinvSum"></span></div>
+      <div class="tools" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        <select id="vinvPeriod" aria-label="Period"><option value="7">Last 7 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option>
+          <option value="month">This month</option><option value="lastmonth">Last month</option><option value="custom">Custom…</option></select>
+        <span id="vinvCustom" hidden><input type="date" id="vinvFrom" aria-label="From"> – <input type="date" id="vinvTo" aria-label="To"></span>
+        <button class="btn ghost" type="button" id="vinvReload" title="Reload">↻</button>
+      </div>
+      <div id="vinvKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:10px"></div>
+      <h4 style="margin:16px 0 6px">Needs attention <span class="note" id="vinvAttN"></span></h4>
+      <div id="vinvAtt"></div>
+      <h4 style="margin:16px 0 6px">All invoices of the period</h4>
+      <div class="tbl" id="vinvAll"></div><div id="vinvMore" style="margin-top:6px"></div></div>
     <div class="panel"><div class="hd"><h3>QuickBooks errors</h3><span class="note">last 15 · intuit_tid identifies the call for Intuit support</span></div><div class="tbl" id="finErr"></div></div>
     <p class="note">Support: <a href="mailto:victor@pkbhomes.com?subject=PKB%20Ops%20QuickBooks">victor@pkbhomes.com</a> · Connection page: <a href="/ops/quickbooks/">/ops/quickbooks</a></p>
   </section>
@@ -579,6 +602,7 @@ async function sendAccess(b){
 const usd = n => n == null ? '—' : Number(n).toLocaleString('en-US', {style:'currency', currency:'USD', maximumFractionDigits: 0});
 async function renderFinance(){
   if (!window.OPS?.state?.me?.finance) return;
+  renderVendorInvoices();   // independent of the QuickBooks connection
   const qs = new URLSearchParams(location.search).get('qbo');
   if (qs) { $('#finMsg').textContent = {connected:'Connected — the first sync is running; reload in a minute.', denied:'Connection cancelled at Intuit.', expired:'The link expired — try again.', error:'Could not connect — try again.', invalid:'Invalid return from Intuit.'}[qs] || ''; window.history.replaceState(null, '', location.pathname + location.hash); }
   // A request can stall in the browser (seen right after the return from Intuit): give up after 15 s, try once
@@ -623,7 +647,113 @@ async function renderFinance(){
     + kpi('Open receivables', usd(owed), `${open.length} invoice(s)`) + kpi('Overdue', usd(late.reduce((a, i) => a + Number(i.balance || 0), 0)), `${late.length} invoice(s) · ${late30.length} over 30 days`);
   const age = d => d == null ? '<span class="pill p-gry">no due date</span>' : d <= 0 ? '<span class="pill p-grn">current</span>' : d <= 30 ? `<span class="pill p-amb">${d} d late</span>` : `<span class="pill p-red">${d} d late</span>`;
   $('#finOpen').innerHTML = open.length ? `<table><thead><tr><th>Customer</th><th>Invoice</th><th>Date</th><th>Due</th><th class="num">Total</th><th class="num">Balance</th><th>Status</th></tr></thead><tbody>${open.map(i => `<tr><td>${esc(i.party || '—')}</td><td class="mono">${esc(i.doc_number || '—')}</td><td>${fmt(i.txn_date)}</td><td>${fmt(i.due_date)}</td><td class="num">${usd(i.total)}</td><td class="num"><b>${usd(i.balance)}</b></td><td>${age(i.days_overdue)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">No open invoices.</div>';
-  $('#finPaid').innerHTML = paid.length ? `<table><thead><tr><th>Date</th><th>Customer</th><th class="num">Amount</th><th>Applied to invoice(s)</th></tr></thead><tbody>${paid.map(p => `<tr><td>${fmt(p.txn_date)}</td><td>${esc(p.party || '—')}</td><td class="num">${usd(p.total)}</td><td>${(p.invoices || []).filter(Boolean).map(esc).join(', ') || (Number(p.unapplied) ? '<span class="pill p-amb">not applied</span>' : '—')}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">No payments in the last 120 days.</div>';
+  renderPayments();
+}
+
+// Vendor invoices sent to invoice@ (ops_vendor_invoices, 0062): counts, what needs attention — with an answer box
+// the robot applies (ops_vendor_invoice_answer) — and every invoice of the period (Victor, 11/21/26).
+const VSTAT = { created: ['Bill created', 'p-grn'], in_bt: ['Already in Buildertrend', 'p-gry'], needs_review: ['Needs review', 'p-amb'], duplicate: ['Duplicate?', 'p-amb'],
+  error: ['Error', 'p-red'], ready: ['Creating bills…', 'p-gry'], creating: ['Creating bills…', 'p-gry'], ignored: ['Ignored', 'p-gry'], not_invoice: ['Not an invoice', 'p-gry'], new: ['Reading…', 'p-gry'] };
+const vPill = st => { const [t, c] = VSTAT[st] || [st, 'p-gry']; return `<span class="pill ${c}">${t}</span>`; };
+const btBill = (id, job) => `<a href="https://buildertrend.net/app/Bills/Bill/${id}/${job}" target="_blank" rel="noopener">${id}</a>`;
+function vinvRange(){
+  const v = $('#vinvPeriod').value, now = new Date(), y = now.getFullYear(), m = now.getMonth(), d = x => x.toISOString().slice(0, 10);
+  if (v === 'custom') return [$('#vinvFrom').value, $('#vinvTo').value || d(now)];
+  if (v === 'month') return [d(new Date(y, m, 1)), d(now)];
+  if (v === 'lastmonth') return [d(new Date(y, m - 1, 1)), d(new Date(y, m, 0))];
+  return [d(new Date(Date.now() - Number(v) * 864e5)), d(now)];
+}
+async function openInvoicePdf(path){
+  const { data, error } = await window.OPS.sb.storage.from('ops-invoices').createSignedUrl(path, 600);
+  if (error) { alert('Could not open the file: ' + error.message); return; }
+  window.open(data.signedUrl, '_blank', 'noopener');
+}
+async function renderVendorInvoices(){
+  const sel = $('#vinvPeriod'); if (!sel) return;
+  if (!sel.dataset.wired) {
+    sel.dataset.wired = 1;
+    sel.onchange = () => { $('#vinvCustom').hidden = sel.value !== 'custom'; if (sel.value === 'custom' && !$('#vinvFrom').value) { $('#vinvFrom').value = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10); $('#vinvTo').value = new Date().toISOString().slice(0, 10); } renderVendorInvoices.all = false; renderVendorInvoices(); };
+    $('#vinvFrom').onchange = $('#vinvTo').onchange = () => renderVendorInvoices();
+    $('#vinvReload').onclick = () => renderVendorInvoices();
+  }
+  const [from, to] = vinvRange(); if (!from) return;
+  $('#vinvSum').textContent = 'loading…';
+  const { data: D, error } = await window.OPS.sb.rpc('ops_vendor_invoices', { p_from: from, p_to: to });
+  if (error) { $('#vinvSum').textContent = 'Error: ' + error.message; return; }
+  const c = D.counts || {}, n = k => Number(c[k] || 0);
+  const invoices = Object.entries(c).filter(([k]) => k !== 'not_invoice').reduce((a, [, v]) => a + Number(v), 0);
+  $('#vinvSum').textContent = `${fmt(D.from)} – ${fmt(D.to)}`;
+  const tile = (h, v, cap, cls = '') => `<div class="panel" style="gap:2px;padding:10px 12px"><div class="note">${h}</div><div style="font:700 22px var(--f-brand)" class="${cls}">${v}</div><div class="note">${cap}</div></div>`;
+  $('#vinvKpis').innerHTML = [
+    tile('E-mails received', D.emails, 'invoice@ → bot mailbox'),
+    tile('Invoices read', invoices, `${n('not_invoice')} file(s) were not invoices`),
+    tile('Bills created', n('created'), `${usd(D.created_amount)} in draft bills`),
+    tile('Already in Buildertrend', n('in_bt'), 'entered by hand — nothing done'),
+    tile('Needs review', n('needs_review') + n('duplicate'), 'waiting for an answer'),
+    tile('Errors', n('error'), 'the robot could not finish'),
+  ].join('');
+  const att = D.attention || [];
+  $('#vinvAttN').textContent = att.length ? `· ${att.length}` : '';
+  $('#vinvAtt').innerHTML = att.length ? att.map(v => {
+    const days = Math.floor((Date.now() - new Date(v.question_sent_at || v.received_at)) / 864e5);
+    const errs = (v.lines || []).filter(l => l.bt_error).map(l => `${l.job || '????'}: ${esc(l.bt_error)}`);
+    return `<div class="panel" style="gap:6px;margin-bottom:8px" data-inv="${v.id}">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"><b>${esc(v.vendor || v.email_subject || '—')}</b>${v.invoice_number ? `<span class="mono">#${esc(v.invoice_number)}</span>` : ''}<span>${usd(v.total)}</span>${vPill(v.status)}
+        <span class="pill ${days > 2 ? 'p-red' : 'p-gry'}">${v.question_sent_at ? `asked ${days} d ago` : `received ${days} d ago`}</span>
+        ${v.file_path ? `<a href="#" data-pdf="${esc(v.file_path)}">open PDF</a>` : '<span class="note">no file</span>'}</div>
+      <ul style="margin:2px 0 0 18px">${[...(v.issues || []), ...errs].map(i => `<li>${esc(i)}</li>`).join('')}</ul>
+      ${v.answer ? `<div class="note">Last answer: ${esc(v.answer)}</div>` : ''}
+      <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap"><textarea rows="2" style="flex:1;min-width:240px;font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)"
+        placeholder='Write the solution, e.g. "5150 SW 165th Pl is job 0078, cost code 10.20.02, pode criar" or "não lançar, já foi pago"'></textarea>
+        <button class="btn" type="button" data-send="${v.id}">Send solution</button><span class="note" data-out></span></div></div>`;
+  }).join('') : '<div class="empty">Nothing waiting. ✓</div>';
+  $('#vinvAtt').querySelectorAll('[data-pdf]').forEach(a => a.onclick = e => { e.preventDefault(); openInvoicePdf(a.dataset.pdf); });
+  $('#vinvAtt').querySelectorAll('[data-send]').forEach(b => b.onclick = async () => {
+    const box = b.closest('[data-inv]'), text = box.querySelector('textarea').value.trim(), out = box.querySelector('[data-out]');
+    if (!text) { out.textContent = 'write the solution first'; return; }
+    b.disabled = true; out.textContent = 'sending…';
+    const { error: er } = await window.OPS.sb.rpc('ops_vendor_invoice_answer', { p_id: b.dataset.send, p_text: text });
+    out.textContent = er ? 'Error: ' + er.message : '✓ sent — the robot applies it in a few minutes; press ↻ to see the result';
+    if (er) b.disabled = false;
+  });
+  const items = D.items || [], show = renderVendorInvoices.all ? items : items.slice(0, 15);
+  $('#vinvAll').innerHTML = items.length ? `<table><thead><tr><th>Received</th><th>Vendor</th><th>Invoice</th><th class="num">Amount</th><th>Status</th><th>Jobs · bills</th><th>File</th></tr></thead><tbody>${show.map(v => {
+    const lines = (v.lines || []).filter(l => !l.excluded);
+    const bills = v.status === 'in_bt' ? (v.bt_found || []).map(f => `${esc(f.number || '')} ${btBill(f.id, f.jobId)}`).join(', ')
+      : lines.map(l => `${esc(l.job || '????')} ${usd(l.amount)}${l.bill ? ' · ' + btBill(l.bill, l.bt_job) : ''}`).join('<br>');
+    return `<tr><td>${fmtT(String(v.received_at).slice(0, 16).replace('T', ' '))}</td><td>${esc(v.vendor || '—')}</td><td class="mono">${esc(v.invoice_number || '—')}</td><td class="num">${usd(v.total)}</td><td>${vPill(v.status)}</td><td>${bills || '—'}</td><td>${v.file_path ? `<a href="#" data-pdf="${esc(v.file_path)}">PDF</a>` : '—'}</td></tr>`; }).join('')}</tbody></table>` : '<div class="empty">No invoices in this period.</div>';
+  $('#vinvAll').querySelectorAll('[data-pdf]').forEach(a => a.onclick = e => { e.preventDefault(); openInvoicePdf(a.dataset.pdf); });
+  $('#vinvMore').innerHTML = items.length > 15 ? `<button class="btn ghost" type="button" id="vinvToggle">${renderVendorInvoices.all ? 'Show the first 15' : `Show all ${items.length}`}</button>` : '';
+  if (items.length > 15) $('#vinvToggle').onclick = () => { renderVendorInvoices.all = !renderVendorInvoices.all; renderVendorInvoices(); };
+}
+
+// Payments received for a chosen period (ops_finance_payments, 0061): 15 rows, then "Show all" (Victor, 11/21/26).
+const iso = d => d.toISOString().slice(0, 10);
+function paidRange(){
+  const v = $('#finPaidPeriod').value, now = new Date(), y = now.getFullYear(), m = now.getMonth();
+  if (v === 'custom') return [$('#finPaidFrom').value, $('#finPaidTo').value || iso(now)];
+  if (v === 'month') return [iso(new Date(y, m, 1)), iso(now)];
+  if (v === 'lastmonth') return [iso(new Date(y, m - 1, 1)), iso(new Date(y, m, 0))];
+  if (v === 'ytd') return [iso(new Date(y, 0, 1)), iso(now)];
+  return [iso(new Date(Date.now() - Number(v) * 864e5)), iso(now)];
+}
+async function renderPayments(){
+  const sel = $('#finPaidPeriod'); if (!sel) return;
+  if (!sel.dataset.wired) {
+    sel.dataset.wired = 1;
+    sel.onchange = () => { $('#finPaidCustom').hidden = sel.value !== 'custom'; if (sel.value === 'custom' && !$('#finPaidFrom').value) { const [f, t] = [iso(new Date(Date.now() - 30 * 864e5)), iso(new Date())]; $('#finPaidFrom').value = f; $('#finPaidTo').value = t; } renderPayments.all = false; renderPayments(); };
+    $('#finPaidFrom').onchange = $('#finPaidTo').onchange = () => { renderPayments.all = false; renderPayments(); };
+  }
+  const [from, to] = paidRange();
+  if (!from) return;
+  $('#finPaidSum').textContent = 'loading…';
+  const { data: d, error } = await window.OPS.sb.rpc('ops_finance_payments', { p_from: from, p_to: to });
+  if (error) { $('#finPaidSum').textContent = 'Error: ' + error.message; return; }
+  const rows = d.payments || [], show = renderPayments.all ? rows : rows.slice(0, 15);
+  $('#finPaidSum').textContent = `${d.count} payment(s) · ${usd(d.total)} · ${fmt(d.from)} – ${fmt(d.to)}`;
+  $('#finPaid').innerHTML = rows.length ? `<table><thead><tr><th>Date</th><th>Customer</th><th class="num">Amount</th><th>Applied to invoice(s)</th></tr></thead><tbody>${show.map(p => `<tr><td>${fmt(p.txn_date)}</td><td>${esc(p.party || '—')}</td><td class="num">${usd(p.total)}</td><td>${(p.invoices || []).filter(Boolean).map(esc).join(', ') || (Number(p.unapplied) ? '<span class="pill p-amb">not applied</span>' : '—')}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">No payments in this period.</div>';
+  $('#finPaidMore').innerHTML = rows.length > 15 ? `<button class="btn ghost" type="button" id="finPaidToggle">${renderPayments.all ? 'Show the first 15' : `Show all ${rows.length}`}</button>` : '';
+  if (rows.length > 15) $('#finPaidToggle').onclick = () => { renderPayments.all = !renderPayments.all; renderPayments(); };
 }
 
 // KPI: late invoices = QuickBooks invoices past due with a balance open (ops_finance_kpis, 0054).
@@ -638,8 +768,8 @@ async function renderLateKpi(){
     + tile('Aging (late invoices)', ag.map(b => b.count).join(' · '), `${ag.map(b => b.bucket).join(' · ')} days past due`)
     + (k.not_issued?.count ? tile('Draws not issued', `${k.not_issued.count}`, `trigger passed, no invoice · ≈ ${usd(k.not_issued.expected_amount)}`) : '');
   // Trend: one series (number of late invoices), every 7 days over 26 weeks; hover shows the point.
-  const t = k.trend || [], box = $('#finLateChart');
-  if (t.length > 1) {
+  const t = k.trend || [], box = $('#finLateChart');   // chart removed from the page (11/21/26)
+  if (box && t.length > 1) {
     const W = Math.max(320, box.clientWidth || 700), H = 180, L = 40, R = 12, T = 12, B = 26;
     const max = Math.max(...t.map(p => +p.count), 1), top = Math.max(4, Math.ceil(max / 4) * 4);
     const x = i => L + (W - L - R) * i / (t.length - 1), y = v => T + (H - T - B) * (1 - v / top);
@@ -659,9 +789,8 @@ async function renderLateKpi(){
       tip.innerHTML = `<b>${fmt(p.date)}</b> · ${p.count} late invoice(s) · ${usd(p.amount)}`; tip.style.display = 'block';
       tip.style.left = Math.min(x(i) + 10, W - tip.offsetWidth - 4) + 'px'; tip.style.top = '0px'; };
     hit.onmousemove = show; hit.onmouseleave = () => { tip.style.display = 'none'; lx.setAttribute('visibility', 'hidden'); pt.setAttribute('visibility', 'hidden'); };
-  } else box.innerHTML = '';
-  const late = k.late || [];
-  $('#finLateTbl').innerHTML = late.length ? `<table><thead><tr><th>Customer</th><th>Invoice</th><th>Billed</th><th>Due</th><th class="num">Balance</th><th class="num">Late</th></tr></thead><tbody>${late.map(d => `<tr><td>${esc(d.party || '—')}</td><td class="mono">${esc(d.invoice || '—')}</td><td>${fmt(d.billed)}</td><td>${fmt(d.due)}</td><td class="num"><b>${usd(d.balance)}</b></td><td class="num"><span class="pill ${d.days_late > 30 ? 'p-red' : d.days_late > 7 ? 'p-amb' : 'p-gry'}">${d.days_late} d</span></td></tr>`).join('')}</tbody></table>` : '<div class="empty">No invoice past due.</div>';
+  } else if (box) box.innerHTML = '';
+  // (the late-invoice table was removed: "Open invoices" lists them with their days late)
 }
 
 async function renderUsers(){
@@ -877,6 +1006,16 @@ function renderCharts(){
     const mon = m => new Date(m+'-15').toLocaleDateString('en-US',{month:'short', year:'numeric'});
     $('#coFinals').textContent = (D.co.finals.length ? `Building final passed (the CO follows): ${D.co.finals.map(f => `${mon(f.m)} · ${f.n}`).join(', ')} (${D.co.finalJobs.map(f=>f.job_number).join(', ')}). ` : '')
       + 'CO date: the job\'s CO date, else the county closing the issued permit (finaled).';
+  }
+  if (D.vendor_invoices) {
+    const V = D.vendor_invoices, tile = (h, v, c, red) => `<div class="kpi"><h3>${h}</h3><div class="big"${red ? ' style="color:var(--red)"' : ''}>${v}</div><div class="cap">${c}</div></div>`;
+    $('#vinvKpiPanel').hidden = false;
+    $('#vinvKpi').innerHTML = [
+      tile('Waiting for review', `${V.waiting}`, V.waiting ? `oldest ${V.oldest_days} day(s) waiting` : 'nothing waiting', V.oldest_days > 2),
+      tile('Bills created', `${V.created_30d}`, 'draft bills, last 30 days'),
+      tile('Already in Buildertrend', `${V.in_bt_30d}`, 'entered by hand, last 30 days'),
+      tile('Errors', `${V.errors}`, V.errors ? 'see Finance → Vendor invoices' : 'none', V.errors > 0),
+    ].join('');
   }
   if (D.warranty) {
     const W = D.warranty, tile = (h, v, c) => `<div class="kpi"><h3>${h}</h3><div class="big">${v}</div><div class="cap">${c}</div></div>`;

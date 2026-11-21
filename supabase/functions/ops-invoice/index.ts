@@ -5,6 +5,7 @@
 //   → { is_invoice, vendor, invoice_number, invoice_date, due_date, total, sites[], invoice_fees[], notes }
 //   POST { mode: 'answer', answer_text, invoice: {vendor, invoice_number, total, issues[], lines[]}, jobs: [{job_number, address}] }
 //   → { decision, assignments[], exclude[], no_job[], cost_code, summary }   (Camila's / Victor's e-mail answer, read)
+//   POST { mode: 'reply', from, from_name, subject, text, context, as_of } → { reply, needs_victor, summary }   (a team e-mail, answered)
 import Anthropic from 'npm:@anthropic-ai/sdk@0.68.0';
 import { cors, json } from '../_shared/cors.ts';
 
@@ -43,18 +44,33 @@ const ANSWER_INSTRUCTIONS = `PKB Ops (an automated system) asked Camila (PKB Hom
 - assignments: for each invoice line whose house the answer names: line_address (the address as in the line), job_number (4 digits like "0063", as in the jobs list).
 - exclude: addresses of lines the answer says to leave out (e.g. "não é nossa", "tira essa").
 - no_job: addresses of lines the answer says to bill without a house / job (e.g. "crie uma bill sem associar a casa", "lança no geral").
+- fetch_link: true when the answer asks to open / download the invoice from the link in the e-mail ("abre o link", "baixa o PDF do link"); the system downloads it and reads it again.
+- The answer was written by the person named in 'Answer written by'; refer to that person, never to someone else.
 - cost_code: the cost code text the answer asks for, or null.
 - summary: one short sentence in Brazilian Portuguese of what you understood.`;
 const ANSWER_SCHEMA = {
-  type: 'object', additionalProperties: false, required: ['decision', 'assignments', 'exclude', 'no_job', 'cost_code', 'summary'],
+  type: 'object', additionalProperties: false, required: ['decision', 'assignments', 'exclude', 'no_job', 'fetch_link', 'cost_code', 'summary'],
   properties: {
     decision: { type: 'string', enum: ['create', 'ignore', 'duplicate', 'wait'] },
     assignments: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['line_address', 'job_number'], properties: { line_address: { type: 'string' }, job_number: { type: 'string' } } } },
     exclude: { type: 'array', items: { type: 'string' } },
     no_job: { type: 'array', items: { type: 'string' } },
+    fetch_link: { type: 'boolean' },
     cost_code: { type: ['string', 'null'] },
     summary: { type: 'string' },
   },
+};
+
+const REPLY_INSTRUCTIONS = `You are PKB Ops, the operations assistant of PKB Homes (a Florida home builder). The bot mailbox is a conversation channel with the PKB team: you are answering an e-mail a team member (@pkbhomes.com) wrote to it; earlier messages of the thread may be quoted below theirs. Write the reply in Brazilian Portuguese, short and direct, like a helpful colleague: no greeting line beyond the person's first name, no sign-off (the system adds one).
+Answer ONLY from the DATA given (houses/jobs, vendor invoices and their bills, open questions). Never invent a number, a date, a job or an amount; if the data does not have the answer, say so plainly and say that Victor was copied.
+You cannot act in Buildertrend from this e-mail except through the invoice process (the invoice answers are handled elsewhere). If the person asks for an action (create/change/delete something, pay, send to someone), say you passed it to Victor (he is in copy) and set needs_victor true.
+Dates in MM/DD/YY. Money as $1,234.56.
+- reply: the e-mail body text.
+- needs_victor: true when it needs a person (an action, a decision, or the data does not answer).
+- summary: one short line in Portuguese of what was asked.`;
+const REPLY_SCHEMA = {
+  type: 'object', additionalProperties: false, required: ['reply', 'needs_victor', 'summary'],
+  properties: { reply: { type: 'string' }, needs_victor: { type: 'boolean' }, summary: { type: 'string' } },
 };
 
 Deno.serve(async (req) => {
@@ -75,10 +91,20 @@ Deno.serve(async (req) => {
       }
       return resp;
     };
+    if (body.mode === 'reply') {
+      const resp = await ask({
+        model: MODEL, max_tokens: 4000, system: REPLY_INSTRUCTIONS,
+        messages: [{ role: 'user', content: `DATA (as of ${body.as_of || '—'}):\n${String(body.context || '').slice(0, 150000)}\n\nE-MAIL from ${body.from_name || ''} <${body.from || ''}>\nSubject: ${body.subject || ''}\n\n${String(body.text || '').slice(0, 12000)}` }],
+        output_config: { effort: 'medium', format: { type: 'json_schema', schema: REPLY_SCHEMA } },
+      });
+      if (resp.stop_reason === 'refusal') return json({ error: 'the model declined' }, 422);
+      try { return json({ ...JSON.parse((resp.content || []).find((b: Any) => b.type === 'text')?.text || ''), model: resp.model }); }
+      catch { return json({ error: 'no JSON in the answer' }, 502); }
+    }
     if (body.mode === 'answer') {
       const resp = await ask({
         model: MODEL, max_tokens: 4000, system: ANSWER_INSTRUCTIONS,
-        messages: [{ role: 'user', content: `Invoice: ${JSON.stringify(body.invoice || {})}\n\nJobs (job_number, address): ${JSON.stringify(body.jobs || [])}\n\nThe answer e-mail:\n${String(body.answer_text || '').slice(0, 12000)}` }],
+        messages: [{ role: 'user', content: `Answer written by: ${body.answer_by || 'Camila'}\n\nInvoice: ${JSON.stringify(body.invoice || {})}\n\nJobs (job_number, address): ${JSON.stringify(body.jobs || [])}\n\nThe answer e-mail:\n${String(body.answer_text || '').slice(0, 12000)}` }],
         output_config: { effort: 'medium', format: { type: 'json_schema', schema: ANSWER_SCHEMA } },
       });
       if (resp.stop_reason === 'refusal') return json({ error: 'the model declined' }, 422);

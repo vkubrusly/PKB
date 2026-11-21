@@ -60,6 +60,8 @@ jobs:
           $SB functions deploy ops-field --project-ref "$PROJECT_REF" --yes
           $SB functions deploy ops-users --project-ref "$PROJECT_REF" --yes
           $SB functions deploy ops-invoice --project-ref "$PROJECT_REF" --yes
+          # called by pg_cron with its own shared secret (x-watch-secret), not a user JWT
+          $SB functions deploy ops-mail-watch --project-ref "$PROJECT_REF" --no-verify-jwt --yes
           $SB functions deploy ops-qbo --project-ref "$PROJECT_REF" --yes
           # Intuit calls these two directly (OAuth return, webhooks): no Supabase login; the one-time
           # state / the intuit-signature HMAC protect them.

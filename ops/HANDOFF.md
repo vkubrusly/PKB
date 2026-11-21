@@ -79,7 +79,16 @@ writes in Portuguese; UI text in English. State as of 2026-10-12.
   Buildertrend claim and follows its class/status; "(closed)" classes = resolved/closed. Board panel "Warranty claims".
 - No e-mail notification: everyone already gets Buildertrend's own notices (Victor).
 
-## Bills from invoices (in design, since 2026-11-19)
+## Bills from invoices (live since 2026-11-20)
+- Flow: collect_mail.py (sender or recipient invoice@ → vendor_invoice, files to Storage `ops-invoices`) →
+  rules/vendor_invoices.mjs (read, split, checks) → rules/bt_bill_check.mjs (looks the invoice up among ALL
+  Buildertrend bills; found → `in_bt`, nothing else) → question to Camila only after that check →
+  rules/bt_bills.mjs (draft bills, file attached, dates checked). Never edits or deletes an existing bill
+  (Camila, 11/20: "não quero que o robô altere nada do que já está nas bills do Builder").
+- Duplicate = same vendor AND same invoice number. Another invoice number is a new bill, even with the same vendor
+  and amount (Victor, 11/20/26).
+- Cost code by vendor: config/vendor_bills.json, else the one Camila gave for that vendor in an earlier answer.
+- Bills Camila said to post "sem associar a casa" go to the general job 41763140.
 - invoice@pkbhomes.com (Microsoft 365 via GoDaddy) forwards to botpkbhomes@gmail.com (Victor, 11/19). The system will
   read each invoice, split it by job (address → job), and create the Buildertrend bills itself as **draft** — not
   Buildertrend's AI Bill Capture, which put the whole of invoice I2426 ($3,808.22, 35 sites) on job 0016.

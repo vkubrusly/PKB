@@ -20,6 +20,7 @@ import { serviceKey, downloadObject } from '../scripts/sb.mjs';
 import { sendEmail } from '../notify/email.mjs';
 
 // Cost code of a vendor's bills: config/vendor_bills.json, else the one given in an earlier answer for this vendor.
+const INVOICE_WORDS = /invoice|\binv[\s#-]?\d|\bbill\b|payment request|fatura|statement/i;
 const BILLS_CFG = JSON.parse(readFileSync(new URL('../config/vendor_bills.json', import.meta.url), 'utf8'));
 export async function vendorCostCode(org, vendor) {
   const c = BILLS_CFG.cost_codes[String(vendor || '').toLowerCase()];
@@ -112,8 +113,12 @@ for (const m of mails) {
   const files = m.parsed?.files || [];
   if (!files.length) {
     if (DRY) { console.log(`[dry run] e-mail without a file: ${m.subject}`); continue; }
-    await sql(`insert into ops.vendor_invoices (org_id, inbound_email_id, file_path, file_name, received_at, email_from, email_subject, status, issues)
-      values (${q(org)}, ${q(m.id)}, '(no file)', null, ${q(m.received_at)}, ${q(m.from_addr)}, ${q(m.subject)}, 'needs_review',
+    const subj = String(m.subject || '').replace(/^\s*(fw|fwd|re)\s*:\s*/gi, '');
+    const num = (/invoice\s*(?:#|no\.?|number)?\s*([A-Z]{0,4}[-#]?\d[\w-]*)/i.exec(subj) || [])[1] || null;
+    const ven = ((/\bfrom\s+(.+?)\s*$/i.exec(subj) || [])[1] || '').trim() || null;
+    const looks = INVOICE_WORDS.test(subj);
+    await sql(`insert into ops.vendor_invoices (org_id, inbound_email_id, file_path, file_name, received_at, email_from, email_subject, status, is_invoice, vendor, invoice_number, issues)
+      values (${q(org)}, ${q(m.id)}, '(no file)', null, ${q(m.received_at)}, ${q(m.from_addr)}, ${q(m.subject)}, ${q(looks ? 'needs_review' : 'not_invoice')}, ${looks ? 'true' : 'false'}, ${q(ven)}, ${q(num)},
         array[${q(`o e-mail não tem arquivo de invoice${(m.parsed?.links || []).length ? `; links no e-mail: ${m.parsed.links.slice(0, 5).join(' ')}` : ''}`)}])
       on conflict (inbound_email_id, file_path) do nothing`);
     continue;
@@ -129,8 +134,9 @@ for (const v of todo) {
   try {
     const x = await readInvoice(await downloadObject(BUCKET, v.file_path), v.file_name, { email_subject: v.email_subject, email_from: v.email_from });
     if (x.error) {
-      console.log(`REVIEW ${tag}: ${x.error}`);
-      if (!DRY) await sql(`update ops.vendor_invoices set status = 'needs_review', issues = array[${q(x.error)}], updated_at = now() where id = ${q(v.id)}`);
+      const looks = INVOICE_WORDS.test(`${v.file_name || ''} ${v.email_subject || ''}`) && !/\.(txt|log)$/i.test(v.file_name || '');
+      console.log(`${looks ? 'REVIEW' : 'not an invoice (unread type)'} ${tag}: ${x.error}`);
+      if (!DRY) await sql(`update ops.vendor_invoices set status = ${q(looks ? 'needs_review' : 'not_invoice')}, is_invoice = ${looks ? 'null' : 'false'}, issues = array[${q(x.error)}], updated_at = now() where id = ${q(v.id)}`);
       continue;
     }
     if (!x.is_invoice) {
@@ -163,19 +169,25 @@ for (const v of todo) {
 // read by ops-invoice (mode answer) and applied. An address assigned to a job, a line left out, "pode criar" →
 // ready (the bills follow); "não lançar" / already entered → ignored; unclear → stays, nothing done. When lines
 // are still without a job after the answer, the question goes out again with what is left.
-const answers = await sql(`select e.id, e.received_at, e.from_addr, e.subject, e.body_text from ops.inbound_emails e
+const answers = await sql(`select e.id, e.message_id, e.received_at, e.from_addr, e.subject, e.body_text, e.parsed from ops.inbound_emails e
   where e.org_id = ${q(org)} and e.category = 'invoice_answer' and e.received_at > now() - interval '30 days'
     and not exists (select 1 from ops.vendor_invoices v where v.answer_email_id = e.id) order by e.received_at`);
 for (const e of answers) {
   const open = await sql(`select v.*, coalesce((select json_agg(l order by l.job_number) from ops.vendor_invoice_lines l where l.invoice_id = v.id), '[]') lines
     from ops.vendor_invoices v where v.org_id = ${q(org)} and v.question_sent_at is not null and v.question_sent_at < ${q(e.received_at)}
       and v.status in ('needs_review', 'duplicate', 'error') order by v.question_sent_at desc`);
-  const v = open.find((x) => x.invoice_number && String(e.subject || '').includes(`#${x.invoice_number}`));
+  // An answer written in the portal (Finance → Vendor invoices) names its invoice; an e-mail answer is matched by
+  // the number in its subject.
+  const viaPortal = e.parsed?.via === 'portal';
+  const v = viaPortal
+    ? (await sql(`select v.*, coalesce((select json_agg(l order by l.job_number) from ops.vendor_invoice_lines l where l.invoice_id = v.id), '[]') lines
+        from ops.vendor_invoices v where v.id = ${q(e.parsed.invoice_id)}`))[0]
+    : open.find((x) => x.invoice_number && String(e.subject || '').includes(`#${x.invoice_number}`));
   if (!v) { console.log(`answer not matched to an open invoice: ${e.subject}`); continue; }
   const key = await serviceKey();
   const r = await fetch(`https://${REF}.supabase.co/functions/v1/ops-invoice`, {
     method: 'POST', headers: { 'content-type': 'application/json', Authorization: `Bearer ${key}`, apikey: key },
-    body: JSON.stringify({ mode: 'answer', answer_text: e.body_text || '', jobs: jobs.filter((j) => j.bt_job_id).map((j) => ({ job_number: j.job_number, address: j.address })),
+    body: JSON.stringify({ mode: 'answer', answer_text: e.body_text || '', answer_by: e.from_addr, jobs: jobs.filter((j) => j.bt_job_id).map((j) => ({ job_number: j.job_number, address: j.address })),
       invoice: { vendor: v.vendor, invoice_number: v.invoice_number, total: v.total, issues: v.issues, lines: v.lines.map((l) => ({ address: l.address, label: l.label, job_number: l.job_number, amount: l.bill_amount })) } }),
   });
   const a = await r.json().catch(() => ({ error: `HTTP ${r.status}` }));
@@ -195,20 +207,50 @@ for (const e of answers) {
   }
   for (const ad of a.no_job || []) { const l = v.lines.find((x) => same(x.address, ad)); if (l) stmts.push(`update ops.vendor_invoice_lines set general = true, job_id = null, job_number = null, excluded = false where id = ${q(l.id)}`); }
   for (const ad of a.exclude || []) { const l = v.lines.find((x) => same(x.address, ad)); if (l) stmts.push(`update ops.vendor_invoice_lines set excluded = true where id = ${q(l.id)}`); }
+  // "pode criar" also retries the lines whose bill failed before
+  if (a.decision === 'create') stmts.push(`update ops.vendor_invoice_lines set bt_status = null, bt_error = null where invoice_id = ${q(v.id)} and bt_status = 'error'`);
   await sql(stmts.join(';\n'));
-  if (a.decision === 'ignore' || a.decision === 'duplicate') { await sql(`update ops.vendor_invoices set status = 'ignored' where id = ${q(v.id)}`); continue; }
-  if (a.decision !== 'create') continue;
-  const left = await sql(`select address, bill_amount from ops.vendor_invoice_lines where invoice_id = ${q(v.id)} and not excluded and not general and job_id is null`);
-  if (left.length) await sql(`update ops.vendor_invoices set status = 'needs_review', question_sent_at = null,
-      issues = array[${left.map((l) => q(`${l.address}: ainda sem obra (${money(l.bill_amount)}) — diga a obra ou "tira essa"`)).join(',')}] where id = ${q(v.id)}`);
-  else if (!a.cost_code && !(await vendorCostCode(org, v.vendor))) await sql(`update ops.vendor_invoices set status = 'needs_review', question_sent_at = null,
-      issues = array[${q(`fornecedor ${v.vendor} ainda não tem cost code definido — qual cost code usar nas bills?`)}] where id = ${q(v.id)}`);
-  else await sql(`update ops.vendor_invoices set status = 'ready', issues = '{}' where id = ${q(v.id)}`);
+  let next;
+  if (a.fetch_link && (!v.file_path || v.file_path === '(no file)')) {
+    await sql(`update ops.vendor_invoices set fetch_requested_at = now(), fetch_error = null where id = ${q(v.id)}; select ops.dispatch_workflow('ops-bt-post.yml')`);
+    next = 'Vou abrir o link do e-mail, baixar o PDF da invoice e ler de novo; o resultado aparece em alguns minutos.';
+  } else if (a.decision === 'ignore' || a.decision === 'duplicate') { await sql(`update ops.vendor_invoices set status = 'ignored' where id = ${q(v.id)}`); next = 'Não vou lançar esta invoice.'; }
+  else if (a.decision !== 'create') next = 'Fico aguardando — quando quiser que eu crie as bills, responda "pode criar".';
+  else {
+    const left = await sql(`select address, bill_amount from ops.vendor_invoice_lines where invoice_id = ${q(v.id)} and not excluded and not general and job_id is null`);
+    if (left.length) {
+      await sql(`update ops.vendor_invoices set status = 'needs_review', question_sent_at = null,
+        issues = array[${left.map((l) => q(`${l.address}: ainda sem obra (${money(l.bill_amount)}) — diga a obra ou "tira essa"`)).join(',')}] where id = ${q(v.id)}`);
+      next = `Ainda falta a obra de ${left.length} endereço(s); mando outro e-mail com o que ficou.`;
+    } else if (!a.cost_code && !(await vendorCostCode(org, v.vendor))) {
+      await sql(`update ops.vendor_invoices set status = 'needs_review', question_sent_at = null,
+        issues = array[${q(`fornecedor ${v.vendor} ainda não tem cost code definido — qual cost code usar nas bills?`)}] where id = ${q(v.id)}`);
+      next = `Ainda falta o cost code do fornecedor ${v.vendor}; mando outro e-mail perguntando.`;
+    } else {
+      await sql(`update ops.vendor_invoices set status = 'ready', issues = '{}' where id = ${q(v.id)}`);
+      next = 'Vou criar as bills em draft no Buildertrend, com a invoice anexada, nos próximos minutos.';
+    }
+  }
+  if (viaPortal) {
+    await sql(`update ops.vendor_invoices set answer = ${q(`${e.from_addr} (portal): ${a.summary} → ${next}`)}, updated_at = now() where id = ${q(v.id)}`);
+    console.log(`portal answer applied: ${next}`);
+    continue;
+  }
+  // Confirmation in the same thread (Victor, 11/21/26: Camila writes to the bot and gets an answer).
+  const first = String(e.from_addr || '').split('@')[0].replace(/^./, (c) => c.toUpperCase());
+  const text = `${first},\n\nEntendi: ${a.summary}\n${next}\n\n— PKB Ops (resposta automática)`;
+  let res;
+  try { res = await sendEmail({ to: [e.from_addr], cc: e.from_addr === REVIEW_CC[0] ? [] : REVIEW_CC, subject: /^re:/i.test(e.subject || '') ? e.subject : `Re: ${e.subject}`, text, alwaysCc: false, inReplyTo: e.message_id }); } catch (err) { res = { error: err.message }; }
+  const st = res.error ? 'failed' : res.dryRun ? 'draft' : 'sent';
+  await sql(`insert into ops.outbound_messages (org_id, channel, rule, to_addresses, cc_addresses, subject, body, status, error, external_id, sent_at)
+      values (${q(org)}, 'email', 'R-INVOICE-OK', array[${q(e.from_addr)}]::text[], array[${(res.cc || REVIEW_CC).map(q).join(',')}]::text[], ${q(`Re: ${e.subject}`)}, ${q(text)}, ${q(st)}, ${q(res.error || null)}, ${q(res.id || null)}, ${st === 'sent' ? 'now()' : 'null'})`);
+  console.log(`${st.toUpperCase()} confirmation → ${e.from_addr}: ${next}`);
 }
 
 // 4. One e-mail per invoice that needs a person (Camila, Cc Victor), with the file attached.
 const ask = await sql(`select v.*, coalesce((select json_agg(l order by l.job_number) from ops.vendor_invoice_lines l where l.invoice_id = v.id), '[]') lines
-  from ops.vendor_invoices v where v.org_id = ${q(org)} and v.status in ('needs_review', 'duplicate', 'error') and v.question_sent_at is null order by v.received_at`);
+  from ops.vendor_invoices v where v.org_id = ${q(org)} and v.status in ('needs_review', 'duplicate', 'error') and v.question_sent_at is null
+    and (v.bt_checked_at is not null or (v.is_invoice is not true and v.status <> 'not_invoice')) order by v.received_at`);   // looked up in Buildertrend first (rules/bt_bill_check.mjs)
 for (const v of ask) {
   const subject = `Invoice para revisar — ${v.vendor || v.email_from || 'fornecedor?'}${v.invoice_number ? ` #${v.invoice_number}` : ''}${v.total != null ? ` · ${money(v.total)}` : ''}`;
   const text = `Camila,
