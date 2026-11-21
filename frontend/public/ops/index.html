@@ -470,9 +470,9 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
     <div class="kpis" id="finKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px"></div>
     <div class="panel" id="finLate"><div class="hd"><h3>Late invoices</h3><span class="note">QuickBooks invoices past their due date with a balance open</span></div>
       <div id="finLateKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px"></div>
-      <div id="finLateChart" style="position:relative;margin-top:14px"></div>
-      <div class="tbl" id="finLateTbl" style="margin-top:10px"></div></div>
-    <div class="panel"><div class="hd"><h3>Open invoices</h3><span class="note">balance due, most overdue first</span></div><div class="tbl" id="finOpen"></div></div>
+      <div id="finLateChart" style="position:relative;margin-top:14px"></div></div>
+    <!-- The late-invoice list was the same as "Open invoices" (Victor, 11/21/26): the late ones are there, with their days late. -->
+    <div class="panel"><div class="hd"><h3>Open invoices</h3><span class="note">balance due, most overdue first · late ones show their days late</span></div><div class="tbl" id="finOpen"></div></div>
     <div class="panel"><div class="hd"><h3>Payments received · last 120 days</h3></div><div class="tbl" id="finPaid"></div></div>
     <div class="panel"><div class="hd"><h3>QuickBooks errors</h3><span class="note">last 15 · intuit_tid identifies the call for Intuit support</span></div><div class="tbl" id="finErr"></div></div>
     <p class="note">Support: <a href="mailto:victor@pkbhomes.com?subject=PKB%20Ops%20QuickBooks">victor@pkbhomes.com</a> · Connection page: <a href="/ops/quickbooks/">/ops/quickbooks</a></p>
@@ -660,8 +660,7 @@ async function renderLateKpi(){
       tip.style.left = Math.min(x(i) + 10, W - tip.offsetWidth - 4) + 'px'; tip.style.top = '0px'; };
     hit.onmousemove = show; hit.onmouseleave = () => { tip.style.display = 'none'; lx.setAttribute('visibility', 'hidden'); pt.setAttribute('visibility', 'hidden'); };
   } else box.innerHTML = '';
-  const late = k.late || [];
-  $('#finLateTbl').innerHTML = late.length ? `<table><thead><tr><th>Customer</th><th>Invoice</th><th>Billed</th><th>Due</th><th class="num">Balance</th><th class="num">Late</th></tr></thead><tbody>${late.map(d => `<tr><td>${esc(d.party || '—')}</td><td class="mono">${esc(d.invoice || '—')}</td><td>${fmt(d.billed)}</td><td>${fmt(d.due)}</td><td class="num"><b>${usd(d.balance)}</b></td><td class="num"><span class="pill ${d.days_late > 30 ? 'p-red' : d.days_late > 7 ? 'p-amb' : 'p-gry'}">${d.days_late} d</span></td></tr>`).join('')}</tbody></table>` : '<div class="empty">No invoice past due.</div>';
+  // (the late-invoice table was removed: "Open invoices" lists them with their days late)
 }
 
 async function renderUsers(){
