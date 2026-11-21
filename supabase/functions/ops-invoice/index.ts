@@ -44,15 +44,18 @@ const ANSWER_INSTRUCTIONS = `PKB Ops (an automated system) asked Camila (PKB Hom
 - assignments: for each invoice line whose house the answer names: line_address (the address as in the line), job_number (4 digits like "0063", as in the jobs list).
 - exclude: addresses of lines the answer says to leave out (e.g. "não é nossa", "tira essa").
 - no_job: addresses of lines the answer says to bill without a house / job (e.g. "crie uma bill sem associar a casa", "lança no geral").
+- fetch_link: true when the answer asks to open / download the invoice from the link in the e-mail ("abre o link", "baixa o PDF do link"); the system downloads it and reads it again.
+- The answer was written by the person named in 'Answer written by'; refer to that person, never to someone else.
 - cost_code: the cost code text the answer asks for, or null.
 - summary: one short sentence in Brazilian Portuguese of what you understood.`;
 const ANSWER_SCHEMA = {
-  type: 'object', additionalProperties: false, required: ['decision', 'assignments', 'exclude', 'no_job', 'cost_code', 'summary'],
+  type: 'object', additionalProperties: false, required: ['decision', 'assignments', 'exclude', 'no_job', 'fetch_link', 'cost_code', 'summary'],
   properties: {
     decision: { type: 'string', enum: ['create', 'ignore', 'duplicate', 'wait'] },
     assignments: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['line_address', 'job_number'], properties: { line_address: { type: 'string' }, job_number: { type: 'string' } } } },
     exclude: { type: 'array', items: { type: 'string' } },
     no_job: { type: 'array', items: { type: 'string' } },
+    fetch_link: { type: 'boolean' },
     cost_code: { type: ['string', 'null'] },
     summary: { type: 'string' },
   },
@@ -101,7 +104,7 @@ Deno.serve(async (req) => {
     if (body.mode === 'answer') {
       const resp = await ask({
         model: MODEL, max_tokens: 4000, system: ANSWER_INSTRUCTIONS,
-        messages: [{ role: 'user', content: `Invoice: ${JSON.stringify(body.invoice || {})}\n\nJobs (job_number, address): ${JSON.stringify(body.jobs || [])}\n\nThe answer e-mail:\n${String(body.answer_text || '').slice(0, 12000)}` }],
+        messages: [{ role: 'user', content: `Answer written by: ${body.answer_by || 'Camila'}\n\nInvoice: ${JSON.stringify(body.invoice || {})}\n\nJobs (job_number, address): ${JSON.stringify(body.jobs || [])}\n\nThe answer e-mail:\n${String(body.answer_text || '').slice(0, 12000)}` }],
         output_config: { effort: 'medium', format: { type: 'json_schema', schema: ANSWER_SCHEMA } },
       });
       if (resp.stop_reason === 'refusal') return json({ error: 'the model declined' }, 422);

@@ -187,7 +187,7 @@ for (const e of answers) {
   const key = await serviceKey();
   const r = await fetch(`https://${REF}.supabase.co/functions/v1/ops-invoice`, {
     method: 'POST', headers: { 'content-type': 'application/json', Authorization: `Bearer ${key}`, apikey: key },
-    body: JSON.stringify({ mode: 'answer', answer_text: e.body_text || '', jobs: jobs.filter((j) => j.bt_job_id).map((j) => ({ job_number: j.job_number, address: j.address })),
+    body: JSON.stringify({ mode: 'answer', answer_text: e.body_text || '', answer_by: e.from_addr, jobs: jobs.filter((j) => j.bt_job_id).map((j) => ({ job_number: j.job_number, address: j.address })),
       invoice: { vendor: v.vendor, invoice_number: v.invoice_number, total: v.total, issues: v.issues, lines: v.lines.map((l) => ({ address: l.address, label: l.label, job_number: l.job_number, amount: l.bill_amount })) } }),
   });
   const a = await r.json().catch(() => ({ error: `HTTP ${r.status}` }));
@@ -211,7 +211,10 @@ for (const e of answers) {
   if (a.decision === 'create') stmts.push(`update ops.vendor_invoice_lines set bt_status = null, bt_error = null where invoice_id = ${q(v.id)} and bt_status = 'error'`);
   await sql(stmts.join(';\n'));
   let next;
-  if (a.decision === 'ignore' || a.decision === 'duplicate') { await sql(`update ops.vendor_invoices set status = 'ignored' where id = ${q(v.id)}`); next = 'Não vou lançar esta invoice.'; }
+  if (a.fetch_link && (!v.file_path || v.file_path === '(no file)')) {
+    await sql(`update ops.vendor_invoices set fetch_requested_at = now(), fetch_error = null where id = ${q(v.id)}; select ops.dispatch_workflow('ops-bt-post.yml')`);
+    next = 'Vou abrir o link do e-mail, baixar o PDF da invoice e ler de novo; o resultado aparece em alguns minutos.';
+  } else if (a.decision === 'ignore' || a.decision === 'duplicate') { await sql(`update ops.vendor_invoices set status = 'ignored' where id = ${q(v.id)}`); next = 'Não vou lançar esta invoice.'; }
   else if (a.decision !== 'create') next = 'Fico aguardando — quando quiser que eu crie as bills, responda "pode criar".';
   else {
     const left = await sql(`select address, bill_amount from ops.vendor_invoice_lines where invoice_id = ${q(v.id)} and not excluded and not general and job_id is null`);
