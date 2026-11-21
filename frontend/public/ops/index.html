@@ -470,7 +470,8 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
     <div class="kpis" id="finKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px"></div>
     <div class="panel" id="finLate"><div class="hd"><h3>Late invoices</h3><span class="note">QuickBooks invoices past their due date with a balance open</span></div>
       <div id="finLateKpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px"></div>
-      <div id="finLateChart" style="position:relative;margin-top:14px"></div></div>
+    </div>
+    <!-- 26-week trend chart removed (Victor, 11/21/26: not needed). -->
     <!-- The late-invoice list was the same as "Open invoices" (Victor, 11/21/26): the late ones are there, with their days late. -->
     <div class="panel"><div class="hd"><h3>Open invoices</h3><span class="note">balance due, most overdue first · late ones show their days late</span></div><div class="tbl" id="finOpen"></div></div>
     <div class="panel"><div class="hd"><h3>Payments received</h3><span class="note" id="finPaidSum"></span></div>
@@ -676,8 +677,8 @@ async function renderLateKpi(){
     + tile('Aging (late invoices)', ag.map(b => b.count).join(' · '), `${ag.map(b => b.bucket).join(' · ')} days past due`)
     + (k.not_issued?.count ? tile('Draws not issued', `${k.not_issued.count}`, `trigger passed, no invoice · ≈ ${usd(k.not_issued.expected_amount)}`) : '');
   // Trend: one series (number of late invoices), every 7 days over 26 weeks; hover shows the point.
-  const t = k.trend || [], box = $('#finLateChart');
-  if (t.length > 1) {
+  const t = k.trend || [], box = $('#finLateChart');   // chart removed from the page (11/21/26)
+  if (box && t.length > 1) {
     const W = Math.max(320, box.clientWidth || 700), H = 180, L = 40, R = 12, T = 12, B = 26;
     const max = Math.max(...t.map(p => +p.count), 1), top = Math.max(4, Math.ceil(max / 4) * 4);
     const x = i => L + (W - L - R) * i / (t.length - 1), y = v => T + (H - T - B) * (1 - v / top);
@@ -697,7 +698,7 @@ async function renderLateKpi(){
       tip.innerHTML = `<b>${fmt(p.date)}</b> · ${p.count} late invoice(s) · ${usd(p.amount)}`; tip.style.display = 'block';
       tip.style.left = Math.min(x(i) + 10, W - tip.offsetWidth - 4) + 'px'; tip.style.top = '0px'; };
     hit.onmousemove = show; hit.onmouseleave = () => { tip.style.display = 'none'; lx.setAttribute('visibility', 'hidden'); pt.setAttribute('visibility', 'hidden'); };
-  } else box.innerHTML = '';
+  } else if (box) box.innerHTML = '';
   // (the late-invoice table was removed: "Open invoices" lists them with their days late)
 }
 
