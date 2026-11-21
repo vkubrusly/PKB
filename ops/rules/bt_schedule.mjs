@@ -141,24 +141,48 @@ if (process.argv.includes('--fix-dates')) {
   // Work days between two ISO dates (Mon–Fri), signed: b later than a → positive.
   const workdays = (a, b) => { const s = Math.sign(Date.parse(b) - Date.parse(a)); let n = 0; const d = new Date(a + 'T12:00:00Z'); const end = b;
     while (d.toISOString().slice(0, 10) !== end) { d.setUTCDate(d.getUTCDate() + s); const w = d.getUTCDay(); if (w !== 0 && w !== 6) n += s; } return n; };
-  // Set the item's first predecessor lag so its Start lands on `date` (a few tries: Buildertrend counts work days).
-  async function lagTo(bt, it, date) {
-    let cur = String(it.startDate).slice(0, 10);
-    for (let k = 0; k < 4; k++) {
-      await page.goto(`https://buildertrend.net/app/Schedules/List/Schedule/${it.id}/${bt}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
-      const lag = page.locator('input[name="predecessors.0.lag"]'); await lag.waitFor({ timeout: 45000 }); await page.waitForTimeout(1500);
-      const now = Number(await lag.inputValue() || 0), next = now - workdays(date, cur);
-      if (next < -999) throw new Error(`lag ${next} too large`);
-      await lag.click({ clickCount: 3 }); await lag.fill(String(next)); await lag.press('Tab'); await page.waitForTimeout(1500);
-      await page.getByRole('button', { name: /^save$/i }).first().click({ timeout: 20000 }); await page.waitForTimeout(4000);
-      if (await page.locator('text=Shift Reason').first().isVisible().catch(() => false)) {
-        if (!(await pickShiftReason(page, SHIFT_REASON, (m) => console.log('  ' + m)))) throw new Error('could not select the Shift Reason');
-        await page.getByRole('button', { name: /^save$/i }).first().click({ timeout: 20000 }); await page.waitForTimeout(5000);
-      }
-      cur = String((await listItems([bt])).find((y) => String(y.id) === String(it.id))?.startDate).slice(0, 10);
-      if (cur === date) return { lag: next };
+  // Move the item's Start to `date` by lowering the lag of EVERY predecessor link by the same number of work days
+  // (an item can have several predecessors; the latest one holds it). If it does not land, the lags go back.
+  const lagInputs = async () => { const out = []; for (let i = 0; i < 10; i++) { const l = page.locator(`input[name="predecessors.${i}.lag"]`); if (!(await l.count())) break; out.push(l); } return out; };
+  async function saveItem() {
+    await page.getByRole('button', { name: /^save$/i }).first().click({ timeout: 20000 }); await page.waitForTimeout(4000);
+    if (await page.locator('text=Shift Reason').first().isVisible().catch(() => false)) {
+      if (!(await pickShiftReason(page, SHIFT_REASON, (m) => console.log('  ' + m)))) throw new Error('could not select the Shift Reason');
+      await page.getByRole('button', { name: /^save$/i }).first().click({ timeout: 20000 }); await page.waitForTimeout(5000);
     }
-    throw new Error(`Start is ${cur} after setting the lag`);
+  }
+  async function openItem(bt, id) {
+    await page.goto(`https://buildertrend.net/app/Schedules/List/Schedule/${id}/${bt}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+    await page.locator('input[name="predecessors.0.lag"]').waitFor({ timeout: 45000 }); await page.waitForTimeout(1500);
+  }
+  async function setLags(values) { const ins = await lagInputs(); for (let i = 0; i < ins.length; i++) { await ins[i].click({ clickCount: 3 }); await ins[i].fill(String(values[i])); await ins[i].press('Tab'); await page.waitForTimeout(600); } }
+  async function lagTo(bt, it, date) {
+    let cur = String(it.startDate).slice(0, 10), orig = null, now = null;
+    for (let k = 0; k < 3; k++) {
+      await openItem(bt, it.id);
+      now = await Promise.all((await lagInputs()).map(async (l) => Number(await l.inputValue() || 0)));
+      orig ??= now;
+      const d = workdays(date, cur), next = now.map((v) => v - d);
+      if (next.some((v) => v < -999)) break;
+      await setLags(next); await saveItem();
+      const after = String((await listItems([bt])).find((y) => String(y.id) === String(it.id))?.startDate).slice(0, 10);
+      if (after === date) return { lag: next.join('/') };
+      if (after === cur) break;   // nothing moved: something else holds it
+      cur = after;
+    }
+    if (orig) { await openItem(bt, it.id); await setLags(orig); await saveItem(); }   // put the links back as they were
+    throw new Error(`Start stays ${cur} after lowering the lags (lags restored to ${orig?.join('/')})`);
+  }
+  // --undo-lag <itemId>:<add>,…: give back lag added by an earlier try on the FIRST predecessor link.
+  const UNDO_LAG = (arg('--undo-lag') || '').split(',').filter(Boolean).map((x) => x.split(':').map(Number));
+  if (UNDO_LAG.length && POST) {
+    const all = await listItems(jobIds);
+    for (const [id, add] of UNDO_LAG) {
+      const it = all.find((y) => String(y.id) === String(id)); if (!it) { console.error(`UNDO-LAG item ${id} not found`); continue; }
+      await openItem(it.jobId, id); const l = (await lagInputs())[0]; const v = Number(await l.inputValue() || 0);
+      await setLags([v + add, ...(await Promise.all((await lagInputs()).slice(1).map(async (x) => Number(await x.inputValue() || 0))))]); await saveItem();
+      await openItem(it.jobId, id); console.log(`UNDO-LAG ${String(it.title).trim()} (item ${id}): first link lag ${v} → ${Number(await (await lagInputs())[0].inputValue())}`);
+    }
   }
   let changed = 0, failed = 0;
   for (const bt of jobIds) {
