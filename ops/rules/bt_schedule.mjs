@@ -21,7 +21,7 @@ const arg = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.a
 const POST = process.env.OPS_BT_POST === 'true' || process.argv.includes('--post');
 const ONLY = arg('--job'), LIMIT = Number(arg('--limit') || 0);
 // --jobs 0001,0002: several houses; --no-logs: dates only from inspections / CO / permit / invoices (not Daily Logs).
-const JOBS = (arg('--jobs') || '').split(',').map((x) => x.trim()).filter(Boolean), NO_LOGS = process.argv.includes('--no-logs');
+const JOBS = (arg('--jobs') || '').split(',').map((x) => x.trim()).filter(Boolean), NO_LOGS = process.argv.includes('--no-logs'), LAG = process.argv.includes('--lag');
 const q = (v) => (v == null ? 'null' : `'${String(v).replace(/'/g, "''")}'`);
 const MAP = JSON.parse(readFileSync(new URL('../config/bt_schedule_map.json', import.meta.url), 'utf8')).rules.map((r) => ({ ...r, itemRe: new RegExp(r.item, 'i'), inspRe: r.inspection ? new RegExp(r.inspection, 'i') : null }));
 
@@ -138,6 +138,28 @@ if (process.argv.includes('--fix-dates')) {
   const fmtBt = (iso) => new Date(iso + 'T12:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric' });
   const exactFor = (e, it) => { const title = String(it.title || '').trim(); const rule = MAP.find((r) => r.itemRe.test(title)); EXACT = null;
     let why = rule ? proof(e, { ...rule, title }) : null; if ((!why || !EXACT) && !NO_LOGS) why = fromLog(e, title); return why && EXACT ? { date: EXACT, why } : null; };
+  // Work days between two ISO dates (Mon–Fri), signed: b later than a → positive.
+  const workdays = (a, b) => { const s = Math.sign(Date.parse(b) - Date.parse(a)); let n = 0; const d = new Date(a + 'T12:00:00Z'); const end = b;
+    while (d.toISOString().slice(0, 10) !== end) { d.setUTCDate(d.getUTCDate() + s); const w = d.getUTCDay(); if (w !== 0 && w !== 6) n += s; } return n; };
+  // Set the item's first predecessor lag so its Start lands on `date` (a few tries: Buildertrend counts work days).
+  async function lagTo(bt, it, date) {
+    let cur = String(it.startDate).slice(0, 10);
+    for (let k = 0; k < 4; k++) {
+      await page.goto(`https://buildertrend.net/app/Schedules/List/Schedule/${it.id}/${bt}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+      const lag = page.locator('input[name="predecessors.0.lag"]'); await lag.waitFor({ timeout: 45000 }); await page.waitForTimeout(1500);
+      const now = Number(await lag.inputValue() || 0), next = now - workdays(date, cur);
+      if (next < -999) throw new Error(`lag ${next} too large`);
+      await lag.click({ clickCount: 3 }); await lag.fill(String(next)); await lag.press('Tab'); await page.waitForTimeout(1500);
+      await page.getByRole('button', { name: /^save$/i }).first().click({ timeout: 20000 }); await page.waitForTimeout(4000);
+      if (await page.locator('text=Shift Reason').first().isVisible().catch(() => false)) {
+        if (!(await pickShiftReason(page, SHIFT_REASON, (m) => console.log('  ' + m)))) throw new Error('could not select the Shift Reason');
+        await page.getByRole('button', { name: /^save$/i }).first().click({ timeout: 20000 }); await page.waitForTimeout(5000);
+      }
+      cur = String((await listItems([bt])).find((y) => String(y.id) === String(it.id))?.startDate).slice(0, 10);
+      if (cur === date) return { lag: next };
+    }
+    throw new Error(`Start is ${cur} after setting the lag`);
+  }
   let changed = 0, failed = 0;
   for (const bt of jobIds) {
     const e = ev[bt]; if (!e) continue;
@@ -166,7 +188,18 @@ if (process.argv.includes('--fix-dates')) {
           from ops.jobs j where j.job_number = ${q(e.job)} on conflict (org_id, dedupe_key) do nothing`);
         changed++; console.log(`DATED ${label}`);
         if (LIMIT && changed >= LIMIT) break;
-      } catch (err) { failed++; console.error(`FAILED date ${label}: ${err.message}`); }
+      } catch (err) {
+        // Victor 11/21/26: an INSPECTION held later by its predecessor (Finish-to-Start link) gets its exact date
+        // through a negative lag on that link (only this item changes); a draw or any other item stays as it is.
+        const isInspection = /^inspection - /i.test(String(it.title || '').trim());
+        if (POST && LAG && isInspection && x.date < String(it.startDate).slice(0, 10)) {
+          try { const r = await lagTo(bt, it, x.date); changed++; console.log(`DATED (lag ${r.lag}) ${label}`); await sql(`insert into ops.events (org_id, job_id, kind, source, occurred_at, payload, dedupe_key)
+            select j.org_id, j.id, 'bt.schedule_date', 'rule', now(), ${q(JSON.stringify({ item: String(it.title).trim(), item_id: it.id, from: String(it.startDate).slice(0, 10), to: x.date, lag: r.lag, evidence: x.why }))}::jsonb, ${q(`bt.schedule_date:${it.id}:${x.date}`)}
+            from ops.jobs j where j.job_number = ${q(e.job)} on conflict (org_id, dedupe_key) do nothing`); continue; }
+          catch (e2) { console.error(`FAILED date (lag) ${label}: ${e2.message}`); }
+        }
+        failed++; console.error(`FAILED date ${label}: ${err.message}`);
+      }
     }
   }
   console.log(`fix-dates: ${changed} changed · ${failed} failed${POST ? '' : ' · dry run (the chain moves after each real change, so the real run can differ)'}`);
