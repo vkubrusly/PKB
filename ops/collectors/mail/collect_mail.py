@@ -61,7 +61,11 @@ def sql(query):
 
 # ---- Vendor invoices (invoice@pkbhomes.com forwards here, Victor 2026-11-19) ----
 INVOICE_BOXES = {'invoice@pkbhomes.com', 'invoices@pkbhomes.com'}
-TEAM_REPLY = {'camila@pkbhomes.com'}   # e-mails from them get an answer (rules/team_mail.mjs; Victor, 11/21/26)
+# Anyone @pkbhomes.com writing to the bot gets an answer — the bot mailbox is a conversation channel (rules/team_mail.mjs;
+# Victor, 11/21/26). Not the invoice boxes (they forward vendor invoices) and never an automatic reply (no loops).
+TEAM_DOMAIN = '@pkbhomes.com'
+NOT_TEAM = {'invoice@pkbhomes.com', 'invoices@pkbhomes.com'}
+AUTO_REPLY = re.compile(r'^\s*(automatic reply|auto(matic)?[- ]?reply|out of (the )?office|resposta autom|ausente|undeliverable|delivery status|mail delivery)', re.I)
 INVOICE_BUCKET = 'ops-invoices'
 INVOICE_TYPES = ('.pdf', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.heic', '.docx', '.doc', '.xlsx', '.xls', '.csv', '.txt')
 _svc = None
@@ -329,7 +333,8 @@ def main():
             category = 'vendor_invoice'
             mid = (msg.get('Message-ID') or f"no-id:{subject}")[:500]
             parsed = {'files': invoice_files(msg, mid), 'links': re.findall(r'https?://[^\s<>"\')]+', body)[:20]}
-        elif addr.lower() in TEAM_REPLY and category == 'other':
+        elif (addr.lower().endswith(TEAM_DOMAIN) and addr.lower() not in NOT_TEAM and category == 'other'
+              and not AUTO_REPLY.search(subject or '') and (msg.get('Auto-Submitted') or 'no').lower() == 'no'):
             # A team member writing to the bot: rules/team_mail.mjs answers it (Victor, 11/21/26).
             category = 'team_mail'
         jm = JOB_RE.search(subject) or JOB_RE.search(body[:400])
