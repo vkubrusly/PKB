@@ -20,6 +20,8 @@ const SHIFT_REASON = 'Data real (inspeção/fatura/Daily Log) – PKB Ops';
 const arg = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
 const POST = process.env.OPS_BT_POST === 'true' || process.argv.includes('--post');
 const ONLY = arg('--job'), LIMIT = Number(arg('--limit') || 0);
+// --jobs 0001,0002: several houses; --no-logs: dates only from inspections / CO / permit / invoices (not Daily Logs).
+const JOBS = (arg('--jobs') || '').split(',').map((x) => x.trim()).filter(Boolean), NO_LOGS = process.argv.includes('--no-logs'), LAG = process.argv.includes('--lag');
 const q = (v) => (v == null ? 'null' : `'${String(v).replace(/'/g, "''")}'`);
 const MAP = JSON.parse(readFileSync(new URL('../config/bt_schedule_map.json', import.meta.url), 'utf8')).rules.map((r) => ({ ...r, itemRe: new RegExp(r.item, 'i'), inspRe: r.inspection ? new RegExp(r.inspection, 'i') : null }));
 
@@ -27,7 +29,7 @@ const MAP = JSON.parse(readFileSync(new URL('../config/bt_schedule_map.json', im
 const rows = await sql(`select j.job_number, j.bt_job_id, j.co_at, c.issued_at, i.type, coalesce(i.actual_at, i.scheduled_at, i.requested_at) at, coalesce(i.actual_at, i.scheduled_at)::date::text exact
   from ops.jobs j join ops.permit_cases c on c.job_id = j.id and c.kind = 'building'
   left join ops.inspections i on i.permit_case_id = c.id and i.passed
-  where j.bt_job_id is not null ${ONLY ? `and j.job_number = ${q(ONLY)}` : ''}`);
+  where j.bt_job_id is not null ${ONLY ? `and j.job_number = ${q(ONLY)}` : ''} ${JOBS.length ? `and j.job_number in (${JOBS.map(q).join(',')})` : ''}`);
 const ev = {};
 for (const r of rows) {
   const e = (ev[r.bt_job_id] ??= { job: r.job_number, issued: r.issued_at, co: r.co_at, passed: [] });
@@ -50,7 +52,7 @@ const logDone = {};
 // a draw → the invoice date; the permit/CO → their dates; a Daily Log → the log date. Work items proven only by a
 // LATER inspection have no exact date (the work was done before it) → null.
 let EXACT = null;
-const fromLog = (e, title) => { for (const it of itemsFor(title)) { const d = logDone[e.job]?.get(it.item); if (d) { EXACT = String(d.date).slice(0, 10); return `Daily Log ${usDate(d.date)}${d.by ? ` (${d.by})` : ''}: "${d.text}"`; } } return null; };
+const fromLog = (e, title) => { for (const it of itemsFor(title)) { const d = logDone[e.job]?.get(it.item); if (d) { EXACT = d.exact || null; return `Daily Log ${usDate(d.date)}${d.by ? ` (${d.by})` : ''}: "${d.text}"`; } } return null; };
 const jobIds = Object.keys(ev).map(Number);
 if (!jobIds.length) { console.log('no jobs with a Buildertrend id and a building permit'); process.exit(0); }
 const proof1 = (e, rule) => {
@@ -135,7 +137,53 @@ if (process.argv.includes('--fix-dates')) {
   await noNotify(page, (m) => console.log('  ' + m));
   const fmtBt = (iso) => new Date(iso + 'T12:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric' });
   const exactFor = (e, it) => { const title = String(it.title || '').trim(); const rule = MAP.find((r) => r.itemRe.test(title)); EXACT = null;
-    let why = rule ? proof(e, { ...rule, title }) : null; if (!why || !EXACT) why = fromLog(e, title); return why && EXACT ? { date: EXACT, why } : null; };
+    let why = rule ? proof(e, { ...rule, title }) : null; if ((!why || !EXACT) && !NO_LOGS) why = fromLog(e, title); return why && EXACT ? { date: EXACT, why } : null; };
+  // Work days between two ISO dates (Mon–Fri), signed: b later than a → positive.
+  const workdays = (a, b) => { const s = Math.sign(Date.parse(b) - Date.parse(a)); let n = 0; const d = new Date(a + 'T12:00:00Z'); const end = b;
+    while (d.toISOString().slice(0, 10) !== end) { d.setUTCDate(d.getUTCDate() + s); const w = d.getUTCDay(); if (w !== 0 && w !== 6) n += s; } return n; };
+  // Move the item's Start to `date` by lowering the lag of EVERY predecessor link by the same number of work days
+  // (an item can have several predecessors; the latest one holds it). If it does not land, the lags go back.
+  const lagInputs = async () => { const out = []; for (let i = 0; i < 10; i++) { const l = page.locator(`input[name="predecessors.${i}.lag"]`); if (!(await l.count())) break; out.push(l); } return out; };
+  async function saveItem() {
+    await page.getByRole('button', { name: /^save$/i }).first().click({ timeout: 20000 }); await page.waitForTimeout(4000);
+    if (await page.locator('text=Shift Reason').first().isVisible().catch(() => false)) {
+      if (!(await pickShiftReason(page, SHIFT_REASON, (m) => console.log('  ' + m)))) throw new Error('could not select the Shift Reason');
+      await page.getByRole('button', { name: /^save$/i }).first().click({ timeout: 20000 }); await page.waitForTimeout(5000);
+    }
+  }
+  async function openItem(bt, id) {
+    await page.goto(`https://buildertrend.net/app/Schedules/List/Schedule/${id}/${bt}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+    await page.locator('input[name="predecessors.0.lag"]').waitFor({ timeout: 45000 }); await page.waitForTimeout(1500);
+  }
+  async function setLags(values) { const ins = await lagInputs(); for (let i = 0; i < ins.length; i++) { await ins[i].click({ clickCount: 3 }); await ins[i].fill(String(values[i])); await ins[i].press('Tab'); await page.waitForTimeout(600); } }
+  async function lagTo(bt, it, date) {
+    let cur = String(it.startDate).slice(0, 10), orig = null, now = null;
+    for (let k = 0; k < 3; k++) {
+      await openItem(bt, it.id);
+      now = await Promise.all((await lagInputs()).map(async (l) => Number(await l.inputValue() || 0)));
+      orig ??= now;
+      const d = workdays(date, cur), next = now.map((v) => v - d);
+      if (next.some((v) => v < -999)) break;
+      await setLags(next); await saveItem();
+      const after = String((await listItems([bt])).find((y) => String(y.id) === String(it.id))?.startDate).slice(0, 10);
+      if (after === date) return { lag: next.join('/') };
+      if (after === cur) break;   // nothing moved: something else holds it
+      cur = after;
+    }
+    if (orig) { await openItem(bt, it.id); await setLags(orig); await saveItem(); }   // put the links back as they were
+    throw new Error(`Start stays ${cur} after lowering the lags (lags restored to ${orig?.join('/')})`);
+  }
+  // --undo-lag <itemId>:<add>,…: give back lag added by an earlier try on the FIRST predecessor link.
+  const UNDO_LAG = (arg('--undo-lag') || '').split(',').filter(Boolean).map((x) => x.split(':').map(Number));
+  if (UNDO_LAG.length && POST) {
+    const all = await listItems(jobIds);
+    for (const [id, add] of UNDO_LAG) {
+      const it = all.find((y) => String(y.id) === String(id)); if (!it) { console.error(`UNDO-LAG item ${id} not found`); continue; }
+      await openItem(it.jobId, id); const l = (await lagInputs())[0]; const v = Number(await l.inputValue() || 0);
+      await setLags([v + add, ...(await Promise.all((await lagInputs()).slice(1).map(async (x) => Number(await x.inputValue() || 0))))]); await saveItem();
+      await openItem(it.jobId, id); console.log(`UNDO-LAG ${String(it.title).trim()} (item ${id}): first link lag ${v} → ${Number(await (await lagInputs())[0].inputValue())}`);
+    }
+  }
   let changed = 0, failed = 0;
   for (const bt of jobIds) {
     const e = ev[bt]; if (!e) continue;
@@ -164,7 +212,18 @@ if (process.argv.includes('--fix-dates')) {
           from ops.jobs j where j.job_number = ${q(e.job)} on conflict (org_id, dedupe_key) do nothing`);
         changed++; console.log(`DATED ${label}`);
         if (LIMIT && changed >= LIMIT) break;
-      } catch (err) { failed++; console.error(`FAILED date ${label}: ${err.message}`); }
+      } catch (err) {
+        // Victor 11/21/26: an INSPECTION held later by its predecessor (Finish-to-Start link) gets its exact date
+        // through a negative lag on that link (only this item changes); a draw or any other item stays as it is.
+        const isInspection = /^inspection - /i.test(String(it.title || '').trim());
+        if (POST && LAG && isInspection && x.date < String(it.startDate).slice(0, 10)) {
+          try { const r = await lagTo(bt, it, x.date); changed++; console.log(`DATED (lag ${r.lag}) ${label}`); await sql(`insert into ops.events (org_id, job_id, kind, source, occurred_at, payload, dedupe_key)
+            select j.org_id, j.id, 'bt.schedule_date', 'rule', now(), ${q(JSON.stringify({ item: String(it.title).trim(), item_id: it.id, from: String(it.startDate).slice(0, 10), to: x.date, lag: r.lag, evidence: x.why }))}::jsonb, ${q(`bt.schedule_date:${it.id}:${x.date}`)}
+            from ops.jobs j where j.job_number = ${q(e.job)} on conflict (org_id, dedupe_key) do nothing`); continue; }
+          catch (e2) { console.error(`FAILED date (lag) ${label}: ${e2.message}`); }
+        }
+        failed++; console.error(`FAILED date ${label}: ${err.message}`);
+      }
     }
   }
   console.log(`fix-dates: ${changed} changed · ${failed} failed${POST ? '' : ' · dry run (the chain moves after each real change, so the real run can differ)'}`);
