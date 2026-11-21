@@ -1,5 +1,5 @@
 // dailylog_done.mjs — which schedule items the Daily Logs say are DONE (config/bt_schedule_dailylog.json).
-// doneFromLogs(logs) → Map(itemRegexSource → { date, exact, by, text }) with the earliest log that says it.
+// doneFromLogs(logs) → Map(itemRegexSource → { date, exact, by, text }): the earliest day any log says it was done.
 // Victor 11/20/26: only a log that says the work WAS done counts (no future, scheduling or inspection sentences,
 // not the bot's own logs). 'exact' = the day the text gives for the work ('10/02', 'Saturday 10/03',
 // 'last Friday', 'ontem'), else the log day; null when the text names a day that cannot be read with certainty.
@@ -62,10 +62,14 @@ export function doneFromLogs(logs) {
         it.wordsRe.lastIndex = 0;
         if (!it.wordsRe.test(f)) continue;
         if (it.notRe && it.notRe.test(f)) { f = f.replace(new RegExp(it.words, 'gi'), ' '); continue; }
-        if (!found.has(it.item)) {
-          const w = workDate(frag, l.date);
-          found.set(it.item, { date: l.date, exact: w === undefined ? String(l.date).slice(0, 10) : w, by: l.by, text: frag.slice(0, 160) });
-        }
+        // The FIRST time the work shows as done wins (Victor, 11/21/26): logs are often copy-pasted, so the same
+        // "bollard instalado" comes back in later logs, and one log may list several dated lines. Every log and every
+        // line is compared and the earliest day kept (the day the text gives, else the log day).
+        const w = workDate(frag, l.date);
+        const cand = { date: l.date, exact: w === undefined ? String(l.date).slice(0, 10) : w, by: l.by, text: frag.slice(0, 160) };
+        const day = (x) => String(x.exact || x.date).slice(0, 10);
+        const cur = found.get(it.item);
+        if (!cur || day(cand) < day(cur)) found.set(it.item, cand);
         f = f.replace(new RegExp(it.words, 'gi'), ' ');   // a more specific item (stucco grading) hides the generic one (stucco)
       }
     }
