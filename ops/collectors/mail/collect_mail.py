@@ -61,6 +61,7 @@ def sql(query):
 
 # ---- Vendor invoices (invoice@pkbhomes.com forwards here, Victor 2026-11-19) ----
 INVOICE_BOXES = {'invoice@pkbhomes.com', 'invoices@pkbhomes.com'}
+TEAM_REPLY = {'camila@pkbhomes.com'}   # e-mails from them get an answer (rules/team_mail.mjs; Victor, 11/21/26)
 INVOICE_BUCKET = 'ops-invoices'
 INVOICE_TYPES = ('.pdf', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.heic', '.docx', '.doc', '.xlsx', '.xls', '.csv', '.txt')
 _svc = None
@@ -328,6 +329,9 @@ def main():
             category = 'vendor_invoice'
             mid = (msg.get('Message-ID') or f"no-id:{subject}")[:500]
             parsed = {'files': invoice_files(msg, mid), 'links': re.findall(r'https?://[^\s<>"\')]+', body)[:20]}
+        elif addr.lower() in TEAM_REPLY and category == 'other':
+            # A team member writing to the bot: rules/team_mail.mjs answers it (Victor, 11/21/26).
+            category = 'team_mail'
         jm = JOB_RE.search(subject) or JOB_RE.search(body[:400])
         row = {
             'uid': num.decode(), 'message_id': (msg.get('Message-ID') or f"no-id:{received}:{subject}")[:500],

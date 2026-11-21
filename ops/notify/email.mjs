@@ -49,11 +49,12 @@ function getTransport() {
 
 // alwaysCc=false for internal alerts (the Guilherme Cc rule applies to e-mails that leave PKB).
 // force=true: a partner approved this message in the portal — send even when OPS_SEND_ENABLED=false.
-export async function sendEmail({ to, cc = [], subject, text, html, attachments = [], alwaysCc = true, force = false }) {
+// inReplyTo: the Message-ID of the e-mail being answered (keeps the reply in the same thread).
+export async function sendEmail({ to, cc = [], subject, text, html, attachments = [], alwaysCc = true, force = false, inReplyTo = null }) {
   const always = alwaysCc ? (process.env.OPS_ALWAYS_CC || '').split(',').map(s => s.trim()).filter(Boolean) : [];
   const ccAll = withCompanions(to, [...new Set([...cc, ...always])].filter(a => ![].concat(to).includes(a)));
   const msg = { from: `PKB Ops <${process.env.BOT_EMAIL}>`, to, cc: ccAll, subject, text, html: brandHtml(text, html),
-    attachments: [...attachments, { filename: 'pkb-homes.png', path: LOGO, cid: LOGO_CID }] };
+    attachments: [...attachments, { filename: 'pkb-homes.png', path: LOGO, cid: LOGO_CID }], ...(inReplyTo ? { inReplyTo, references: [inReplyTo] } : {}) };
   if ((process.env.OPS_SEND_ENABLED === 'false' && !force) || !process.env.BOT_EMAIL_PASSWORD) {
     console.log('[email dry-run]', JSON.stringify({ to, cc: ccAll, subject }));
     return { dryRun: true, cc: ccAll };
