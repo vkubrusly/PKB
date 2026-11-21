@@ -5,6 +5,7 @@
 //   → { is_invoice, vendor, invoice_number, invoice_date, due_date, total, sites[], invoice_fees[], notes }
 //   POST { mode: 'answer', answer_text, invoice: {vendor, invoice_number, total, issues[], lines[]}, jobs: [{job_number, address}] }
 //   → { decision, assignments[], exclude[], no_job[], cost_code, summary }   (Camila's / Victor's e-mail answer, read)
+//   POST { mode: 'reply', from, from_name, subject, text, context, as_of } → { reply, needs_victor, summary }   (a team e-mail, answered)
 import Anthropic from 'npm:@anthropic-ai/sdk@0.68.0';
 import { cors, json } from '../_shared/cors.ts';
 
@@ -57,6 +58,18 @@ const ANSWER_SCHEMA = {
   },
 };
 
+const REPLY_INSTRUCTIONS = `You are PKB Ops, the operations assistant of PKB Homes (a Florida home builder), answering an e-mail that a team member wrote to the bot mailbox. Write the reply in Brazilian Portuguese, short and direct, like a helpful colleague: no greeting line beyond the person's first name, no sign-off (the system adds one).
+Answer ONLY from the DATA given (houses/jobs, vendor invoices and their bills, open questions). Never invent a number, a date, a job or an amount; if the data does not have the answer, say so plainly and say that Victor was copied.
+You cannot act in Buildertrend from this e-mail except through the invoice process (the invoice answers are handled elsewhere). If the person asks for an action (create/change/delete something, pay, send to someone), say you passed it to Victor (he is in copy) and set needs_victor true.
+Dates in MM/DD/YY. Money as $1,234.56.
+- reply: the e-mail body text.
+- needs_victor: true when it needs a person (an action, a decision, or the data does not answer).
+- summary: one short line in Portuguese of what was asked.`;
+const REPLY_SCHEMA = {
+  type: 'object', additionalProperties: false, required: ['reply', 'needs_victor', 'summary'],
+  properties: { reply: { type: 'string' }, needs_victor: { type: 'boolean' }, summary: { type: 'string' } },
+};
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   try {
@@ -75,6 +88,16 @@ Deno.serve(async (req) => {
       }
       return resp;
     };
+    if (body.mode === 'reply') {
+      const resp = await ask({
+        model: MODEL, max_tokens: 4000, system: REPLY_INSTRUCTIONS,
+        messages: [{ role: 'user', content: `DATA (as of ${body.as_of || '—'}):\n${String(body.context || '').slice(0, 150000)}\n\nE-MAIL from ${body.from_name || ''} <${body.from || ''}>\nSubject: ${body.subject || ''}\n\n${String(body.text || '').slice(0, 12000)}` }],
+        output_config: { effort: 'medium', format: { type: 'json_schema', schema: REPLY_SCHEMA } },
+      });
+      if (resp.stop_reason === 'refusal') return json({ error: 'the model declined' }, 422);
+      try { return json({ ...JSON.parse((resp.content || []).find((b: Any) => b.type === 'text')?.text || ''), model: resp.model }); }
+      catch { return json({ error: 'no JSON in the answer' }, 502); }
+    }
     if (body.mode === 'answer') {
       const resp = await ask({
         model: MODEL, max_tokens: 4000, system: ANSWER_INSTRUCTIONS,

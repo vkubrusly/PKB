@@ -169,7 +169,7 @@ for (const v of todo) {
 // read by ops-invoice (mode answer) and applied. An address assigned to a job, a line left out, "pode criar" →
 // ready (the bills follow); "não lançar" / already entered → ignored; unclear → stays, nothing done. When lines
 // are still without a job after the answer, the question goes out again with what is left.
-const answers = await sql(`select e.id, e.received_at, e.from_addr, e.subject, e.body_text from ops.inbound_emails e
+const answers = await sql(`select e.id, e.message_id, e.received_at, e.from_addr, e.subject, e.body_text from ops.inbound_emails e
   where e.org_id = ${q(org)} and e.category = 'invoice_answer' and e.received_at > now() - interval '30 days'
     and not exists (select 1 from ops.vendor_invoices v where v.answer_email_id = e.id) order by e.received_at`);
 for (const e of answers) {
@@ -202,14 +202,33 @@ for (const e of answers) {
   for (const ad of a.no_job || []) { const l = v.lines.find((x) => same(x.address, ad)); if (l) stmts.push(`update ops.vendor_invoice_lines set general = true, job_id = null, job_number = null, excluded = false where id = ${q(l.id)}`); }
   for (const ad of a.exclude || []) { const l = v.lines.find((x) => same(x.address, ad)); if (l) stmts.push(`update ops.vendor_invoice_lines set excluded = true where id = ${q(l.id)}`); }
   await sql(stmts.join(';\n'));
-  if (a.decision === 'ignore' || a.decision === 'duplicate') { await sql(`update ops.vendor_invoices set status = 'ignored' where id = ${q(v.id)}`); continue; }
-  if (a.decision !== 'create') continue;
-  const left = await sql(`select address, bill_amount from ops.vendor_invoice_lines where invoice_id = ${q(v.id)} and not excluded and not general and job_id is null`);
-  if (left.length) await sql(`update ops.vendor_invoices set status = 'needs_review', question_sent_at = null,
-      issues = array[${left.map((l) => q(`${l.address}: ainda sem obra (${money(l.bill_amount)}) — diga a obra ou "tira essa"`)).join(',')}] where id = ${q(v.id)}`);
-  else if (!a.cost_code && !(await vendorCostCode(org, v.vendor))) await sql(`update ops.vendor_invoices set status = 'needs_review', question_sent_at = null,
-      issues = array[${q(`fornecedor ${v.vendor} ainda não tem cost code definido — qual cost code usar nas bills?`)}] where id = ${q(v.id)}`);
-  else await sql(`update ops.vendor_invoices set status = 'ready', issues = '{}' where id = ${q(v.id)}`);
+  let next;
+  if (a.decision === 'ignore' || a.decision === 'duplicate') { await sql(`update ops.vendor_invoices set status = 'ignored' where id = ${q(v.id)}`); next = 'Não vou lançar esta invoice.'; }
+  else if (a.decision !== 'create') next = 'Fico aguardando — quando quiser que eu crie as bills, responda "pode criar".';
+  else {
+    const left = await sql(`select address, bill_amount from ops.vendor_invoice_lines where invoice_id = ${q(v.id)} and not excluded and not general and job_id is null`);
+    if (left.length) {
+      await sql(`update ops.vendor_invoices set status = 'needs_review', question_sent_at = null,
+        issues = array[${left.map((l) => q(`${l.address}: ainda sem obra (${money(l.bill_amount)}) — diga a obra ou "tira essa"`)).join(',')}] where id = ${q(v.id)}`);
+      next = `Ainda falta a obra de ${left.length} endereço(s); mando outro e-mail com o que ficou.`;
+    } else if (!a.cost_code && !(await vendorCostCode(org, v.vendor))) {
+      await sql(`update ops.vendor_invoices set status = 'needs_review', question_sent_at = null,
+        issues = array[${q(`fornecedor ${v.vendor} ainda não tem cost code definido — qual cost code usar nas bills?`)}] where id = ${q(v.id)}`);
+      next = `Ainda falta o cost code do fornecedor ${v.vendor}; mando outro e-mail perguntando.`;
+    } else {
+      await sql(`update ops.vendor_invoices set status = 'ready', issues = '{}' where id = ${q(v.id)}`);
+      next = 'Vou criar as bills em draft no Buildertrend, com a invoice anexada, nos próximos minutos.';
+    }
+  }
+  // Confirmation in the same thread (Victor, 11/21/26: Camila writes to the bot and gets an answer).
+  const first = String(e.from_addr || '').split('@')[0].replace(/^./, (c) => c.toUpperCase());
+  const text = `${first},\n\nEntendi: ${a.summary}\n${next}\n\n— PKB Ops (resposta automática)`;
+  let res;
+  try { res = await sendEmail({ to: [e.from_addr], cc: e.from_addr === REVIEW_CC[0] ? [] : REVIEW_CC, subject: /^re:/i.test(e.subject || '') ? e.subject : `Re: ${e.subject}`, text, alwaysCc: false, inReplyTo: e.message_id }); } catch (err) { res = { error: err.message }; }
+  const st = res.error ? 'failed' : res.dryRun ? 'draft' : 'sent';
+  await sql(`insert into ops.outbound_messages (org_id, channel, rule, to_addresses, cc_addresses, subject, body, status, error, external_id, sent_at)
+      values (${q(org)}, 'email', 'R-INVOICE-OK', array[${q(e.from_addr)}]::text[], array[${(res.cc || REVIEW_CC).map(q).join(',')}]::text[], ${q(`Re: ${e.subject}`)}, ${q(text)}, ${q(st)}, ${q(res.error || null)}, ${q(res.id || null)}, ${st === 'sent' ? 'now()' : 'null'})`);
+  console.log(`${st.toUpperCase()} confirmation → ${e.from_addr}: ${next}`);
 }
 
 // 4. One e-mail per invoice that needs a person (Camila, Cc Victor), with the file attached.

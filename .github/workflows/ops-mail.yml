@@ -56,6 +56,7 @@ jobs:
           node rules/send_approved.mjs || echo "::warning::rules/send_approved.mjs failed"
           node rules/warranty.mjs || echo "::warning::rules/warranty.mjs failed"
           node rules/vendor_invoices.mjs || echo "::warning::rules/vendor_invoices.mjs failed"
+          node rules/team_mail.mjs || echo "::warning::rules/team_mail.mjs failed"   # answers Camila's e-mails
 
       # Security robot (rules/security_watch.mjs): attack attempts and doors left open, every hour.
       # Critical / high findings e-mail Victor at once (even with sending off); weekly report on Mondays.
