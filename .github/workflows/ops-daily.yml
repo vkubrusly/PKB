@@ -245,7 +245,15 @@ jobs:
         if: steps.bt.outputs.state == 'ok' && vars.OPS_BT_POST == 'true'
         continue-on-error: true
         env: { OPS_BT_POST: 'true' }
-        run: node rules/bt_schedule.mjs || echo "::warning::bt_schedule failed"
+        # Victor 11/21/26: the items just completed get their exact date at once (inspection → day it passed,
+        # CO → Final Structural day, draw → invoice date, Daily Log → day the work was done); an inspection held by
+        # its predecessors gets it through the lag; a draw or other item that Buildertrend holds stays as it is.
+        run: |
+          node rules/bt_schedule.mjs --marked-out marked.txt || echo "::warning::bt_schedule failed"
+          if [ -s marked.txt ]; then
+            read -r JOBS ITEMS < marked.txt
+            node rules/bt_schedule.mjs --fix-dates --lag --jobs "$JOBS" --items "$ITEMS" || echo "::warning::bt_schedule dates failed"
+          fi
 
       # Warranty claims (rules/bt_warranty.mjs): create the Buildertrend claim of each new website request
       # item and follow every claim's status until it is resolved. Only with OPS_BT_POST 'true'.

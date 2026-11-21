@@ -21,7 +21,7 @@ const arg = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.a
 const POST = process.env.OPS_BT_POST === 'true' || process.argv.includes('--post');
 const ONLY = arg('--job'), LIMIT = Number(arg('--limit') || 0);
 // --jobs 0001,0002: several houses; --no-logs: dates only from inspections / CO / permit / invoices (not Daily Logs).
-const JOBS = (arg('--jobs') || '').split(',').map((x) => x.trim()).filter(Boolean), NO_LOGS = process.argv.includes('--no-logs'), LAG = process.argv.includes('--lag');
+const JOBS = (arg('--jobs') || '').split(',').map((x) => x.trim()).filter(Boolean), NO_LOGS = process.argv.includes('--no-logs'), LAG = process.argv.includes('--lag'), ONLY_ITEMS = new Set((arg('--items') || '').split(',').filter(Boolean));
 const q = (v) => (v == null ? 'null' : `'${String(v).replace(/'/g, "''")}'`);
 const MAP = JSON.parse(readFileSync(new URL('../config/bt_schedule_map.json', import.meta.url), 'utf8')).rules.map((r) => ({ ...r, itemRe: new RegExp(r.item, 'i'), inspRe: r.inspection ? new RegExp(r.inspection, 'i') : null }));
 
@@ -191,7 +191,7 @@ if (process.argv.includes('--fix-dates')) {
     const tried = new Set();
     for (let round = 0; round < 200; round++) {
       const items = (await listItems([bt])).filter((it) => it.completed).sort((a, b) => String(a.startDate).localeCompare(String(b.startDate)) || String(a.id).localeCompare(String(b.id)));
-      const next = items.map((it) => ({ it, x: exactFor(e, it) })).find(({ it, x }) => x && String(it.startDate).slice(0, 10) !== x.date && !tried.has(String(it.id)));
+      const next = items.map((it) => ({ it, x: exactFor(e, it) })).find(({ it, x }) => x && String(it.startDate).slice(0, 10) !== x.date && !tried.has(String(it.id)) && (!ONLY_ITEMS.size || ONLY_ITEMS.has(String(it.id))));
       if (!next) break;
       const { it, x } = next; tried.add(String(it.id));
       const label = `${e.job} · ${String(it.title).trim()} (item ${it.id}) ${String(it.startDate).slice(0, 10)} → ${x.date} ← ${x.why}`;
@@ -260,7 +260,7 @@ for (const it of items) {
   const e = ev[it.jobId]; if (!e) continue;
   const title = String(it.title || '').trim();
   const rule = MAP.find((r) => r.itemRe.test(title));
-  const why = (rule && proof(e, { ...rule, title })) || fromLog(e, title); if (!why) continue; if (why) todo.push({ it, e, why });
+  const why = (rule && proof(e, { ...rule, title })) || fromLog(e, title); if (!why) continue; todo.push({ it, e, why, exact: EXACT });
 }
 if (!POST) {
   // Dry run: also show which open items no rule covers (to extend config/bt_schedule_map.json).
@@ -271,8 +271,8 @@ if (!POST) {
 const list = LIMIT ? todo.slice(0, LIMIT) : todo;
 console.log(`${todo.length} item(s) to mark complete${LIMIT ? ` (limited to ${list.length})` : ''}${POST ? '' : ' · DRY RUN (no change)'}`);
 
-let done = 0, failed = 0;
-for (const { it, e, why } of list) {
+let done = 0, failed = 0; const marked = [];
+for (const { it, e, why, exact } of list) {
   const label = `${e.job} · ${String(it.title).trim()} (item ${it.id}) ← ${why}`;
   if (!POST) { console.log(`[dry run] ${label}`); continue; }
   try {
@@ -286,8 +286,15 @@ for (const { it, e, why } of list) {
       select j.org_id, j.id, 'bt.schedule_complete', 'rule', now(), ${q(JSON.stringify({ item: String(it.title).trim(), item_id: it.id, evidence: why }))}::jsonb, ${q(`bt.schedule_complete:${it.id}`)}
       from ops.jobs j where j.job_number = ${q(e.job)} on conflict (org_id, dedupe_key) do nothing`);
     done++; console.log(`MARKED ${label}`);
+    if (exact) marked.push({ job: e.job, id: String(it.id) });
   } catch (err) { failed++; console.error(`FAILED ${label}: ${err.message}`); }
 }
 console.log(`schedule: ${done} marked complete · ${failed} failed${POST ? '' : ' · dry run'}`);
+// --marked-out <file>: the items just marked that have an exact date ("jobs items" for the --fix-dates step that
+// follows in ops-daily: Victor 11/21/26 — the robot puts the exact date when it completes the item).
+if (arg('--marked-out')) {
+  const { writeFileSync } = await import('node:fs');
+  writeFileSync(arg('--marked-out'), marked.length ? `${[...new Set(marked.map((m) => m.job))].join(',')} ${marked.map((m) => m.id).join(',')}` : '');
+}
 await browser.close();
 process.exit(failed && !done ? 1 : 0);
