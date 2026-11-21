@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 // =============================================================================
-// team_mail.mjs — answer the e-mails a team member writes to the bot mailbox (Victor, 11/21/26: "avisei a Camila
-// que se ela mandar e-mail pra você, você responde"). Senders: TEAM_REPLY in collect_mail.py (category
-// 'team_mail'). The answer comes from the data PKB Ops has (houses, permits, inspections, vendor invoices and their
+// team_mail.mjs — the bot mailbox is a conversation channel: anyone @pkbhomes.com who writes to it gets an answer
+// (Victor, 11/21/26). Senders: collect_mail.py, category 'team_mail' (not invoice@, never an automatic reply). The answer comes from the data PKB Ops has (houses, permits, inspections, vendor invoices and their
 // bills) through the Edge Function ops-invoice (mode reply); it goes back in the same thread, Cc Victor. Anything
 // that needs an action or a decision is left to Victor (he is in copy) — this rule never acts in Buildertrend.
 //   node rules/team_mail.mjs [--dry-run]
@@ -22,7 +21,8 @@ const mails = await sql(`select id, message_id, received_at, from_addr, from_nam
 if (!mails.length) { console.log('team_mail: nothing to answer'); process.exit(0); }
 
 // Data the answer may use: the latest board snapshot (houses) and the vendor invoices of the last 45 days.
-const snap = (await sql(`select data->'board'->>'asOf' as_of, data->'board'->'jobs' jobs from ops.snapshots where kind = 'board' or data ? 'board' order by created_at desc limit 1`))[0] || {};
+const snap = (await sql(`select data->'board'->>'asOf' as_of, data->'board'->'jobs' jobs, data->'board'->'directory' dir from ops.snapshots where kind = 'board' or data ? 'board' order by created_at desc limit 1`))[0] || {};
+const people = (snap.dir || []).map((p) => `${p.name} <${p.email || '—'}> — ${p.role || ''}`).join('\n');
 const jobs = (snap.jobs || []).map((j) => COLS.map((k) => (j[k] == null ? '' : Array.isArray(j[k]) ? j[k].join('+') : String(j[k]))).join('|')).join('\n');
 const inv = await sql(`select v.vendor, v.invoice_number, v.total, v.status, v.invoice_date, v.received_at, v.issues, v.bt_found, v.answer,
     coalesce((select json_agg(json_build_object('job', coalesce(l.job_number, case when l.general then 'geral' end), 'amount', l.bill_amount, 'bill', l.bt_bill_id, 'bt', l.bt_status)) from ops.vendor_invoice_lines l where l.invoice_id = v.id), '[]') lines
@@ -32,7 +32,7 @@ const invText = inv.map((v) => `${v.vendor || '?'} #${v.invoice_number || '?'} �
   + `${(v.bt_found || []).length ? ` · no Buildertrend: ${v.bt_found.map((f) => `${f.number} ${money(f.amount)}`).join(', ')}` : ''}`
   + `${(v.lines || []).length ? ` · obras: ${v.lines.map((l) => `${l.job || '????'} ${money(l.amount)}${l.bill ? ` (bill ${l.bill})` : ''}`).join(', ')}` : ''}`
   + `${(v.issues || []).length && ['needs_review', 'duplicate', 'error'].includes(v.status) ? ` · pendências: ${v.issues.join(' | ').slice(0, 400)}` : ''}`).join('\n');
-const context = `HOUSES / JOBS (pipe-separated: ${COLS.join('|')}):\n${jobs}\n\nVENDOR INVOICES (invoice@, last 45 days):\n${invText || '(none)'}`;
+const context = `PKB TEAM (who is writing; use first names):\n${people}\n\nHOUSES / JOBS (pipe-separated: ${COLS.join('|')}):\n${jobs}\n\nVENDOR INVOICES (invoice@, last 45 days):\n${invText || '(none)'}`;
 
 const key = await serviceKey();
 for (const m of mails) {
