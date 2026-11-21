@@ -705,7 +705,8 @@ async function renderVendorInvoices(){
       ${v.answer ? `<div class="note">Last answer: ${esc(v.answer)}</div>` : ''}
       <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap"><textarea rows="2" style="flex:1;min-width:240px;font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)"
         placeholder='Write the solution, e.g. "5150 SW 165th Pl is job 0078, cost code 10.20.02, pode criar" or "não lançar, já foi pago"'></textarea>
-        <button class="btn" type="button" data-send="${v.id}">Send solution</button><span class="note" data-out></span></div></div>`;
+        <button class="btn" type="button" data-send="${v.id}">Send solution</button>
+        <button class="btn ghost" type="button" data-dismiss="${v.id}" title="Solved some other way: take it off this list">Dismiss</button><span class="note" data-out></span></div></div>`;
   }).join('') : '<div class="empty">Nothing waiting. ✓</div>';
   $('#vinvAtt').querySelectorAll('[data-pdf]').forEach(a => a.onclick = e => { e.preventDefault(); openInvoicePdf(a.dataset.pdf); });
   $('#vinvAtt').querySelectorAll('[data-send]').forEach(b => b.onclick = async () => {
@@ -715,6 +716,15 @@ async function renderVendorInvoices(){
     const { error: er } = await window.OPS.sb.rpc('ops_vendor_invoice_answer', { p_id: b.dataset.send, p_text: text });
     out.textContent = er ? 'Error: ' + er.message : '✓ sent — the robot applies it in a few minutes; press ↻ to see the result';
     if (er) b.disabled = false;
+  });
+  $('#vinvAtt').querySelectorAll('[data-dismiss]').forEach(b => b.onclick = async () => {
+    const box = b.closest('[data-inv]'), out = box.querySelector('[data-out]');
+    const note = prompt('Dismiss this invoice? The robot will do nothing more with it.\nHow was it solved? (optional)', '');
+    if (note === null) return;
+    b.disabled = true; out.textContent = 'dismissing…';
+    const { error: er } = await window.OPS.sb.rpc('ops_vendor_invoice_dismiss', { p_id: b.dataset.dismiss, p_note: note });
+    if (er) { out.textContent = 'Error: ' + er.message; b.disabled = false; return; }
+    renderVendorInvoices();
   });
   const items = D.items || [], show = renderVendorInvoices.all ? items : items.slice(0, 15);
   $('#vinvAll').innerHTML = items.length ? `<table><thead><tr><th>Received</th><th>Vendor</th><th>Invoice</th><th class="num">Amount</th><th>Status</th><th>Jobs · bills</th><th>File</th></tr></thead><tbody>${show.map(v => {
