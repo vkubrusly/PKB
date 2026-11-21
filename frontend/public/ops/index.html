@@ -473,7 +473,16 @@ footer{margin-top:30px;font-size:12.5px;color:var(--ink-3);border-top:1px solid 
       <div id="finLateChart" style="position:relative;margin-top:14px"></div></div>
     <!-- The late-invoice list was the same as "Open invoices" (Victor, 11/21/26): the late ones are there, with their days late. -->
     <div class="panel"><div class="hd"><h3>Open invoices</h3><span class="note">balance due, most overdue first · late ones show their days late</span></div><div class="tbl" id="finOpen"></div></div>
-    <div class="panel"><div class="hd"><h3>Payments received · last 120 days</h3></div><div class="tbl" id="finPaid"></div></div>
+    <div class="panel"><div class="hd"><h3>Payments received</h3><span class="note" id="finPaidSum"></span></div>
+      <div class="tools" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        <select id="finPaidPeriod" aria-label="Period">
+          <option value="30">Last 30 days</option><option value="60">Last 60 days</option><option value="90">Last 90 days</option>
+          <option value="120" selected>Last 120 days</option><option value="month">This month</option><option value="lastmonth">Last month</option>
+          <option value="ytd">Year to date</option><option value="365">Last 12 months</option><option value="custom">Custom…</option></select>
+        <span id="finPaidCustom" hidden><input type="date" id="finPaidFrom" aria-label="From"> – <input type="date" id="finPaidTo" aria-label="To"></span>
+      </div>
+      <div class="tbl" id="finPaid" style="margin-top:8px"></div>
+      <div id="finPaidMore" style="margin-top:6px"></div></div>
     <div class="panel"><div class="hd"><h3>QuickBooks errors</h3><span class="note">last 15 · intuit_tid identifies the call for Intuit support</span></div><div class="tbl" id="finErr"></div></div>
     <p class="note">Support: <a href="mailto:victor@pkbhomes.com?subject=PKB%20Ops%20QuickBooks">victor@pkbhomes.com</a> · Connection page: <a href="/ops/quickbooks/">/ops/quickbooks</a></p>
   </section>
@@ -623,7 +632,36 @@ async function renderFinance(){
     + kpi('Open receivables', usd(owed), `${open.length} invoice(s)`) + kpi('Overdue', usd(late.reduce((a, i) => a + Number(i.balance || 0), 0)), `${late.length} invoice(s) · ${late30.length} over 30 days`);
   const age = d => d == null ? '<span class="pill p-gry">no due date</span>' : d <= 0 ? '<span class="pill p-grn">current</span>' : d <= 30 ? `<span class="pill p-amb">${d} d late</span>` : `<span class="pill p-red">${d} d late</span>`;
   $('#finOpen').innerHTML = open.length ? `<table><thead><tr><th>Customer</th><th>Invoice</th><th>Date</th><th>Due</th><th class="num">Total</th><th class="num">Balance</th><th>Status</th></tr></thead><tbody>${open.map(i => `<tr><td>${esc(i.party || '—')}</td><td class="mono">${esc(i.doc_number || '—')}</td><td>${fmt(i.txn_date)}</td><td>${fmt(i.due_date)}</td><td class="num">${usd(i.total)}</td><td class="num"><b>${usd(i.balance)}</b></td><td>${age(i.days_overdue)}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">No open invoices.</div>';
-  $('#finPaid').innerHTML = paid.length ? `<table><thead><tr><th>Date</th><th>Customer</th><th class="num">Amount</th><th>Applied to invoice(s)</th></tr></thead><tbody>${paid.map(p => `<tr><td>${fmt(p.txn_date)}</td><td>${esc(p.party || '—')}</td><td class="num">${usd(p.total)}</td><td>${(p.invoices || []).filter(Boolean).map(esc).join(', ') || (Number(p.unapplied) ? '<span class="pill p-amb">not applied</span>' : '—')}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">No payments in the last 120 days.</div>';
+  renderPayments();
+}
+
+// Payments received for a chosen period (ops_finance_payments, 0061): 15 rows, then "Show all" (Victor, 11/21/26).
+const iso = d => d.toISOString().slice(0, 10);
+function paidRange(){
+  const v = $('#finPaidPeriod').value, now = new Date(), y = now.getFullYear(), m = now.getMonth();
+  if (v === 'custom') return [$('#finPaidFrom').value, $('#finPaidTo').value || iso(now)];
+  if (v === 'month') return [iso(new Date(y, m, 1)), iso(now)];
+  if (v === 'lastmonth') return [iso(new Date(y, m - 1, 1)), iso(new Date(y, m, 0))];
+  if (v === 'ytd') return [iso(new Date(y, 0, 1)), iso(now)];
+  return [iso(new Date(Date.now() - Number(v) * 864e5)), iso(now)];
+}
+async function renderPayments(){
+  const sel = $('#finPaidPeriod'); if (!sel) return;
+  if (!sel.dataset.wired) {
+    sel.dataset.wired = 1;
+    sel.onchange = () => { $('#finPaidCustom').hidden = sel.value !== 'custom'; if (sel.value === 'custom' && !$('#finPaidFrom').value) { const [f, t] = [iso(new Date(Date.now() - 30 * 864e5)), iso(new Date())]; $('#finPaidFrom').value = f; $('#finPaidTo').value = t; } renderPayments.all = false; renderPayments(); };
+    $('#finPaidFrom').onchange = $('#finPaidTo').onchange = () => { renderPayments.all = false; renderPayments(); };
+  }
+  const [from, to] = paidRange();
+  if (!from) return;
+  $('#finPaidSum').textContent = 'loading…';
+  const { data: d, error } = await window.OPS.sb.rpc('ops_finance_payments', { p_from: from, p_to: to });
+  if (error) { $('#finPaidSum').textContent = 'Error: ' + error.message; return; }
+  const rows = d.payments || [], show = renderPayments.all ? rows : rows.slice(0, 15);
+  $('#finPaidSum').textContent = `${d.count} payment(s) · ${usd(d.total)} · ${fmt(d.from)} – ${fmt(d.to)}`;
+  $('#finPaid').innerHTML = rows.length ? `<table><thead><tr><th>Date</th><th>Customer</th><th class="num">Amount</th><th>Applied to invoice(s)</th></tr></thead><tbody>${show.map(p => `<tr><td>${fmt(p.txn_date)}</td><td>${esc(p.party || '—')}</td><td class="num">${usd(p.total)}</td><td>${(p.invoices || []).filter(Boolean).map(esc).join(', ') || (Number(p.unapplied) ? '<span class="pill p-amb">not applied</span>' : '—')}</td></tr>`).join('')}</tbody></table>` : '<div class="empty">No payments in this period.</div>';
+  $('#finPaidMore').innerHTML = rows.length > 15 ? `<button class="btn ghost" type="button" id="finPaidToggle">${renderPayments.all ? 'Show the first 15' : `Show all ${rows.length}`}</button>` : '';
+  if (rows.length > 15) $('#finPaidToggle').onclick = () => { renderPayments.all = !renderPayments.all; renderPayments(); };
 }
 
 // KPI: late invoices = QuickBooks invoices past due with a balance open (ops_finance_kpis, 0054).
