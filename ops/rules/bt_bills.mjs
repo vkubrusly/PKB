@@ -30,7 +30,7 @@ const org = await orgId();
 // A line left 'filling' by a run that died before Save was never saved: free it (runs do not overlap — the
 // ops-bt-post concurrency group).
 if (POST) await sql(`update ops.vendor_invoice_lines set bt_status = null where bt_status = 'filling'`);
-const lines = await sql(`select l.*, v.vendor, v.invoice_number, v.invoice_date, v.due_date, v.total, v.file_path, v.file_name, v.cost_code inv_cost_code,
+const lines = await sql(`select l.*, j.bt_job_name, v.vendor, v.invoice_number, v.invoice_date, v.due_date, v.total, v.file_path, v.file_name, v.cost_code inv_cost_code,
     j.bt_job_id, (select count(*) from ops.vendor_invoice_lines x where x.invoice_id = v.id and not x.excluded) n_lines
   from ops.vendor_invoice_lines l join ops.vendor_invoices v on v.id = l.invoice_id left join ops.jobs j on j.id = l.job_id
   where v.org_id = ${q(org)} and not l.excluded
@@ -95,7 +95,9 @@ for (const l of lines) {
     await page.locator('#billTitle').first().waitFor({ timeout: 60000 });
     await page.waitForTimeout(2000); await hide();
     const jobName = await page.locator('[id="selectedJobId"]').locator('xpath=ancestor::div[contains(@class,"ant-select")][1]').innerText().catch(() => '');
-    if (!l.general && l.job_number && !jobName.includes(l.job_number)) throw new Error(`form opened on another job (${jobName.trim()})`);
+    // PRIME jobs have no number in Buildertrend ('PRIME - CT - Belvedere - 519 W DANDEE PL'): the job name counts too.
+    const sameJob = (n) => n.includes(l.job_number) || (l.bt_job_name && n.toLowerCase().includes(String(l.bt_job_name).slice(0, 30).toLowerCase()));
+    if (!l.general && l.job_number && !sameJob(jobName)) throw new Error(`form opened on another job (${jobName.trim()})`);
 
     let payTo, cc;
     if (ocr) {
@@ -109,7 +111,7 @@ for (const l of lines) {
       if (!got) throw new Error('Buildertrend did not fill the form from the PDF (bulk upload)');
       if (Math.abs(got - Number(l.bill_amount)) > 0.01) throw new Error(`Buildertrend read ${money(got)} from the PDF; the invoice is ${money(l.bill_amount)}`);
       const jobAfter = await page.locator('[id="selectedJobId"]').locator('xpath=ancestor::div[contains(@class,"ant-select")][1]').innerText().catch(() => '');
-      if (!l.general && l.job_number && !jobAfter.includes(l.job_number)) throw new Error(`after the upload the job is "${jobAfter.trim()}"`);
+      if (!l.general && l.job_number && !sameJob(jobAfter)) throw new Error(`after the upload the job is "${jobAfter.trim()}"`);
       // Vendor: keep Buildertrend's when it is this vendor, else pick the vendor.
       const payNow = (await page.locator('[id="performingUserId"]').locator('xpath=ancestor::div[contains(@class,"ant-select")][1]').innerText().catch(() => '')).replace(/\s+/g, ' ').trim();
       const vw = (String(l.vendor || '').toLowerCase().match(/[a-z0-9]{3,}/g) || []).find((w) => !['the', 'inc', 'llc', 'corp', 'services', 'service'].includes(w)) || '';
