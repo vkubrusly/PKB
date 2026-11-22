@@ -79,7 +79,11 @@ for (const l of lines) {
   const code = l.inv_cost_code || await vendorCostCode(org, l.vendor);
   const fail = async (msg) => { failed++; console.error(`FAILED ${tag}: ${msg}`); if (POST) await sql(`update ops.vendor_invoice_lines set bt_status = 'error', bt_error = ${q(msg.slice(0, 500))} where id = ${q(l.id)}`); };
   if (!btJob) { await fail('no Buildertrend job'); continue; }
-  if (!code) { await fail(`no cost code for vendor "${l.vendor}" (config/vendor_bills.json or Camila's answer)`); continue; }
+  // No cost code known: a one-house invoice goes in the way Camila does it (11/21/26) — the PDF dropped on "fill this
+  // form" (Buildertrend's bulk upload), the cost codes it suggests kept, only the job, vendor and total checked.
+  // An invoice split over several houses still needs a cost code (the upload would put the whole amount on one).
+  const ocr = !code && Number(l.n_lines) === 1;
+  if (!code && !ocr) { await fail(`no cost code for vendor "${l.vendor}" and the invoice is split over ${l.n_lines} houses`); continue; }
   // Reserve the line (only one run fills a given line; ops-bt-post runs one at a time).
   if (POST && !(await sql(`update ops.vendor_invoice_lines set bt_status = 'filling' where id = ${q(l.id)} and bt_status is null returning id`)).length) { console.log(`skip ${tag}: taken by another run`); continue; }
   try {
@@ -93,9 +97,33 @@ for (const l of lines) {
     const jobName = await page.locator('[id="selectedJobId"]').locator('xpath=ancestor::div[contains(@class,"ant-select")][1]').innerText().catch(() => '');
     if (!l.general && l.job_number && !jobName.includes(l.job_number)) throw new Error(`form opened on another job (${jobName.trim()})`);
 
+    let payTo, cc;
+    if (ocr) {
+      // Bulk upload: the "Browse or drop a file to fill this form" input (the first file input; one file, PDF allowed).
+      const fillIn = page.locator('input[type="file"]').first();
+      if (!/pdf/i.test(await fillIn.getAttribute('accept').catch(() => '') || '')) throw new Error('the "fill this form" upload was not found');
+      await fillIn.setInputFiles(files.get(l.file_path));
+      const amountOnForm = async () => Number(((await page.locator('text=/Total:/').locator('xpath=..').innerText().catch(() => '')).match(/\$\s?([\d,]+\.\d{2})/) || [])[1]?.replace(/,/g, '') || 0);
+      for (let i = 0; i < 40 && !(await amountOnForm()); i++) await page.waitForTimeout(3000);   // Buildertrend reads the PDF
+      const got = await amountOnForm();
+      if (!got) throw new Error('Buildertrend did not fill the form from the PDF (bulk upload)');
+      if (Math.abs(got - Number(l.bill_amount)) > 0.01) throw new Error(`Buildertrend read ${money(got)} from the PDF; the invoice is ${money(l.bill_amount)}`);
+      const jobAfter = await page.locator('[id="selectedJobId"]').locator('xpath=ancestor::div[contains(@class,"ant-select")][1]').innerText().catch(() => '');
+      if (!l.general && l.job_number && !jobAfter.includes(l.job_number)) throw new Error(`after the upload the job is "${jobAfter.trim()}"`);
+      // Vendor: keep Buildertrend's when it is this vendor, else pick the vendor.
+      const payNow = (await page.locator('[id="performingUserId"]').locator('xpath=ancestor::div[contains(@class,"ant-select")][1]').innerText().catch(() => '')).replace(/\s+/g, ' ').trim();
+      const vw = (String(l.vendor || '').toLowerCase().match(/[a-z0-9]{3,}/g) || []).find((w) => !['the', 'inc', 'llc', 'corp', 'services', 'service'].includes(w)) || '';
+      payTo = vw && payNow.toLowerCase().includes(vw) ? payNow : await pick('performingUserId', l.vendor);
+      if (!payTo) throw new Error(`Pay to "${l.vendor}" is not a Sub/Vendor in Buildertrend (Buildertrend suggested "${payNow}")`);
+      if (!(await page.locator('#billNumber').inputValue().catch(() => ''))) await page.locator('#billNumber').fill(String(l.invoice_number));
+      if (!(await page.locator('#billTitle').inputValue().catch(() => ''))) await page.locator('#billTitle').fill(`${l.vendor} ${l.invoice_number}`);
+      if (!(await page.locator('#invoiceDate').inputValue().catch(() => ''))) await setDate('invoiceDate', l.invoice_date);
+      if (!(await page.locator('#unifiedDeadlineRequest').inputValue().catch(() => ''))) await setDate('unifiedDeadlineRequest', l.due_date);
+      cc = 'as Buildertrend suggested: ' + ((await page.locator('text=/Costs/').locator('xpath=..').innerText().catch(() => '')).match(/\d{2}\.\d{2}(\.\d{2})?[^\n$]*/g) || ['?']).slice(0, 4).join(' | ');
+    } else {
     await page.locator('#billTitle').fill(`${l.vendor} ${l.invoice_number}`);
     await page.locator('#billNumber').fill(String(l.invoice_number));
-    const payTo = await pick('performingUserId', l.vendor);
+    payTo = await pick('performingUserId', l.vendor);
     if (!payTo) throw new Error(`Pay to "${l.vendor}" is not a Sub/Vendor in Buildertrend`);
     await setDate('invoiceDate', l.invoice_date);
     await setDate('unifiedDeadlineRequest', l.due_date);
@@ -107,18 +135,22 @@ for (const l of lines) {
     await page.locator('button[aria-label^="Open "]').first().click();
     await page.locator('#costCodeId').first().waitFor({ timeout: 20000 });
     await page.locator('#itemTitle').fill(`${l.label ? `${l.label} ` : ''}${l.address || ''}`.trim().slice(0, 100) || `${l.vendor} ${l.invoice_number}`);
-    const cc = await pick('costCodeId', code);
+    cc = await pick('costCodeId', code);
     if (!cc) throw new Error(`cost code "${code}" not found`);
     const bc = page.locator('#builderCost').first();
     await bc.click({ clickCount: 3 }); await bc.fill(String(Number(l.bill_amount).toFixed(2))); await page.keyboard.press('Tab');
     await page.waitForTimeout(800);
     await page.locator('button[aria-label="Close line item"]').first().click().catch(() => {});
     await page.waitForTimeout(800);
+    }
 
     // QuickBooks: "Send to QuickBooks immediately upon save" stays as Buildertrend sets it — a draft is not sent
     // (Victor, 11/19/26).
 
-    // Attachment: Attachments → Add → (menu) → file chooser.
+    // Attachment: Attachments → Add → (menu) → file chooser — unless the bulk upload already attached the PDF.
+    const baseName = String(l.file_name || 'invoice.pdf').replace(/\.[^.]+$/, '');
+    const preAttached = ocr && (await page.locator('body').getByText(baseName, { exact: false }).count()) > 0;
+    if (!preAttached) {
     const addBtn = page.locator('.ant-form-item:has-text("Attachments"), section:has-text("Attachments"), div:has(> h3:text-is("Attachments"))').getByRole('button', { name: /^Add$/ }).first();
     const attachBtn = (await addBtn.count()) ? addBtn : page.getByRole('button', { name: /^Add$/ }).last();
     let chooser = page.waitForEvent('filechooser', { timeout: 8000 }).catch(() => null);
@@ -156,6 +188,7 @@ for (const l of lines) {
     const base = String(l.file_name || 'invoice.pdf').replace(/\.[^.]+$/, '');
     const attached = await page.locator('.ant-modal-content:not(:has-text("Upload Files")), body').first().getByText(base, { exact: false }).count();
     if (!attached) throw new Error('attachment did not show on the form');
+    }
 
     const total = (await page.locator('text=/Total:/').locator('xpath=..').innerText().catch(() => '')).replace(/\s+/g, ' ');
     console.log(`${POST ? 'SAVING' : 'FILLED (dry run, not saved)'} ${tag} · job "${jobName.trim()}" · pay to ${payTo} · cost code ${cc} · ${total} · file attached`);
