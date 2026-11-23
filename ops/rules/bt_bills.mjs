@@ -121,7 +121,9 @@ for (const l of lines) {
     await page.locator('button[aria-label="Create new Bill"]').first().click();
     await page.locator('#billTitle').first().waitFor({ timeout: 60000 });
     await page.waitForTimeout(2000); await hide();
-    const jobName = await page.locator('[id="selectedJobId"]').locator('xpath=ancestor::div[contains(@class,"ant-select")][1]').innerText().catch(() => '');
+    // The job field first shows the job id while it loads ('45718171'): wait for the name.
+    let jobName = '';
+    for (let i = 0; i < 15; i++) { jobName = await page.locator('[id="selectedJobId"]').locator('xpath=ancestor::div[contains(@class,"ant-select")][1]').innerText().catch(() => ''); if (/[A-Za-z]/.test(jobName)) break; await page.waitForTimeout(1000); }
     // PRIME jobs have no number in Buildertrend ('PRIME - CT - Belvedere - 519 W DANDEE PL'): the job name counts too.
     const sameJob = (n) => n.includes(l.job_number) || (l.bt_job_name && n.toLowerCase().includes(String(l.bt_job_name).slice(0, 30).toLowerCase()));
     if (!l.general && l.job_number && !sameJob(jobName)) throw new Error(`form opened on another job (${jobName.trim()})`);
