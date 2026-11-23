@@ -4,7 +4,7 @@
 //   POST { file_base64, media_type, file_name, email_subject?, email_from? }
 //   → { is_invoice, vendor, invoice_number, invoice_date, due_date, total, sites[], invoice_fees[], notes }
 //   POST { mode: 'answer', answer_text, invoice: {vendor, invoice_number, total, issues[], lines[]}, jobs: [{job_number, address}] }
-//   → { decision, assignments[], exclude[], no_job[], cost_code, summary }   (Camila's / Victor's e-mail answer, read)
+//   → { decision, assignments[], exclude[], no_job[], cost_code, lessons[], summary }   (Camila's / Victor's e-mail answer, read)
 //   POST { mode: 'reply', from, from_name, subject, text, context, as_of } → { reply, needs_victor, summary }   (a team e-mail, answered)
 import Anthropic from 'npm:@anthropic-ai/sdk@0.68.0';
 import { cors, json } from '../_shared/cors.ts';
@@ -18,7 +18,7 @@ Return only what the document shows. Never invent a number, an address or a date
 - is_invoice: true only for an invoice / bill / statement asking PKB to pay. False for anything else (W-9, receipt of payment, quote/estimate, signature image, logo, photo, lien waiver, terms and conditions page, marketing).
 - vendor: the company being paid (the "from" / remit-to company, not PKB).
 - invoice_number, invoice_date and due_date (YYYY-MM-DD) of the document as a whole; total: the amount due for the whole document.
-- sites: one entry per house / job / property / service address the invoice charges, with the amount for that site INCLUDING its own tax. Use the site's own subtotal or total line when the invoice gives one; otherwise add up its lines. label: the site's name or code as printed (e.g. "S319"); address: the street address exactly as printed; amount: number. If the whole invoice is for one site, return one entry with the invoice total minus any invoice-wide fees.
+- sites: one entry per house / job / property / service address the invoice charges, with the amount for that site INCLUDING its own tax. Use the site's own subtotal or total line when the invoice gives one; otherwise add up its lines. label: the site's name or code as printed (e.g. "S319"); address: the street address exactly as printed; parcel: the parcel / property ID when printed for that site (e.g. "3493-086-009"), else null; amount: number. If the whole invoice is for one site, return one entry with the invoice total minus any invoice-wide fees.
 - invoice_fees: charges on the whole invoice that belong to no site (delivery, fuel, environmental, service fee…), each with description and amount. Taxes already inside a site amount are not fees.
 - notes: in Brazilian Portuguese; anything a person must check (credits, partial payments, a site without an address, figures that do not add up), in one or two short sentences; null when there is nothing.`;
 
@@ -33,7 +33,7 @@ const SCHEMA = {
     invoice_date: { type: ['string', 'null'] },
     due_date: { type: ['string', 'null'] },
     total: { type: ['number', 'null'] },
-    sites: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['label', 'address', 'amount'], properties: { label: { type: ['string', 'null'] }, address: { type: ['string', 'null'] }, amount: { type: 'number' } } } },
+    sites: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['label', 'address', 'parcel', 'amount'], properties: { label: { type: ['string', 'null'] }, address: { type: ['string', 'null'] }, parcel: { type: ['string', 'null'] }, amount: { type: 'number' } } } },
     invoice_fees: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['description', 'amount'], properties: { description: { type: 'string' }, amount: { type: 'number' } } } },
     notes: { type: ['string', 'null'] },
   },
@@ -47,9 +47,11 @@ const ANSWER_INSTRUCTIONS = `PKB Ops (an automated system) asked Camila (PKB Hom
 - fetch_link: true when the answer asks to open / download the invoice from the link in the e-mail ("abre o link", "baixa o PDF do link"); the system downloads it and reads it again.
 - The answer was written by the person named in 'Answer written by'; refer to that person, never to someone else.
 - cost_code: the cost code text the answer asks for, or null.
+- lessons: how-to rules the answer teaches that will apply to FUTURE invoices too, not only this one (e.g. "faturas da Preferred: subir pelo bulk upload", "taxa de entrega vai no geral", "o lote X é a obra Y" is NOT a lesson — that goes in assignments). Each: lesson (one sentence in Brazilian Portuguese, self-contained), vendor_only (true when it applies only to this invoice's vendor). Empty when the answer only decides this invoice.
+- Earlier lessons from the team are given under 'Lessons'; follow them when reading the answer.
 - summary: one short sentence in Brazilian Portuguese of what you understood.`;
 const ANSWER_SCHEMA = {
-  type: 'object', additionalProperties: false, required: ['decision', 'assignments', 'exclude', 'no_job', 'fetch_link', 'cost_code', 'summary'],
+  type: 'object', additionalProperties: false, required: ['decision', 'assignments', 'exclude', 'no_job', 'fetch_link', 'cost_code', 'lessons', 'summary'],
   properties: {
     decision: { type: 'string', enum: ['create', 'ignore', 'duplicate', 'wait'] },
     assignments: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['line_address', 'job_number'], properties: { line_address: { type: 'string' }, job_number: { type: 'string' } } } },
@@ -57,6 +59,7 @@ const ANSWER_SCHEMA = {
     no_job: { type: 'array', items: { type: 'string' } },
     fetch_link: { type: 'boolean' },
     cost_code: { type: ['string', 'null'] },
+    lessons: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['lesson', 'vendor_only'], properties: { lesson: { type: 'string' }, vendor_only: { type: 'boolean' } } } },
     summary: { type: 'string' },
   },
 };
@@ -104,7 +107,7 @@ Deno.serve(async (req) => {
     if (body.mode === 'answer') {
       const resp = await ask({
         model: MODEL, max_tokens: 4000, system: ANSWER_INSTRUCTIONS,
-        messages: [{ role: 'user', content: `Answer written by: ${body.answer_by || 'Camila'}\n\nInvoice: ${JSON.stringify(body.invoice || {})}\n\nJobs (job_number, address): ${JSON.stringify(body.jobs || [])}\n\nThe answer e-mail:\n${String(body.answer_text || '').slice(0, 12000)}` }],
+        messages: [{ role: 'user', content: `Answer written by: ${body.answer_by || 'Camila'}\n\nInvoice: ${JSON.stringify(body.invoice || {})}\n\nJobs (job_number, address): ${JSON.stringify(body.jobs || [])}\n\nLessons: ${JSON.stringify(body.lessons || [])}\n\nThe answer e-mail:\n${String(body.answer_text || '').slice(0, 12000)}` }],
         output_config: { effort: 'medium', format: { type: 'json_schema', schema: ANSWER_SCHEMA } },
       });
       if (resp.stop_reason === 'refusal') return json({ error: 'the model declined' }, 422);
@@ -122,7 +125,7 @@ Deno.serve(async (req) => {
       model: MODEL,
       max_tokens: 16000,
       system: INSTRUCTIONS,
-      messages: [{ role: 'user', content: [file, { type: 'text', text: `File: ${body.file_name || '—'}\nE-mail from: ${body.email_from || '—'}\nE-mail subject: ${body.email_subject || '—'}` }] }],
+      messages: [{ role: 'user', content: [file, { type: 'text', text: `File: ${body.file_name || '—'}\nE-mail from: ${body.email_from || '—'}\nE-mail subject: ${body.email_subject || '—'}${(body.lessons || []).length ? `\n\nLessons the PKB team gave for invoices (follow them when they apply to reading this one):\n- ${(body.lessons || []).join('\n- ')}` : ''}` }] }],
       output_config: { effort: 'medium', format: { type: 'json_schema', schema: SCHEMA } },
     };
     const resp = await ask(params);
