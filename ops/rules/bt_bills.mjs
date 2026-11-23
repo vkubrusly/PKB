@@ -72,22 +72,49 @@ async function setDate(id, d) {
   throw new Error(`date field ${id} stayed empty (${iso})`);
 }
 
+// The cost code Buildertrend suggests for an invoice: drop the PDF on "fill this form" of a new bill, read the cost
+// code of its first cost line, leave without saving (Victor, 11/23/26: "o builder escolhe o cost code"). Used for an
+// invoice split over several houses: every house gets that cost code, the same attachment and its own amount.
+const suggested = new Map();
+async function suggestCostCode(btJob, pdfPath) {
+  page.once('dialog', (d) => d.accept().catch(() => {}));
+  await page.goto(`https://buildertrend.net/app/Bills?jobId=${btJob}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+  await page.locator('button[aria-label="Create new Bill"]').first().waitFor({ timeout: 60000 }); await hide();
+  await page.locator('button[aria-label="Create new Bill"]').first().click();
+  await page.locator('#billTitle').first().waitFor({ timeout: 60000 }); await page.waitForTimeout(2000); await hide();
+  await page.locator('input[type="file"]').first().setInputFiles(pdfPath);
+  const amt = async () => Number(((await page.locator('text=/Total:/').locator('xpath=..').innerText().catch(() => '')).match(/\$\s?([\d,]+\.\d{2})/) || [])[1]?.replace(/,/g, '') || 0);
+  for (let i = 0; i < 40 && !(await amt()); i++) await page.waitForTimeout(3000);
+  if (!(await amt())) throw new Error('Buildertrend did not read the PDF (bulk upload) to suggest a cost code');
+  await page.locator('button[aria-label^="Open "]').first().click();
+  await page.locator('#costCodeId').first().waitFor({ timeout: 20000 });
+  const cc = (await page.locator('#costCodeId').locator('xpath=ancestor::div[contains(@class,"ant-select")][1]').innerText().catch(() => '')).replace(/\s+/g, ' ').trim();
+  await page.locator('button[aria-label="Close line item"]').first().click().catch(() => {});
+  if (!/\d{2}\.\d{2}/.test(cc)) throw new Error(`Buildertrend suggested no cost code ("${cc}")`);
+  return cc.replace(/\s*Inactive\s*$/i, '');
+}
+
 let made = 0, failed = 0;
 for (const l of lines) {
   const btJob = l.general ? CFG.general_bt_job : l.bt_job_id;
   const tag = `${l.vendor} #${l.invoice_number} · ${l.general ? 'GERAL' : l.job_number} · ${money(l.bill_amount)}`;
-  const code = l.inv_cost_code || await vendorCostCode(org, l.vendor);
+  let code = l.inv_cost_code || null;   // only a cost code named for this invoice; otherwise Buildertrend picks it
   const fail = async (msg) => { failed++; console.error(`FAILED ${tag}: ${msg}`); if (POST) await sql(`update ops.vendor_invoice_lines set bt_status = 'error', bt_error = ${q(msg.slice(0, 500))} where id = ${q(l.id)}`); };
   if (!btJob) { await fail('no Buildertrend job'); continue; }
   // No cost code known: a one-house invoice goes in the way Camila does it (11/21/26) — the PDF dropped on "fill this
   // form" (Buildertrend's bulk upload), the cost codes it suggests kept, only the job, vendor and total checked.
   // An invoice split over several houses still needs a cost code (the upload would put the whole amount on one).
   const ocr = !code && Number(l.n_lines) === 1;
-  if (!code && !ocr) { await fail(`no cost code for vendor "${l.vendor}" and the invoice is split over ${l.n_lines} houses`); continue; }
   // Reserve the line (only one run fills a given line; ops-bt-post runs one at a time).
   if (POST && !(await sql(`update ops.vendor_invoice_lines set bt_status = 'filling' where id = ${q(l.id)} and bt_status is null returning id`)).length) { console.log(`skip ${tag}: taken by another run`); continue; }
   try {
     if (!files.has(l.file_path)) { const p = join(dir, l.file_name || 'invoice.pdf'); writeFileSync(p, await downloadObject('ops-invoices', l.file_path)); files.set(l.file_path, p); }
+    if (!code && !ocr) {
+      if (!suggested.has(l.invoice_id)) suggested.set(l.invoice_id, await suggestCostCode(btJob, files.get(l.file_path)));
+      code = suggested.get(l.invoice_id);
+      console.log(`cost code suggested by Buildertrend for ${l.vendor} #${l.invoice_number}: ${code}`);
+      if (POST) await sql(`update ops.vendor_invoices set cost_code = ${q(code)} where id = ${q(l.invoice_id)} and cost_code is null`);
+    }
     await page.goto(`https://buildertrend.net/app/Bills?jobId=${btJob}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
     await page.locator('button[aria-label="Create new Bill"]').first().waitFor({ timeout: 60000 });
     await hide();

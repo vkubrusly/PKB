@@ -146,7 +146,7 @@ for (const v of todo) {
     }
     const a = allocate(x, jobs);
     // a one-house invoice goes in through Buildertrend's bulk upload, which suggests the cost codes (Camila, 11/21/26)
-    if (a.lines.length > 1 && !(await vendorCostCode(org, x.vendor))) a.issues.push(`fornecedor ${x.vendor || '?'} ainda não tem cost code definido — qual cost code usar nas bills? (responda com o código, ex.: "10.20.02 Portable toilets")`);
+    // no cost-code question: Buildertrend picks the cost code (bulk upload), Victor 11/23/26
     const dup = (await sql(`select id from ops.vendor_invoices where org_id = ${q(org)} and id <> ${q(v.id)} and lower(vendor) = lower(${q(x.vendor)})
       and invoice_number = ${q(x.invoice_number)} and status in ('ready', 'creating', 'created', 'needs_review')`)).length > 0;
     const status = dup ? 'duplicate' : a.issues.length ? 'needs_review' : 'ready';
@@ -223,7 +223,7 @@ for (const e of answers) {
       await sql(`update ops.vendor_invoices set status = 'needs_review', question_sent_at = null,
         issues = array[${left.map((l) => q(`${l.address}: ainda sem obra (${money(l.bill_amount)}) — diga a obra ou "tira essa"`)).join(',')}] where id = ${q(v.id)}`);
       next = `Ainda falta a obra de ${left.length} endereço(s); mando outro e-mail com o que ficou.`;
-    } else if (!a.cost_code && v.lines.filter((x) => !x.excluded).length > 1 && !(await vendorCostCode(org, v.vendor))) {
+    } else if (false) {   // cost code: Buildertrend picks it (Victor 11/23/26) — never asked any more
       await sql(`update ops.vendor_invoices set status = 'needs_review', question_sent_at = null,
         issues = array[${q(`fornecedor ${v.vendor} ainda não tem cost code definido — qual cost code usar nas bills?`)}] where id = ${q(v.id)}`);
       next = `Ainda falta o cost code do fornecedor ${v.vendor}; mando outro e-mail perguntando.`;
