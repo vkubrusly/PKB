@@ -45,16 +45,27 @@ const dir = mkdtempSync(join(tmpdir(), 'bills-'));
 const files = new Map();
 const hide = () => page.evaluate(() => document.getElementById('chmln-dom')?.remove()).catch(() => {});
 
+// The vendor as the invoice writes it ("Shady Environmental, Inc") may be shorter in Buildertrend ("Shady
+// Environmental"): try the full name, then without ", Inc / LLC / Corp…", then its first two words.
+const vendorTries = (t) => {
+  const base = String(t).replace(/[,.]?\s*\b(inc|llc|l\.l\.c|corp(oration)?|co|ltd|company)\.?\s*$/i, '').replace(/[,.]\s*$/, '').trim();
+  const two = base.split(/\s+/).slice(0, 2).join(' ');
+  return [...new Set([String(t).trim(), base, two])].filter((x) => x.length >= 3);
+};
 async function pick(id, text) {
   const box = page.locator(`[id="${id}"]`).first();
-  await box.click({ force: true }); await page.waitForTimeout(600);
-  await box.fill(text); await page.waitForTimeout(2000);
-  const opts = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option');
-  const all = await opts.allInnerTexts();
-  const k = all.findIndex((t) => t.toLowerCase().includes(text.toLowerCase()) && !/^Create /i.test(t.trim()) && !/Inactive/i.test(t));
-  if (k < 0) { await page.keyboard.press('Escape'); return null; }
-  await opts.nth(k).click({ force: true }); await page.waitForTimeout(600);
-  return all[k].replace(/\s+/g, ' ').trim();
+  const tries = id === 'performingUserId' ? vendorTries(text) : [text];
+  for (const t of tries) {
+    await box.click({ force: true }); await page.waitForTimeout(600);
+    await box.fill(t); await page.waitForTimeout(2000);
+    const opts = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option');
+    const all = await opts.allInnerTexts();
+    const k = all.findIndex((o) => o.toLowerCase().includes(t.toLowerCase()) && !/^Create /i.test(o.trim()) && !/Inactive/i.test(o));
+    if (k >= 0) { await opts.nth(k).click({ force: true }); await page.waitForTimeout(600); return all[k].replace(/\s+/g, ' ').trim(); }
+    await box.fill('').catch(() => {});
+  }
+  await page.keyboard.press('Escape');
+  return null;
 }
 // Dates: Buildertrend shows them as "Nov 16, 2026"; typed as MM/DD/YYYY they were left empty (bill 127431643,
 // 11/19). Type the displayed format, then check the field holds a date — a bill without its dates is not saved.
