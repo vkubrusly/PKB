@@ -61,7 +61,13 @@ async function pick(id, text) {
     const opts = page.locator('.ant-select-dropdown:not(.ant-select-dropdown-hidden) .ant-select-item-option');
     const all = await opts.allInnerTexts();
     const k = all.findIndex((o) => o.toLowerCase().includes(t.toLowerCase()) && !/^Create /i.test(o.trim()) && !/Inactive/i.test(o));
-    if (k >= 0) { await opts.nth(k).click({ force: true }); await page.waitForTimeout(600); return all[k].replace(/\s+/g, ' ').trim(); }
+    if (k >= 0) {
+      await opts.nth(k).click({ force: true }); await page.waitForTimeout(1500);
+      // A vendor not assigned to the job: Buildertrend asks "Add assignee to job?" — "Do Not Add to Job" (as in
+      // collectors/buildertrend/bill_create.mjs). Until it is answered the form stays read-only behind it.
+      if (id === 'performingUserId') { const keep = page.getByRole('button', { name: /^Do Not Add to Job$/ }).first(); if (await keep.isVisible().catch(() => false)) { await keep.click(); await page.waitForTimeout(1500); } }
+      return all[k].replace(/\s+/g, ' ').trim();
+    }
     await box.fill('').catch(() => {});
   }
   await page.keyboard.press('Escape');
