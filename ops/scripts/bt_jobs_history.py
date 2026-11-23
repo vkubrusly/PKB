@@ -5,7 +5,8 @@
 #   python3 scripts/bt_jobs_history.py 0040 0056 …
 import io, json, os, sys, urllib.error, urllib.request, zipfile
 repo, tok = os.environ['GITHUB_REPOSITORY'], os.environ['GH_TOKEN']
-want = sys.argv[1:]
+want = [a for a in sys.argv[1:] if not a.startswith('--parcels=')]
+PARCELS = next((a.split('=', 1)[1].split(',') for a in sys.argv[1:] if a.startswith('--parcels=')), None)
 class NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, *a, **k): return None
 opener = urllib.request.build_opener(NoRedirect)
@@ -23,6 +24,15 @@ for page in range(1, 6):
     arts += [x for x in a if not x['expired']]
     if len(a) < 100: break
 arts.sort(key=lambda x: x['created_at'])
+if PARCELS:   # the jobs of the LATEST snapshot whose Buildertrend "Parcial ID" is one of these parcels
+    a = arts[-1]
+    z = zipfile.ZipFile(io.BytesIO(get(a['archive_download_url'], raw=True)))
+    d = json.loads(z.read(next(n for n in z.namelist() if n.endswith('job_fields.json'))))
+    dig = lambda x: ''.join(ch for ch in str(x or '') if ch.isdigit())
+    for p in PARCELS:
+        hits = [j for j in d.get('jobs', []) if dig(j.get('parcel')) == dig(p)]
+        print(p, '→', ' | '.join(f"{j.get('name')} (jobId {j.get('jobId')}, {j.get('street')})" for j in hits) or 'not found')
+    sys.exit(0)
 print(f'{len(arts)} snapshots')
 prev = None
 for a in arts:
