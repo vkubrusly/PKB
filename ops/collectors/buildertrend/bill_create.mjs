@@ -14,8 +14,17 @@
 import { openBuildertrend } from './session.mjs';
 
 // The spec may come base64-encoded (no quotes to escape in the Actions shell).
+// Or 'db:<key>[,<key>…]': a batch stored in ops.events (kind 'recon.bill_specs', dedupe_key 'recon.bill_specs:<key>'),
+// so a reconciliation of hundreds of bills does not travel in the workflow input.
 const rawSpec = process.argv[2];
-const specs = [].concat(JSON.parse(/^\s*[[{]/.test(rawSpec) ? rawSpec : Buffer.from(rawSpec, 'base64').toString('utf8')));
+let specs;
+if (/^db:/.test(rawSpec)) {
+  const { sql } = await import('../../scripts/sb.mjs');
+  const keys = rawSpec.slice(3).split(',').filter(Boolean);
+  const rows = await sql(`select dedupe_key, payload from ops.events where kind = 'recon.bill_specs' and dedupe_key in (${keys.map((k) => `'recon.bill_specs:${k.replace(/'/g, "''")}'`).join(',')})`);
+  if (rows.length !== keys.length) throw new Error(`spec batches found ${rows.length} of ${keys.length}`);
+  specs = keys.flatMap((k) => rows.find((r) => r.dedupe_key === `recon.bill_specs:${k}`).payload.specs);
+} else specs = [].concat(JSON.parse(/^\s*[[{]/.test(rawSpec) ? rawSpec : Buffer.from(rawSpec, 'base64').toString('utf8')));
 const SAVE = process.argv.includes('--save'), PAY = process.argv.includes('--pay');
 const { browser, page, loggedIn } = await openBuildertrend();
 if (!loggedIn) { console.error('session expired'); await browser.close(); process.exit(1); }

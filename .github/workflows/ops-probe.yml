@@ -36,7 +36,7 @@ jobs:
       - name: Run probe
         env:
           BT_COOKIES_FILE: ${{ github.workspace }}/bt_cookies.json
-          SUPABASE_ACCESS_TOKEN: ${{ (inputs.probe == 'bt-schedule-rule' || inputs.probe == 'bt-warranty-rule' || inputs.probe == 'bt-bills-rule' || inputs.probe == 'buildertrend-bill-delete') && secrets.SUPABASE_ACCESS_TOKEN || '' }}
+          SUPABASE_ACCESS_TOKEN: ${{ (inputs.probe == 'bt-schedule-rule' || inputs.probe == 'bt-warranty-rule' || inputs.probe == 'bt-bills-rule' || inputs.probe == 'buildertrend-bill-delete' || inputs.probe == 'bt-bill-create') && secrets.SUPABASE_ACCESS_TOKEN || '' }}
           ORANGE_PORTAL_USER: ${{ secrets.ORANGE_PORTAL_USER }}
           ORANGE_PORTAL_PASS: ${{ secrets.ORANGE_PORTAL_PASS }}
           ORANGE_PORTAL_USER_2: ${{ secrets.ORANGE_PORTAL_USER_2 }}
